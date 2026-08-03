@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Game Hub</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app">
+
+    <header class="topbar">
+      <div class="profile">
+        <div class="avatar" id="avatar"></div>
+        <div class="profile-text">
+          <span class="hello">Merhaba</span>
+          <strong id="username">Oyuncu</strong>
+        </div>
+      </div>
+      <div class="points-chip">
+        <span class="coin">◆</span>
+        <span id="points">0</span>
+      </div>
+    </header>
+
+    <section class="hero">
+      <h1>Oyun Hub</h1>
+      <p>Oyna, puan topla. Puanlar ileride token'a dönüşecek.</p>
+    </section>
+
+    <h2 class="section-title">Oyunlar</h2>
+    <div class="game-grid" id="games"></div>
+
+    <footer class="foot">Sürüm 0.1 · Faz 1</footer>
+  </div>
+
+  <script type="module" src="js/hub.js"></script>
+</body>
+</html>
