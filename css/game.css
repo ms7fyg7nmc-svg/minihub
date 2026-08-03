@@ -1,0 +1,94 @@
+/* Oyunlarin ortak gorunumu: baslik, skor kutulari, butonlar, bitis ekrani.
+   Her oyun once style.css'i, sonra bu dosyayi, en son kendi css'ini yukler.
+   (2048 bu dosyadan once yazildigi icin kendi kopyasini kullaniyor, ona dokunmuyoruz.) */
+
+.game-app { display: flex; flex-direction: column; gap: 14px; }
+
+.game-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.game-title { margin: 0; font-size: 26px; letter-spacing: -0.5px; }
+.game-sub { margin: 4px 0 0; font-size: 12.5px; color: var(--muted); }
+
+.scores { display: flex; gap: 8px; }
+
+.score-box {
+  min-width: 72px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--bg-soft);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.score-box span { font-size: 10px; letter-spacing: 0.8px; color: var(--muted); }
+.score-box strong { font-size: 17px; font-variant-numeric: tabular-nums; }
+.score-box.warn strong { color: #ff6b6b; }
+
+/* --- Butonlar --- */
+
+.controls { display: flex; gap: 10px; }
+
+.btn {
+  flex: 1;
+  padding: 13px 16px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--bg-soft);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.4; cursor: default; }
+.btn:disabled:active { transform: none; }
+.btn.primary { background: var(--accent); color: var(--accent-text); flex: none; padding: 13px 28px; }
+
+.hint { margin: 0; text-align: center; font-size: 12px; color: var(--muted); }
+
+/* --- Bitis / bilgi ekrani --- */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  text-align: center;
+  background: rgba(10, 11, 16, 0.86);
+  backdrop-filter: blur(3px);
+  border-radius: 16px;
+  animation: overlay-fade 0.25s ease-out;
+}
+
+.overlay[hidden] { display: none; }
+.overlay h2 { margin: 0; font-size: 23px; }
+.overlay p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+
+@keyframes overlay-fade { from { opacity: 0; } }
+
+/* Puan kazanildiginda ekranda yukari sizip kaybolan yazi */
+.floater {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+  font-weight: 800;
+  font-size: 20px;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  animation: floater-up 0.8s ease-out forwards;
+}
+
+@keyframes floater-up {
+  from { opacity: 1; transform: translate(-50%, -50%); }
+  to { opacity: 0; transform: translate(-50%, -160%); }
+}
