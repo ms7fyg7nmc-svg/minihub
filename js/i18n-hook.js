@@ -38,6 +38,9 @@ export function t(key, params = {}) {
 
 /** Sayfadaki data-i18n ve data-i18n-title etiketli metinleri doldurur. */
 export function applyStaticTexts(root = document) {
+  /* Sayfanin dil etiketini secili dile cek */
+  document.documentElement.lang = getLang();
+
   root.querySelectorAll('[data-i18n]').forEach((el) => {
     el.textContent = t(el.dataset.i18n);
   });
