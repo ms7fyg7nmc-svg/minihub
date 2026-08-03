@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Game Hub</title>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Game Hub</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="css/style.css">
-</head>
+  </head>
 <body>
   <div class="app">
 
@@ -14,8 +14,8 @@
       <div class="profile">
         <div class="avatar" id="avatar"></div>
         <div class="profile-text">
-          <span class="hello">Merhaba</span>
-          <strong id="username">Oyuncu</strong>
+          <span class="hello" data-i18n="hub.hello">Hi</span>
+          <strong id="username">Player</strong>
         </div>
       </div>
       <div class="points-chip">
@@ -24,15 +24,20 @@
       </div>
     </header>
 
+    <div class="lang-bar">
+      <span class="lang-label" data-i18n="hub.language">Language</span>
+      <div id="lang-switcher"></div>
+    </div>
+
     <section class="hero">
-      <h1>Oyun Hub</h1>
-      <p>Oyna, puan topla. Puanlar ileride token'a dönüşecek.</p>
+      <h1 data-i18n="hub.title">Game Hub</h1>
+      <p data-i18n="hub.subtitle">Play, earn points. Points will turn into tokens later.</p>
     </section>
 
-    <h2 class="section-title">Oyunlar</h2>
+    <h2 class="section-title" data-i18n="hub.gamesTitle">Games</h2>
     <div class="game-grid" id="games"></div>
 
-    <footer class="foot">Sürüm 0.1 · Faz 1</footer>
+    <footer class="foot" data-i18n="hub.footer">Version 0.1 - Phase 1</footer>
   </div>
 
   <script type="module" src="js/hub.js"></script>
