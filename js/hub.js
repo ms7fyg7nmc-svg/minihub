@@ -16,11 +16,33 @@ function gameList() {
          ready: true,
       },
       {
+         id: 'blockblast',
+         title: t('game.blockblast.title'),
+         desc: t('game.blockblast.desc'),
+         icon: '▦',
+         url: 'games/blockblast/index.html',
+         gradient: 'linear-gradient(140deg, #7f9bff, #5b6bff)',
+         ready: true,
+      },
+      {
+         id: 'watersort',
+         title: t('game.watersort.title'),
+         desc: t('game.watersort.desc'),
+         icon: '🧪',
+         url: 'games/watersort/index.html',
+         gradient: 'linear-gradient(140deg, #4ecb8b, #2fa9a0)',
+         /* Burada rekor bir skor degil, ulasilan bolum numarasi */
+         bestKey: 'hub.level',
+         ready: true,
+      },
+      {
          id: 'match3',
          title: t('game.match3.title'),
          desc: t('game.match3.desc'),
-         icon: '★',
-         ready: false,
+         icon: '🍒',
+         url: 'games/match3/index.html',
+         gradient: 'linear-gradient(140deg, #e2679c, #c0507f)',
+         ready: true,
       },
       {
          id: 'runner',
@@ -29,7 +51,7 @@ function gameList() {
          icon: '▶',
          ready: false,
       },
-      ];
+   ];
 }
 
 initTelegram();
@@ -84,12 +106,17 @@ for (const game of gameList()) {
    card.querySelector('h3').textContent = game.title;
    card.querySelector('p').textContent = game.desc;
 
+   /* Yeni oyunlarin kart ikonuna renk gecisi ver */
+   if (game.gradient) {
+      card.querySelector('.game-icon').style.background = game.gradient;
+   }
+
    const badge = card.querySelector('.badge');
    if (game.ready) {
       badge.textContent = t('hub.play');
       getBest(game.id).then((best) => {
          if (best > 0) {
-            badge.textContent = t('hub.record', { best: best.toLocaleString(locale()) });
+            badge.textContent = t(game.bestKey ?? 'hub.record', { best: best.toLocaleString(locale()) });
             badge.classList.add('record');
          }
       });
