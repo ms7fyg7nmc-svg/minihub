@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Su Sıralama</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/game.css">
+  <link rel="stylesheet" href="watersort.css">
+</head>
+<body data-i18n-title="title">
+  <div class="app game-app">
+
+    <header class="game-head">
+      <div>
+        <h1 class="game-title" data-i18n="title">Su Sıralama</h1>
+        <p class="game-sub" data-i18n="subtitle">Her tüpü tek renge indir</p>
+      </div>
+      <div class="scores">
+        <div class="score-box">
+          <span data-i18n="level">BÖLÜM</span>
+          <strong id="level">1</strong>
+        </div>
+        <div class="score-box">
+          <span data-i18n="bestLevel">EN İYİ</span>
+          <strong id="best">1</strong>
+        </div>
+      </div>
+    </header>
+
+    <div class="stage-wrap">
+      <div class="stage" id="stage"></div>
+      <div class="overlay" id="overlay" hidden>
+        <h2 id="overlay-title"></h2>
+        <p id="overlay-text"></p>
+        <button class="btn primary" id="overlay-btn"></button>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="undo" data-i18n="undo">Geri al</button>
+      <button class="btn" id="restart" data-i18n="restart">Yeniden</button>
+      <a class="btn" href="../../index.html" id="back-link" data-i18n="backToHub">Hub'a dön</a>
+    </div>
+
+    <p class="hint" data-i18n="hint">Bir tüpe dokun, sonra dökeceğin tüpe dokun.</p>
+  </div>
+
+  <script type="module" src="watersort.js"></script>
+</body>
+</html>
