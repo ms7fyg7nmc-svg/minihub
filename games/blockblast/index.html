@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Blok Bulmaca</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/game.css">
+  <link rel="stylesheet" href="blockblast.css">
+</head>
+<body data-i18n-title="title">
+  <div class="app game-app">
+
+    <header class="game-head">
+      <div>
+        <h1 class="game-title" data-i18n="title">Blok Bulmaca</h1>
+        <p class="game-sub" data-i18n="subtitle">Satırları ve sütunları doldur</p>
+      </div>
+      <div class="scores">
+        <div class="score-box">
+          <span data-i18n="score">SKOR</span>
+          <strong id="score">0</strong>
+        </div>
+        <div class="score-box">
+          <span data-i18n="best">REKOR</span>
+          <strong id="best">0</strong>
+        </div>
+      </div>
+    </header>
+
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+
+      <div class="overlay" id="overlay" hidden>
+        <h2 id="overlay-title"></h2>
+        <p id="overlay-text"></p>
+        <button class="btn primary" id="overlay-btn"></button>
+      </div>
+    </div>
+
+    <div class="tray" id="tray"></div>
+
+    <div class="controls">
+      <button class="btn" id="new-game" data-i18n="newGame">Yeni oyun</button>
+      <a class="btn" href="../../index.html" id="back-link" data-i18n="backToHub">Hub'a dön</a>
+    </div>
+
+    <p class="hint" data-i18n="hint">Parçayı tut ve tahtaya sürükle.</p>
+  </div>
+
+  <script type="module" src="blockblast.js"></script>
+</body>
+</html>
