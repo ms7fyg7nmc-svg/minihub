@@ -1,0 +1,61 @@
+/* Su Siralama'nin kendine ozel gorunumu.
+   Ortak parcalar (skor kutulari, butonlar, bitis ekrani) css/game.css icinde. */
+
+.stage-wrap { position: relative; }
+
+.stage {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  gap: 14px 12px;
+  min-height: 380px;
+  padding: 20px 10px;
+  border-radius: 16px;
+  background: var(--bg-soft);
+  touch-action: manipulation;
+  user-select: none;
+}
+
+/* --- Tup --- */
+
+.tube {
+  --tube-w: 42px;
+  --layer-h: 34px;
+  position: relative;
+  width: var(--tube-w);
+  height: calc(var(--layer-h) * 4 + 8px);
+  padding: 4px;
+  display: flex;
+  flex-direction: column-reverse; /* ilk katman en altta dursun */
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  border-top: 0;
+  border-radius: 6px 6px 20px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: transform 0.16s ease;
+}
+
+.tube.selected { transform: translateY(-14px); border-color: rgba(255, 255, 255, 0.45); }
+.tube.done { border-color: rgba(78, 203, 139, 0.55); }
+
+.layer {
+  height: var(--layer-h);
+  border-radius: 2px;
+  animation: pour-in 0.22s ease-out;
+}
+
+.layer:first-child { border-radius: 2px 2px 16px 16px; } /* en alttaki katman */
+
+@keyframes pour-in {
+  from { transform: translateY(-26px); opacity: 0.4; }
+}
+
+/* Secili tupte en ustteki katman disari cikmis gibi gorunsun */
+.tube.selected .layer:last-child { box-shadow: 0 -3px 0 rgba(255, 255, 255, 0.35); }
+
+/* Dar ekranda tupleri kucult */
+@media (max-width: 380px) {
+  .tube { --tube-w: 36px; --layer-h: 30px; }
+  .stage { gap: 12px 9px; }
+}
