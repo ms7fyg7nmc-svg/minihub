@@ -1,0 +1,76 @@
+/* Blok Bulmaca'nin kendine ozel gorunumu.
+   Ortak parcalar (skor kutulari, butonlar, bitis ekrani) css/game.css icinde. */
+
+.board-wrap { position: relative; }
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+  padding: 6px;
+  border-radius: 16px;
+  background: var(--bg-soft);
+  aspect-ratio: 1 / 1;
+  touch-action: none;
+  user-select: none;
+}
+
+.sq {
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  transition: background-color 0.12s ease, transform 0.12s ease;
+}
+
+.sq.filled { box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.18); }
+
+/* Parcanin birakilacagi yerin on izlemesi */
+.sq.preview { background: rgba(255, 255, 255, 0.28); }
+.sq.preview-bad { background: rgba(255, 90, 90, 0.25); }
+
+/* Patlayan kareler */
+.sq.clearing { animation: burst 0.22s ease-out forwards; }
+
+@keyframes burst {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.18); filter: brightness(1.7); }
+  100% { transform: scale(0.2); opacity: 0; }
+}
+
+/* --- Alttaki parca rafi --- */
+
+.tray {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  min-height: 92px;
+  padding: 10px 6px;
+  border-radius: 16px;
+  background: var(--bg-soft);
+  touch-action: none;
+  user-select: none;
+}
+
+.slot { display: grid; place-items: center; }
+
+.piece {
+  display: grid;
+  gap: 3px;
+  cursor: grab;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.piece.used { opacity: 0; pointer-events: none; }
+.piece.dragging { opacity: 0.25; }
+.piece .pc { width: 14px; height: 14px; border-radius: 4px; }
+
+/* Parmagin altinda gezen kopya */
+.ghost {
+  position: fixed;
+  z-index: 50;
+  display: grid;
+  pointer-events: none;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.45));
+}
+
+.ghost .pc { border-radius: 6px; box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.18); }
+.ghost .pc.empty { visibility: hidden; }
