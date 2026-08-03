@@ -1,28 +1,28 @@
 <!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>2048</title>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>2048</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="../../css/style.css">
   <link rel="stylesheet" href="2048.css">
-</head>
+  </head>
 <body>
   <div class="app game-app">
 
     <header class="game-head">
       <div>
-        <h1 class="game-title">2048</h1>
-        <p class="game-sub">Aynı sayıları birleştir</p>
+        <h1 class="game-title" data-i18n="game.2048.title">2048</h1>
+        <p class="game-sub" data-i18n="g2048.subtitle">Merge matching numbers</p>
       </div>
       <div class="scores">
         <div class="score-box">
-          <span>SKOR</span>
+          <span data-i18n="g2048.score">SCORE</span>
           <strong id="score">0</strong>
         </div>
         <div class="score-box">
-          <span>REKOR</span>
+          <span data-i18n="g2048.best">BEST</span>
           <strong id="best">0</strong>
         </div>
       </div>
@@ -34,19 +34,19 @@
         <div class="tiles" id="tiles"></div>
 
         <div class="overlay" id="overlay" hidden>
-          <h2 id="overlay-title">Oyun bitti</h2>
+          <h2 id="overlay-title">Game Over</h2>
           <p id="overlay-text"></p>
-          <button class="btn primary" id="overlay-btn">Yeniden oyna</button>
+          <button class="btn primary" id="overlay-btn">Play Again</button>
         </div>
       </div>
     </div>
 
     <div class="controls">
-      <button class="btn" id="new-game">Yeni oyun</button>
-      <a class="btn" href="../../index.html" id="back-link">Hub'a dön</a>
+      <button class="btn" id="new-game" data-i18n="g2048.newGame">New Game</button>
+      <a class="btn" href="../../index.html" id="back-link" data-i18n="g2048.backToHub">Back to Hub</a>
     </div>
 
-    <p class="hint">Parmağınla kaydır (bilgisayarda ok tuşları).</p>
+    <p class="hint" data-i18n="g2048.hint">Swipe with your finger (arrow keys on computer).</p>
   </div>
 
   <script type="module" src="2048.js"></script>
