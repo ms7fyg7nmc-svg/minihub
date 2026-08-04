@@ -8,7 +8,7 @@ export const SUPPORTED_LANGS = ['en', 'tr', 'es', 'ru'];
 export const DEFAULT_LANG = 'en';
 
 const LOCALE_MAP = { en: 'en-US', tr: 'tr-TR', es: 'es-ES', ru: 'ru-RU' };
-const LABELS = { en: 'EN', tr: 'TR', es: 'ES', ru: 'RU' };
+const LABELS = { en: '🇬🇧 EN', tr: '🇹🇷 TR', es: '🇪🇸 ES', ru: '🇷🇺 RU' };
 
 const DICT = {
   en: {
