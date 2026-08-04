@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>2048</title>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>2048</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="../../css/style.css">
   <link rel="stylesheet" href="2048.css">
-  </head>
+</head>
 <body>
   <div class="app game-app">
 
@@ -28,25 +28,32 @@
       </div>
     </header>
 
-    <div class="board-wrap">
-      <div class="board" id="board">
-        <div class="cells" id="cells"></div>
-        <div class="tiles" id="tiles"></div>
+    <!-- Ekranin ortasinda duran oyun alani -->
+    <div class="game-mid">
+      <div class="board-wrap">
+        <div class="board" id="board">
+          <div class="cells" id="cells"></div>
+          <div class="tiles" id="tiles"></div>
 
-        <div class="overlay" id="overlay" hidden>
-          <h2 id="overlay-title">Game Over</h2>
-          <p id="overlay-text"></p>
-          <button class="btn primary" id="overlay-btn">Play Again</button>
+          <div class="overlay" id="overlay" hidden>
+            <h2 id="overlay-title">Game Over</h2>
+            <p id="overlay-text"></p>
+            <button class="btn primary" id="overlay-btn">Play Again</button>
+          </div>
         </div>
       </div>
     </div>
 
+    <p class="hint" data-i18n="g2048.hint">Swipe with your finger (arrow keys on computer).</p>
+
+    <!-- Butonlar en altta: tek elle bas parmakla rahat ulasilsin -->
     <div class="controls">
       <button class="btn" id="new-game" data-i18n="g2048.newGame">New Game</button>
       <a class="btn" href="../../index.html" id="back-link" data-i18n="g2048.backToHub">Back to Hub</a>
     </div>
 
-    <p class="hint" data-i18n="g2048.hint">Swipe with your finger (arrow keys on computer).</p>
+    <footer class="foot"><span data-i18n="hub.version">Version 0.1</span></footer>
+
   </div>
 
   <script type="module" src="2048.js"></script>
