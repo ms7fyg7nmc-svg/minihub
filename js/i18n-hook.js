@@ -32,6 +32,12 @@ export function t(key, params = {}) {
   /* i18n.js karsilik bulamazsa anahtarin kendisini geri verir */
   if (translated && translated !== fullKey) return translated;
 
+  /* Ortak anahtarlar (ornek: "hub.version") oyun adi olmadan da aranir */
+  if (key.includes('.')) {
+    const shared = coreT(key, params);
+    if (shared && shared !== key) return shared;
+  }
+
   const own = fallbackTexts[key];
   return own === undefined ? fullKey : fillParams(own, params);
 }
