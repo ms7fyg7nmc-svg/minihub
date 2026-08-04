@@ -42,6 +42,9 @@
 .layer {
   height: var(--layer-h);
   border-radius: 2px;
+}
+
+.layer.pour {
   animation: pour-in 0.22s ease-out;
 }
 
