@@ -13,10 +13,10 @@ const LABELS = { en: '🇬🇧 EN', tr: '🇹🇷 TR', es: '🇪🇸 ES', ru: '�
 const DICT = {
   en: {
     'hub.hello': 'Hi',
-    'hub.title': 'Game Hub',
-    'hub.subtitle': 'Play, earn points. Points will turn into tokens later.',
+    'hub.title': 'Mini Hub Pocket Games',
+    'hub.subtitle': 'Play, collect points. What they unlock later is still a surprise. 🎁',
     'hub.gamesTitle': 'Games',
-    'hub.footer': 'Version 0.1 - Phase 1',
+    'hub.version': 'Version 0.1',
     'hub.play': 'Play',
     'hub.soon': 'Soon',
     'hub.record': 'Record {best}',
@@ -87,10 +87,10 @@ const DICT = {
   },
   tr: {
     'hub.hello': 'Merhaba',
-    'hub.title': 'Oyun Hub',
-    'hub.subtitle': 'Oyna, puan topla. Puanlar ileride tokena dönüşecek.',
+    'hub.title': 'Mini Hub Pocket Games',
+    'hub.subtitle': 'Oyna, puan topla. Puanların neye dönüşeceği şimdilik sürpriz. 🎁',
     'hub.gamesTitle': 'Oyunlar',
-    'hub.footer': 'Sürüm 0.1 - Faz 1',
+    'hub.version': 'Sürüm 0.1',
     'hub.play': 'Oyna',
     'hub.soon': 'Yakında',
     'hub.record': 'Rekor {best}',
@@ -161,10 +161,10 @@ const DICT = {
   },
   es: {
     'hub.hello': 'Hola',
-    'hub.title': 'Centro de Juegos',
-    'hub.subtitle': 'Juega y gana puntos. Los puntos se convertirán en tokens más adelante.',
+    'hub.title': 'Mini Hub Pocket Games',
+    'hub.subtitle': 'Juega y gana puntos. En qué se convertirán todavía es una sorpresa. 🎁',
     'hub.gamesTitle': 'Juegos',
-    'hub.footer': 'Versión 0.1 - Fase 1',
+    'hub.version': 'Versión 0.1',
     'hub.play': 'Jugar',
     'hub.soon': 'Pronto',
     'hub.record': 'Récord {best}',
@@ -235,10 +235,10 @@ const DICT = {
   },
   ru: {
     'hub.hello': 'Привет',
-    'hub.title': 'Игровой Хаб',
-    'hub.subtitle': 'Играй и зарабатывай очки. Очки позже превратятся в токены.',
+    'hub.title': 'Mini Hub Pocket Games',
+    'hub.subtitle': 'Играй и собирай очки. Во что они превратятся — пока сюрприз. 🎁',
     'hub.gamesTitle': 'Игры',
-    'hub.footer': 'Версия 0.1 - Этап 1',
+    'hub.version': 'Версия 0.1',
     'hub.play': 'Играть',
     'hub.soon': 'Скоро',
     'hub.record': 'Рекорд {best}',
@@ -362,6 +362,9 @@ export function locale() {
 
 /** Sayfadaki data-i18n etiketli elementlerin metnini gunceller. */
 export function applyTranslations(root = document) {
+  /* Sayfanin dil etiketini secili dile cek */
+  document.documentElement.lang = currentLang;
+
   root.querySelectorAll('[data-i18n]').forEach((el) => {
     el.textContent = t(el.dataset.i18n);
   });
@@ -373,7 +376,7 @@ export function renderLangSwitcher(container) {
   container.innerHTML = '';
   const select = document.createElement('select');
   select.className = 'lang-select';
-  select.setAttribute('aria-label', 'Language');
+  select.setAttribute('aria-label', t('hub.language'));
   for (const lang of SUPPORTED_LANGS) {
     const opt = document.createElement('option');
     opt.value = lang;
