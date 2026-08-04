@@ -8,7 +8,7 @@
    sonra geri alinabilir hamlelerle karistir. Boylece her bolumun cozumu
    kesin vardir (karistirma hamlelerini tersten oynamak yeter). */
 
-import { initTelegram, haptic, showBackButton } from '../../js/tg.js';
+import { initTelegram, haptic, showBackButton, requireHubEntry } from '../../js/tg.js';
 import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js';
 import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js';
 
@@ -58,6 +58,7 @@ let locked = false; /* bolum bitince tiklamayi kapat */
 /* ---------- Baslangic ---------- */
 
 initTelegram();
+requireHubEntry();
 applyStaticTexts();
 showBackButton(goHome);
 

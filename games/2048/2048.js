@@ -4,7 +4,7 @@ Tahta 16 kutudan olusur (4x4). Her kutuda ya bir tas vardir ya da bostur.
 Bir yone kaydirinca tum taslar o yone gider, ayni sayilar birlesir,
 sonra bos bir kutuya yeni bir tas dogar. */
 
-import { initTelegram, haptic, showBackButton } from '../../js/tg.js';
+import { initTelegram, haptic, showBackButton, requireHubEntry } from '../../js/tg.js';
 import { submitScore, getBest, addPoints, saveState, loadState, clearState } from '../../js/store.js';
 import { initLang, t, locale, applyTranslations } from '../../js/i18n.js';
 
@@ -45,6 +45,7 @@ await initLang();
 applyTranslations();
 
 initTelegram();
+requireHubEntry();
 showBackButton(goHome);
 document.getElementById('back-link').addEventListener('click', (e) => {
    e.preventDefault();

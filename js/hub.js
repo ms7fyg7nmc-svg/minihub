@@ -1,7 +1,7 @@
 /* Hub (ana menu) ekraninin mantigi.
 Yeni oyun eklemek istedigimizde sadece asagidaki gameList() fonksiyonuna satir ekliyoruz. */
 
-import { initTelegram, getUser, haptic, hideBackButton } from './tg.js';
+import { initTelegram, getUser, haptic, hideBackButton, markHubEntry } from './tg.js';
 import { getPoints, getBest } from './store.js';
 import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js';
 
@@ -130,6 +130,7 @@ for (const game of gameList()) {
       });
       card.addEventListener('click', () => {
          haptic.tap();
+         markHubEntry();
          window.location.href = game.url;
       });
    } else {
