@@ -153,7 +153,8 @@ function addRandomTile() {
 /* ---------- Hamle ---------- */
 
 function move(direction) {
-   if (over) return;
+   /* Oyun bittiyse ya da bir bilgi ekrani acikken hamle kabul etmeyiz */
+   if (over || overlayVisible()) return;
 
 const vec = VECTORS[direction];
    let moved = false;
@@ -261,6 +262,7 @@ function isGameOver() {
 }
 
 async function endGame() {
+   if (over) return;
    over = true;
    clearState(GAME_ID);
    haptic.error();
