@@ -8,6 +8,7 @@
    birlikte aranir ("match3.score"). */
 
 import { initLang, t as coreT, getLang } from './i18n.js';
+export { locale } from './i18n.js';
 
 let gameId = '';
 let fallbackTexts = {};
