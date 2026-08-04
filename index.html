@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Game Hub</title>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Mini Hub Pocket Games</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link rel="stylesheet" href="css/style.css">
-  </head>
-<body>
+</head>
+<body class="hub">
   <div class="app">
 
     <header class="topbar">
@@ -24,20 +24,20 @@
       </div>
     </header>
 
-    <div class="lang-bar">
-      <span class="lang-label" data-i18n="hub.language">Language</span>
-      <div id="lang-switcher"></div>
-    </div>
-
     <section class="hero">
-      <h1 data-i18n="hub.title">Game Hub</h1>
-      <p data-i18n="hub.subtitle">Play, earn points. Points will turn into tokens later.</p>
+      <h1 data-i18n="hub.title">Mini Hub Pocket Games</h1>
+      <p data-i18n="hub.subtitle">Play, collect points. What they unlock later is still a surprise.</p>
     </section>
 
     <h2 class="section-title" data-i18n="hub.gamesTitle">Games</h2>
     <div class="game-grid" id="games"></div>
 
-    <footer class="foot" data-i18n="hub.footer">Version 0.1 - Phase 1</footer>
+    <!-- Alt satir: solda surum, saginda dil sectirici -->
+    <footer class="foot">
+      <span data-i18n="hub.version">Version 0.1</span>
+      <div id="lang-switcher"></div>
+    </footer>
+
   </div>
 
   <script type="module" src="js/hub.js"></script>
