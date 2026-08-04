@@ -1,7 +1,28 @@
 /* 2048 tahtasinin gorunumu.
    Kare boyutlari JS tarafindan --cell ve --gap degiskenlerine yazilir. */
 
-.game-app { display: flex; flex-direction: column; gap: 16px; }
+/* Oyun ekrani tam ekran yuksekliginde bir kolondur.
+   Ortadaki bolum (.game-mid) buyuyerek tahtayi ekranin ortasina yerlestirir;
+   ipucu ve butonlar en alta iner, boylece tek elle oynarken bas parmak rahat ulasir. */
+
+.game-app {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.game-mid {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Oyun ekraninda alt satir (sadece surum) tahtaya yakin dursun */
+.game-app .foot { margin-top: 4px; }
 
 .game-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .game-title { margin: 0; font-size: 28px; letter-spacing: -0.5px; }
