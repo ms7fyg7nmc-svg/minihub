@@ -2,7 +2,29 @@
    Her oyun once style.css'i, sonra bu dosyayi, en son kendi css'ini yukler.
    (2048 bu dosyadan once yazildigi icin kendi kopyasini kullaniyor, ona dokunmuyoruz.) */
 
-.game-app { display: flex; flex-direction: column; gap: 14px; }
+/* Oyun ekrani tam ekran yuksekliginde bir kolondur.
+   Ortadaki bolum (.game-mid) buyuyerek tahtayi ekranin ortasina yerlestirir;
+   ipucu ve butonlar en alta iner, boylece tek elle oynarken bas parmak rahat ulasir. */
+
+.game-app {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.game-mid {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+}
+
+/* Oyun ekraninda alt satir (sadece surum) tahtaya yakin dursun */
+.game-app .foot { margin-top: 4px; }
 
 .game-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .game-title { margin: 0; font-size: 26px; letter-spacing: -0.5px; }
