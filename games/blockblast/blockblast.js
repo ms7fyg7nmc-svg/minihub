@@ -6,7 +6,7 @@
 
 import { initTelegram, haptic, showBackButton } from '../../js/tg.js';
 import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js';
-import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js';
 
 const GAME_ID = 'blockblast';
 const SIZE = 8;
@@ -187,12 +187,12 @@ function place(piece, row, col, slotIndex) {
   haptic.tap();
 
   const cleared = findFullLines();
+  let bonus = 0;
 
   if (cleared.cells.length) {
-    const bonus = cleared.lines * 100 * cleared.lines; /* 1 sıra=100, 2=400, 3=900 */
+    bonus = cleared.lines * 100 * cleared.lines; /* 1 sıra=100, 2=400, 3=900 */
     score += bonus;
     haptic.success();
-    animateClear(cleared.cells, bonus);
   }
 
   if (tray.every((p) => !p)) refillTray();
@@ -200,6 +200,8 @@ function place(piece, row, col, slotIndex) {
   updateScore();
   render();
   persist();
+
+  if (cleared.cells.length) animateClear(cleared, bonus);
 
   if (!anyPieceFits()) endGame();
 }
@@ -226,8 +228,10 @@ function findFullLines() {
     }
   }
 
-  for (const i of cells) grid[i] = null;
-  return { cells: [...cells], lines };
+  const list = [...cells];
+  const colors = list.map((i) => grid[i]);
+  for (const i of list) grid[i] = null;
+  return { cells: list, colors, lines };
 }
 
 function persist() {
@@ -307,16 +311,20 @@ function renderTray() {
   });
 }
 
-function animateClear(indexes, bonus) {
-  for (const i of indexes) {
-    const el = squares[i];
-    el.classList.add('clearing');
+function animateClear(cleared, bonus) {
+  cleared.cells.forEach((index, k) => {
+    const el = squares[index];
+    if (!el) return;
+    el.style.backgroundColor = cleared.colors[k];
+    el.classList.add('filled', 'clearing');
     setTimeout(() => {
       el.classList.remove('clearing');
-      el.style.backgroundColor = '';
-      el.classList.remove('filled');
+      if (!grid[index]) {
+        el.style.backgroundColor = '';
+        el.classList.remove('filled');
+      }
     }, 220);
-  }
+  });
   showFloater(`+${format(bonus)}`);
 }
 
@@ -338,7 +346,7 @@ function updateScore() {
   }
 }
 
-const format = (n) => Number(n).toLocaleString('tr-TR');
+const format = (n) => Number(n).toLocaleString(locale());
 
 /* ---------- Surukle-birak ---------- */
 
