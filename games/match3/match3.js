@@ -7,7 +7,7 @@
 
 import { initTelegram, haptic, showBackButton } from '../../js/tg.js';
 import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js';
-import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js';
 
 const GAME_ID = 'match3';
 const SIZE = 8;
@@ -461,7 +461,7 @@ function updateHud() {
   }
 }
 
-const format = (n) => Number(n).toLocaleString('tr-TR');
+const format = (n) => Number(n).toLocaleString(locale());
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /* ---------- Kontroller ---------- */
