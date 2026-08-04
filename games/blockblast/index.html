@@ -29,24 +29,31 @@
       </div>
     </header>
 
-    <div class="board-wrap">
-      <div class="board" id="board"></div>
+    <!-- Ekranin ortasinda duran oyun alani -->
+    <div class="game-mid">
+      <div class="board-wrap">
+        <div class="board" id="board"></div>
 
-      <div class="overlay" id="overlay" hidden>
-        <h2 id="overlay-title"></h2>
-        <p id="overlay-text"></p>
-        <button class="btn primary" id="overlay-btn"></button>
+        <div class="overlay" id="overlay" hidden>
+          <h2 id="overlay-title"></h2>
+          <p id="overlay-text"></p>
+          <button class="btn primary" id="overlay-btn"></button>
+        </div>
       </div>
+
+      <div class="tray" id="tray"></div>
     </div>
 
-    <div class="tray" id="tray"></div>
+    <p class="hint" data-i18n="hint">Parçayı tut ve tahtaya sürükle.</p>
 
+    <!-- Butonlar en altta: tek elle bas parmakla rahat ulasilsin -->
     <div class="controls">
       <button class="btn" id="new-game" data-i18n="newGame">Yeni oyun</button>
       <a class="btn" href="../../index.html" id="back-link" data-i18n="backToHub">Hub'a dön</a>
     </div>
 
-    <p class="hint" data-i18n="hint">Parçayı tut ve tahtaya sürükle.</p>
+    <footer class="foot"><span data-i18n="hub.version">Sürüm 0.1</span></footer>
+
   </div>
 
   <script type="module" src="blockblast.js"></script>
