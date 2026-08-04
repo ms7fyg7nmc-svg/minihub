@@ -52,6 +52,7 @@ let level = 1;
 let bestLevel = 1;
 let moves = 0;
 let selected = null;
+let lastPour = null;
 let locked = false; /* bolum bitince tiklamayi kapat */
 
 /* ---------- Baslangic ---------- */
@@ -240,6 +241,7 @@ function pour(from, to) {
   for (let i = 0; i < count; i++) tubes[to].push(tubes[from].pop());
   history.push({ from, to, count });
   moves++;
+  lastPour = { to, count };
   return true;
 }
 
@@ -247,7 +249,8 @@ function undo() {
   if (!history.length || locked) return;
   const last = history.pop();
   for (let i = 0; i < last.count; i++) tubes[last.from].push(tubes[last.to].pop());
-  moves++;
+  moves = Math.max(0, moves - 1);
+  lastPour = null;
   selected = null;
   render();
   persist();
@@ -322,16 +325,21 @@ function render() {
     if (selected === index) el.classList.add('selected');
     if (tube.length === CAPACITY && tube.every((c) => c === tube[0])) el.classList.add('done');
 
-    for (const colorIndex of tube) {
+    tube.forEach((colorIndex, li) => {
       const layer = document.createElement('div');
       layer.className = 'layer';
       layer.style.backgroundColor = COLORS[colorIndex];
+      if (lastPour && lastPour.to === index && li >= tube.length - lastPour.count) {
+        layer.classList.add('pour');
+      }
       el.appendChild(layer);
-    }
+    });
 
     el.addEventListener('click', () => onTubeClick(index));
     stageEl.appendChild(el);
   });
+
+  lastPour = null;
 }
 
 /* ---------- Bitis ekrani ---------- */
