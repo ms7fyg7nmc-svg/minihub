@@ -33,25 +33,32 @@
       </div>
     </header>
 
-    <div class="board-wrap">
-      <div class="board" id="board">
-        <div class="cells" id="cells"></div>
-        <div class="tiles" id="tiles"></div>
+    <!-- Ekranin ortasinda duran oyun alani -->
+    <div class="game-mid">
+      <div class="board-wrap">
+        <div class="board" id="board">
+          <div class="cells" id="cells"></div>
+          <div class="tiles" id="tiles"></div>
 
-        <div class="overlay" id="overlay" hidden>
-          <h2 id="overlay-title"></h2>
-          <p id="overlay-text"></p>
-          <button class="btn primary" id="overlay-btn"></button>
+          <div class="overlay" id="overlay" hidden>
+            <h2 id="overlay-title"></h2>
+            <p id="overlay-text"></p>
+            <button class="btn primary" id="overlay-btn"></button>
+          </div>
         </div>
       </div>
     </div>
 
+    <p class="hint" data-i18n="hint">Şekeri komşusuyla değiştirmek için parmağınla it.</p>
+
+    <!-- Butonlar en altta: tek elle bas parmakla rahat ulasilsin -->
     <div class="controls">
       <button class="btn" id="new-game" data-i18n="newGame">Yeni oyun</button>
       <a class="btn" href="../../index.html" id="back-link" data-i18n="backToHub">Hub'a dön</a>
     </div>
 
-    <p class="hint" data-i18n="hint">Şekeri komşusuyla değiştirmek için parmağınla it.</p>
+    <footer class="foot"><span data-i18n="hub.version">Sürüm 0.1</span></footer>
+
   </div>
 
   <script type="module" src="match3.js"></script>
