@@ -11,7 +11,9 @@ function gameList() {
          id: '2048',
          title: t('game.2048.title'),
          desc: t('game.2048.desc'),
-         icon: '2048',
+         icon: '🧮',
+         gradient: 'linear-gradient(140deg, #f2b179, #ed6b4a)',
+         accent: '#f2884b',
          url: 'games/2048/index.html',
          ready: true,
       },
@@ -19,18 +21,20 @@ function gameList() {
          id: 'blockblast',
          title: t('game.blockblast.title'),
          desc: t('game.blockblast.desc'),
-         icon: '▦',
+         icon: '🧱',
          url: 'games/blockblast/index.html',
          gradient: 'linear-gradient(140deg, #7f9bff, #5b6bff)',
+         accent: '#5b8cff',
          ready: true,
       },
       {
          id: 'watersort',
          title: t('game.watersort.title'),
          desc: t('game.watersort.desc'),
-         icon: '🧪',
+         icon: '💧',
          url: 'games/watersort/index.html',
          gradient: 'linear-gradient(140deg, #4ecb8b, #2fa9a0)',
+         accent: '#4ecb8b',
          /* Burada rekor bir skor degil, ulasilan bolum numarasi */
          bestKey: 'hub.level',
          ready: true,
@@ -39,16 +43,17 @@ function gameList() {
          id: 'match3',
          title: t('game.match3.title'),
          desc: t('game.match3.desc'),
-         icon: '🍒',
+         icon: '🍬',
          url: 'games/match3/index.html',
          gradient: 'linear-gradient(140deg, #e2679c, #c0507f)',
+         accent: '#e2679c',
          ready: true,
       },
       {
          id: 'runner',
          title: t('game.runner.title'),
          desc: t('game.runner.desc'),
-         icon: '▶',
+         icon: '🏃',
          ready: false,
       },
    ];
@@ -110,6 +115,9 @@ for (const game of gameList()) {
    if (game.gradient) {
       card.querySelector('.game-icon').style.background = game.gradient;
    }
+
+   /* Kartin sol kenarindaki ince renk seridi */
+   if (game.accent) card.style.setProperty('--card-accent', game.accent);
 
    const badge = card.querySelector('.badge');
    if (game.ready) {
