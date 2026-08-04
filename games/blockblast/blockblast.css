@@ -1,6 +1,14 @@
 /* Blok Bulmaca'nin kendine ozel gorunumu.
    Ortak parcalar (skor kutulari, butonlar, bitis ekrani) css/game.css icinde. */
 
+.game-mid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  justify-content: center;
+}
+
 .board-wrap { position: relative; }
 
 .board {
