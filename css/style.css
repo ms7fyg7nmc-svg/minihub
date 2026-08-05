@@ -21,12 +21,21 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
+html { overscroll-behavior: none; }
+
 body {
   margin: 0;
   background-color: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overscroll-behavior: none;
+}
+
+/* Oyun ekranlari hic kaymasin: yukseklik tam ekrana kilitli, tasma kapali.
+   Hub'da bu yok, orada kartlar icin kaydirma gerekiyor. */
+body.game {
+  height: var(--app-h, 100dvh);
+  overflow: hidden;
 }
 
 /* --- Arka plan grafikleri ---

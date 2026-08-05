@@ -65,13 +65,6 @@ function gameList() {
          accent: '#f5b942',
          ready: true,
       },
-      {
-         id: 'runner',
-         title: t('game.runner.title'),
-         desc: t('game.runner.desc'),
-         icon: '🏃',
-         ready: false,
-      },
    ];
 }
 

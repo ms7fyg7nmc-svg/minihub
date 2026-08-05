@@ -20,6 +20,11 @@
   border-radius: 16px;
   background: var(--bg-soft);
   aspect-ratio: 1 / 1;
+  /* Kisa ekranlarda kare tahta asagi tasip butonlari itiyordu. Ekranin
+     kalan yuksekligi neyse tahta ondan buyuk olamaz (340px = baslik +
+     raf + ipucu + butonlar + alt satirin kapladigi yer). */
+  max-width: min(100%, calc(var(--app-h, 100dvh) - 340px));
+  margin: 0 auto;
   touch-action: none;
   user-select: none;
 }

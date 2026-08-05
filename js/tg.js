@@ -26,7 +26,21 @@ if (supports('7.7') && tg.disableVerticalSwipes) tg.disableVerticalSwipes();
 
 applyTheme();
    tg.onEvent('themeChanged', applyTheme);
+   tg.onEvent('viewportChanged', syncViewport);
 }
+
+/* Ekranin gercek gorunur yuksekligini --app-h degiskenine yazar.
+Mobilde 100vh, tarayici cubuklarinin kapladigi yeri de sayip birkac piksel
+fazla cikiyor; sayfanin parmakla oynamasinin sebebi bu. Telegram bize tam
+degeri veriyor, disarida ise pencerenin kendi yuksekligini kullaniyoruz. */
+function syncViewport() {
+   const height = tg?.viewportStableHeight || window.innerHeight;
+   if (height) document.documentElement.style.setProperty('--app-h', `${height}px`);
+}
+
+syncViewport();
+window.addEventListener('resize', syncViewport);
+window.addEventListener('orientationchange', syncViewport);
 
 /* Telegram'in tema renklerini CSS'e aktarir (acik/koyu tema uyumu) */
 function applyTheme() {

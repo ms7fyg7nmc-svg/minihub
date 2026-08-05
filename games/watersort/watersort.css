@@ -9,7 +9,8 @@
   align-content: center;
   justify-content: center;
   gap: 14px 12px;
-  min-height: 380px;
+  /* Cok kisa ekranlarda bu alan butonlari asagi itiyordu */
+  min-height: min(380px, calc(var(--app-h, 100dvh) - 290px));
   padding: 20px 10px;
   border-radius: 16px;
   background: var(--bg-soft);
