@@ -65,6 +65,18 @@ function gameList() {
          accent: '#f5b942',
          ready: true,
       },
+      {
+         id: 'flow',
+         title: t('game.flow.title'),
+         desc: t('game.flow.desc'),
+         icon: '🔗',
+         url: 'games/flow/index.html',
+         gradient: 'linear-gradient(140deg, #3fc7d4, #2f8fa8)',
+         accent: '#3fc7d4',
+         /* Burada rekor bir skor degil, ulasilan bolum numarasi */
+         bestKey: 'hub.level',
+         ready: true,
+      },
    ];
 }
 

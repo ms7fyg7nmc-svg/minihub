@@ -103,7 +103,7 @@ undoBtn.addEventListener('click', () => {
 });
 
 window.addEventListener('resize', layout);
-document.addEventListener('langchange', applyStaticTexts);
+document.addEventListener('langchange', () => applyStaticTexts());
 
 bootstrap();
 

@@ -1,0 +1,57 @@
+/* Baglan (Flow Connect) gorunumu.
+   Izgara boyutu bolume gore degistigi icin --cols JS tarafindan yazilir. */
+
+.board-wrap { position: relative; }
+
+.board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 5), 1fr);
+  gap: 3px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  padding: 6px;
+  border-radius: 16px;
+  background: var(--bg-soft);
+  touch-action: none;
+  user-select: none;
+}
+
+.cell {
+  position: relative;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  transition: background-color 0.08s ease;
+}
+
+/* Renkle dolu hucre. --tl/--tr/--br/--bl JS tarafindan yaziliyor: baglantisi
+   olmayan yonlerdeki koseler yuvarlaniyor, boylece hucreler yan yana bir
+   "boru" gibi birlesiyor. */
+.cell.filled {
+  background: var(--cell-color);
+  border-radius: var(--tl, 8px) var(--tr, 8px) var(--br, 8px) var(--bl, 8px);
+}
+
+/* Rengin sabit iki ucu: ortada kucuk bir halka */
+.cell.endpoint::after {
+  content: '';
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.12) inset;
+}
+
+.cell.endpoint.filled::after { background: #fff; }
+
+/* Suruklerken parmagin altindaki hucreyi hafifce vurgula */
+.cell.dragging-over { filter: brightness(1.12); }
+
+/* Bolum tamamlaninca hucreler hafifce parlar */
+.board.solved .cell.filled { animation: flow-glow 0.6s ease-out; }
+
+@keyframes flow-glow {
+  0% { filter: brightness(1); }
+  40% { filter: brightness(1.5); }
+  100% { filter: brightness(1); }
+}
