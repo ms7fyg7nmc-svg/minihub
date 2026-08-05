@@ -222,12 +222,17 @@ function adjacent(a, b) {
   return Math.abs(ra - rb) + Math.abs(ca - cb) === 1;
 }
 
+/* Bir rengin iki ucu var, hangisinden baslanip hangisinde bitildigi onemli
+   degil - path'in iki ucu {a,b} kumesine (sirasiz) esit olmali. */
+function endsMatch(path, color) {
+  if (path.length < 2) return false;
+  const [a, b] = endpoints[color];
+  const first = path[0], last = path[path.length - 1];
+  return (first === a && last === b) || (first === b && last === a);
+}
+
 function isSolved() {
-  const allConnected = paths.every((p, color) => {
-    if (!p.length) return false;
-    const [a, b] = endpoints[color];
-    return p[0] === a && p[p.length - 1] === b;
-  });
+  const allConnected = paths.every((p, color) => endsMatch(p, color));
   if (!allConnected) return false;
 
   const filled = paths.reduce((sum, p) => sum + p.length, 0);
@@ -278,7 +283,9 @@ function extendDragTo(cellIndex) {
   if (!adjacent(last, cellIndex)) return;
 
   const owner = cellOwner(cellIndex);
-  const isOwnOtherEnd = isEndpoint(cellIndex, color) && cellIndex !== endpoints[color][0];
+  /* "Diger uc" path'in HANGI ucundan baslandigina gore degisir - path[0]
+     hangi endpoint ise, hedef otekisi olur (sabit endpoints[color][0] degil) */
+  const isOwnOtherEnd = isEndpoint(cellIndex, color) && cellIndex !== path[0];
 
   if (owner !== -1 && owner !== color) return; /* baska rengin hucresi: gecilmez */
   if (path.includes(cellIndex)) return;         /* kendi uzerinden gecemez */
@@ -295,12 +302,12 @@ function endDrag() {
   drag = null;
 
   const path = paths[color];
-  const [a, b] = endpoints[color];
-  const connected = path.length > 1 && path[0] === a && path[path.length - 1] === b;
+  const connected = endsMatch(path, color);
 
   if (!connected) {
-    /* Yarim birakildi: sadece baslangic ucu kalsin */
-    paths[color] = [a];
+    /* Yarim birakildi: cizmeye NEREDEN basladiysa orada kalsin
+       (sabit olarak endpoints[color][0]'a degil) */
+    paths[color] = [path[0]];
   } else {
     moves++;
     haptic.tap();
