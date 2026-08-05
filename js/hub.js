@@ -50,6 +50,16 @@ function gameList() {
          ready: true,
       },
       {
+         id: 'tripletile',
+         title: t('game.tripletile.title'),
+         desc: t('game.tripletile.desc'),
+         icon: '🀄',
+         url: 'games/tripletile/index.html',
+         gradient: 'linear-gradient(140deg, #f5b942, #f2884b)',
+         accent: '#f5b942',
+         ready: true,
+      },
+      {
          id: 'runner',
          title: t('game.runner.title'),
          desc: t('game.runner.desc'),

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Triple Tile</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    /* Uygulama dogrudan bu oyun sayfasinda acildiysa once hub'i goster.
+       Isaret hub acildiginda birakilir; yoksa buraya hub'dan gelinmemistir. */
+    try {
+      if (sessionStorage.getItem('mh_hub_open') !== '1') location.replace('../../index.html');
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/game.css">
+  <link rel="stylesheet" href="tripletile.css">
+</head>
+<body data-i18n-title="title">
+  <div class="app game-app">
+
+    <header class="game-head">
+      <div>
+        <h1 class="game-title" data-i18n="title">Triple Tile</h1>
+        <p class="game-sub" data-i18n="subtitle">Collect three of a kind</p>
+      </div>
+      <div class="scores">
+        <div class="score-box">
+          <span data-i18n="score">SCORE</span>
+          <strong id="score">0</strong>
+        </div>
+        <div class="score-box">
+          <span data-i18n="level">LEVEL</span>
+          <strong id="level">1</strong>
+        </div>
+        <div class="score-box">
+          <span data-i18n="best">BEST</span>
+          <strong id="best">0</strong>
+        </div>
+      </div>
+    </header>
+
+    <!-- Ekranin ortasinda duran oyun alani -->
+    <div class="game-mid">
+      <div class="board-wrap">
+        <div class="board" id="board"></div>
+
+        <div class="overlay" id="overlay" hidden>
+          <h2 id="overlay-title"></h2>
+          <p id="overlay-text"></p>
+          <button class="btn primary" id="overlay-btn"></button>
+        </div>
+      </div>
+
+      <!-- Toplanan taslarin dizildigi 7 gozlu raf -->
+      <div class="slot-bar" id="slots"></div>
+    </div>
+
+    <p class="hint" data-i18n="hint">Tap a free tile. Three of a kind clears.</p>
+
+    <!-- Butonlar en altta: tek elle bas parmakla rahat ulasilsin -->
+    <div class="controls">
+      <button class="btn" id="undo" data-i18n="undo">Undo</button>
+      <button class="btn" id="new-game" data-i18n="newGame">New Game</button>
+      <a class="btn" href="../../index.html" id="back-link" data-i18n="backToHub">Back to Hub</a>
+    </div>
+
+    <footer class="foot"><span data-i18n="hub.version">Version 0.1</span></footer>
+
+  </div>
+
+  <script type="module" src="tripletile.js"></script>
+</body>
+</html>

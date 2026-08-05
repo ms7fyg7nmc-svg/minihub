@@ -1,0 +1,90 @@
+/* Uclu Eslestir (Triple Tile) gorunumu.
+   Ortak parcalar (skor kutulari, butonlar, bitis ekrani) css/game.css icinde.
+   Tas boyutlari JS tarafindan --tile degiskenine yazilir. */
+
+.board-wrap { position: relative; }
+
+/* Tahta 10 x 8 yarim-hucre genisliginde; taslar 2 yarim-hucre kaplar */
+.board {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 10 / 8;
+  border-radius: 16px;
+  background: var(--bg-soft);
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.tile {
+  position: absolute;
+  width: var(--tile, 0px);
+  height: var(--tile, 0px);
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--tile, 30px) * 0.46);
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.28), 0 6px 14px rgba(0, 0, 0, 0.35);
+  transition: transform 0.12s ease, filter 0.12s ease, opacity 0.16s ease;
+}
+
+.tile:active { transform: scale(0.94); }
+
+/* Ustunde baska tas olan taslar oynanamaz: karartilir */
+.tile.locked {
+  cursor: default;
+  filter: brightness(0.45) saturate(0.5);
+}
+
+.tile.locked:active { transform: none; }
+
+/* Rafa giderken kucule kucule kaybolsun */
+.tile.taken { opacity: 0; transform: scale(0.5); pointer-events: none; }
+
+/* --- Alttaki 7 gozlu raf --- */
+
+.slot-bar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  padding: 8px;
+  border-radius: 16px;
+  background: var(--bg-soft);
+  user-select: none;
+}
+
+.slot {
+  aspect-ratio: 1 / 1;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  display: grid;
+  place-items: center;
+  font-size: 19px;
+  line-height: 1;
+}
+
+/* Rafa yeni dusen tas belirsin */
+.slot.filled { animation: slot-pop 0.18s ease-out; }
+
+@keyframes slot-pop {
+  from { transform: scale(0.5); }
+  60%  { transform: scale(1.12); }
+}
+
+/* Uclu tamamlaninca patlayarak gitsin */
+.slot.clearing { animation: slot-clear 0.24s ease-in forwards; }
+
+@keyframes slot-clear {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.2); filter: brightness(1.6); }
+  100% { transform: scale(0); opacity: 0; }
+}
+
+/* Raf dolmaya yaklasinca uyar */
+.slot-bar.danger { box-shadow: inset 0 0 0 2px rgba(255, 107, 107, 0.55); }
+
+/* Dar ekranda yazilar tasmasin */
+@media (max-width: 360px) {
+  .slot { font-size: 16px; }
+}
