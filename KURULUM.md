@@ -121,12 +121,34 @@ Bir dosyayı güncellediğimde:
 
 **Var:**
 - Oyun hub menüsü (Telegram teması ve kullanıcı bilgisiyle uyumlu)
-- Tam çalışan 2048: kaydırma, birleştirme, animasyon, titreşim
+- Dört dil: İngilizce, Türkçe, İspanyolca, Rusça (hub'ın altındaki seçiciden)
+- **Beş oyun:**
+
+  | Oyun | Nasıl oynanır | Puan kuralı | Ayar (oyunun `.js` dosyasında) |
+  |---|---|---|---|
+  | 2048 | Kaydır, aynı sayıları birleştir | Skor / 10 | `POINTS_DIVISOR` |
+  | Blok Bulmaca | Parçaları tahtaya sürükle, satır patlat | Skor / 10 | `POINTS_DIVISOR` |
+  | Su Sıralama | Renkleri tüplerde ayır | Bölüm başına 25 | `POINTS_PER_LEVEL` |
+  | Şeker Eşleştir | 60 saniyede 3'lü eşleştir | Skor / 10 | `POINTS_DIVISOR` |
+  | Üçlü Eşleştir | Açık taşları rafa topla, 3'lüyü patlat | Skor / 10 | `POINTS_DIVISOR` |
+
 - Skor + rekor + toplam hub puanı (Telegram bulutunda saklanır, telefon
   değişse bile kaybolmaz)
 - Yarım kalan oyun kaydedilir, geri döndüğünde kaldığın yerden devam eder
-- Puan kuralı: her 10 oyun skoru = 1 hub puanı (`games/2048/2048.js` içindeki
-  `POINTS_DIVISOR` değeriyle ayarlanır)
+- Bot her açıldığında önce hub ekranı gelir, oyunun içine düşmez
+- Telegram dışında (normal tarayıcıda) açılırsa üstte "Telegram'da aç" uyarısı
+  çıkar — puanların bulutta saklanmadığını hatırlatır
+
+### Uyarıya bot adresini eklemek (isteğe bağlı)
+
+`js/hub.js` dosyasının en üstündeki şu satıra kendi botunun adresini yazarsan
+uyarı tıklanabilir hale gelir ve kullanıcıyı doğrudan bota götürür:
+
+```js
+const BOT_LINK = 'https://t.me/SENIN_BOT_ADIN';
+```
+
+Boş bırakırsan uyarı yine görünür, sadece tıklanamaz olur.
 
 **Yok (Faz 2 ve sonrası):**
 - Sunucu ve veritabanı — şu an skorlar sadece kullanıcının kendi cihazında/

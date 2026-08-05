@@ -42,6 +42,12 @@ function applyTheme() {
    }
 }
 
+/* Sayfa gercekten Telegram icinde mi acilmis (yani kullanici tanimli mi).
+Tarayicida acildiginda false doner; o zaman puanlar sadece o cihazda kalir. */
+export function isTelegramUser() {
+   return !!tg?.initDataUnsafe?.user;
+}
+
 /* Giris yapan Telegram kullanicisi (yoksa misafir) */
 export function getUser() {
    const u = tg?.initDataUnsafe?.user;

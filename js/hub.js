@@ -1,9 +1,15 @@
 /* Hub (ana menu) ekraninin mantigi.
 Yeni oyun eklemek istedigimizde sadece asagidaki gameList() fonksiyonuna satir ekliyoruz. */
 
-import { initTelegram, getUser, haptic, hideBackButton } from './tg.js';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js';
 import { getPoints, getBest } from './store.js';
 import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js';
+
+/* Botun Telegram adresi. Kendi botunun adini yazarsan tarayicida acan
+   kullanicilar uyariya dokununca dogrudan bota gider. Bos birakilirsa
+   uyari yine gorunur, sadece tiklanabilir olmaz.
+   Ornek: 'https://t.me/oyunhub_bot' */
+const BOT_LINK = '';
 
 function gameList() {
    return [
@@ -78,12 +84,28 @@ renderLangSwitcher(document.getElementById('lang-switcher'));
 
 renderProfile();
 renderGames();
+renderTelegramNotice();
 
 document.addEventListener('langchange', () => {
    applyTranslations();
    renderProfile();
    renderGames();
 });
+
+/* Sayfa Telegram disinda acildiysa puanlarin kaybolabilecegini hatirlatir */
+function renderTelegramNotice() {
+   const notice = document.getElementById('tg-notice');
+   if (!notice || isTelegramUser()) return;
+
+   notice.hidden = false;
+   if (BOT_LINK) {
+      notice.href = BOT_LINK;
+      notice.target = '_blank';
+      notice.rel = 'noopener';
+   } else {
+      notice.classList.add('is-static'); /* gidilecek adres yok, ok isareti gizlensin */
+   }
+}
 
 function renderProfile() {
    const user = getUser();
@@ -105,10 +127,11 @@ function renderGames() {
    const container = document.getElementById('games');
    container.textContent = '';
 
-for (const game of gameList()) {
+gameList().forEach((game, index) => {
    const card = document.createElement('button');
    card.className = 'game-card';
    card.disabled = !game.ready;
+   card.style.setProperty('--i', index); /* kartlar sirayla belirsin */
 
    card.innerHTML = `
    <div class="game-icon${game.ready ? '' : ' soon'}">${game.icon}</div>
@@ -147,5 +170,5 @@ for (const game of gameList()) {
    }
 
    container.appendChild(card);
-}
+});
 }

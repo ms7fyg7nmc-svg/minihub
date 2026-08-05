@@ -24,15 +24,39 @@
 /* Oyun ekraninda alt satir (sadece surum) tahtaya yakin dursun */
 .game-app .foot { margin-top: 4px; }
 
-.game-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.game-title { margin: 0; font-size: 28px; letter-spacing: -0.5px; }
+/* Not: bu bolum css/game.css'teki ile ayni gorunumu verir. 2048 diger
+   oyunlardan once yazildigi icin kendi kopyasini kullaniyor. */
+
+.game-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  user-select: none;
+}
+
+/* Baslik tarafi daralabilsin ki skor kutulari tasmasin */
+.game-head > div:first-child { min-width: 0; }
+
+.game-title {
+  margin: 0;
+  font-size: clamp(19px, 5.6vw, 28px);
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+  background: linear-gradient(100deg, var(--c-blue, #5b8cff), var(--c-violet, #c079f2) 55%, var(--c-pink, #e2679c));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
 .game-sub { margin: 4px 0 0; font-size: 12.5px; color: var(--muted); }
 
-.scores { display: flex; gap: 8px; }
+.scores { display: flex; gap: 6px; flex: none; }
 
 .score-box {
-  min-width: 74px;
-  padding: 8px 12px;
+  min-width: 60px;
+  padding: 8px 10px;
   border-radius: 12px;
   background: var(--bg-soft);
   text-align: center;

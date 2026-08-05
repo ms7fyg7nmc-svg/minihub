@@ -54,6 +54,7 @@ const KINDS = [
 /* Tahta 10 x 8 "yarim hucre" buyuklugunde. Bir tas 2 x 2 yarim hucre kaplar.
    Ust katlar yarim hucre kaydirildigi icin alttakilerin uzerine biner. */
 const FIELD_W = 10;
+const FIELD_H = 8;
 const LAYERS = [
   { z: 0, xs: [0, 2, 4, 6, 8], ys: [0, 2, 4, 6] }, /* 20 yer */
   { z: 1, xs: [1, 3, 5, 7], ys: [1, 3, 5] },       /* 12 yer */
@@ -161,29 +162,66 @@ function buildLevel() {
   persist();
 }
 
-/* Kac tasi hangi kata koyacagimizi secer (ust katlar daha az yer tutar) */
+/* Hangi kata kac tas konacagi.
+   Ust katlar bilerek dar tutuldu: her ust tas alttaki dort yeri kapattigi
+   icin tepeyi kalabalik yaparsak oyuncunun elinde cok az secenek kaliyor.
+   Alt kat genis, tepe ince -> her an 6-8 tas oynanabilir durumda olur. */
+const LAYER_SHAPES = {
+  18: [10, 5, 3],
+  24: [14, 7, 3],
+  30: [18, 8, 4],
+  36: [20, 12, 4],
+};
+
 function pickPositions(total) {
   const caps = LAYERS.map((l) => l.xs.length * l.ys.length);
-  const room = caps.reduce((a, b) => a + b, 0);
-  const want = Math.min(total, room);
+  const counts = (LAYER_SHAPES[total] ?? LAYER_SHAPES[18]).map((n, i) => Math.min(n, caps[i]));
 
-  const counts = caps.map((cap) => Math.min(cap, Math.round(want * cap / room)));
-
-  /* Yuvarlama yuzunden olusan farki kapat */
-  let diff = want - counts.reduce((a, b) => a + b, 0);
-  for (let i = 0; diff !== 0; i = (i + 1) % counts.length) {
-    if (diff > 0 && counts[i] < caps[i]) { counts[i]++; diff--; }
-    else if (diff < 0 && counts[i] > 0) { counts[i]--; diff++; }
-  }
+  /* Alt kat ortada toplu dursun (duzgun bir yigin gorunsun), ust katlar ise
+     birbirinden uzaga dagilsin. Ust katlari da ortalarsak hepsi ust uste
+     binip alttaki taslarin neredeyse tamamini kilitliyor. */
+  const cx = (FIELD_W - 2) / 2;
+  const cy = (FIELD_H - 2) / 2;
 
   const positions = [];
   LAYERS.forEach((layer, i) => {
     const spots = [];
     for (const x of layer.xs) for (const y of layer.ys) spots.push({ x, y, z: layer.z });
-    shuffle(spots);
-    positions.push(...spots.slice(0, counts[i]));
+
+    let chosen;
+    if (layer.z === 0) {
+      /* Merkeze en yakin yerler (esitlikleri bozmak icin hafif rastgelelik) */
+      const away = (p) => (p.x - cx) ** 2 + (p.y - cy) ** 2 + Math.random() * 3;
+      chosen = spots.map((p) => ({ p, d: away(p) }))
+        .sort((a, b) => a.d - b.d)
+        .slice(0, counts[i])
+        .map(({ p }) => p);
+    } else {
+      chosen = spreadOut(spots, counts[i]);
+    }
+    positions.push(...chosen);
   });
   return positions;
+}
+
+/* Verilen yerlerden, birbirine en uzak olacak sekilde n tane secer */
+function spreadOut(spots, n) {
+  if (n >= spots.length) return spots.slice();
+
+  const pool = spots.slice();
+  shuffle(pool);
+  const chosen = [pool.pop()];
+
+  while (chosen.length < n && pool.length) {
+    let bestIndex = 0;
+    let bestGap = -1;
+    pool.forEach((spot, i) => {
+      const gap = Math.min(...chosen.map((c) => (c.x - spot.x) ** 2 + (c.y - spot.y) ** 2));
+      if (gap > bestGap) { bestGap = gap; bestIndex = i; }
+    });
+    chosen.push(pool.splice(bestIndex, 1)[0]);
+  }
+  return chosen;
 }
 
 /* Bir tasin ustu acik mi: daha ust katta onunle cakisan tas var mi */
@@ -218,10 +256,13 @@ function generate(total, kindCount) {
 
     if (!ok) continue;
 
-    for (const trio of trios) {
-      const kind = Math.floor(Math.random() * kindCount);
-      for (const i of trio) positions[i].kind = kind;
-    }
+    /* Cesitleri sirayla dagit: rastgele secseydik bir cesit tahtayi
+       kaplayabilir, oyun hem cirkin hem kolay olurdu. */
+    const pool = trios.map((_, i) => i % kindCount);
+    shuffle(pool);
+    trios.forEach((trio, i) => {
+      for (const j of trio) positions[j].kind = pool[i];
+    });
     return positions;
   }
 
