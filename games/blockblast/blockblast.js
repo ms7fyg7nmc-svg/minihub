@@ -4,7 +4,7 @@
    Dolan satir ve sutunlar patlar. Eldeki hicbir parca hicbir yere sigmiyorsa
    oyun biter. Sure yok, kaybetme baskisi yok. */
 
-import { initTelegram, haptic, showBackButton, requireHubEntry } from '../../js/tg.js';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js';
 import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js';
 import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js';
 
@@ -65,9 +65,9 @@ let squares = []; /* tahtadaki 64 div */
 /* ---------- Baslangic ---------- */
 
 initTelegram();
-requireHubEntry();
 applyStaticTexts();
 showBackButton(goHome);
+backToHubOnResume();
 
 document.getElementById('back-link').addEventListener('click', (e) => {
   e.preventDefault();

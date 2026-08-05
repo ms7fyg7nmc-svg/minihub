@@ -5,7 +5,7 @@
    ustundekiler asagi duser, yukaridan yenileri gelir. Zincirleme patlamalar
    daha cok puan verir. Tur 60 saniye surer. */
 
-import { initTelegram, haptic, showBackButton, requireHubEntry } from '../../js/tg.js';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js';
 import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js';
 import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js';
 
@@ -68,9 +68,9 @@ let cellPx = 0;
 /* ---------- Baslangic ---------- */
 
 initTelegram();
-requireHubEntry();
 applyStaticTexts();
 showBackButton(goHome);
+backToHubOnResume();
 
 document.getElementById('back-link').addEventListener('click', (e) => {
   e.preventDefault();

@@ -56,12 +56,21 @@ export async function getPoints() {
   return Number(await get('hub_points')) || 0;
 }
 
+/* Puan ekleme "oku, topla, yaz" seklinde calistigi icin iki ekleme ust uste
+gelirse biri digerini silebilir. Eklemeleri sirayla calistirarak bunu onluyoruz. */
+let pointsQueue = Promise.resolve(0);
+
 /** Hub puanina ekleme yapar, yeni toplami dondurur. */
-export async function addPoints(amount) {
+export function addPoints(amount) {
   const n = Math.max(0, Math.round(Number(amount) || 0));
-  const total = (await getPoints()) + n;
-  set('hub_points', total);
-  return total;
+  pointsQueue = pointsQueue
+    .catch(() => 0) /* onceki ekleme patlasa bile sira devam etsin */
+    .then(async () => {
+      const total = (await getPoints()) + n;
+      set('hub_points', total);
+      return total;
+    });
+  return pointsQueue;
 }
 
 export async function getBest(game) {

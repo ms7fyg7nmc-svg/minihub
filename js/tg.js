@@ -66,33 +66,6 @@ export const haptic = {
    },
 };
 
-/* Oyun sayfalarina sadece hub uzerinden girilmesini saglar.
-Telegram, mini app'i kapatip yeniden actiginda bazen son kalinan sayfayi
-direkt gosteriyor (hub'i atlayip). Hub'dan bir oyuna gecerken markHubEntry()
-cagrilir; oyun sayfasi acilirken requireHubEntry() bu izni arar - yoksa
-kullaniciyi once hub'a geri gonderir. */
-const HUB_ENTRY_KEY = 'mh_via_hub';
-
-export function markHubEntry() {
-   try {
-      sessionStorage.setItem(HUB_ENTRY_KEY, '1');
-   } catch {
-      /* depolama kapaliysa sorun degil, en kotu ihtimalle korumasiz kalir */
-   }
-}
-
-export function requireHubEntry() {
-   let allowed = false;
-   try {
-      allowed = sessionStorage.getItem(HUB_ENTRY_KEY) === '1';
-      sessionStorage.removeItem(HUB_ENTRY_KEY);
-   } catch {
-      allowed = true; /* depolamaya erisilemiyorsa yonlendirmeyi zorlama */
-   }
-   if (!allowed) window.location.replace('../../index.html');
-   return allowed;
-}
-
 /* Telegram'in sol ustteki "Geri" tusu */
 export function showBackButton(handler) {
    if (!supports('6.1') || !tg?.BackButton) return;
@@ -102,4 +75,22 @@ export function showBackButton(handler) {
 
 export function hideBackButton() {
    if (supports('6.1')) tg?.BackButton?.hide();
+}
+
+/* Telegram, mini app'i kapattigimizda sayfayi bellekte tutabiliyor; bota
+tekrar girildiginde ayni oyun ekranini geri gosteriyor. Oyuncu uygulamadan
+uzun sure ayrilip dondugunde onu hub'a getiriyoruz. Oyun ilerlemesi zaten
+her hamlede kaydedildigi icin hicbir sey kaybolmuyor. */
+const RESUME_LIMIT_MS = 60000;
+
+export function backToHubOnResume(hubUrl = '../../index.html') {
+   let hiddenAt = 0;
+
+   document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+         hiddenAt = Date.now();
+      } else if (hiddenAt && Date.now() - hiddenAt > RESUME_LIMIT_MS) {
+         window.location.replace(hubUrl);
+      }
+   });
 }

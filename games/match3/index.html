@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Şeker Eşleştir</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    /* Uygulama dogrudan bu oyun sayfasinda acildiysa once hub'i goster.
+       Isaret hub acildiginda birakilir; yoksa buraya hub'dan gelinmemistir. */
+    try {
+      if (sessionStorage.getItem('mh_hub_open') !== '1') location.replace('../../index.html');
+    } catch (e) {}
+  </script>
   <link rel="stylesheet" href="../../css/style.css">
   <link rel="stylesheet" href="../../css/game.css">
   <link rel="stylesheet" href="match3.css">
