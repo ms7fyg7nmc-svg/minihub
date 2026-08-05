@@ -17,6 +17,11 @@
 const MINI_APP_URL = 'https://ms7fyg7nmc-svg.github.io/minihub/';
 const BOT_USERNAME = 'minihubgames_bot';
 
+/* Karsilama mesajinin ustundeki banner gorseli. Ayni repo'da barinir,
+   degistirmek istersen bot/assets/banner.png dosyasinin uzerine yaz ve
+   GitHub'a yolla - adres ayni kalir. */
+const BANNER_URL = 'https://ms7fyg7nmc-svg.github.io/minihub/bot/assets/banner.png';
+
 /* Telegram bize kullanicinin dilini soyluyor; bilmedigimiz bir dilse Ingilizce */
 const TEXTS = {
   en: {
@@ -134,6 +139,22 @@ async function send(env, chatId, text, replyMarkup) {
   });
 }
 
+/* Karsilama mesaji banner gorseliyle gider. Diger cevaplar duz metin kalir,
+   yoksa kullanici her yazdiginda resim inip sohbeti agirlastirir. */
+async function sendWithBanner(env, chatId, caption, replyMarkup) {
+  await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/sendPhoto`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      chat_id: chatId,
+      photo: BANNER_URL,
+      caption,
+      parse_mode: 'HTML',
+      reply_markup: replyMarkup,
+    }),
+  });
+}
+
 export default {
   async fetch(request, env) {
     /* Tarayicidan acilirsa calistigini gostersin */
@@ -167,7 +188,7 @@ export default {
     const command = incoming.split(/[\s@]/)[0].toLowerCase();
 
     if (command === '/start' || command === '/play') {
-      await send(env, chatId, t.welcome, keyboard(t));
+      await sendWithBanner(env, chatId, t.welcome, keyboard(t));
     } else if (command === '/help') {
       await send(env, chatId, t.help, keyboard(t));
     } else {
