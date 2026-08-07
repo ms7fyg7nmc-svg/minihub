@@ -165,20 +165,29 @@ function gameList() {
          accent: '#4ecb8b',
          ready: true,
       },
-      {
-         id: 'minesweeper',
-         title: t('game.minesweeper.title'),
-         desc: t('game.minesweeper.desc'),
-         icon: ICONS.minesweeper,
-         url: 'games/minesweeper/index.html',
-         /* Gri denenmisti ama renkli kartlarin yaninda pasif gorunuyordu;
-            mayin temasina da uyan sicak bir kirmizi kullaniyoruz */
-         gradient: 'linear-gradient(140deg, #e2685e, #a83a33)',
-         accent: '#e2685e',
-         /* Burada rekor bir skor degil, ulasilan bolum numarasi */
-         bestKey: 'hub.level',
-         ready: true,
-      },
+      /* Mayin Tarlasi menuden cikarildi.
+
+         Sebep oyunun bozuk olmasi degil - calisiyor ve tahtalari tahmin
+         gerektirmiyor. Sorun hub'a uymamasi: kurallarini onceden bilmeyi
+         gerektiriyor, oysa buradaki oyunlar "ac ve oyna" olmali. Sadelestirip
+         anlatim da ekledik ama sahibi de test eden arkadaslari da anlamadi;
+         bu noktada sorun anlatim degil, oyunun kendisi.
+
+         Dosyalar duruyor (games/minesweeper/). Geri istenirse asagidaki
+         kaydi yorumdan cikarmak yeterli:
+
+         {
+            id: 'minesweeper',
+            title: t('game.minesweeper.title'),
+            desc: t('game.minesweeper.desc'),
+            icon: ICONS.minesweeper,
+            url: 'games/minesweeper/index.html',
+            gradient: 'linear-gradient(140deg, #e2685e, #a83a33)',
+            accent: '#e2685e',
+            bestKey: 'hub.level',
+            ready: true,
+         },
+      */
    ];
 }
 
