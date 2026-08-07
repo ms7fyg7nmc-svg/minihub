@@ -169,35 +169,30 @@ function range(n) {
   return Array.from({ length: n }, (_, i) => i);
 }
 
-/* Uzun rotayi K parcaya boler; her parca en az 2 hucre olur */
+/* Uzun rotayi tam olarak K parcaya boler.
+
+   Onceki surum rastgele kesim noktalari secip 1 hucrelik parcalari atiyordu,
+   basarisiz olursa da esit araliklarla bolen bir yedege dusuyordu - o yedekte
+   Math.max(end, start + 2) yuzunden parcalar UST USTE BINEBILIYORDU, yani iki
+   renk ayni hucreyi paylasabiliyordu. Bunun yerine: once her parcaya 2 hucre
+   veriyoruz, artan hucreleri rastgele dagitiyoruz. Boylece parca sayisi hep
+   dogru, her parca en az 2 hucre, hicbiri ust uste binmiyor. */
 function splitIntoSegments(route, count) {
   const total = route.length;
-  const cuts = [0];
-  while (cuts.length < count) {
-    const point = 2 + Math.floor(Math.random() * (total - 2));
-    if (!cuts.includes(point)) cuts.push(point);
+  const sizes = new Array(count).fill(2);
+
+  /* colorCountFor, count <= total/3 garantisi veriyor; yine de tedbirli olalim */
+  let extra = Math.max(0, total - count * 2);
+  while (extra > 0) {
+    sizes[Math.floor(Math.random() * count)]++;
+    extra--;
   }
-  cuts.sort((a, b) => a - b);
-  cuts.push(total);
 
   const segments = [];
-  for (let i = 0; i < count; i++) {
-    const seg = route.slice(cuts[i], cuts[i + 1]);
-    if (seg.length >= 2) segments.push(seg);
-  }
-  /* Kesim sansa bagli 1 hucrelik parca birakirsa, komsu parcayla birlestir */
-  return segments.length === count ? segments : mergeShortSegments(route, count);
-}
-
-/* splitIntoSegments basarisiz olursa (cok nadir): rotayi esit araliklarla boler */
-function mergeShortSegments(route, count) {
-  const total = route.length;
-  const step = total / count;
-  const segments = [];
-  for (let i = 0; i < count; i++) {
-    const start = Math.floor(i * step);
-    const end = i === count - 1 ? total : Math.floor((i + 1) * step);
-    segments.push(route.slice(start, Math.max(end, start + 2)));
+  let at = 0;
+  for (const s of sizes) {
+    segments.push(route.slice(at, at + s));
+    at += s;
   }
   return segments;
 }
@@ -286,6 +281,13 @@ function extendDragTo(cellIndex) {
   /* "Diger uc" path'in HANGI ucundan baslandigina gore degisir - path[0]
      hangi endpoint ise, hedef otekisi olur (sabit endpoints[color][0] degil) */
   const isOwnOtherEnd = isEndpoint(cellIndex, color) && cellIndex !== path[0];
+
+  /* Baska bir rengin SABIT UCU uzerinden gecilemez. cellOwner() sadece
+     cizilmis yollara bakar; hic dokunulmamis bir uc hicbir path'te olmadigi
+     icin oradan serbestce gecilebiliyordu. Sonuc: o uc baska rengin altinda
+     kayboluyor, sahibi renk bir daha asla baglanamiyordu. */
+  const endpointOwner = endpoints.findIndex(([a, b]) => a === cellIndex || b === cellIndex);
+  if (endpointOwner !== -1 && endpointOwner !== color) return;
 
   if (owner !== -1 && owner !== color) return; /* baska rengin hucresi: gecilmez */
   if (path.includes(cellIndex)) return;         /* kendi uzerinden gecemez */

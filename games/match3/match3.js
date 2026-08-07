@@ -134,9 +134,11 @@ function makeTile(kind, r, c) {
 const at = (r, c) => board[r * SIZE + c];
 const put = (r, c, tile) => { board[r * SIZE + c] = tile; };
 
-/* Baslangicta hazir eslesme olmamali ve en az bir gecerli hamle bulunmali */
+/* Baslangicta hazir eslesme olmamali ve en az bir gecerli hamle bulunmali.
+   Deneme sayisi sinirli: sinirsiz bir dongu, sansin ters gittigi bir durumda
+   sayfayi tamamen dondururdu. Pratikte ilk deneme neredeyse hep tutuyor. */
 function fillBoard() {
-  do {
+  for (let attempt = 0; attempt < 60; attempt++) {
     board = new Array(SIZE * SIZE);
     for (let r = 0; r < SIZE; r++) {
       for (let c = 0; c < SIZE; c++) {
@@ -147,7 +149,10 @@ function fillBoard() {
         put(r, c, makeTile(kind, r, c));
       }
     }
-  } while (!hasValidMove());
+    if (hasValidMove()) return;
+  }
+  /* Buraya gelinirse elimizdeki tahtayla devam ederiz; hamle kalmadigini
+     fark eden resolveCascades zaten karistirmayi cagiracak. */
 }
 
 /* (r,c) hucresine bu cesidi koyarsak sola/yukari dogru 3'lu olusur mu */
@@ -318,7 +323,8 @@ function dropAndRefill() {
 }
 
 async function shuffleBoard() {
-  do {
+  /* Once eldeki sekerleri yeniden diz - tas sayilari korunur */
+  for (let attempt = 0; attempt < 50; attempt++) {
     const kinds = board.map((tile) => tile.kind);
     for (let i = kinds.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -328,8 +334,17 @@ async function shuffleBoard() {
       tile.kind = kinds[i];
       paintTile(tile);
     });
-  } while (findMatches().length || !hasValidMove());
+    if (!findMatches().length && hasValidMove()) {
+      await wait(200);
+      return;
+    }
+  }
 
+  /* Eldeki seker dagilimi uygun bir dizilis vermiyor: tahtayi bastan kur.
+     Onceki surumde bu dongu sinirsizdi - boyle bir durumda sayfa donardi,
+     cunku ayni sabit taslari sonsuza kadar yeniden dizmeye calisirdi. */
+  fillBoard();
+  renderAll();
   await wait(200);
 }
 
