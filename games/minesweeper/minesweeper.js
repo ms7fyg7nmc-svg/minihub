@@ -27,11 +27,14 @@ registerTexts(GAME_ID, {
   level: 'BÖLÜM',
   mines: 'MAYIN',
   bestLevel: 'EN İYİ',
-  digMode: 'Kaz',
-  flagMode: 'Bayrak',
+  howToPlay: 'Yardım',
   restart: 'Yeniden',
   backToHub: "Hub'a dön",
-  hint: 'Açmak için dokun. Mayın işaretlemek için Bayrak kipine geç.',
+  hint: 'Güvenli kareleri aç. Mayınları oyun senin için işaretler.',
+  tutorialTitle: 'Nasıl oynanır',
+  tutorialRule: 'Sayı, o karenin çevresindeki mayın sayısını gösterir.',
+  tutorialAuto: 'Kesin olan mayınları oyun senin için işaretler. Sen sadece güvenli kareleri aç.',
+  tutorialStart: 'Başla',
   levelDone: 'Bölüm temiz!',
   nextLevel: 'Sonraki bölüm',
   levelResult: '{mines} mayının hepsini buldun.',
@@ -41,12 +44,13 @@ registerTexts(GAME_ID, {
   reached: '{level}. bölüme kadar geldin.',
 });
 
+const TUTORIAL_SEEN_KEY = 'mh_minesweeper_seen';
+
 const boardEl = document.getElementById('board');
 const levelEl = document.getElementById('level');
 const minesEl = document.getElementById('mines');
 const bestEl = document.getElementById('best');
-const flagBtn = document.getElementById('flag-mode');
-const flagLabel = document.getElementById('flag-mode-label');
+const tutorialEl = document.getElementById('tutorial');
 const overlayEl = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlayText = document.getElementById('overlay-text');
@@ -60,7 +64,6 @@ let flags = new Set();     /* bayrakli hucreler */
 let placed = false;        /* mayinlar yerlestirildi mi (ilk dokunustan sonra) */
 let level = 1;
 let bestLevel = 1;
-let flagMode = false;
 let locked = false;
 let cellEls = [];
 
@@ -79,14 +82,15 @@ document.getElementById('new-game').addEventListener('click', () => {
   haptic.tap();
   buildLevel(level);
 });
-flagBtn.addEventListener('click', () => {
+document.getElementById('how-to').addEventListener('click', () => {
   haptic.tap();
-  setFlagMode(!flagMode);
+  showTutorial();
 });
-document.addEventListener('langchange', () => {
-  applyStaticTexts();
-  setFlagMode(flagMode); /* buton yazisi dile gore tazelensin */
+document.getElementById('tutorial-btn').addEventListener('click', () => {
+  haptic.tap();
+  hideTutorial();
 });
+document.addEventListener('langchange', () => applyStaticTexts());
 
 bootstrap();
 
@@ -109,7 +113,28 @@ async function bootstrap() {
   } else {
     buildLevel(1);
   }
-  setFlagMode(false);
+
+  /* Ilk kez oynuyorsa kisa anlatimi goster */
+  let gorulmus = false;
+  try {
+    gorulmus = localStorage.getItem(TUTORIAL_SEEN_KEY) === '1';
+  } catch {
+    gorulmus = true; /* depolama kapaliysa her acilista gostermeyelim */
+  }
+  if (!gorulmus) showTutorial();
+}
+
+function showTutorial() {
+  tutorialEl.hidden = false;
+}
+
+function hideTutorial() {
+  tutorialEl.hidden = true;
+  try {
+    localStorage.setItem(TUTORIAL_SEEN_KEY, '1');
+  } catch {
+    /* depolama kapali olabilir, sorun degil */
+  }
 }
 
 function goHome() {
@@ -281,18 +306,10 @@ function solvableWithoutGuessing(mineSet, startIndex) {
 
 function onCellTap(index) {
   if (locked) return;
+  if (!tutorialEl.hidden) return; /* anlatim ekrani acikken tahta pasif */
 
-  if (flagMode) {
-    if (open.has(index)) return;
-    if (flags.has(index)) flags.delete(index);
-    else flags.add(index);
-    haptic.tap();
-    renderAll();
-    persist();
-    return;
-  }
-
-  if (flags.has(index)) return; /* bayrakli hucre yanlislikla acilmasin */
+  /* Bayrakli hucre = kesin mayin. Kazara dokunup kaybetmeyi engelliyoruz. */
+  if (flags.has(index)) return;
 
   /* Ilk dokunus: mayinlari simdi yerlestiriyoruz ki bu hucre guvenli olsun */
   if (!placed) {
@@ -303,6 +320,7 @@ function onCellTap(index) {
   if (mines.has(index)) return loseGame(index);
 
   revealFrom(index);
+  autoFlag();
   haptic.tap();
   renderAll();
   persist();
@@ -314,6 +332,30 @@ function revealFrom(index) {
   if (open.has(index) || flags.has(index)) return;
   open.add(index);
   if (adjacentMines(index) === 0) neighbors(index).forEach(revealFrom);
+}
+
+/* Kesin oldugu ispatlanabilen mayinlari oyuncu adina isaretler.
+
+   Kural: bir sayinin kapali komsu sayisi, o sayidan (zaten isaretlenmisler
+   dusuldukten sonra) geriye kalana esitse, o komsularin HEPSI mayindir.
+   Bayrak koymak oyuncunun isi olmaktan cikiyor - ki kafa karistiran
+   "Kaz/Bayrak" kipini bu sayede tamamen kaldirabildik. Oyuncuya kalan is
+   guvenli kareleri bulmak, yani oyunun asil dusunme kismi. */
+function autoFlag() {
+  let progress = true;
+  while (progress) {
+    progress = false;
+    for (const index of open) {
+      const hidden = neighbors(index).filter((n) => !open.has(n) && !flags.has(n));
+      if (!hidden.length) continue;
+
+      const need = adjacentMines(index) - neighbors(index).filter((n) => flags.has(n)).length;
+      if (need === hidden.length) {
+        hidden.forEach((n) => flags.add(n));
+        progress = true;
+      }
+    }
+  }
 }
 
 async function loseGame(index) {
@@ -400,12 +442,6 @@ function renderAll() {
       el.textContent = n;
     }
   });
-}
-
-function setFlagMode(on) {
-  flagMode = on;
-  flagBtn.setAttribute('aria-pressed', String(on));
-  flagLabel.textContent = t(on ? 'flagMode' : 'digMode');
 }
 
 const format = (n) => Number(n).toLocaleString(locale());

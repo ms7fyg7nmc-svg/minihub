@@ -1,0 +1,60 @@
+/* Yilan gorunumu. Izgara sabit (--cols) ama hucre boyutu ekrana gore esner. */
+
+.board-wrap { position: relative; }
+
+.board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 15), 1fr);
+  gap: 2px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  padding: 6px;
+  border-radius: 16px;
+  background: var(--bg-soft);
+  touch-action: none;
+  user-select: none;
+}
+
+.cell {
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+/* Yilanin govdesi; bas biraz daha parlak ve yuvarlak */
+.cell.body {
+  background: #4ecb8b;
+  border-radius: 4px;
+}
+
+.cell.head {
+  background: #6ee7a8;
+  border-radius: 6px;
+  box-shadow: 0 0 10px rgba(110, 231, 168, 0.55);
+}
+
+/* Yem */
+.cell.food {
+  background: #e2544e;
+  border-radius: 50%;
+  animation: food-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes food-pulse {
+  50% { transform: scale(0.78); }
+}
+
+/* Carpma ani */
+.cell.crash {
+  background: #e2544e;
+  animation: crash-flash 0.4s ease-out;
+}
+
+@keyframes crash-flash {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.5); filter: brightness(1.8); }
+  100% { transform: scale(1); }
+}
+
+/* Baslangic ekrani, bitis ekraniyla ayni kaliptan gelir */
+.start p { max-width: 30ch; }

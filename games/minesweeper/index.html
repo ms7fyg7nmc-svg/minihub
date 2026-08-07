@@ -50,16 +50,36 @@
           <p id="overlay-text"></p>
           <button class="btn primary" id="overlay-btn"></button>
         </div>
+
+        <!-- Ilk oyunda bir kez cikan kisa anlatim. Ortadaki "1" ornegi
+             kuralin tamamini tek bakista gosteriyor. -->
+        <div class="overlay tutorial" id="tutorial" hidden>
+          <h2 data-i18n="tutorialTitle">How to play</h2>
+
+          <div class="demo" aria-hidden="true">
+            <div class="demo-cell"></div>
+            <div class="demo-cell"></div>
+            <div class="demo-cell"></div>
+            <div class="demo-cell"></div>
+            <div class="demo-cell demo-num">1</div>
+            <div class="demo-cell"></div>
+            <div class="demo-cell"></div>
+            <div class="demo-cell demo-mine">🚩</div>
+            <div class="demo-cell"></div>
+          </div>
+
+          <p data-i18n="tutorialRule">The number counts the mines touching that square.</p>
+          <p class="tutorial-sub" data-i18n="tutorialAuto">Mines we can prove are flagged for you. Just open the safe squares.</p>
+          <button class="btn primary" id="tutorial-btn" data-i18n="tutorialStart">Start</button>
+        </div>
       </div>
     </div>
 
-    <p class="hint" id="hint" data-i18n="hint">Tap to open. Switch to the flag to mark a mine.</p>
+    <p class="hint" id="hint" data-i18n="hint">Open the safe squares. Mines get flagged for you.</p>
 
     <!-- Butonlar en altta: tek elle bas parmakla rahat ulasilsin -->
     <div class="controls">
-      <button class="btn" id="flag-mode" aria-pressed="false">
-        <span id="flag-mode-label" data-i18n="digMode">Dig</span>
-      </button>
+      <button class="btn" id="how-to" data-i18n="howToPlay">Help</button>
       <button class="btn" id="new-game" data-i18n="restart">Restart</button>
       <a class="btn" href="../../index.html" id="back-link" data-i18n="backToHub">Back to Hub</a>
     </div>

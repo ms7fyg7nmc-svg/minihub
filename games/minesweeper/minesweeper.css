@@ -75,8 +75,33 @@
   100% { filter: brightness(1); }
 }
 
-/* Bayrak kipi acikken butonu vurgula */
-#flag-mode[aria-pressed="true"] {
-  background: rgba(245, 185, 66, 0.22);
-  box-shadow: inset 0 0 0 1px rgba(245, 185, 66, 0.45);
+/* --- Ilk oyunda cikan kisa anlatim --- */
+
+.tutorial p { max-width: 30ch; }
+.tutorial .tutorial-sub { font-size: 12.5px; opacity: 0.75; }
+
+/* Kuralin ornegi: 3x3 kucuk izgara, ortasinda "1", komsusunda bayrak */
+.demo {
+  display: grid;
+  grid-template-columns: repeat(3, 34px);
+  gap: 3px;
+  margin: 2px 0 4px;
 }
+
+.demo-cell {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.10);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.demo-num {
+  background: rgba(255, 255, 255, 0.035);
+  color: #5b8cff;
+}
+
+.demo-mine { background: rgba(245, 185, 66, 0.22); }

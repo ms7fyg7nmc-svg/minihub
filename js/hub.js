@@ -70,6 +70,13 @@ const ICONS = {
       <circle cx="18" cy="15" r="3.2" fill="#fff"/>
    </svg>`,
 
+   /* Kivrilan bir yilan govdesi ve onundeki yem */
+   snake: `<svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 17h6a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h5" fill="none" stroke="#fff"
+            stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="19" cy="3.5" r="2.6" fill="#fff" opacity=".55"/>
+   </svg>`,
+
    /* Izgaranin ortasinda bir mayin */
    minesweeper: `<svg viewBox="0 0 24 24" aria-hidden="true">
       <rect x="2.5" y="2.5" width="19" height="19" rx="3" fill="none" stroke="#fff"
@@ -146,6 +153,16 @@ function gameList() {
          accent: '#3fc7d4',
          /* Burada rekor bir skor degil, ulasilan bolum numarasi */
          bestKey: 'hub.level',
+         ready: true,
+      },
+      {
+         id: 'snake',
+         title: t('game.snake.title'),
+         desc: t('game.snake.desc'),
+         icon: ICONS.snake,
+         url: 'games/snake/index.html',
+         gradient: 'linear-gradient(140deg, #6ee7a8, #2fa06a)',
+         accent: '#4ecb8b',
          ready: true,
       },
       {
