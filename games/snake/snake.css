@@ -2,6 +2,8 @@
 
 .board-wrap { position: relative; }
 
+/* Duvarlar oldurucu oldugu icin sinirin nerede bittigi net gorunmeli:
+   yilanin renginde kalin bir cerceve. */
 .board {
   position: relative;
   display: grid;
@@ -10,15 +12,19 @@
   width: 100%;
   aspect-ratio: 1 / 1;
   padding: 6px;
-  border-radius: 16px;
-  background: var(--bg-soft);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.28);
+  box-shadow: inset 0 0 0 3px rgba(78, 203, 139, 0.55);
   touch-action: none;
   user-select: none;
 }
 
+/* Kareler gorunur olmali, yoksa tahta duz bir zemin gibi duruyor ve
+   yilanin hangi kareye gelecegi kestirilemiyor. Notr gri kullaniyoruz:
+   Telegram'in hem acik hem koyu temasinda seciliyor. */
 .cell {
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.035);
+  background: rgba(140, 145, 165, 0.22);
 }
 
 /* Yilanin govdesi; bas biraz daha parlak ve yuvarlak */

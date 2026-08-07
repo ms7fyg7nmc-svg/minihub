@@ -12,6 +12,7 @@ import { submitScore, addPoints, getBest, clearState } from '../../js/store.js';
 import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js';
 
 const GAME_ID = 'snake';
+const INTRO_SEEN_KEY = 'mh_snake_seen'; /* giris ekrani bir kez gosterilir */
 const SIZE = 15;              /* izgara SIZE x SIZE */
 const FOOD_SCORE = 10;        /* bir yem kac puan */
 const POINTS_DIVISOR = 10;    /* her 10 oyun skoru = 1 hub puani */
@@ -117,13 +118,34 @@ function resetGame() {
 
   placeFood();
   hideOverlay();
-  startEl.hidden = false;
   updateHud();
   render();
+
+  /* Nasil oynanacagini sadece ilk kez anlatiyoruz. Sonraki turlarda
+     "Yeniden"e basan zaten ne yaptigini biliyor, her seferinde ayni
+     ekrani gostermek gereksiz bir engel. */
+  if (introSeen()) {
+    startRun();
+  } else {
+    startEl.hidden = false;
+  }
+}
+
+function introSeen() {
+  try {
+    return localStorage.getItem(INTRO_SEEN_KEY) === '1';
+  } catch {
+    return true; /* depolama kapaliysa her turda gostermeyelim */
+  }
 }
 
 function startRun() {
   startEl.hidden = true;
+  try {
+    localStorage.setItem(INTRO_SEEN_KEY, '1');
+  } catch {
+    /* depolama kapali olabilir, sorun degil */
+  }
   running = true;
   scheduleTick();
 }
