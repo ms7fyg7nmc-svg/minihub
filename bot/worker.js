@@ -27,9 +27,7 @@ const TEXTS = {
   en: {
     welcome:
       '👋 <b>Welcome to Mini HUB Pocket Games</b>\n\n' +
-      'Five mini games, all inside Telegram:\n' +
-      '🧮 2048   🧱 Block Puzzle   💧 Water Sort\n' +
-      '🍬 Match Candy   🀄 Triple Tile\n\n' +
+      'A pocket full of mini games — puzzles, blocks, candy, mines and more.\n\n' +
       'Every game you finish earns hub points. No download, no ads.\n\n' +
       'Tap <b>Play</b> below to start.',
     help:
@@ -42,14 +40,12 @@ const TEXTS = {
     nudge: 'Tap <b>Play</b> to open the games 👇',
     play: '🎮 Play',
     invite: '👤 Invite a friend',
-    shareText: 'Five mini games right inside Telegram — come beat my score!',
+    shareText: 'A pocket full of mini games — come beat my score!',
   },
   tr: {
     welcome:
       "👋 <b>Mini HUB Pocket Games'e hoş geldin</b>\n\n" +
-      "Telegram'ın içinde beş mini oyun:\n" +
-      '🧮 2048   🧱 Blok Bulmaca   💧 Su Sıralama\n' +
-      '🍬 Şeker Eşleştir   🀄 Üçlü Eşleştir\n\n' +
+      'Cebinde bir sürü mini oyun — bulmaca, blok, şeker, mayın ve dahası.\n\n' +
       'Bitirdiğin her oyun sana hub puanı kazandırır. İndirme yok, reklam yok.\n\n' +
       'Başlamak için aşağıdaki <b>Oyna</b> düğmesine bas.',
     help:
@@ -62,14 +58,12 @@ const TEXTS = {
     nudge: 'Oyunları açmak için <b>Oyna</b>’ya bas 👇',
     play: '🎮 Oyna',
     invite: '👤 Arkadaşını davet et',
-    shareText: "Telegram'ın içinde beş mini oyun — gel skorumu geç bakalım!",
+    shareText: "Cebinde bir sürü mini oyun — gel skorumu geç bakalım!",
   },
   es: {
     welcome:
       '👋 <b>Bienvenido a Mini HUB Pocket Games</b>\n\n' +
-      'Cinco minijuegos, todos dentro de Telegram:\n' +
-      '🧮 2048   🧱 Block Puzzle   💧 Water Sort\n' +
-      '🍬 Match Candy   🀄 Triple Ficha\n\n' +
+      'Un bolsillo lleno de minijuegos: puzles, bloques, caramelos, minas y más.\n\n' +
       'Cada partida que terminas te da puntos de hub. Sin descargas, sin anuncios.\n\n' +
       'Pulsa <b>Jugar</b> para empezar.',
     help:
@@ -82,14 +76,12 @@ const TEXTS = {
     nudge: 'Pulsa <b>Jugar</b> para abrir los juegos 👇',
     play: '🎮 Jugar',
     invite: '👤 Invitar a un amigo',
-    shareText: 'Cinco minijuegos dentro de Telegram: ¡ven a superar mi puntuación!',
+    shareText: 'Un bolsillo lleno de minijuegos: ¡ven a superar mi puntuación!',
   },
   ru: {
     welcome:
       '👋 <b>Добро пожаловать в Mini HUB Pocket Games</b>\n\n' +
-      'Пять мини-игр прямо в Telegram:\n' +
-      '🧮 2048   🧱 Block Puzzle   💧 Water Sort\n' +
-      '🍬 Match Candy   🀄 Тройная плитка\n\n' +
+      'Целый карман мини-игр: головоломки, блоки, конфеты, мины и не только.\n\n' +
       'За каждую игру начисляются очки хаба. Без загрузок и без рекламы.\n\n' +
       'Нажми <b>Играть</b>, чтобы начать.',
     help:
@@ -102,7 +94,7 @@ const TEXTS = {
     nudge: 'Нажми <b>Играть</b>, чтобы открыть игры 👇',
     play: '🎮 Играть',
     invite: '👤 Пригласить друга',
-    shareText: 'Пять мини-игр прямо в Telegram — попробуй побить мой счёт!',
+    shareText: 'Целый карман мини-игр — попробуй побить мой счёт!',
   },
 };
 

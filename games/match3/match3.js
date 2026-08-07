@@ -388,6 +388,13 @@ async function endGame() {
 
 function persist() {
   if (over || !started) return;
+
+  /* Patlama ve dusme animasyonu sirasinda tahtada gecici bosluklar olur.
+     Sureyi sayan zamanlayici saniyede bir kaydettigi icin tam o ana denk
+     gelebiliyordu: hem bu satir cokuyor hem de yarim bir tahta kaydediliyordu.
+     Tahta dolana kadar (bir sonraki saniye) kaydi atliyoruz. */
+  if (board.some((tile) => !tile)) return;
+
   saveState(GAME_ID, {
     kinds: board.map((tile) => tile.kind),
     score,

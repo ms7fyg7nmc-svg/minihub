@@ -77,6 +77,18 @@ function gameList() {
          bestKey: 'hub.level',
          ready: true,
       },
+      {
+         id: 'minesweeper',
+         title: t('game.minesweeper.title'),
+         desc: t('game.minesweeper.desc'),
+         icon: '💣',
+         url: 'games/minesweeper/index.html',
+         gradient: 'linear-gradient(140deg, #8d92a8, #5a5f75)',
+         accent: '#8d92a8',
+         /* Burada rekor bir skor degil, ulasilan bolum numarasi */
+         bestKey: 'hub.level',
+         ready: true,
+      },
    ];
 }
 
