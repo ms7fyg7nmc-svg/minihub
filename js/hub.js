@@ -7,28 +7,70 @@ import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i1
 
 /* ---------- GECICI: test jetonu ----------
 
-   Adres satirina ?bonus=ejderha1m eklenerek acilirsa hesaba bir kereligine
-   1.000.000 jeton yazar. Test icin var; isaret localStorage'a yazildigi icin
-   sayfayi yenilemek tekrar tekrar jeton eklemez.
+   Bir kereligine 1.000.000 jeton yazar. Iki yolu var:
+
+   1) JETON ROZETINE 10 KEZ ART ARDA DOKUNMAK (5 saniye icinde).
+      Asil yol bu. Telegram hesabina bagli jetonlar Telegram CloudStorage'da
+      tutuluyor ve oraya ancak Mini App telefonda ACIKKEN yazilabiliyor -
+      yani bonusun uygulamanin ICINDEN tetiklenmesi gerekiyor. Adres satirina
+      parametre eklemek Telegram'da mumkun olmadigi icin gizli dokunus kullandik.
+
+   2) ?bonus=ejderha1m parametresiyle acmak. Sadece tarayicida test icin;
+      tarayicinin hafizasina yazar, Telegram hesabina degil.
+
+   Isaret localStorage'a yazildigi icin ikinci kez jeton eklemez.
 
    Jetonlar zaten tamamen cihazda tutuldugu ve herkes tarafindan
-   degistirilebildigi icin bu yeni bir acik degil - ama adres herkese acik
-   oldugundan test bitince bu blok SILINMELI. */
+   degistirilebildigi icin bu yeni bir acik degil - ama herkese acik bir
+   uygulamada duruyor, test bitince bu blok SILINMELI. */
 const BONUS_ANAHTAR = 'ejderha1m';
 const BONUS_MIKTAR = 1_000_000;
+const BONUS_DOKUNUS = 10;      /* kac dokunus */
+const BONUS_SURE = 5000;       /* kac milisaniye icinde */
+
+/* Bonusu bir kez uygular; zaten verilmisse false doner */
+async function bonusVer() {
+   const isaret = `bonus_${BONUS_ANAHTAR}`;
+   if (localStorage.getItem(isaret) === '1') return false;
+
+   await addPoints(BONUS_MIKTAR);
+   localStorage.setItem(isaret, '1');
+   return true;
+}
 
 async function testJetonu() {
-   const istenen = new URLSearchParams(location.search).get('bonus');
-   if (istenen !== BONUS_ANAHTAR) return;
-
-   const isaret = `bonus_${BONUS_ANAHTAR}`;
-   if (localStorage.getItem(isaret) !== '1') {
-      await addPoints(BONUS_MIKTAR);
-      localStorage.setItem(isaret, '1');
-   }
-
+   if (new URLSearchParams(location.search).get('bonus') !== BONUS_ANAHTAR) return;
+   await bonusVer();
    /* Adresi temizle ki yenilemede ?bonus= takili kalmasin */
    history.replaceState(null, '', location.pathname);
+}
+
+/* Jeton rozetine gizli dokunus sayaci */
+function bonusDokunusuKur() {
+   const rozet = document.getElementById('points-chip');
+   if (!rozet) return;
+
+   let sayac = 0;
+   let ilkDokunus = 0;
+
+   rozet.addEventListener('click', async () => {
+      const simdi = Date.now();
+      /* Sure asildiysa sayac bastan baslar */
+      if (simdi - ilkDokunus > BONUS_SURE) {
+         ilkDokunus = simdi;
+         sayac = 0;
+      }
+      sayac++;
+      if (sayac < BONUS_DOKUNUS) return;
+
+      sayac = 0;
+      if (await bonusVer()) {
+         haptic.success();
+         renderProfile();
+      } else {
+         haptic.error();
+      }
+   });
 }
 
 /* Botun Telegram adresi. Kendi botunun adini yazarsan tarayicida acan
@@ -252,7 +294,8 @@ await initLang();
 applyTranslations();
 renderLangSwitcher(document.getElementById('lang-switcher'));
 
-await testJetonu(); /* GECICI - test bitince kaldirilacak */
+await testJetonu();   /* GECICI - test bitince kaldirilacak */
+bonusDokunusuKur();   /* GECICI */
 renderProfile();
 renderGames();
 renderTelegramNotice();
