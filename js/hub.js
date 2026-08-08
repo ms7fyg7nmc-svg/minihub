@@ -70,16 +70,20 @@ const ICONS = {
       <circle cx="18" cy="15" r="3.2" fill="#fff"/>
    </svg>`,
 
-   /* Ejderha: kanatlar, govde, bas ve boynuzlar */
+   /* Ejderha: acik kanatlar, kose hatli bas ve geriye supurulmus boynuzlar.
+      Oyundaki cizimin kucuk hali - kartla oyun ekrani birbirini tutsun. */
    pet: `<svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4.5 10.5Q1 8 0.8 11.2q2.6 1.4 4 3.2z" fill="#fff" opacity=".55"/>
-      <path d="M19.5 10.5Q23 8 23.2 11.2q-2.6 1.4-4 3.2z" fill="#fff" opacity=".55"/>
-      <ellipse cx="12" cy="16" rx="6.4" ry="5.2" fill="#fff" opacity=".92"/>
-      <circle cx="12" cy="8.4" r="4.6" fill="#fff"/>
-      <path d="M9.4 4.6 8.2 1.8l3 1.6z" fill="#fff" opacity=".7"/>
-      <path d="M14.6 4.6 15.8 1.8l-3 1.6z" fill="#fff" opacity=".7"/>
-      <circle cx="10.3" cy="8" r="1.1" fill="#3a2a4d"/>
-      <circle cx="13.7" cy="8" r="1.1" fill="#3a2a4d"/>
+      <path d="M9 10 1.2 4.4Q-0.6 10 2 14.6L4 12.2 5.4 14.8 7.2 12.2 8.6 14.6z"
+            fill="#fff" opacity=".6"/>
+      <path d="M15 10 22.8 4.4Q24.6 10 22 14.6L20 12.2 18.6 14.8 16.8 12.2 15.4 14.6z"
+            fill="#fff" opacity=".6"/>
+      <path d="M12 13.4q4.6 0 5.6 3.4Q18 21 12 21T6.4 16.8Q7.4 13.4 12 13.4z"
+            fill="#fff" opacity=".92"/>
+      <path d="M8.2 8.4 7.6 3.6 9.8 6.4z" fill="#fff" opacity=".72"/>
+      <path d="M15.8 8.4 16.4 3.6 14.2 6.4z" fill="#fff" opacity=".72"/>
+      <path d="M8 9.2 8.6 5.2 12 3.6l3.4 1.6.6 4Q14.6 13 12 13T8 9.2z" fill="#fff"/>
+      <path d="M9.6 8.2 11 8.8 9.6 9.4z" fill="#3a2a4d"/>
+      <path d="M14.4 8.2 13 8.8l1.4.6z" fill="#3a2a4d"/>
    </svg>`,
 
    /* Kivrilan bir yilan govdesi ve onundeki yem */
