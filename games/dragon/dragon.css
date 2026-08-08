@@ -1,0 +1,344 @@
+/* Dragon Island gorunumu.
+   Ortak parcalar (baslik, skor kutulari, butonlar) css/game.css icinde. */
+
+/* game.css yalnizca min-height veriyor; bu oyunda kozmetik katalogu uzun
+   oldugu icin sayfanin kendisi uzuyor ve panelin ic kaydirmasi devreye
+   girmiyordu. Yuksekligi ekrana sabitleyince .panel gercekten kayiyor ve
+   "Bitti" butonu her zaman gorunur kaliyor. */
+.game-app {
+  height: var(--app-h, 100dvh);
+  max-height: var(--app-h, 100dvh);
+  overflow: hidden;
+}
+
+.game-mid { gap: 10px; }
+
+/* --- ADA SAHNESI --- */
+
+.island {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+  aspect-ratio: 1 / 0.92;
+  border-radius: 22px;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  /* Gokyuzu: ustte mor gece, altta derinlik */
+  background:
+    radial-gradient(120% 80% at 50% 12%, rgba(150, 120, 255, 0.20), transparent 62%),
+    radial-gradient(90% 60% at 50% 96%, rgba(80, 60, 140, 0.28), transparent 70%),
+    linear-gradient(180deg, #171429 0%, #100d1c 100%);
+}
+
+/* Yildizlar: tek bir tekrarli desen, ek istek yok */
+.island::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.4px 1.4px at 18% 14%, rgba(255,255,255,.7), transparent),
+    radial-gradient(1.2px 1.2px at 72% 9%, rgba(255,255,255,.55), transparent),
+    radial-gradient(1.6px 1.6px at 44% 22%, rgba(255,255,255,.5), transparent),
+    radial-gradient(1.2px 1.2px at 88% 28%, rgba(255,255,255,.45), transparent),
+    radial-gradient(1.3px 1.3px at 8% 34%, rgba(255,255,255,.4), transparent);
+  animation: yildiz-parla 5s ease-in-out infinite;
+}
+
+@keyframes yildiz-parla { 50% { opacity: 0.55; } }
+
+.isle-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.isle-front { pointer-events: none; z-index: 3; }
+
+/* Ejderha: iki canvas katmaninin arasinda duran DOM parcasi */
+.dragon-slot {
+  position: absolute;
+  z-index: 2;
+  width: 38%;
+  aspect-ratio: 1;
+  /* JS ada uzerindeki karonun ekran konumunu buraya yaziyor */
+  left: var(--dx, 50%);
+  top: var(--dy, 55%);
+  transform: translate(-50%, -78%);
+  pointer-events: none;
+}
+
+.dragon-art {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  animation: idle-bob 3.4s ease-in-out infinite;
+}
+
+.dragon-art svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+@keyframes idle-bob { 50% { transform: translateY(-6px); } }
+
+/* Dokununca / oynayinca / beslenince */
+.island.poked .dragon-art { animation: poke 0.5s ease-out; }
+
+@keyframes poke {
+  0%   { transform: translateY(0) scale(1) rotate(0deg); }
+  30%  { transform: translateY(-13px) scale(1.04) rotate(-3deg); }
+  65%  { transform: translateY(0) scale(0.98) rotate(2deg); }
+  100% { transform: translateY(0) scale(1) rotate(0deg); }
+}
+
+.island.fed { animation: fed-glow 0.6s ease-out; }
+@keyframes fed-glow { 40% { box-shadow: inset 0 0 52px 0 rgba(245, 185, 66, 0.40); } }
+
+.island.levelup { animation: levelup-flash 0.9s ease-out; }
+@keyframes levelup-flash { 30% { box-shadow: inset 0 0 72px 0 rgba(110, 231, 168, 0.5); } }
+
+.island.playing .dragon-art { animation: play-hop 0.9s ease-out; }
+
+@keyframes play-hop {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  20% { transform: translateY(-22px) rotate(-6deg); }
+  45% { transform: translateY(0) rotate(4deg); }
+  70% { transform: translateY(-12px) rotate(-3deg); }
+}
+
+/* --- Satin alinan animasyon efektleri --- */
+
+.fx { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: visible; }
+
+.fx span {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+  animation: fx-rise var(--dur, 3s) linear infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes fx-rise {
+  0%   { opacity: 0; transform: translateY(0) scale(0.6); }
+  15%  { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(-110px) scale(0.2); }
+}
+
+.fx.storm span { animation-name: fx-spark; border-radius: 2px; }
+
+@keyframes fx-spark {
+  0%, 100% { opacity: 0; transform: scaleY(0.4); }
+  8%       { opacity: 1; transform: scaleY(1.3); }
+  16%      { opacity: 0; }
+}
+
+.fx.aura::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 78%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--aura, #f5b942) 0%, transparent 66%);
+  opacity: 0.30;
+  animation: aura-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes aura-pulse {
+  50% { opacity: 0.5; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+/* Ucusan yazilar (+1 XP, Seviye 12!) */
+.floaters { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+
+.floater {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  font-weight: 800;
+  font-size: 19px;
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+  white-space: nowrap;
+  animation: floater-up 0.9s ease-out forwards;
+}
+
+@keyframes floater-up {
+  from { opacity: 1; transform: translate(-50%, -50%); }
+  to { opacity: 0; transform: translate(-50%, -170%); }
+}
+
+/* --- EJDERHA KUNYESI --- */
+
+.dragon-card { width: 100%; max-width: 380px; margin: 0 auto; }
+
+.dragon-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+
+.dragon-name { font-size: 15px; }
+.dragon-lv { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.xp-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; }
+
+.bar { height: 9px; border-radius: 999px; background: rgba(255, 255, 255, 0.09); overflow: hidden; }
+
+.bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6ee7a8, #2fa06a);
+  transition: width 0.35s ease;
+}
+
+.bar-value { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 40px; text-align: right; }
+
+.stat-row { display: flex; gap: 16px; margin-top: 7px; font-size: 12px; color: var(--muted); }
+.stat b { color: var(--text); font-variant-numeric: tabular-nums; }
+.stat b.low { color: #e2685e; }
+
+.dragon-card .hint { margin-top: 8px; }
+.hint.warn { color: #e2685e; }
+
+/* --- Butonlar --- */
+
+.controls[hidden] { display: none; }
+.btn.feed { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.btn.feed b::before { content: '◆'; margin-right: 4px; opacity: 0.8; }
+.btn:disabled { opacity: 0.45; }
+
+/* game.css'teki .btn flex:1 aliyor - kolon yerlesiminde bu onu dikey olarak
+   buyutuyordu, o yuzden burada sabitleniyor. */
+.back-link {
+  flex: none;
+  display: block;
+  text-align: center;
+  margin-top: 8px;
+  font-size: 13px;
+  padding: 9px;
+}
+
+/* --- KOZMETIK PANELI --- */
+
+.panel { width: 100%; max-width: 380px; margin: 0 auto; flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+.panel[hidden] { display: none; }
+.panel::-webkit-scrollbar { display: none; }
+
+/* Dukkan aciktken ada kucultulur, uzun katalog butonlari ekran disina itmesin */
+body.shop-open .island { max-width: 190px; }
+body.shop-open .dragon-card { display: none; }
+
+.shop-msg { margin: 0 0 10px; }
+.shop-msg[hidden] { display: none; }
+
+.shop-group { margin-bottom: 13px; }
+
+.shop-title {
+  margin: 0 0 7px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+}
+
+.shop-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.shop-row::-webkit-scrollbar { display: none; }
+
+.shop-item {
+  flex: none;
+  width: 82px;
+  padding: 8px 6px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  background: var(--bg-soft);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  transition: transform 0.12s ease, border-color 0.15s ease;
+}
+
+.shop-item:active { transform: scale(0.96); }
+.shop-item.on { border-color: rgba(245, 185, 66, 0.75); box-shadow: 0 0 0 1px rgba(245, 185, 66, 0.35) inset; }
+.shop-item.trying { border-color: rgba(245, 185, 66, 0.9); border-style: dashed; }
+.shop-item.locked { opacity: 0.5; }
+
+.swatch {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.swatch svg { position: relative; width: 30px; height: 30px; display: block; }
+
+.shop-name { font-size: 10.5px; line-height: 1.2; text-align: center; }
+.shop-price { font-size: 10.5px; font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; }
+.shop-price.owned { color: var(--muted); font-weight: 600; }
+.shop-need { font-size: 10px; color: var(--muted); }
+
+/* --- Deneme cubugu --- */
+
+.try-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 11px;
+  padding: 8px 9px;
+  border-radius: 14px;
+  border: 1px solid rgba(245, 185, 66, 0.4);
+  background: rgba(245, 185, 66, 0.08);
+}
+
+.try-bar[hidden] { display: none; }
+.try-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+
+.try-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.try-note { font-size: 11px; color: var(--muted); }
+.try-note.warn { color: #e2685e; }
+
+.try-btn {
+  flex: none;
+  padding: 8px 11px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.10);
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.try-btn.buy { background: var(--gold, #f5b942); color: #221a06; }
+.try-btn.buy:disabled { background: rgba(255, 255, 255, 0.08); color: var(--muted); cursor: default; }
+.try-btn:active { transform: scale(0.96); }

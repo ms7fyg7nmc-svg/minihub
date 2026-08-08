@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Dragon Island</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    /* Uygulama dogrudan bu oyun sayfasinda acildiysa once hub'i goster.
+       Isaret hub acildiginda birakilir; yoksa buraya hub'dan gelinmemistir. */
+    try {
+      if (sessionStorage.getItem('mh_hub_open') !== '1') location.replace('../../index.html');
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/game.css">
+  <link rel="stylesheet" href="dragon.css">
+</head>
+<body class="game" data-i18n-title="title">
+  <div class="app game-app">
+
+    <header class="game-head">
+      <div>
+        <h1 class="game-title" data-i18n="title">Dragon Island</h1>
+        <p class="game-sub" id="stage-name">—</p>
+      </div>
+      <div class="scores">
+        <div class="score-box">
+          <span data-i18n="level">LEVEL</span>
+          <strong id="level">1</strong>
+        </div>
+        <div class="score-box">
+          <span data-i18n="coins">COINS</span>
+          <strong id="coins">0</strong>
+        </div>
+      </div>
+    </header>
+
+    <div class="game-mid">
+
+      <!-- ADA SAHNESI
+           arka canvas -> ejderhanin arkasi, sonra ejderha, sonra on canvas.
+           Boylece ondeki agac gercekten ejderhanin onunden gecer. -->
+      <div class="island" id="island">
+        <canvas class="isle-layer" id="isle-back"></canvas>
+        <div class="dragon-slot" id="dragon-slot">
+          <div class="fx" id="fx"></div>
+          <div class="dragon-art" id="dragon-art"></div>
+        </div>
+        <canvas class="isle-layer isle-front" id="isle-front"></canvas>
+        <div class="floaters" id="floaters"></div>
+      </div>
+
+      <!-- EJDERHA KUNYESI -->
+      <section class="dragon-card">
+        <div class="dragon-line">
+          <strong class="dragon-name" id="dragon-name">Dragon</strong>
+          <span class="dragon-lv" id="dragon-lv">Lv. 1</span>
+        </div>
+        <div class="xp-row">
+          <div class="bar xp"><i id="xp-fill"></i></div>
+          <span class="bar-value" id="xp-value">0/2</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat"><span data-i18n="fullness">Fullness</span> <b id="hunger-value">100%</b></span>
+          <span class="stat"><span data-i18n="happiness">Mood</span> <b id="happy-value">100%</b></span>
+        </div>
+        <p class="hint" id="hint" data-i18n="hint">Earn coins in the other games, then feed your dragon.</p>
+      </section>
+
+      <!-- KOZMETIK PANELI -->
+      <section class="panel" id="panel-shop" hidden>
+        <p class="hint shop-msg" id="shop-msg" hidden></p>
+
+        <!-- Deneme cubugu: satin almadan once ejderhanin uzerinde gorunur -->
+        <div class="try-bar" id="try-bar" hidden>
+          <div class="try-info">
+            <span class="try-name" id="try-name"></span>
+            <span class="try-note" id="try-note"></span>
+          </div>
+          <button class="try-btn buy" id="try-buy"></button>
+          <button class="try-btn" id="try-cancel" data-i18n="tryCancel">Cancel</button>
+        </div>
+
+        <div id="shop"></div>
+      </section>
+
+    </div>
+
+    <div class="controls" id="controls">
+      <button class="btn primary feed" id="feed">
+        <span data-i18n="feed">Feed</span>
+        <b id="feed-cost">10</b>
+      </button>
+      <button class="btn" id="play" data-i18n="play">Play</button>
+      <button class="btn" id="customize" data-i18n="customize">Customize</button>
+    </div>
+
+    <div class="controls" id="shop-controls" hidden>
+      <button class="btn primary" id="shop-done" data-i18n="done">Done</button>
+    </div>
+
+    <a class="btn back-link" href="../../index.html" id="back-link" data-i18n="backToHub">Back to Hub</a>
+
+    <footer class="foot"><span data-i18n="hub.version">Version 0.1</span></footer>
+
+  </div>
+
+  <script type="module" src="dragon.js"></script>
+</body>
+</html>
