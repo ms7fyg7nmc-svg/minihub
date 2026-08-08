@@ -1,16 +1,39 @@
 /* Puan kaydetme sistemi.
-   Once Telegram CloudStorage'a yazar (telefon degistirsen bile kalir),
-   ayni anda tarayici hafizasina da yazar (aninda okumak ve tarayicida test icin).
 
    Saklanan veriler:
      hub_points        -> toplam hub puani (ileride token'a cevrilecek)
      best_<oyunAdi>    -> o oyundaki en yuksek skor
      state_<oyunAdi>   -> yarim kalan oyunun kayitli hali
+
+   NEDEN "ONCE YEREL, BULUT SADECE YEDEK"?
+
+   Onceki surumde okuma once Telegram CloudStorage'a gidiyordu. Ama bulut
+   yazmasi gecikmeli: set() yerel kayda aninda yaziyor, buluta ise yazma
+   birkac yuz milisaniye sonra ulasiyordu. Art arda besleme yapinca bir
+   sonraki okuma buluttan ESKI (yuksek) bakiyeyi aliyor ve harcama o eski
+   sayidan dusuluyordu - yani jetonlar gercekte eksilmiyordu. Ustelik get()
+   o eski bulut degerini localStorage'in uzerine de geri yaziyordu.
+   Olculdu: 2.232 jetonluk harcamanin sadece 724'u hesaba yansidi.
+
+   Simdi yetkili kaynak bu cihazdaki kayit:
+     - Bellekteki 'onbellek' ilk okumadan sonra dogrudan cevap verir
+       (bulut gidip gelmesi yok, "1 saniye bekleme" hissi de kalkti).
+     - Bulut sadece YEDEK: yerel kayit bossa (yeni telefon, temizlenmis
+       tarayici) oradan geri yuklenir.
+     - Buluta yazma geciktirilerek yapilir, boylece hizli oynarken her
+       harekette bir bulut istegi gitmez; uygulama kapanirken bekleyenler
+       hemen gonderilir.
 */
 
 const tg = window.Telegram?.WebApp ?? null;
 const cloud = tg?.CloudStorage ?? null;
 const cloudReady = !!cloud && !!tg?.version && parseFloat(tg.version) >= 6.9;
+
+const BULUT_BEKLEME = 600; /* ms - art arda yazmalari tek istekte toplar */
+
+/* Bu oturumun yetkili degerleri. Bir kez doldurulunca okuma hep buradan. */
+const onbellek = new Map();
+const bekleyenYazmalar = new Map(); /* key -> zamanlayici */
 
 /* --- Dusuk seviye okuma/yazma --- */
 
@@ -30,25 +53,61 @@ function localSet(key, value) {
   }
 }
 
+const bos = (v) => v === null || v === undefined || v === '';
+
 function get(key) {
+  if (onbellek.has(key)) return Promise.resolve(onbellek.get(key));
+
+  const yerel = localGet(key);
+
+  /* Bu cihazda kayit varsa yetkili odur - buluta hic sormuyoruz */
+  if (!bos(yerel) || !cloudReady) {
+    onbellek.set(key, yerel);
+    return Promise.resolve(yerel);
+  }
+
+  /* Yerel bosken bulut yedegi geri yuklenir (yeni cihaz / temiz tarayici) */
   return new Promise((resolve) => {
-    const fallback = localGet(key);
-    if (!cloudReady) return resolve(fallback);
     cloud.getItem(key, (err, value) => {
-      if (err || value === null || value === undefined || value === '') {
-        return resolve(fallback);
-      }
-      localSet(key, value); /* bulutu yerel kopyaya yansit */
-      resolve(value);
+      const sonuc = err || bos(value) ? yerel : value;
+      if (!bos(sonuc)) localSet(key, sonuc);
+      onbellek.set(key, sonuc);
+      resolve(sonuc);
     });
   });
 }
 
 function set(key, value) {
   const str = String(value);
+  onbellek.set(key, str);
   localSet(key, str);
-  if (cloudReady) cloud.setItem(key, str, () => {});
+  bulutaYaz(key);
 }
+
+function bulutaYaz(key) {
+  if (!cloudReady) return;
+  clearTimeout(bekleyenYazmalar.get(key));
+  bekleyenYazmalar.set(key, setTimeout(() => {
+    bekleyenYazmalar.delete(key);
+    cloud.setItem(key, onbellek.get(key) ?? '', () => {});
+  }, BULUT_BEKLEME));
+}
+
+/* Uygulama kapanirken/arka plana gecerken bekleyenleri hemen gonder,
+   yoksa son birkac saniyelik ilerleme buluta hic ulasmaz. */
+function bulutuBosalt() {
+  if (!cloudReady || !bekleyenYazmalar.size) return;
+  for (const [key, zamanlayici] of bekleyenYazmalar) {
+    clearTimeout(zamanlayici);
+    cloud.setItem(key, onbellek.get(key) ?? '', () => {});
+  }
+  bekleyenYazmalar.clear();
+}
+
+window.addEventListener('pagehide', bulutuBosalt);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) bulutuBosalt();
+});
 
 /* --- Uygulamanin kullandigi fonksiyonlar --- */
 
