@@ -72,6 +72,18 @@
         <!-- Uyarilar (parasi yetmedi / seviye kilidi) buraya yazilir:
              Bakim panelindeki ipucu satiri dukkan aciktken gizli oluyor. -->
         <p class="hint shop-msg" id="shop-msg" hidden></p>
+
+        <!-- Deneme cubugu: sahip olmadigin bir urune dokununca ejderha onu
+             uzerinde gosterir, satin alma ancak buradan onaylanir. -->
+        <div class="try-bar" id="try-bar" hidden>
+          <div class="try-info">
+            <span class="try-name" id="try-name"></span>
+            <span class="try-note" id="try-note"></span>
+          </div>
+          <button class="try-btn buy" id="try-buy"></button>
+          <button class="try-btn" id="try-cancel" data-i18n="tryCancel">Vazgeç</button>
+        </div>
+
         <div id="shop"></div>
       </section>
 

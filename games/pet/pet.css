@@ -188,6 +188,55 @@ body.shop-open .pet-stage { max-width: 176px; }
 .shop-msg { margin: 0 0 10px; }
 .shop-msg[hidden] { display: none; }
 
+/* --- Deneme cubugu --- */
+
+.try-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 11px;
+  padding: 8px 9px;
+  border-radius: 14px;
+  border: 1px solid rgba(245, 185, 66, 0.4);
+  background: rgba(245, 185, 66, 0.08);
+}
+
+.try-bar[hidden] { display: none; }
+
+.try-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+
+.try-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.try-note { font-size: 11px; color: var(--muted); }
+.try-note.warn { color: #e2685e; }
+
+.try-btn {
+  flex: none;
+  padding: 8px 11px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.10);
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.try-btn.buy { background: var(--gold, #f5b942); color: #221a06; }
+.try-btn.buy:disabled { background: rgba(255, 255, 255, 0.08); color: var(--muted); cursor: default; }
+.try-btn:active { transform: scale(0.96); }
+
+/* Denenen urun: kesikli cerceve, "alinmis" halkasindan ayirt edilsin */
+.shop-item.trying { border-color: rgba(245, 185, 66, 0.9); border-style: dashed; }
+
 /* --- Dukkan --- */
 
 .shop-group { margin-bottom: 14px; }
@@ -249,6 +298,10 @@ body.shop-open .pet-stage { max-width: 176px; }
 }
 
 .swatch svg { width: 30px; height: 30px; display: block; }
+
+/* Renk kutucugundaki desen, renk zemininin uzerine biner */
+.swatch { position: relative; }
+.swatch svg { position: relative; }
 
 .shop-name { font-size: 10.5px; line-height: 1.2; text-align: center; }
 

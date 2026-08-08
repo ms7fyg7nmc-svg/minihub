@@ -57,6 +57,9 @@ registerTexts(GAME_ID, {
   stageHatch: 'Yeni çıktı',
   stageNames: 'Yavru,Genç,Ejderha,Savaşçı,Kadim,Efsane',
   lockedMsg: "Seviye {level}'de açılıyor.",
+  tryHint: 'Ejderhanın üzerinde deniyorsun.',
+  tryNoCoins: 'Yeterli jetonun yok.',
+  tryCancel: 'Vazgeç',
 
   /* Dukkan urun adlari */
   colViolet: 'Mor',
@@ -66,11 +69,14 @@ registerTexts(GAME_ID, {
   colGold: 'Altın',
   colShadow: 'Gölge',
   colInferno: 'Ateş',
+  colRunic: 'Kadim Rün',
+  colLord: 'Ejder Kralı',
   crNone: 'Yok',
   crSilver: 'Gümüş',
   crGold: 'Altın',
   crRuby: 'Yakut',
   crAncient: 'Kadim',
+  crDragon: 'Ejder Tacı',
   efNone: 'Yok',
   efEmbers: 'Kıvılcım',
   efFlame: 'Alev',
@@ -84,22 +90,36 @@ registerTexts(GAME_ID, {
 /* name yerine nameKey tutuluyor: isimler cizim koduyla degil ceviri dosyasiyla
    geliyor, boylece dukkan da diger metinler gibi 4 dilde calisiyor. */
 
+/* Renkler ucuzdan pahaliya duz -> desenli gidiyor: ilk renkler sade, ustteki
+   renklerde pul, magma catlagi, kadim run ve zirh plakasi gibi desenler var.
+   pattern alani dragonSvg icinde govdeye kirpilarak ciziliyor. */
 const COLORS = {
-  violet:  { price: 0,    nameKey: 'colViolet',  body: '#a978e8', dark: '#7b4fd0', belly: '#e6d6fa', horn: '#f5b942' },
-  crimson: { price: 400,  nameKey: 'colCrimson', body: '#e05a52', dark: '#a8342d', belly: '#f7cdc6', horn: '#f5b942' },
-  emerald: { price: 700,  nameKey: 'colEmerald', body: '#3fbf7a', dark: '#248a53', belly: '#cdf0dd', horn: '#f5d76e' },
-  ice:     { price: 1200, nameKey: 'colIce',     body: '#5fc8e8', dark: '#2a8bb0', belly: '#d6f2fb', horn: '#eaf7ff' },
-  gold:    { price: 2000, nameKey: 'colGold',    body: '#e8b13c', dark: '#b07d16', belly: '#fbe9c0', horn: '#fff3d0' },
-  shadow:  { price: 3200, nameKey: 'colShadow',  body: '#4a4560', dark: '#2b2739', belly: '#8a83a8', horn: '#c4b6f0' },
-  inferno: { price: 5000, nameKey: 'colInferno', body: '#f2703a', dark: '#a83318', belly: '#ffd9a8', horn: '#ffe066', needLevel: 40 },
+  violet:  { price: 0,     nameKey: 'colViolet',  body: '#a978e8', dark: '#7b4fd0', belly: '#e6d6fa', horn: '#f5b942' },
+  crimson: { price: 400,   nameKey: 'colCrimson', body: '#e05a52', dark: '#a8342d', belly: '#f7cdc6', horn: '#f5b942' },
+  emerald: { price: 700,   nameKey: 'colEmerald', body: '#3fbf7a', dark: '#248a53', belly: '#cdf0dd', horn: '#f5d76e' },
+  ice:     { price: 1200,  nameKey: 'colIce',     body: '#5fc8e8', dark: '#2a8bb0', belly: '#d6f2fb', horn: '#eaf7ff',
+             pattern: 'scales', ink: '#ffffff' },
+  gold:    { price: 2000,  nameKey: 'colGold',    body: '#e8b13c', dark: '#b07d16', belly: '#fbe9c0', horn: '#fff3d0',
+             pattern: 'scales', ink: '#7d5406' },
+  shadow:  { price: 3200,  nameKey: 'colShadow',  body: '#4a4560', dark: '#2b2739', belly: '#8a83a8', horn: '#c4b6f0',
+             pattern: 'scales', ink: '#c4b6f0' },
+  inferno: { price: 5000,  nameKey: 'colInferno', body: '#f2703a', dark: '#a83318', belly: '#ffd9a8', horn: '#ffe066',
+             pattern: 'cracks', ink: '#ffe066', needLevel: 40 },
+  runic:   { price: 8000,  nameKey: 'colRunic',   body: '#4d6b8f', dark: '#2b3f5c', belly: '#cfe0f0', horn: '#8fe3d8',
+             pattern: 'runes',  ink: '#8fe3d8', needLevel: 65 },
+  /* Obsidyen + altin. Koyu bir renk ama sahne zemininden ayirt edilecek kadar
+     acik tutuldu; daha koyusunda kanatlar arka plana karisiyor. */
+  dragonlord: { price: 12000, nameKey: 'colLord', body: '#4a4166', dark: '#332c4a', belly: '#b6a8dd', horn: '#f5c74a',
+             pattern: 'plates', ink: '#f5c74a', needLevel: 80 },
 };
 
 const CROWNS = {
-  none:    { price: 0,    nameKey: 'crNone' },
-  silver:  { price: 600,  nameKey: 'crSilver',  metal: '#d8dde8', edge: '#9aa2b5', gem: null },
-  gold:    { price: 1500, nameKey: 'crGold',    metal: '#f5c74a', edge: '#c9922a', gem: null },
-  ruby:    { price: 3000, nameKey: 'crRuby',    metal: '#f5c74a', edge: '#c9922a', gem: '#e2544e' },
-  ancient: { price: 6000, nameKey: 'crAncient', metal: '#c9b7f5', edge: '#8b6fd6', gem: '#6ee7a8', needLevel: 50 },
+  none:    { price: 0,     nameKey: 'crNone' },
+  silver:  { price: 600,   nameKey: 'crSilver',  metal: '#d8dde8', edge: '#9aa2b5', gem: '#8fd0ff' },
+  gold:    { price: 1500,  nameKey: 'crGold',    metal: '#f5c74a', edge: '#c9922a', gem: '#fff3d0' },
+  ruby:    { price: 3000,  nameKey: 'crRuby',    metal: '#f5c74a', edge: '#c9922a', gem: '#e2544e' },
+  ancient: { price: 6000,  nameKey: 'crAncient', metal: '#c9b7f5', edge: '#8b6fd6', gem: '#6ee7a8', needLevel: 50 },
+  dragon:  { price: 11000, nameKey: 'crDragon',  metal: '#f0d78a', edge: '#a8761c', gem: '#ff6b4a', needLevel: 75 },
 };
 
 const EFFECTS = {
@@ -127,16 +147,102 @@ function eyeMarks(mood, pal) {
     <circle cx="13" cy="-57" r="2.4" fill="#2a2136"/>`;
 }
 
+/* Taclar: ucuzdan pahaliya sade halkadan cok katmanli tac hazinesine gider.
+   Her biri kendi mimarisiyle cizilir - fiyat farki gozle gorulsun diye.
+
+   Hepsi y=0 tabaninda cizilir, sonra headTop'a tasinir. Boylece hem ejderhanin
+   alnina oturtmak hem de dukkan kutucugunda tek basina gostermek kolay olur;
+   CROWN_BOX her tacin kutucukta kullanacagi cerceveyi tutar. */
+
+const CROWN_BOX = {
+  silver:  '-18 -28 36 32',
+  gold:    '-21 -32 42 36',
+  ruby:    '-23 -40 46 44',
+  ancient: '-37 -43 74 47',
+  dragon:  '-41 -44 82 48',
+};
+
 function crownSvg(key, headTop) {
   const c = CROWNS[key];
   if (!c || key === 'none') return '';
-  const gem = c.gem
-    ? `<circle cx="0" cy="${headTop - 15}" r="3.6" fill="${c.gem}"/>`
-    : `<circle cx="0" cy="${headTop - 15}" r="2.6" fill="#fff" opacity=".9"/>`;
-  return `
-    <path d="M-19 ${headTop} l4 -12 l7 7 l8 -12 l8 12 l7 -7 l4 12 z"
-          fill="${c.metal}" stroke="${c.edge}" stroke-width="1.6" stroke-linejoin="round"/>
-    ${gem}`;
+
+  /* Ortak taban seridi */
+  const bant = (w, h) => `
+    <path d="M${-w} 2 h${w * 2} v${-h} h${-w * 2} z"
+          fill="${c.metal}" stroke="${c.edge}" stroke-width="1.4" stroke-linejoin="round"/>
+    <path d="M${-w + 2} -1 h${w * 2 - 4}" stroke="${c.edge}"
+          stroke-width="1.1" opacity=".55"/>`;
+
+  let ic;
+
+  if (key === 'silver') {
+    /* Ince halka, uc sivri uc */
+    ic = `
+      ${bant(15, 5)}
+      <path d="M-15 -3 L-10 -16 L-5 -8 L0 -20 L5 -8 L10 -16 L15 -3 Z"
+            fill="${c.metal}" stroke="${c.edge}" stroke-width="1.4" stroke-linejoin="round"/>
+      <circle cx="0" cy="-22" r="2.8" fill="${c.gem}"/>`;
+
+  } else if (key === 'gold') {
+    /* Bes uclu, her ucunda inci */
+    const uclar = [[-16, -17], [-8, -20], [0, -26], [8, -20], [16, -17]];
+    const inci = uclar.map(([x, y]) => `<circle cx="${x}" cy="${y - 3}" r="2.2" fill="${c.gem}"/>`).join('');
+    ic = `
+      ${bant(18, 6)}
+      <path d="M-18 -4 L-16 -17 L-11 -9 L-8 -20 L-4 -10 L0 -26
+               L4 -10 L8 -20 L11 -9 L16 -17 L18 -4 Z"
+            fill="${c.metal}" stroke="${c.edge}" stroke-width="1.4" stroke-linejoin="round"/>
+      ${inci}`;
+
+  } else if (key === 'ruby') {
+    /* Yuksek tac, tepesinde buyuk tas, yanlarda kucukler */
+    ic = `
+      ${bant(20, 7)}
+      <path d="M-20 -5 L-16 -20 L-10 -11 L0 -30 L10 -11 L16 -20 L20 -5 Z"
+            fill="${c.metal}" stroke="${c.edge}" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M0 -36 l5 6 l-5 7 l-5 -7 z" fill="${c.gem}"/>
+      <path d="M0 -36 l5 6 l-5 1 z" fill="#fff" opacity=".45"/>
+      <circle cx="-16" cy="-23" r="2.8" fill="${c.gem}"/>
+      <circle cx="16" cy="-23" r="2.8" fill="${c.gem}"/>
+      <circle cx="0" cy="-2" r="2.2" fill="${c.gem}" opacity=".8"/>`;
+
+  } else if (key === 'ancient') {
+    /* Yanlarda kanatlar, uclarda runlar, tepede parlayan tas */
+    ic = `
+      <path d="M-34 -8 q10 -3 16 4 l-3 6 q-8 -6 -13 -2z
+               M34 -8 q-10 -3 -16 4 l3 6 q8 -6 13 -2z"
+            fill="${c.metal}" opacity=".8"/>
+      ${bant(22, 8)}
+      <path d="M-22 -6 L-17 -23 L-11 -12 L0 -32 L11 -12 L17 -23 L22 -6 Z"
+            fill="${c.metal}" stroke="${c.edge}" stroke-width="1.5" stroke-linejoin="round"/>
+      <circle cx="0" cy="-34" r="4.5" fill="${c.gem}"/>
+      <circle cx="0" cy="-34" r="1.8" fill="#fff" opacity=".6"/>
+      <path d="M-17 -20 v5 M-20 -17.5 h6 M17 -20 v5 M14 -17.5 h6"
+            stroke="${c.gem}" stroke-width="1.6" opacity=".85" stroke-linecap="round"/>
+      <path d="M-8 -2 h16" stroke="${c.gem}" stroke-width="1.4" opacity=".7"/>`;
+
+  } else {
+    /* dragon: genis kanatlar, yan boynuzlar, tepesinde ejder gozu */
+    ic = `
+      <path d="M-38 -12 q13 -6 21 6 l-4 7 q-10 -9 -17 -5z
+               M38 -12 q-13 -6 -21 6 l4 7 q10 -9 17 -5z"
+            fill="${c.metal}" opacity=".85"/>
+      <path d="M-30 -24 q-6 -11 2 -18 q2 9 8 13z
+               M30 -24 q6 -11 -2 -18 q-2 9 -8 13z"
+            fill="${c.metal}" stroke="${c.edge}" stroke-width="1.2"/>
+      ${bant(25, 9)}
+      <path d="M-25 -7 L-20 -26 L-14 -14 L-7 -34 L0 -26 L7 -34 L14 -14 L20 -26 L25 -7 Z"
+            fill="${c.metal}" stroke="${c.edge}" stroke-width="1.6" stroke-linejoin="round"/>
+      <path d="M-25 -7 L-20 -26 L-14 -14 L-7 -34 L0 -26 L0 -7 Z"
+            fill="${c.edge}" opacity=".2"/>
+      <ellipse cx="0" cy="-33" rx="5.2" ry="6" fill="${c.gem}"/>
+      <ellipse cx="0" cy="-33" rx="1.5" ry="4.2" fill="#2a1020"/>
+      <circle cx="-20" cy="-29" r="2.8" fill="${c.gem}"/>
+      <circle cx="20" cy="-29" r="2.8" fill="${c.gem}"/>
+      <path d="M-19 -2 h38" stroke="${c.gem}" stroke-width="1.6" opacity=".65"/>`;
+  }
+
+  return `<g transform="translate(0 ${headTop})">${ic}</g>`;
 }
 
 /* Yumurta: seviye yukseldikce catlaklar artar */
@@ -158,6 +264,68 @@ function eggSvg(level, pal) {
         ${crack}${crack2}
       </g>
     </svg>`;
+}
+
+/* Govde deseni. Ust seviye renklerin farki burada goruluyor.
+   Cizimler govde yoluna kirpilir, boylece kenardan tasmaz. */
+let desenSayaci = 0;
+
+function patternMarks(pal, govdeYolu) {
+  if (!pal.pattern) return '';
+  const uid = `d${++desenSayaci}`;
+  const ink = pal.ink || pal.dark;
+  let icerik = '';
+
+  if (pal.pattern === 'scales') {
+    /* Ust uste binen pul siralari */
+    for (let sira = 0; sira < 6; sira++) {
+      const y = -26 + sira * 11;
+      const kaydir = sira % 2 ? 6 : 0;
+      for (let x = -42 + kaydir; x <= 42; x += 12) {
+        icerik += `<path d="M${x} ${y} q6 7 12 0" fill="none" stroke="${ink}"
+                         stroke-width="1.6" opacity=".3" stroke-linecap="round"/>`;
+      }
+    }
+  } else if (pal.pattern === 'cracks') {
+    /* Icten yanan magma catlaklari */
+    icerik = `
+      <path d="M-24 -26 l6 12 l-5 9 l8 13 l-4 12
+               M14 -28 l-4 14 l7 10 l-5 12 l6 10
+               M-6 -20 l5 11 l-4 10 l6 12"
+            fill="none" stroke="${ink}" stroke-width="2.4" opacity=".75"
+            stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M-24 -26 l6 12 l-5 9 l8 13 l-4 12
+               M14 -28 l-4 14 l7 10 l-5 12 l6 10"
+            fill="none" stroke="#fff" stroke-width="0.9" opacity=".5"
+            stroke-linecap="round"/>`;
+  } else if (pal.pattern === 'runes') {
+    /* Kadim simgeler: govdede parlayan bir halka ve run harfleri */
+    icerik = `
+      <circle cx="0" cy="-2" r="21" fill="none" stroke="${ink}" stroke-width="1.6" opacity=".55"/>
+      <circle cx="0" cy="-2" r="14" fill="none" stroke="${ink}" stroke-width="1" opacity=".35"/>
+      <path d="M-30 -22 v9 M-34 -18 h8 M-30 -13 l4 5
+               M28 -20 v10 M24 -20 l8 5 l-8 5
+               M-28 14 l5 -8 l5 8 M-26 11 h6
+               M26 12 v10 M22 12 h8 M26 17 h5
+               M0 -14 v7 M-4 -10 h8 M0 -7 l4 6 l-8 0 z"
+            fill="none" stroke="${ink}" stroke-width="2" opacity=".8"
+            stroke-linecap="round" stroke-linejoin="round"/>`;
+  } else if (pal.pattern === 'plates') {
+    /* Zirh plakalari ve altin kaplama */
+    icerik = `
+      <path d="M-40 -18 q40 -12 80 0 M-40 -4 q40 -12 80 0
+               M-40 10 q40 -12 80 0 M-40 24 q40 -12 80 0"
+            fill="none" stroke="${ink}" stroke-width="1.8" opacity=".45"/>
+      <path d="M-22 -30 v62 M22 -30 v62" stroke="${ink}"
+            stroke-width="1.4" opacity=".3"/>
+      <path d="M-34 -24 l6 -6 l6 6 l-6 6 z M28 -20 l5 -5 l5 5 l-5 5 z
+               M-32 18 l5 -5 l5 5 l-5 5 z M26 20 l6 -6 l6 6 l-6 6 z"
+            fill="${ink}" opacity=".6"/>`;
+  }
+
+  return `
+    <clipPath id="${uid}"><path d="${govdeYolu}"/></clipPath>
+    <g clip-path="url(#${uid})">${icerik}</g>`;
 }
 
 /* Ejderha. g = 0..1 arasi buyume orani (seviye 5 -> 99).
@@ -195,6 +363,9 @@ function dragonSvg(g, pal, crownKey, mood) {
     }
   }
 
+  /* Govde yolu hem dolgu hem de desenin kirpma maskesi olarak kullaniliyor */
+  const govdeYolu = 'M-34 2 Q-38 -22 -14 -30 Q14 -34 34 -12 Q45 10 28 29 Q2 40 -18 31 Q-32 22 -34 2 Z';
+
   /* Ayaklar: govdenin alt kenarini ortecek sekilde, pencelerle */
   const ayak = (cx) => `
     <ellipse cx="${cx}" cy="31" rx="12" ry="7.5" fill="${pal.dark}"/>
@@ -230,13 +401,15 @@ function dragonSvg(g, pal, crownKey, mood) {
         ${spikes}
 
         <!-- GOVDE -->
-        <path d="M-34 2 Q-38 -22 -14 -30 Q14 -34 34 -12 Q45 10 28 29 Q2 40 -18 31 Q-32 22 -34 2 Z"
-              fill="${pal.body}"/>
+        <path d="${govdeYolu}" fill="${pal.body}"/>
         <!-- Yan golge: govde yassi bir leke gibi durmasin -->
         <path d="M-34 2 Q-38 -22 -14 -30 Q-24 -8 -22 12 Q-21 26 -18 31 Q-32 22 -34 2 Z"
               fill="${pal.dark}" opacity=".22"/>
         <path d="M34 -12 Q45 10 28 29 Q22 20 22 8 Q22 -8 16 -24 Z"
               fill="${pal.dark}" opacity=".22"/>
+
+        <!-- Renge ozel desen (pul / magma / run / plaka) -->
+        ${patternMarks(pal, govdeYolu)}
 
         <!-- AYAKLAR -->
         ${ayak(-16)}${ayak(16)}
@@ -299,6 +472,11 @@ const feedCostEl = document.getElementById('feed-cost');
 const hintEl = document.getElementById('hint');
 const shopEl = document.getElementById('shop');
 const shopMsgEl = document.getElementById('shop-msg');
+const tryBar = document.getElementById('try-bar');
+const tryName = document.getElementById('try-name');
+const tryNote = document.getElementById('try-note');
+const tryBuy = document.getElementById('try-buy');
+const tryCancel = document.getElementById('try-cancel');
 const tabCare = document.getElementById('tab-care');
 const tabShop = document.getElementById('tab-shop');
 const panelCare = document.getElementById('panel-care');
@@ -312,6 +490,16 @@ let busy = false;
 
 let owned = { color: ['violet'], crown: ['none'], effect: ['none'] };
 let eq = { color: 'violet', crown: 'none', effect: 'none' };
+
+/* Sahip olmadigin bir urune dokununca burasi dolar: ejderha o urunu uzerinde
+   gosterir ama hicbir sey satin alinmaz. Alim ancak deneme cubugundaki
+   butonla onaylanir - eskiden tek dokunus parayi aninda goturuyordu. */
+let deneme = null;   /* { group, id, item } */
+
+/* Ejderhanin O AN gorunecegi kusam: kalici secimler + varsa deneme */
+function gorunum() {
+  return deneme ? { ...eq, [deneme.group]: deneme.id } : eq;
+}
 
 /* ---------- Baslangic ---------- */
 
@@ -328,6 +516,13 @@ feedBtn.addEventListener('click', feed);
 petStage.addEventListener('click', poke);
 tabCare.addEventListener('click', () => switchTab('care'));
 tabShop.addEventListener('click', () => switchTab('shop'));
+tryBuy.addEventListener('click', confirmBuy);
+tryCancel.addEventListener('click', () => {
+  deneme = null;
+  haptic.tap();
+  renderShop();
+  render();
+});
 document.addEventListener('langchange', () => {
   applyStaticTexts();
   renderShop();
@@ -366,6 +561,14 @@ function switchTab(which) {
   panelShop.hidden = !shop;
   panelCare.hidden = shop;
   document.body.classList.toggle('shop-open', shop);
+
+  /* Bakim sekmesine donerken deneme birakilir: oyuncu almadigi bir kiyafeti
+     uzerinde gormeye devam etmesin */
+  if (!shop && deneme) {
+    deneme = null;
+    renderShop();
+    render();
+  }
   haptic.tap();
 }
 
@@ -457,14 +660,44 @@ const GROUPS = [
 ];
 
 /* Kucuk onizleme kareleri */
+/* Kutucuktaki mini desen: renk kartinda da ne aldigini gorebilsin */
+function swatchPattern(item) {
+  const ink = item.ink || item.dark;
+  if (item.pattern === 'scales') {
+    return `<svg viewBox="0 0 24 24"><g fill="none" stroke="${ink}" stroke-width="1.4" opacity=".55">
+      <path d="M2 7q3 4 6 0M8 7q3 4 6 0M14 7q3 4 6 0
+               M5 13q3 4 6 0M11 13q3 4 6 0
+               M2 19q3 4 6 0M8 19q3 4 6 0M14 19q3 4 6 0"/></g></svg>`;
+  }
+  if (item.pattern === 'cracks') {
+    return `<svg viewBox="0 0 24 24"><path d="M7 2 l3 6 l-3 5 l4 5 l-2 4 M17 3 l-2 7 l3 5 l-2 6"
+      fill="none" stroke="${ink}" stroke-width="1.8" opacity=".9"
+      stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+  if (item.pattern === 'runes') {
+    return `<svg viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8" fill="none" stroke="${ink}" stroke-width="1.2" opacity=".6"/>
+      <path d="M12 7 v5 M9.5 9 h5 M12 12 l2.5 4 h-5 z" fill="none" stroke="${ink}"
+            stroke-width="1.7" opacity=".95" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+  if (item.pattern === 'plates') {
+    return `<svg viewBox="0 0 24 24"><g stroke="${ink}" fill="none" stroke-width="1.4" opacity=".7">
+      <path d="M3 7q9 -4 18 0M3 13q9 -4 18 0M3 19q9 -4 18 0"/></g>
+      <path d="M12 2 l3 3 l-3 3 l-3 -3z" fill="${ink}" opacity=".85"/></svg>`;
+  }
+  return '';
+}
+
 function preview(groupKey, id, item) {
   if (groupKey === 'color') {
-    return `<span class="swatch" style="background:linear-gradient(140deg, ${item.body}, ${item.dark})"></span>`;
+    return `<span class="swatch" style="background:linear-gradient(140deg, ${item.body}, ${item.dark})">
+      ${swatchPattern(item)}</span>`;
   }
   if (groupKey === 'crown') {
     if (id === 'none') return `<span class="swatch" style="background:rgba(255,255,255,.06)">—</span>`;
+    /* Her tacin kendi cercevesi var: hepsi kutucugu ayni oranda doldursun */
     return `<span class="swatch" style="background:rgba(255,255,255,.06)">
-      <svg viewBox="-24 -24 48 30"><g transform="translate(0 4)">${crownSvg(id, 0)}</g></svg>
+      <svg viewBox="${CROWN_BOX[id]}">${crownSvg(id, 0)}</svg>
     </span>`;
   }
   if (id === 'none') return `<span class="swatch" style="background:rgba(255,255,255,.06)">—</span>`;
@@ -493,8 +726,10 @@ function renderShop() {
       const secili = eq[group.key] === id;
       const kilit = item.needLevel && level < item.needLevel;
 
+      const deniyor = deneme?.group === group.key && deneme.id === id;
+
       const btn = document.createElement('button');
-      btn.className = 'shop-item' + (secili ? ' on' : '') +
+      btn.className = 'shop-item' + (secili ? ' on' : '') + (deniyor ? ' trying' : '') +
                       ((!sahip && (kilit || coins < item.price)) ? ' locked' : '');
       btn.innerHTML = `
         ${preview(group.key, id, item)}
@@ -517,11 +752,13 @@ function renderShop() {
   }
 }
 
-async function pickItem(groupKey, id, item) {
+/* Dukkanda bir urune dokunmak: sahip oldugunu kusandirir, olmadigini DENER.
+   Deneme hicbir jeton harcamaz; alim tryBuy ile onaylanir. */
+function pickItem(groupKey, id, item) {
   if (busy) return;
 
-  /* Zaten alinmissa sadece kusan */
   if (owned[groupKey].includes(id)) {
+    deneme = null;
     eq[groupKey] = id;
     shopMsgEl.hidden = true;
     haptic.tap();
@@ -530,6 +767,19 @@ async function pickItem(groupKey, id, item) {
     render();
     return;
   }
+
+  /* Kilitli olsa bile denenebilir: oyuncu neyin pesinde oldugunu gorsun */
+  deneme = { group: groupKey, id, item };
+  shopMsgEl.hidden = true;
+  haptic.tap();
+  renderShop();
+  render();
+}
+
+/* Deneme cubugundaki "Satin al" */
+async function confirmBuy() {
+  if (busy || !deneme) return;
+  const { group: groupKey, id, item } = deneme;
 
   if (item.needLevel && level < item.needLevel) {
     return uyar(t('lockedMsg', { level: item.needLevel }));
@@ -546,6 +796,8 @@ async function pickItem(groupKey, id, item) {
     return reddet();
   }
 
+  deneme = null;
+
   coins = sonuc.total;
   owned[groupKey].push(id);
   eq[groupKey] = id;
@@ -561,12 +813,14 @@ async function pickItem(groupKey, id, item) {
 /* ---------- Ekrana cizme ---------- */
 
 function render() {
-  const pal = COLORS[eq.color] || COLORS.violet;
+  const kusam = gorunum();
+  const pal = COLORS[kusam.color] || COLORS.violet;
 
   petArt.innerHTML = level <= EGG_UNTIL
     ? eggSvg(level, pal)
-    : dragonSvg(growth(), pal, eq.crown, mood());
+    : dragonSvg(growth(), pal, kusam.crown, mood());
 
+  renderTryBar();
   stageNameEl.textContent = stageLabel();
   levelEl.textContent = format(level);
   coinsEl.textContent = format(coins);
@@ -594,13 +848,36 @@ function render() {
   else hintEl.textContent = t('hint');
 }
 
+/* Deneme cubugu: ne denendigi, kac jetona geldigi ve alinip alinamayacagi */
+function renderTryBar() {
+  if (!deneme) {
+    tryBar.hidden = true;
+    return;
+  }
+
+  const { item } = deneme;
+  const kilit = item.needLevel && level < item.needLevel;
+  const parasiz = coins < item.price;
+
+  tryBar.hidden = false;
+  tryName.textContent = t(item.nameKey);
+  tryBuy.textContent = `◆ ${format(item.price)}`;
+  tryBuy.disabled = busy || kilit || parasiz;
+
+  tryNote.classList.toggle('warn', !!(kilit || parasiz));
+  if (kilit) tryNote.textContent = t('lockedMsg', { level: item.needLevel });
+  else if (parasiz) tryNote.textContent = t('tryNoCoins');
+  else tryNote.textContent = t('tryHint');
+}
+
 /* Satin alinan animasyonu sahneye kurar */
 function renderEffect() {
-  const fx = EFFECTS[eq.effect] || EFFECTS.none;
+  const secili = gorunum().effect;
+  const fx = EFFECTS[secili] || EFFECTS.none;
   fxEl.textContent = '';
   fxEl.className = 'fx';
 
-  if (eq.effect === 'none') return;
+  if (secili === 'none') return;
 
   if (fx.kind === 'aura') {
     fxEl.classList.add('aura');

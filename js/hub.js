@@ -2,8 +2,34 @@
 Yeni oyun eklemek istedigimizde sadece asagidaki gameList() fonksiyonuna satir ekliyoruz. */
 
 import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js';
-import { getPoints, getBest } from './store.js';
+import { getPoints, getBest, addPoints } from './store.js';
 import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js';
+
+/* ---------- GECICI: test jetonu ----------
+
+   Adres satirina ?bonus=ejderha1m eklenerek acilirsa hesaba bir kereligine
+   1.000.000 jeton yazar. Test icin var; isaret localStorage'a yazildigi icin
+   sayfayi yenilemek tekrar tekrar jeton eklemez.
+
+   Jetonlar zaten tamamen cihazda tutuldugu ve herkes tarafindan
+   degistirilebildigi icin bu yeni bir acik degil - ama adres herkese acik
+   oldugundan test bitince bu blok SILINMELI. */
+const BONUS_ANAHTAR = 'ejderha1m';
+const BONUS_MIKTAR = 1_000_000;
+
+async function testJetonu() {
+   const istenen = new URLSearchParams(location.search).get('bonus');
+   if (istenen !== BONUS_ANAHTAR) return;
+
+   const isaret = `bonus_${BONUS_ANAHTAR}`;
+   if (localStorage.getItem(isaret) !== '1') {
+      await addPoints(BONUS_MIKTAR);
+      localStorage.setItem(isaret, '1');
+   }
+
+   /* Adresi temizle ki yenilemede ?bonus= takili kalmasin */
+   history.replaceState(null, '', location.pathname);
+}
 
 /* Botun Telegram adresi. Kendi botunun adini yazarsan tarayicida acan
    kullanicilar uyariya dokununca dogrudan bota gider. Bos birakilirsa
@@ -226,6 +252,7 @@ await initLang();
 applyTranslations();
 renderLangSwitcher(document.getElementById('lang-switcher'));
 
+await testJetonu(); /* GECICI - test bitince kaldirilacak */
 renderProfile();
 renderGames();
 renderTelegramNotice();
