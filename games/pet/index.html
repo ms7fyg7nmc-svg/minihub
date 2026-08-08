@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>My Dragon</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    /* Uygulama dogrudan bu oyun sayfasinda acildiysa once hub'i goster.
+       Isaret hub acildiginda birakilir; yoksa buraya hub'dan gelinmemistir. */
+    try {
+      if (sessionStorage.getItem('mh_hub_open') !== '1') location.replace('../../index.html');
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../../css/game.css">
+  <link rel="stylesheet" href="pet.css">
+</head>
+<body class="game" data-i18n-title="title">
+  <div class="app game-app">
+
+    <header class="game-head">
+      <div>
+        <h1 class="game-title" data-i18n="title">My Dragon</h1>
+        <p class="game-sub" id="stage-name" data-i18n="stage.egg">Egg</p>
+      </div>
+      <div class="scores">
+        <div class="score-box">
+          <span data-i18n="level">LEVEL</span>
+          <strong id="level">1</strong>
+        </div>
+        <div class="score-box">
+          <span data-i18n="coins">COINS</span>
+          <strong id="coins">0</strong>
+        </div>
+      </div>
+    </header>
+
+    <!-- Ekranin ortasinda duran oyun alani -->
+    <div class="game-mid">
+      <div class="pet-wrap">
+        <div class="pet-stage" id="pet-stage">
+          <div class="pet-art" id="pet-art"></div>
+        </div>
+
+        <!-- Doyum ve gelisim cubuklari -->
+        <div class="bars">
+          <div class="bar-row">
+            <span class="bar-label" data-i18n="fullness">Fullness</span>
+            <div class="bar"><i id="hunger-fill"></i></div>
+            <span class="bar-value" id="hunger-value">100%</span>
+          </div>
+          <div class="bar-row">
+            <span class="bar-label" data-i18n="growth">Growth</span>
+            <div class="bar xp"><i id="xp-fill"></i></div>
+            <span class="bar-value" id="xp-value">0/3</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="hint" id="hint" data-i18n="hint">Earn coins in the other games, then feed your dragon here.</p>
+
+    <!-- Butonlar en altta: tek elle bas parmakla rahat ulasilsin -->
+    <div class="controls">
+      <button class="btn primary feed" id="feed">
+        <span data-i18n="feed">Feed</span>
+        <b id="feed-cost">10</b>
+      </button>
+      <a class="btn" href="../../index.html" id="back-link" data-i18n="backToHub">Back to Hub</a>
+    </div>
+
+    <footer class="foot"><span data-i18n="hub.version">Version 0.1</span></footer>
+
+  </div>
+
+  <script type="module" src="pet.js"></script>
+</body>
+</html>

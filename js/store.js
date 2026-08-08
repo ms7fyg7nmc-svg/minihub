@@ -73,6 +73,29 @@ export function addPoints(amount) {
   return pointsQueue;
 }
 
+/** Hub puanindan harcama yapar.
+    { ok, total } dondurur - bakiye yetmiyorsa ok:false ve hicbir sey degismez.
+
+    Eklemelerle AYNI siraya bagli calisir: yoksa "oku, cikar, yaz" arasina bir
+    kazanc girip bakiyeyi bozabilirdi. */
+export function spendPoints(amount) {
+  const n = Math.max(0, Math.round(Number(amount) || 0));
+
+  const sonuc = pointsQueue
+    .catch(() => 0)
+    .then(async () => {
+      const total = await getPoints();
+      if (total < n) return { ok: false, total };
+      const kalan = total - n;
+      set('hub_points', kalan);
+      return { ok: true, total: kalan };
+    });
+
+  /* Siradaki islem guncel bakiyeyi gorsun */
+  pointsQueue = sonuc.then((r) => r.total).catch(() => 0);
+  return sonuc;
+}
+
 export async function getBest(game) {
   return Number(await get(`best_${game}`)) || 0;
 }

@@ -70,6 +70,18 @@ const ICONS = {
       <circle cx="18" cy="15" r="3.2" fill="#fff"/>
    </svg>`,
 
+   /* Ejderha: kanatlar, govde, bas ve boynuzlar */
+   pet: `<svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4.5 10.5Q1 8 0.8 11.2q2.6 1.4 4 3.2z" fill="#fff" opacity=".55"/>
+      <path d="M19.5 10.5Q23 8 23.2 11.2q-2.6 1.4-4 3.2z" fill="#fff" opacity=".55"/>
+      <ellipse cx="12" cy="16" rx="6.4" ry="5.2" fill="#fff" opacity=".92"/>
+      <circle cx="12" cy="8.4" r="4.6" fill="#fff"/>
+      <path d="M9.4 4.6 8.2 1.8l3 1.6z" fill="#fff" opacity=".7"/>
+      <path d="M14.6 4.6 15.8 1.8l-3 1.6z" fill="#fff" opacity=".7"/>
+      <circle cx="10.3" cy="8" r="1.1" fill="#3a2a4d"/>
+      <circle cx="13.7" cy="8" r="1.1" fill="#3a2a4d"/>
+   </svg>`,
+
    /* Kivrilan bir yilan govdesi ve onundeki yem */
    snake: `<svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M4 17h6a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h5" fill="none" stroke="#fff"
@@ -91,6 +103,18 @@ const ICONS = {
 
 function gameList() {
    return [
+      {
+         id: 'pet',
+         title: t('game.pet.title'),
+         desc: t('game.pet.desc'),
+         icon: ICONS.pet,
+         url: 'games/pet/index.html',
+         gradient: 'linear-gradient(140deg, #b083ec, #7b4fd0)',
+         accent: '#a978e8',
+         /* Rekor yok: bu oyun skor tutmuyor, kazanilan jetonu harciyor */
+         noBest: true,
+         ready: true,
+      },
       {
          id: '2048',
          title: t('game.2048.title'),
@@ -271,12 +295,15 @@ gameList().forEach((game, index) => {
    const badge = card.querySelector('.badge');
    if (game.ready) {
       badge.textContent = t('hub.play');
-      getBest(game.id).then((best) => {
-         if (best > 0) {
-            badge.textContent = t(game.bestKey ?? 'hub.record', { best: best.toLocaleString(locale()) });
-            badge.classList.add('record');
-         }
-      });
+      /* noBest: skor tutmayan oyunlar (ornek: Ordegim) rozette rekor gostermez */
+      if (!game.noBest) {
+         getBest(game.id).then((best) => {
+            if (best > 0) {
+               badge.textContent = t(game.bestKey ?? 'hub.record', { best: best.toLocaleString(locale()) });
+               badge.classList.add('record');
+            }
+         });
+      }
       card.addEventListener('click', () => {
          haptic.tap();
          window.location.href = game.url;
