@@ -27,7 +27,8 @@ const TEXTS = {
   en: {
     welcome:
       '👋 <b>Welcome to Mini HUB Pocket Games</b>\n\n' +
-      'A pocket full of mini games — puzzles, blocks, candy, mines and more.\n\n' +
+      'A pocket full of mini games — puzzles, blocks, candy and more.\n\n' +
+      'Spend what you earn raising your own dragon on a floating island.\n\n' +
       'Every game you finish earns hub points. No download, no ads.\n\n' +
       'Tap <b>Play</b> below to start.',
     help:
@@ -45,7 +46,8 @@ const TEXTS = {
   tr: {
     welcome:
       "👋 <b>Mini HUB Pocket Games'e hoş geldin</b>\n\n" +
-      'Cebinde bir sürü mini oyun — bulmaca, blok, şeker, mayın ve dahası.\n\n' +
+      'Cebinde bir sürü mini oyun — bulmaca, blok, şeker ve dahası.\n\n' +
+      'Kazandığın jetonlarla uçan adadaki kendi ejderhanı büyüt.\n\n' +
       'Bitirdiğin her oyun sana hub puanı kazandırır. İndirme yok, reklam yok.\n\n' +
       'Başlamak için aşağıdaki <b>Oyna</b> düğmesine bas.',
     help:
@@ -63,7 +65,8 @@ const TEXTS = {
   es: {
     welcome:
       '👋 <b>Bienvenido a Mini HUB Pocket Games</b>\n\n' +
-      'Un bolsillo lleno de minijuegos: puzles, bloques, caramelos, minas y más.\n\n' +
+      'Un bolsillo lleno de minijuegos: puzles, bloques, caramelos y más.\n\n' +
+      'Gasta lo que ganes criando tu dragón en una isla flotante.\n\n' +
       'Cada partida que terminas te da puntos de hub. Sin descargas, sin anuncios.\n\n' +
       'Pulsa <b>Jugar</b> para empezar.',
     help:
@@ -81,7 +84,8 @@ const TEXTS = {
   ru: {
     welcome:
       '👋 <b>Добро пожаловать в Mini HUB Pocket Games</b>\n\n' +
-      'Целый карман мини-игр: головоломки, блоки, конфеты, мины и не только.\n\n' +
+      'Целый карман мини-игр: головоломки, блоки, конфеты и не только.\n\n' +
+      'Трать заработанное на своего дракона с летающего острова.\n\n' +
       'За каждую игру начисляются очки хаба. Без загрузок и без рекламы.\n\n' +
       'Нажми <b>Играть</b>, чтобы начать.',
     help:
