@@ -34,7 +34,7 @@ import { isTelegramUser, getInitData } from './tg.js';
    birakirsan sunucuya baglanma denemesi basarisiz olur ve oyun otomatik
    olarak yerel moda duser - hicbir sey kirilmaz, sadece bakiyeler bu
    cihazdan cihaza tasinmaz. */
-const API_BASE = 'https://minihub-bot.KULLANICIADIN.workers.dev';
+const API_BASE = 'https://minihub-bot.volkanturedi1.workers.dev';
 
 function uuid() {
   if (globalThis.crypto?.randomUUID) return crypto.randomUUID();
