@@ -136,19 +136,37 @@ async function send(env, chatId, text, replyMarkup) {
 }
 
 /* Karsilama mesaji banner gorseliyle gider. Diger cevaplar duz metin kalir,
-   yoksa kullanici her yazdiginda resim inip sohbeti agirlastirir. */
+   yoksa kullanici her yazdiginda resim inip sohbeti agirlastirir.
+
+   GORSEL GIDEMEZSE METIN YINE GITSIN
+
+   Once bu yedek yoktu: banner adresi bir sebeple ulasilamaz olunca (dosya
+   adi degisti, GitHub Pages gecici olarak cevap vermedi) sendPhoto sessizce
+   basarisiz oluyor ve /start yazan kullanici HICBIR sey gormuyordu. Artik
+   gorsel gitmezse ayni metin duz mesaj olarak gonderiliyor - bot hicbir
+   durumda sessiz kalmiyor. */
 async function sendWithBanner(env, chatId, caption, replyMarkup) {
-  await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/sendPhoto`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      chat_id: chatId,
-      photo: BANNER_URL,
-      caption,
-      parse_mode: 'HTML',
-      reply_markup: replyMarkup,
-    }),
-  });
+  try {
+    const cevap = await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/sendPhoto`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        photo: BANNER_URL,
+        caption,
+        parse_mode: 'HTML',
+        reply_markup: replyMarkup,
+      }),
+    });
+    if (cevap.ok) {
+      const sonuc = await cevap.json().catch(() => null);
+      if (sonuc?.ok) return;
+    }
+  } catch {
+    /* ag hatasi - asagidaki duz metne dusulur */
+  }
+
+  await send(env, chatId, caption, replyMarkup);
 }
 
 export default {
