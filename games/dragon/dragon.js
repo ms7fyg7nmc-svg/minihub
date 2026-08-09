@@ -244,7 +244,7 @@ function durt() {
 }
 
 async function besle() {
-  if (busy || ejderha.level >= CONFIG.MAX_LEVEL) return;
+  if (busy) return;
 
   const fiyat = feedCost(ejderha.level);
   if (coins < fiyat) return uyar(t('notEnough'));
@@ -253,7 +253,7 @@ async function besle() {
   feedBtn.disabled = true;
 
   /* Etiket ayni karede iki kez basilirsa ikinci istegi tek islem yapar */
-  const sonuc = await harca(`feed:${ejderha.id}:${ejderha.level}:${ejderha.xp}`, fiyat);
+  const sonuc = await harca(`feed:${ejderha.id}:${ejderha.level}:${ejderha.xp}:${ejderha.lastFed}`, fiyat);
   busy = false;
 
   if (!sonuc.ok) {
@@ -264,6 +264,19 @@ async function besle() {
 
   coins = sonuc.bakiye;
   ejderha.lastFed = Date.now();
+
+  /* Son seviyede besleme XP vermez ama ejderha yine ACIKIYOR.
+     Eskiden buton tamamen kapaliydi ve seviye 99'daki bir ejderha bir daha
+     hic doyurulamiyordu - dogru davranis besleyip doyumu doldurmak. */
+  if (ejderha.level >= CONFIG.MAX_LEVEL) {
+    haptic.success();
+    islandEl.classList.add('fed');
+    setTimeout(() => islandEl.classList.remove('fed'), 950);
+    kaydet();
+    ciz();
+    return;
+  }
+
   xpVer(CONFIG.FEED_XP, 'fed');
 }
 
@@ -541,15 +554,18 @@ function ciz() {
 
   const fiyat = feedCost(ejderha.level);
   feedCostEl.textContent = bicim(fiyat);
-  feedBtn.disabled = busy || enSon || coins < fiyat;
+  /* Son seviyede de beslenebilir: XP gelmez ama doyum dolar */
+  feedBtn.disabled = busy || coins < fiyat;
   playBtn.disabled = (ejderha.lastPlayed || 0) + CONFIG.PLAY_COOLDOWN_MS > Date.now();
 
   denemeCubuguCiz();
 
   if (!hintEl.classList.contains('warn')) {
-    if (enSon) hintEl.textContent = t('maxLevel');
-    else if (coins < fiyat) hintEl.textContent = t('notEnough');
+    /* Aclik en son seviyede bile oncelikli: "en yuksek seviye" yazisi
+       oyuncunun ejderhasinin ac oldugunu gormesini engellemesin */
+    if (coins < fiyat) hintEl.textContent = t('notEnough');
     else if (d < CONFIG.HUNGRY_BELOW) hintEl.textContent = t('hungryHint');
+    else if (enSon) hintEl.textContent = t('maxLevel');
     else hintEl.textContent = t('hint');
   }
   /* Uyari bir sonraki cizimde temizlenir */
@@ -576,32 +592,82 @@ function denemeCubuguCiz() {
   else tryNote.textContent = t('tryHint');
 }
 
-/* Satin alinan animasyonu sahneye kurar */
+/* --- Satin alinan animasyonlar ---
+
+   Once hepsi ayni seydi: renkli kucuk kareler yukari suzuluyordu, sadece
+   rengi degisiyordu. Simdi her efektin kendi SEKLI ve kendi hareketi var -
+   kor titriyor, alev dili uzayip kisaliyor, simsek carpiyor, hale donuyor,
+   yildiz parildayip sonuyor. Sekiller SVG, hareket CSS. */
+
+const EFEKT_SEKLI = {
+  ember: `<svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.4" fill="currentColor"/>
+          <circle cx="6" cy="6" r="2" fill="#fff" opacity=".7"/></svg>`,
+
+  flame: `<svg viewBox="0 0 24 26">
+            <path d="M12 1 C17 8 21 12 21 17 C21 22 17 25 12 25 C7 25 3 22 3 17
+                     C3 12 7 8 12 1 Z" fill="currentColor"/>
+            <path d="M12 9 C15 13 16.5 15 16.5 17.5 C16.5 20.5 14.5 22 12 22
+                     C9.5 22 7.5 20.5 7.5 17.5 C7.5 15 9 13 12 9 Z"
+                  fill="#fff" opacity=".55"/>
+          </svg>`,
+
+  bolt:  `<svg viewBox="0 0 22 30">
+            <path d="M14 0 L4 15 H10 L7 30 L20 12 H13 Z" fill="currentColor"/>
+            <path d="M14 0 L4 15 H10 L7 30 L20 12 H13 Z" fill="none"
+                  stroke="#fff" stroke-width="1.2" opacity=".8"/>
+          </svg>`,
+
+  star:  `<svg viewBox="0 0 24 24">
+            <path d="M12 0 C13.2 8.6 15.4 10.8 24 12 C15.4 13.2 13.2 15.4 12 24
+                     C10.8 15.4 8.6 13.2 0 12 C8.6 10.8 10.8 8.6 12 0 Z"
+                  fill="currentColor"/>
+          </svg>`,
+};
+
 function efektCiz(auraId) {
   const fx = AURAS[auraId] || AURAS.none;
   fxEl.textContent = '';
   fxEl.className = 'fx';
+  fxEl.style.color = fx.color || '';
   if (auraId === 'none') return;
 
-  if (fx.kind === 'aura') {
-    fxEl.classList.add('aura');
+  /* Hale: parcacik degil, ejderhanin cevresinde donen bir halka */
+  if (fx.kind === 'halo') {
+    fxEl.classList.add('halo');
     fxEl.style.setProperty('--aura', fx.color);
+    fxEl.innerHTML = `
+      <svg class="halo-ring" viewBox="0 0 100 100">
+        <ellipse cx="50" cy="50" rx="46" ry="15" fill="none" stroke="${fx.color}"
+                 stroke-width="2.5" stroke-dasharray="10 7" opacity=".85"/>
+        <ellipse cx="50" cy="50" rx="38" ry="12" fill="none" stroke="${fx.color}"
+                 stroke-width="1.2" stroke-dasharray="4 9" opacity=".5"/>
+      </svg>`;
     return;
   }
-  if (fx.kind === 'storm') fxEl.classList.add('storm');
 
-  const adet = fx.kind === 'storm' ? 6 : 12;
-  for (let i = 0; i < adet; i++) {
+  /* Adet ve gecikme araligi birlikte secildi: her an ekranda birkac tanesi
+     gorunur olsun ama sahne kalabaliga donmesin. */
+  const ayar = {
+    ember: { adet: 18, boy: [5, 9],   sure: [2.0, 3.4], gecikme: 2.2 },
+    flame: { adet: 12, boy: [12, 22], sure: [1.1, 1.9], gecikme: 1.4 },
+    bolt:  { adet: 5,  boy: [16, 26], sure: [2.4, 4.0], gecikme: 3.0 },
+    star:  { adet: 14, boy: [9, 16],  sure: [1.6, 2.8], gecikme: 2.0 },
+  }[fx.kind];
+
+  const rast = ([a, b]) => a + Math.random() * (b - a);
+
+  for (let i = 0; i < ayar.adet; i++) {
     const s = document.createElement('span');
-    const boy = fx.kind === 'storm' ? 3 : 3 + Math.random() * 4;
+    s.className = `p ${fx.kind}`;
+    const boy = rast(ayar.boy);
     s.style.cssText = `
-      left:${8 + Math.random() * 84}%;
-      bottom:${6 + Math.random() * 26}%;
+      left:${4 + Math.random() * 92}%;
+      bottom:${(fx.kind === 'bolt' || fx.kind === 'star' ? 10 + Math.random() * 70 : Math.random() * 24)}%;
       width:${boy}px;
-      height:${fx.kind === 'storm' ? 16 : boy}px;
-      background:${fx.color};
-      --dur:${(2.2 + Math.random() * 2.4).toFixed(2)}s;
-      --delay:${(Math.random() * 2.4).toFixed(2)}s;`;
+      --dx:${(Math.random() * 26 - 13).toFixed(1)}px;
+      --dur:${rast(ayar.sure).toFixed(2)}s;
+      --delay:${(Math.random() * ayar.gecikme).toFixed(2)}s;`;
+    s.innerHTML = EFEKT_SEKLI[fx.kind];
     fxEl.appendChild(s);
   }
 }

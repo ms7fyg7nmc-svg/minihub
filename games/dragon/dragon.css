@@ -110,46 +110,114 @@
 
 /* --- Satin alinan animasyon efektleri --- */
 
-.fx { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: visible; }
+/* Efekt katmani ejderhanin ONUNDE duruyor. Arkada oldugunda parcaciklarin
+   cogu govdenin arkasinda kayboluyordu; onde olunca alev govdeyi yalayip
+   geciyor ve satin alinan sey gercekten goruluyor. */
+.fx { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: visible; }
 
-.fx span {
+/* Her parcacik bir SVG kabi. Renk 'color' ile geliyor, sekiller
+   currentColor kullaniyor - tek yerden renklendirmek icin. */
+.fx .p {
   position: absolute;
-  border-radius: 50%;
+  display: block;
   opacity: 0;
-  animation: fx-rise var(--dur, 3s) linear infinite;
+  animation-duration: var(--dur, 3s);
   animation-delay: var(--delay, 0s);
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
 }
 
-@keyframes fx-rise {
-  0%   { opacity: 0; transform: translateY(0) scale(0.6); }
-  15%  { opacity: 0.9; }
-  100% { opacity: 0; transform: translateY(-110px) scale(0.2); }
+.fx .p svg { width: 100%; height: auto; display: block; }
+
+/* Kor: hafifce savrularak yukselir ve titrer */
+.fx .p.ember {
+  animation-name: kor-yuksel;
+  animation-timing-function: linear;
+  filter: drop-shadow(0 0 4px currentColor);
 }
 
-.fx.storm span { animation-name: fx-spark; border-radius: 2px; }
+@keyframes kor-yuksel {
+  0%   { opacity: 0; transform: translate(0, 0) scale(0.5); }
+  12%  { opacity: 1; }
+  55%  { opacity: 0.85; }
+  100% { opacity: 0; transform: translate(var(--dx, 0), -105px) scale(0.25); }
+}
 
-@keyframes fx-spark {
-  0%, 100% { opacity: 0; transform: scaleY(0.4); }
-  8%       { opacity: 1; transform: scaleY(1.3); }
+/* Alev dili: yukselirken uzayip incelir */
+.fx .p.flame {
+  animation-name: alev-yuksel;
+  animation-timing-function: ease-out;
+  transform-origin: 50% 100%;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+@keyframes alev-yuksel {
+  0%   { opacity: 0; transform: translate(0, 0) scale(0.5, 0.4); }
+  18%  { opacity: 0.95; transform: translate(0, -14px) scale(1, 1); }
+  60%  { opacity: 0.8; transform: translate(calc(var(--dx, 0px) * 0.5), -48px) scale(0.8, 1.25); }
+  100% { opacity: 0; transform: translate(var(--dx, 0), -86px) scale(0.3, 0.6); }
+}
+
+/* Simsek: yerinde carpar, iki kez cakip soner */
+.fx .p.bolt {
+  animation-name: simsek-cak;
+  animation-timing-function: steps(1, end);
+  filter: drop-shadow(0 0 7px currentColor);
+}
+
+@keyframes simsek-cak {
+  0%, 100% { opacity: 0; transform: scale(0.9); }
+  3%       { opacity: 1; transform: scale(1.1); }
+  7%       { opacity: 0.15; }
+  11%      { opacity: 0.95; transform: scale(1); }
   16%      { opacity: 0; }
 }
 
-.fx.aura::before {
+/* Yildiz: donerek parildar ve soner */
+.fx .p.star {
+  animation-name: yildiz-parilda;
+  animation-timing-function: ease-in-out;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+
+@keyframes yildiz-parilda {
+  0%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+  50%      { opacity: 1; transform: scale(1) rotate(80deg); }
+}
+
+/* Hale: ejderhanin cevresinde donen halka + yumusak isik */
+.fx.halo::before {
   content: '';
   position: absolute;
   left: 50%;
-  top: 52%;
-  width: 78%;
+  top: 54%;
+  width: 84%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(circle, var(--aura, #f5b942) 0%, transparent 66%);
-  opacity: 0.30;
-  animation: aura-pulse 2.6s ease-in-out infinite;
+  background: radial-gradient(circle, var(--aura, #c079f2) 0%, transparent 64%);
+  opacity: 0.2;
+  animation: hale-nabiz 2.8s ease-in-out infinite;
 }
 
-@keyframes aura-pulse {
-  50% { opacity: 0.5; transform: translate(-50%, -50%) scale(1.1); }
+@keyframes hale-nabiz {
+  50% { opacity: 0.34; transform: translate(-50%, -50%) scale(1.09); }
+}
+
+/* Halka ejderhanin ayaklarinin cevresinde donen bir buyu cemberi.
+   Daha genis/asagidayken kutunun disina tasip atlama ipi gibi duruyordu. */
+.fx .halo-ring {
+  position: absolute;
+  left: 50%;
+  top: 79%;
+  width: 76%;
+  transform: translate(-50%, -50%);
+  animation: hale-don 7s linear infinite;
+  filter: drop-shadow(0 0 5px var(--aura, #c079f2));
+}
+
+@keyframes hale-don {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 /* Ucusan yazilar (+1 XP, Seviye 12!) */

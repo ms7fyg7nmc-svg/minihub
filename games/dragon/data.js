@@ -79,13 +79,15 @@ export const FACES = {
 };
 
 /* --- HALE: satin alinan animasyonlar --- */
+/* kind, art.js degil dragon.js tarafindan okunuyor: her tur kendi seklini ve
+   hareketini getiriyor (kor, alev dili, simsek, donen hale, kivilcim yildizi). */
 export const AURAS = {
   none:   { price: 0,    nameKey: 'auNone' },
-  embers: { price: 500,  nameKey: 'auEmbers', color: '#f5b942', kind: 'rise' },
-  flame:  { price: 1400, nameKey: 'auFlame',  color: '#f2703a', kind: 'rise' },
-  storm:  { price: 2800, nameKey: 'auStorm',  color: '#8fd0ff', kind: 'storm' },
-  halo:   { price: 4200, nameKey: 'auHalo',   color: '#c079f2', kind: 'aura' },
-  stars:  { price: 6500, nameKey: 'auStars',  color: '#ffe066', kind: 'rise', needLevel: 60 },
+  embers: { price: 500,  nameKey: 'auEmbers', color: '#f5b942', kind: 'ember' },
+  flame:  { price: 1400, nameKey: 'auFlame',  color: '#f2703a', kind: 'flame' },
+  storm:  { price: 2800, nameKey: 'auStorm',  color: '#8fd0ff', kind: 'bolt' },
+  halo:   { price: 4200, nameKey: 'auHalo',   color: '#c079f2', kind: 'halo' },
+  stars:  { price: 6500, nameKey: 'auStars',  color: '#ffe066', kind: 'star', needLevel: 60 },
 };
 
 /* Slot anahtarindan katalog tablosuna */

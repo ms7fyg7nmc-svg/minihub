@@ -79,6 +79,13 @@ function ekrana(r, c, h = 0) {
 /* Derinlik anahtari: buyuk olan one gelir */
 const derinlik = (r, c) => r + c;
 
+/* Sahnenin izgara merkezine gore dikey sinirlari.
+   UST  = en arkadaki agacin tepesi (plato yuksekligi dahil)
+   ALT  = adanin altindaki kaya koninin ucu
+   Kadrajlama bu ikisinin ortasina gore yapiliyor. */
+const ICERIK_UST = -118;
+const ICERIK_ALT = 190;
+
 /* --- Sahnedeki nesneler ---
    tur: agac | kaya | yuva | cicek | kutuk */
 const NESNELER = [
@@ -328,7 +335,12 @@ export function createIsland(arkaCanvas, onCanvas) {
     /* Ada ekrana sigsin: genislige gore olcekle */
     olcek = Math.min(1, (genislik - 16) / icerikGenislik);
     merkezX = genislik / 2;
-    merkezY = yukseklikPx * 0.30;
+
+    /* Dikey kadrajlama sabit bir oranla degil, sahnenin GERCEK sinirlarina
+       gore yapiliyor. Sabit oranda ada yukarida kaliyor, altta bos bir serit
+       birakiyordu; boyle hesaplayinca agac tepelerinden kaya ucuna kadar olan
+       butun icerik kutunun ortasina oturuyor. */
+    merkezY = yukseklikPx / 2 - ((ICERIK_UST + ICERIK_ALT) / 2) * olcek;
 
     pisir();
     partikullerYarat();
@@ -455,6 +467,10 @@ export function createIsland(arkaCanvas, onCanvas) {
   return {
     boyutlandir,
     ejderhaNoktasi,
+    /* Tek kareyi hemen cizer. Animasyon dongusu requestAnimationFrame'e
+       bagli, o da sayfa gorunmez oldugunda durur; sabit bir goruntu uretmek
+       isteyen (ornegin bot banner'i) buradan tek kare alabilir. */
+    tekKare(zaman = 0) { ciz(zaman); },
     basla() {
       if (calisiyor) return;
       calisiyor = true;

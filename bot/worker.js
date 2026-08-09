@@ -20,7 +20,7 @@ const BOT_USERNAME = 'minihubgames_bot';
 /* Karsilama mesajinin ustundeki banner gorseli. Ayni repo'da barinir,
    degistirmek istersen bot/assets/banner.png dosyasinin uzerine yaz ve
    GitHub'a yolla - adres ayni kalir. */
-const BANNER_URL = 'https://ms7fyg7nmc-svg.github.io/minihub/bot/assets/banner.png';
+const BANNER_URL = 'https://ms7fyg7nmc-svg.github.io/minihub/bot/assets/banner.jpg';
 
 /* Telegram bize kullanicinin dilini soyluyor; bilmedigimiz bir dilse Ingilizce */
 const TEXTS = {
