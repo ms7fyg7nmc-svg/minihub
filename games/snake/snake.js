@@ -81,6 +81,14 @@ let timer = null;
 let running = false;
 let over = false;
 
+/* Bolum atlarken kisa bir duraklama var. O sirada gelen bir kaydirma
+   oyunu ESKI harita uzerinde yeniden baslatiyor ve yilan yeni bolume
+   gecmeden engele carpiyordu. Bu bayrak o araligi kilitliyor. */
+let gecis = false;
+
+/* Bolumun SON yemi altin renkli: bitise ne kadar kaldigi gorunsun */
+let altinYem = false;
+
 /* ---------- Baslangic ---------- */
 
 initTelegram();
@@ -157,39 +165,104 @@ function buildLevel() {
   dir = 1;
   nextDir = 1;
 
-  walls = buildWalls(mid);
+  walls = buildWalls();
   placeFood();
   render();
 }
 
-/* Engelleri dagitir.
+/* ---------- ENGELLER: SIMETRIK VE TASARLANMIS ----------
 
-   Iki kural var: yilanin basladigi satira hic engel koymuyoruz (yoksa oyuncu
-   daha tepki veremeden carpabilir), ve engeller haritayi ikiye bolmemeli -
-   yerlestirdikten sonra bos hucrelerin hepsinin birbirine bagli oldugunu
-   kontrol ediyoruz, degilse yeniden dagitiyoruz. */
-function buildWalls(startRow) {
-  const count = Math.min((level - 1) * OBSTACLES_PER_LEVEL, MAX_OBSTACLES);
-  if (count === 0) return new Set();
+   Onceki surumde engeller rastgele serpistiriliyordu; harita her seferinde
+   dagilmis ve kazara duruyordu. Simdi her bolumun BELIRLI bir deseni var:
+   sol-ust ceyrege birkac hucre koyuyoruz, sonra iki eksende de aynaliyoruz.
+   Sonuc dort katli simetrik, kasitli gorunen bir harita.
 
-  const yasak = new Set(snake);
-  for (let c = 0; c < SIZE; c++) yasak.add(startRow * SIZE + c); /* baslangic satiri */
+   Desen bolume gore SABIT seciliyor - ayni bolum her zaman ayni haritayi
+   veriyor, yani oyuncu ogrenebiliyor. Desenler tukendikce sikliklari artiyor.
 
-  const aday = [];
-  for (let i = 0; i < SIZE * SIZE; i++) if (!yasak.has(i)) aday.push(i);
+   Baslangic satirina (ortadaki satir) hicbir desen dokunmuyor: taban
+   hucrelerinin satiri her zaman ortanin ustunde, aynalari da altinda kaliyor. */
 
-  for (let deneme = 0; deneme < 40; deneme++) {
-    const havuz = aday.slice();
-    for (let i = havuz.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [havuz[i], havuz[j]] = [havuz[j], havuz[i]];
+/* Sol-ust ceyrekteki hucreleri her iki eksende aynalar */
+function dortAyna(noktalar) {
+  const s = new Set();
+  for (const [r, c] of noktalar) {
+    if (r < 0 || c < 0 || r >= SIZE || c >= SIZE) continue;
+    for (const rr of [r, SIZE - 1 - r]) {
+      for (const cc of [c, SIZE - 1 - c]) s.add(rr * SIZE + cc);
     }
-    const secilen = new Set(havuz.slice(0, count));
-    if (hepsiBagli(secilen)) return secilen;
+  }
+  return s;
+}
+
+/* Her desen sol-ust ceyrekte taban hucreleri uretir. n = siklik (0..3) */
+const DESENLER = [
+  /* Dort kosede L blok */
+  (n) => {
+    const d = [];
+    const uz = 2 + Math.min(2, n);
+    for (let k = 0; k < uz; k++) { d.push([2, 2 + k]); d.push([2 + k, 2]); }
+    return d;
+  },
+  /* Dikey sutunlar */
+  (n) => {
+    const d = [];
+    const uz = 3 + Math.min(2, n);
+    for (let k = 0; k < uz; k++) d.push([2 + k, 4]);
+    return d;
+  },
+  /* Yatay cubuklar */
+  (n) => {
+    const d = [];
+    const uz = 3 + Math.min(3, n);
+    for (let k = 0; k < uz; k++) d.push([4, 1 + k]);
+    return d;
+  },
+  /* Elmas kenari (capraz) */
+  (n) => {
+    const d = [];
+    const uz = 3 + Math.min(2, n);
+    for (let k = 0; k < uz; k++) d.push([5 - k, 1 + k]);
+    return d;
+  },
+  /* Nokta izgarasi */
+  (n) => {
+    const d = [[2, 2], [2, 5], [5, 2]];
+    if (n >= 1) d.push([5, 5]);
+    if (n >= 2) d.push([3, 3], [4, 4]);
+    return d;
+  },
+  /* Kapili duvar: dikey duvar, ortasinda gecis bosluk */
+  (n) => {
+    const d = [];
+    for (let r = 0; r <= 2 + Math.min(2, n); r++) d.push([r, 3]);
+    return d;
+  },
+];
+
+function buildWalls() {
+  if (level < 2) return new Set();
+
+  const sira = level - 2;
+  const siklik = Math.floor(sira / DESENLER.length);
+
+  /* Once bu bolumun deseni, olmazsa oncekiler: her zaman simetrik bir
+     harita cikmasi garanti olsun */
+  for (let kaydir = 0; kaydir < DESENLER.length; kaydir++) {
+    const desen = DESENLER[(sira + kaydir) % DESENLER.length];
+    const engeller = dortAyna(desen(siklik));
+
+    /* Yilanin uzerinde ya da baslangic satirinda olmamali */
+    let cakisma = false;
+    for (const i of engeller) {
+      if (snake.includes(i) || rowOf(i) === Math.floor(SIZE / 2)) { cakisma = true; break; }
+    }
+    if (cakisma || engeller.size > MAX_OBSTACLES) continue;
+
+    if (hepsiBagli(engeller)) return engeller;
   }
 
-  /* 40 denemede bolunmemis bir dagilim cikmazsa engelsiz devam et -
-     zor bir bolum, imkansiz bir bolumden iyidir */
+  /* Hicbiri uymadiysa engelsiz devam: zor bir bolum, imkansiz bolumden iyidir */
   return new Set();
 }
 
@@ -233,6 +306,7 @@ function introSeen() {
 }
 
 function startRun() {
+  if (gecis || over) return;
   startEl.hidden = true;
   try {
     localStorage.setItem(INTRO_SEEN_KEY, '1');
@@ -254,6 +328,8 @@ function placeFood() {
     if (!snake.includes(i) && !walls.has(i)) bos.push(i);
   }
   food = bos.length ? bos[Math.floor(Math.random() * bos.length)] : -1;
+  /* Bu yem bolumu bitirecek olan mi? */
+  altinYem = eatenThisLevel === FOODS_PER_LEVEL - 1;
 }
 
 /* ---------- Oyun dongusu ---------- */
@@ -297,10 +373,15 @@ function tick() {
   if (yemVar) {
     score += FOOD_SCORE;
     eatenThisLevel++;
-    haptic.tap();
     updateHud();
 
-    if (eatenThisLevel >= FOODS_PER_LEVEL) return levelUp();
+    if (eatenThisLevel >= FOODS_PER_LEVEL) {
+      haptic.success();
+      altinPatlama(hedef);
+      render();
+      return levelUp();
+    }
+    haptic.tap();
     placeFood();
   } else {
     snake.pop();
@@ -314,6 +395,7 @@ function tick() {
 async function levelUp() {
   stopTimer();
   running = false;
+  gecis = true;   /* bu arada gelen kaydirma oyunu yeniden baslatmasin */
 
   level++;
   score += LEVEL_BONUS;
@@ -326,6 +408,7 @@ async function levelUp() {
 
   buildLevel();
   updateHud();
+  gecis = false;
   running = true;
   scheduleTick();
 }
@@ -367,13 +450,44 @@ function buildBoard() {
   }
 }
 
+/* Yonden CSS sinifina: gozler bu yone gore yerlesiyor */
+const YON_SINIFI = (d) => (
+  d === 1 ? 'dir-right' : d === -1 ? 'dir-left' : d === SIZE ? 'dir-down' : 'dir-up'
+);
+
 function render() {
   for (const el of cellEls) el.className = 'cell';
   for (const w of walls) cellEls[w].classList.add('wall');
+
+  /* Bas / govde / kuyruk ayri cizilir: govde halkalari bir acik bir koyu
+     olunca pul dokusu cikiyor, kuyruk incelip yilan boru gibi durmuyor. */
   snake.forEach((i, k) => {
-    cellEls[i].classList.add(k === 0 ? 'head' : 'body');
+    const el = cellEls[i];
+    if (k === 0) {
+      el.classList.add('head', YON_SINIFI(dir));
+    } else if (k === snake.length - 1 && snake.length > 2) {
+      el.classList.add('tail');
+    } else {
+      el.classList.add('body', k % 2 ? 'pul-b' : 'pul-a');
+    }
   });
-  if (food >= 0) cellEls[food].classList.add('food');
+
+  if (food >= 0) {
+    cellEls[food].classList.add('food');
+    if (altinYem) cellEls[food].classList.add('gold');
+  }
+}
+
+/* Bolumu bitiren altin yem yenince cikan kucuk halka patlamasi */
+function altinPatlama(index) {
+  const hucre = cellEls[index];
+  if (!hucre) return;
+  const el = document.createElement('span');
+  el.className = 'gold-burst';
+  el.style.left = `${hucre.offsetLeft + hucre.offsetWidth / 2}px`;
+  el.style.top = `${hucre.offsetTop + hucre.offsetHeight / 2}px`;
+  boardEl.appendChild(el);
+  setTimeout(() => el.remove(), 700);
 }
 
 function showFloater(text) {
@@ -413,7 +527,7 @@ const KEYS = {
 
 /* Ilk hareket turu baslatir - yilan o ana kadar yerinde bekler */
 function ensureRunning() {
-  if (!running && !over) startRun();
+  if (!running && !over && !gecis) startRun();
 }
 
 window.addEventListener('keydown', (e) => {
@@ -427,11 +541,18 @@ window.addEventListener('keydown', (e) => {
 let touchStart = null;
 const SWIPE_MIN = 18;
 
-boardEl.addEventListener('pointerdown', (e) => {
+/* Kaydirma yuzeyi tahtanin KENDISI degil, ortadaki tum bolum.
+
+   Tahta ile alttaki butonlar arasindaki bosluga denk gelen parmak hareketleri
+   eskiden hic algilanmiyordu; oyuncu donmeye calisirken komut kayboluyordu.
+   Artik bu bosluk da yuzeye dahil. */
+const swipeEl = document.querySelector('.game-mid');
+
+swipeEl.addEventListener('pointerdown', (e) => {
   touchStart = { x: e.clientX, y: e.clientY };
 });
 
-boardEl.addEventListener('pointermove', (e) => {
+swipeEl.addEventListener('pointermove', (e) => {
   if (!touchStart) return;
   e.preventDefault();
 
@@ -447,8 +568,8 @@ boardEl.addEventListener('pointermove', (e) => {
   touchStart = { x: e.clientX, y: e.clientY };
 });
 
-boardEl.addEventListener('pointerup', () => { touchStart = null; });
-boardEl.addEventListener('pointercancel', () => { touchStart = null; });
+swipeEl.addEventListener('pointerup', () => { touchStart = null; });
+swipeEl.addEventListener('pointercancel', () => { touchStart = null; });
 
 /* ---------- Bitis ekrani ---------- */
 
