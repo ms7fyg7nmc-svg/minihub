@@ -20,14 +20,19 @@ import { loadState, saveState } from '../../js/store.js';
 import { SLOTS, VARSAYILAN_GORUNUM } from './data.js';
 
 const OYUN_ID = 'dragon';
-const SURUM = 1;
+const SURUM = 2;
 
-/* Bos bir oyuncu kaydi */
+/* Bos bir oyuncu kaydi.
+
+   ADA OYUNCUYA AIT, EJDERHAYA DEGIL: V2'de ikinci ejderha geldiginde ayni
+   adada yasayacaklar, o yuzden kayitta ust seviyede duruyor. */
 function yeniOyuncu() {
   return {
     v: SURUM,
     dragons: [yeniEjderha('d1')],
     activeId: 'd1',
+    island: 'grassland',
+    ownedIslands: ['grassland'],
     /* Dolap: her slot icin sahip olunan parcalar */
     owned: Object.fromEntries(SLOTS.map((s) => [s.key, [VARSAYILAN_GORUNUM[s.key]]])),
   };
@@ -51,21 +56,54 @@ export function yeniEjderha(id) {
   };
 }
 
-/* --- Eski Ejderham kaydindan gecis ---
+/* --- ESKI KIMLIKLERIN KARSILIGI ---
 
-   Oyuncular Ejderham'da seviye atlamis ve kozmetik satin almis olabilir.
-   Dragon Island ayri bir oyun oldugu icin o ilerleme kaybolmasin diye
-   state_pet kaydi bir kereligine buraya tasiniyor.
+   Katalog 8'erli kategorilere genisletilirken item kimlikleri degisti.
+   Oyuncularin satin aldiklari kaybolmasin diye eski kimlikler yenilerine
+   esleniyor. Tablo hem Ejderham (state_pet) hem de Dragon Island'in ilk
+   surumundeki (v1) kayitlari kapsiyor.
 
-   Eski surumde desen renge yapisikti (ornegin 'ice' hep pullu gelirdi).
-   Yeni surumde renk ve desen ayri secilebiliyor; goc sirasinda eski rengin
-   deseni ayri bir parca olarak dolaba ekleniyor. */
-const ESKI_DESEN = {
-  ice: 'scales', gold: 'scales', shadow: 'scales',
-  inferno: 'cracks', runic: 'runes', dragonlord: 'plates',
+   Karsiligi olmayan bir parca (ornegin artik bulunmayan monokl) en yakin
+   yeni parcaya veriliyor - oyuncudan bir sey geri alinmiyor. */
+const ESKI_ID = {
+  color: {
+    violet: 'royal', crimson: 'ember', emerald: 'emerald', ice: 'frost',
+    gold: 'celestial', shadow: 'obsidian', inferno: 'ember',
+    runic: 'ocean', dragonlord: 'obsidian',
+  },
+  skin: {
+    scales: 'tribal', plates: 'armor', cracks: 'flame',
+    runes: 'runes', frost: 'cosmic',
+  },
+  head: {
+    silver: 'silver', gold: 'golden', ruby: 'flame',
+    ancient: 'king', dragon: 'celestial',
+  },
+  face: {
+    scar: 'scar', warpaint: 'warPaint', monocle: 'darkMark', visor: 'runeFace',
+  },
+  aura: {
+    embers: 'ember', flame: 'golden', storm: 'electric',
+    halo: 'cosmic', stars: 'celestial',
+  },
 };
 
-function eskidenAktar(eski) {
+/* Eski surumde desen renge yapisikti (ornegin 'ice' hep pullu gelirdi).
+   Goc sirasinda o desen ayri bir parca olarak dolaba ekleniyor. */
+const PET_DESEN = {
+  ice: 'tribal', gold: 'tribal', shadow: 'tribal',
+  inferno: 'flame', runic: 'runes', dragonlord: 'armor',
+};
+
+const cevir = (slot, id) => (id && ESKI_ID[slot]?.[id]) || null;
+
+function listeyiCevir(slot, liste, varsayilan) {
+  const yeni = (liste || []).map((id) => cevir(slot, id)).filter(Boolean);
+  return [...new Set([varsayilan, ...yeni])];
+}
+
+/* Ejderham (state_pet) kaydindan gecis */
+function petTasi(eski) {
   const o = yeniOyuncu();
   const d = o.dragons[0];
 
@@ -75,20 +113,38 @@ function eskidenAktar(eski) {
 
   const eq = eski.eq || {};
   const sahip = eski.owned || {};
-
   const renk = eq.color || 'violet';
-  d.look.color = renk;
-  d.look.head = eq.crown && eq.crown !== 'none' ? eq.crown : 'none';
-  d.look.aura = eq.effect && eq.effect !== 'none' ? eq.effect : 'none';
-  d.look.skin = ESKI_DESEN[renk] || 'none';
 
-  o.owned.color = [...new Set(['violet', ...(sahip.color || [])])];
-  o.owned.head = [...new Set(['none', ...(sahip.crown || [])])];
-  o.owned.aura = [...new Set(['none', ...(sahip.effect || [])])];
-  /* Sahip olunan her rengin deseni de dolaba girer */
-  o.owned.skin = [...new Set(['none', ...(sahip.color || []).map((c) => ESKI_DESEN[c]).filter(Boolean)])];
+  d.look.color = cevir('color', renk) || VARSAYILAN_GORUNUM.color;
+  d.look.head = cevir('head', eq.crown) || 'none';
+  d.look.aura = cevir('aura', eq.effect) || 'none';
+  d.look.skin = PET_DESEN[renk] || 'none';
+
+  o.owned.color = listeyiCevir('color', sahip.color, VARSAYILAN_GORUNUM.color);
+  o.owned.head = listeyiCevir('head', sahip.crown, 'none');
+  o.owned.aura = listeyiCevir('aura', sahip.effect, 'none');
+  o.owned.skin = [...new Set(['none',
+    ...(sahip.color || []).map((c) => PET_DESEN[c]).filter(Boolean)])];
 
   return o;
+}
+
+/* Dragon Island v1 kaydindaki kimlikleri yeni kataloga cevirir */
+function v1Tasi(kayit) {
+  for (const d of kayit.dragons) {
+    d.look = d.look || {};
+    for (const slot of ['color', 'skin', 'head', 'face', 'aura']) {
+      const yeni = cevir(slot, d.look[slot]);
+      d.look[slot] = yeni || (d.look[slot] === 'none' ? 'none' : VARSAYILAN_GORUNUM[slot]);
+    }
+  }
+  for (const slot of ['color', 'skin', 'head', 'face', 'aura']) {
+    kayit.owned[slot] = listeyiCevir(
+      slot, kayit.owned?.[slot],
+      slot === 'color' ? VARSAYILAN_GORUNUM.color : 'none',
+    );
+  }
+  return kayit;
 }
 
 /* --- Yukleme / kaydetme --- */
@@ -96,13 +152,17 @@ function eskidenAktar(eski) {
 export async function oyuncuyuYukle() {
   const kayit = await loadState(OYUN_ID);
   if (kayit && Array.isArray(kayit.dragons) && kayit.dragons.length) {
-    return duzelt(kayit);
+    /* v1 kaydi eski item kimliklerini tutuyor; once onlari cevir */
+    const guncel = (Number(kayit.v) || 1) >= 2 ? kayit : v1Tasi(duzelt(kayit));
+    const son = duzelt(guncel);
+    saveState(OYUN_ID, son);
+    return son;
   }
 
   /* Dragon Island kaydi yoksa eski Ejderham ilerlemesine bak */
   const eski = await loadState('pet');
   if (eski && Number(eski.level) > 0) {
-    const tasinan = eskidenAktar(eski);
+    const tasinan = petTasi(eski);
     saveState(OYUN_ID, tasinan);
     return tasinan;
   }
@@ -117,13 +177,17 @@ export function oyuncuyuKaydet(oyuncu) {
   saveState(OYUN_ID, oyuncu);
 }
 
-/* Eksik alanlari tamamlar: eski bir kayit yeni bir slot tanimayabilir */
+/* Eksik alanlari tamamlar: eski bir kayit yeni bir slotu veya adayi
+   tanimayabilir. Kayit bicimi buyudukce tek dokunulacak yer burasi. */
 function duzelt(o) {
   o.v = SURUM;
   o.owned = o.owned || {};
   for (const s of SLOTS) {
     if (!Array.isArray(o.owned[s.key])) o.owned[s.key] = [VARSAYILAN_GORUNUM[s.key]];
   }
+  if (!Array.isArray(o.ownedIslands) || !o.ownedIslands.length) o.ownedIslands = ['grassland'];
+  if (!o.island || !o.ownedIslands.includes(o.island)) o.island = o.ownedIslands[0];
+
   for (const d of o.dragons) {
     d.look = { ...VARSAYILAN_GORUNUM, ...(d.look || {}) };
     d.happiness = Number.isFinite(d.happiness) ? d.happiness : 100;
@@ -131,6 +195,17 @@ function duzelt(o) {
   }
   if (!o.dragons.some((d) => d.id === o.activeId)) o.activeId = o.dragons[0].id;
   return o;
+}
+
+/* --- Ada --- */
+
+export function adaSahipMi(oyuncu, id) {
+  return (oyuncu.ownedIslands || []).includes(id);
+}
+
+export function adaEkle(oyuncu, id) {
+  if (!oyuncu.ownedIslands) oyuncu.ownedIslands = [];
+  if (!oyuncu.ownedIslands.includes(id)) oyuncu.ownedIslands.push(id);
 }
 
 export function aktifEjderha(oyuncu) {

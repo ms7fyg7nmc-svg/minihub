@@ -12,11 +12,22 @@ export { locale } from './i18n.js';
 
 let gameId = '';
 let fallbackTexts = {};
+let itemTexts = null;
 
 /** Oyun acilirken kendi yedek metinlerini kaydeder. */
 export function registerTexts(id, texts) {
   gameId = id;
   fallbackTexts = texts || {};
+}
+
+/** Cok dilli item paketi: { en: {...}, tr: {...}, ... }
+
+    Dragon Island'in kozmetik katalogu 60'tan fazla item ve aciklama tutuyor.
+    Bunlari js/i18n.js'e koymak ana sozlugu (ve dolayisiyla HUB'in acilisini)
+    gereksiz yere sisirirdi; burada kayitli olunca sadece o oyun acildiginda
+    yukleniyor. */
+export function registerItemTexts(pack) {
+  itemTexts = pack || null;
 }
 
 /* "{score}" gibi yer tutuculari gercek degerlerle degistirir */
@@ -37,6 +48,13 @@ export function t(key, params = {}) {
   if (key.includes('.')) {
     const shared = coreT(key, params);
     if (shared && shared !== key) return shared;
+  }
+
+  /* Oyunun kendi cok dilli item paketi: once secili dil, sonra Ingilizce */
+  if (itemTexts) {
+    const dil = getLang();
+    const bulunan = itemTexts[dil]?.[key] ?? itemTexts.en?.[key];
+    if (bulunan !== undefined) return fillParams(bulunan, params);
   }
 
   const own = fallbackTexts[key];

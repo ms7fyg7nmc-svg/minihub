@@ -300,9 +300,30 @@
 .panel[hidden] { display: none; }
 .panel::-webkit-scrollbar { display: none; }
 
-/* Dukkan aciktken ada kucultulur, uzun katalog butonlari ekran disina itmesin */
-body.shop-open .island { max-width: 190px; }
+/* MARKET ONIZLEMESI
+
+   Dukkan aciktken sahne degil EJDERHA one cikar: ada katmanlari gizlenir,
+   ejderha kutunun ortasinda buyuk durur. Boylece kanat, kuyruk, tac ve yuz
+   detaylari satin almadan once gercekten gorulebiliyor. Idle animasyonu
+   devam eder. */
+body.shop-open .island {
+  max-width: 260px;
+  aspect-ratio: 1 / 0.78;
+  background:
+    radial-gradient(62% 52% at 50% 46%, rgba(255, 255, 255, 0.08), transparent 72%),
+    linear-gradient(180deg, #1b1733 0%, #120f22 100%);
+}
+
+body.shop-open .isle-layer { display: none; }
 body.shop-open .dragon-card { display: none; }
+
+/* Konumlandirmayi JS degil CSS devralir: tam ortada ve buyuk */
+body.shop-open .dragon-slot {
+  left: 50% !important;
+  top: 52% !important;
+  width: 96% !important;
+  transform: translate(-50%, -50%);
+}
 
 .shop-msg { margin: 0 0 10px; }
 .shop-msg[hidden] { display: none; }
@@ -349,6 +370,33 @@ body.shop-open .dragon-card { display: none; }
 .shop-item.trying { border-color: rgba(245, 185, 66, 0.9); border-style: dashed; }
 .shop-item.locked { opacity: 0.5; }
 
+/* Nadirlik noktasi: fiyat kademesi bir bakista anlasilsin */
+.rar-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--rar, #9aa2b5);
+  box-shadow: 0 0 5px var(--rar, #9aa2b5);
+}
+
+.shop-item { position: relative; }
+
+/* Kanat/kuyruk kutucugu: ejderhanin tamami degil, o parcanin bulundugu
+   bolge buyutulup kirpiliyor. 200 birimlik kadrajdan ilgili pencereyi
+   gostermek icin svg buyutulup kaydiriliyor. */
+.swatch.zoom { width: 46px; height: 42px; background: rgba(255, 255, 255, 0.05); }
+.swatch.zoom svg { position: absolute; display: block; }
+
+/* Sol kanat: x 10..95, y 38..128 penceresi */
+.swatch.zoom.wings svg { width: 108px; height: 108px; left: -5px; top: -21px; }
+
+/* Kuyruk: x 110..186, y 96..172 penceresi
+   (kuyruk govdenin sagindan cikip asagi kivriliyor) */
+.swatch.zoom.tail svg { width: 121px; height: 121px; left: -67px; top: -58px; }
+
 .swatch {
   position: relative;
   width: 40px;
@@ -381,6 +429,18 @@ body.shop-open .dragon-card { display: none; }
 
 .try-bar[hidden] { display: none; }
 .try-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.try-line { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+
+.try-rar {
+  flex: none;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  color: var(--rar, #9aa2b5);
+}
+
+.try-bar { border-color: color-mix(in srgb, var(--rar, #f5b942) 55%, transparent); }
 
 .try-name {
   font-size: 12.5px;
@@ -410,3 +470,105 @@ body.shop-open .dragon-card { display: none; }
 .try-btn.buy { background: var(--gold, #f5b942); color: #221a06; }
 .try-btn.buy:disabled { background: rgba(255, 255, 255, 0.08); color: var(--muted); cursor: default; }
 .try-btn:active { transform: scale(0.96); }
+
+
+/* --- BESLEME ANIMASYONU ---
+
+   Yem butonun oldugu alttan cikip ejderhaya ucuyor, ejderha onu yiyor.
+   Tum dizi ~0.9 saniye: geri bildirim aninda hissedilsin ama oyuncuyu
+   bekletmesin. */
+
+.food {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  bottom: 4%;
+  width: 17%;
+  max-width: 62px;
+  pointer-events: none;
+  transform: translate(-50%, 0) scale(0.7);
+  animation: yem-ucus 0.62s cubic-bezier(0.4, 0, 0.5, 1) forwards;
+}
+
+.food[hidden] { display: none; }
+.food svg { width: 100%; height: auto; display: block; }
+
+@keyframes yem-ucus {
+  0%   { opacity: 0; transform: translate(-50%, 0) scale(0.55) rotate(-18deg); }
+  15%  { opacity: 1; }
+  70%  { opacity: 1; transform: translate(-50%, calc(var(--ucus, -120px) * 0.8)) scale(1) rotate(10deg); }
+  100% { opacity: 0; transform: translate(-50%, var(--ucus, -120px)) scale(0.35) rotate(24deg); }
+}
+
+/* Ejderha yemi yiyor: one egilip agzini kapatiyor */
+.island.eating .dragon-art { animation: yeme 0.5s ease-out; }
+
+@keyframes yeme {
+  0%   { transform: translateY(0) scaleY(1); }
+  25%  { transform: translateY(3px) scaleY(0.94) scaleX(1.03); }
+  55%  { transform: translateY(-4px) scaleY(1.05) scaleX(0.98); }
+  100% { transform: translateY(0) scaleY(1); }
+}
+
+/* Yeme aninda agizdan cikan kucuk kirinti parcaciklari */
+.crumbs {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  top: 46%;
+  pointer-events: none;
+}
+
+.crumbs i {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #e07a44;
+  animation: kirinti 0.5s ease-out forwards;
+}
+
+@keyframes kirinti {
+  0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--kx), var(--ky)) scale(0.3); }
+}
+
+/* Buz nefesi: yavasca suzulup erir */
+.fx .p.frost {
+  animation-name: buz-suzul;
+  animation-timing-function: linear;
+  filter: drop-shadow(0 0 4px currentColor);
+}
+
+@keyframes buz-suzul {
+  0%   { opacity: 0; transform: translate(0, 0) scale(0.4) rotate(0deg); }
+  15%  { opacity: 0.95; }
+  100% { opacity: 0; transform: translate(var(--dx, 0), -78px) scale(0.9) rotate(160deg); }
+}
+
+/* Golge sisi: ayaklarin dibinde yatay suzulur, yukselmez */
+.fx .p.mist {
+  animation-name: sis-kay;
+  animation-timing-function: ease-in-out;
+  filter: blur(2px);
+}
+
+@keyframes sis-kay {
+  0%, 100% { opacity: 0; transform: translate(0, 0) scaleX(0.6); }
+  30%      { opacity: 0.55; }
+  70%      { opacity: 0.4; transform: translate(var(--dx, 0), -6px) scaleX(1.15); }
+}
+
+/* Kozmik zerre: yavas yukselirken nabiz gibi parlar */
+.fx .p.cosmic {
+  animation-name: kozmik-suzul;
+  animation-timing-function: ease-in-out;
+  filter: drop-shadow(0 0 6px currentColor);
+}
+
+@keyframes kozmik-suzul {
+  0%   { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  20%  { opacity: 0.9; transform: scale(1); }
+  60%  { opacity: 0.6; transform: translate(calc(var(--dx, 0px) * 0.6), -46px) scale(0.8); }
+  100% { opacity: 0; transform: translate(var(--dx, 0), -88px) scale(0.3); }
+}

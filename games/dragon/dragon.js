@@ -10,13 +10,15 @@
    ileride dengeleme yaparken bu dosyayi acmak gerekmemeli. */
 
 import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js';
 
 import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js';
-import { SLOTS, KATALOG, AURAS } from './data.js';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES } from './data.js';
 import { bakiyeOku, harca } from './economy.js';
-import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle } from './model.js';
+import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
+         adaSahipMi, adaEkle } from './model.js';
 import { dragonSvg, headSvg, faceSvg, HEAD_BOX } from './art.js';
+import { ITEM_TEXTS } from './i18n-items.js';
 import { createIsland } from './island.js';
 
 const GAME_ID = 'dragon';
@@ -57,27 +59,19 @@ registerTexts(GAME_ID, {
   stageNames: 'Yavru,Genç,Ejderha,Savaşçı,Kadim,Efsane',
 
   shopColors: 'RENK',
+  shopWings: 'KANAT',
+  shopTails: 'KUYRUK',
+  shopIslands: 'ADA',
+  equipIsland: 'Bu adaya taşın',
   shopSkins: 'DESEN',
   shopHeads: 'TAÇ',
   shopFaces: 'YÜZ',
   shopAuras: 'ANİMASYON',
-
-  colViolet: 'Mor', colCrimson: 'Kızıl', colEmerald: 'Zümrüt', colIce: 'Buz',
-  colGold: 'Altın', colShadow: 'Gölge', colInferno: 'Ateş', colRunic: 'Kadim Rün',
-  colLord: 'Ejder Kralı',
-
-  skNone: 'Düz', skScales: 'Pul', skPlates: 'Zırh', skCracks: 'Magma',
-  skRunes: 'Rün', skFrost: 'Buz Kırağı',
-
-  hdNone: 'Yok', hdSilver: 'Gümüş', hdGold: 'Altın', hdRuby: 'Yakut',
-  hdAncient: 'Kadim', hdDragon: 'Ejder Tacı',
-
-  fcNone: 'Yok', fcScar: 'Yara İzi', fcPaint: 'Savaş Boyası',
-  fcMonocle: 'Monokl', fcVisor: 'Vizör',
-
-  auNone: 'Yok', auEmbers: 'Kıvılcım', auFlame: 'Alev', auStorm: 'Şimşek',
-  auHalo: 'Hale', auStars: 'Yıldız',
 });
+
+/* Item adlari ve aciklamalari dort dilde ayri dosyada: katalog buyudukce
+   ana sozlugu (ve HUB'in acilisini) sismesin diye. */
+registerItemTexts(ITEM_TEXTS);
 
 /* ---------- DOM ---------- */
 
@@ -116,6 +110,8 @@ const tryName = document.getElementById('try-name');
 const tryNote = document.getElementById('try-note');
 const tryBuy = document.getElementById('try-buy');
 const tryCancel = document.getElementById('try-cancel');
+const tryRar = document.getElementById('try-rar');
+const foodEl = document.getElementById('food');
 
 /* ---------- Durum ---------- */
 
@@ -134,7 +130,7 @@ function gorunum() {
   return deneme ? { ...ejderha.look, [deneme.slot]: deneme.id } : ejderha.look;
 }
 
-const ada = createIsland(backCv, frontCv);
+const ada = createIsland(backCv, frontCv, 'grassland');
 
 /* ---------- Baslangic ---------- */
 
@@ -155,12 +151,17 @@ shopDoneBtn.addEventListener('click', () => dukkanGoster(false));
 islandEl.addEventListener('click', durt);
 
 tryBuy.addEventListener('click', satinAlOnayla);
-tryCancel.addEventListener('click', () => {
+tryCancel.addEventListener('click', denemeyiBirak);
+
+/* Denemeyi biraktiginda ada denenmisse sahne sahip olunan adaya doner */
+function denemeyiBirak() {
+  const adaDenendi = deneme?.slot === 'island';
   deneme = null;
+  if (adaDenendi) ada.temaDegistir(oyuncu.island);
   haptic.tap();
   dukkanCiz();
   ciz();
-});
+}
 
 document.addEventListener('langchange', () => {
   applyStaticTexts();
@@ -183,6 +184,7 @@ async function basla() {
   oyuncu = await oyuncuyuYukle();
   ejderha = aktifEjderha(oyuncu);
   coins = await bakiyeOku();
+  ada.temaDegistir(oyuncu.island);
   adaYerlestir();
   ada.basla();
   dukkanCiz();
@@ -265,6 +267,10 @@ async function besle() {
   coins = sonuc.bakiye;
   ejderha.lastFed = Date.now();
 
+  /* Yem ejderhaya ucar, ejderha onu yer, ANCAK ONDAN SONRA XP gelir.
+     Odul animasyondan once gelirse besleme "olmus bitmis" gibi hissettiriyor. */
+  await yemAnimasyonu();
+
   /* Son seviyede besleme XP vermez ama ejderha yine ACIKIYOR.
      Eskiden buton tamamen kapaliydi ve seviye 99'daki bir ejderha bir daha
      hic doyurulamiyordu - dogru davranis besleyip doyumu doldurmak. */
@@ -338,6 +344,54 @@ function uyar(metin) {
   shopMsgEl.hidden = false;
 }
 
+/* --- BESLEME ANIMASYONU ---
+
+   Yem alttan (butonun oldugu yonden) cikip ejderhanin agzina ucar, ejderha
+   yeme hareketi yapar, agzindan birkac kirinti sicrar. Toplam ~0.9 saniye. */
+function yemAnimasyonu() {
+  return new Promise((bitti) => {
+    const kutu = islandEl.getBoundingClientRect();
+    const hedef = slotEl.getBoundingClientRect();
+    /* Ejderhanin agzi: slotun ust-orta bolgesi */
+    const agizY = hedef.top - kutu.top + hedef.height * 0.42;
+    const yemY = kutu.height * 0.96;
+
+    foodEl.hidden = false;
+    foodEl.style.setProperty('--ucus', `${Math.round(agizY - yemY)}px`);
+    /* Animasyonu bastan baslat */
+    foodEl.style.animation = 'none';
+    void foodEl.offsetWidth;
+    foodEl.style.animation = '';
+
+    setTimeout(() => {
+      foodEl.hidden = true;
+      islandEl.classList.add('eating');
+      kirintiSac(hedef.left - kutu.left + hedef.width / 2, agizY);
+      haptic.tap();
+      setTimeout(() => {
+        islandEl.classList.remove('eating');
+        bitti();
+      }, 320);
+    }, 620);
+  });
+}
+
+function kirintiSac(x, y) {
+  const kap = document.createElement('div');
+  kap.className = 'crumbs';
+  kap.style.left = `${x}px`;
+  kap.style.top = `${y}px`;
+  for (let i = 0; i < 6; i++) {
+    const p = document.createElement('i');
+    const aci = (Math.PI / 6) * i + Math.PI * 0.15;
+    p.style.setProperty('--kx', `${Math.cos(aci) * 26}px`);
+    p.style.setProperty('--ky', `${Math.abs(Math.sin(aci)) * 22 + 6}px`);
+    kap.appendChild(p);
+  }
+  floatersEl.appendChild(kap);
+  setTimeout(() => kap.remove(), 520);
+}
+
 function ucur(metin) {
   const el = document.createElement('div');
   el.className = 'floater';
@@ -358,7 +412,9 @@ function dukkanGoster(acik) {
   document.body.classList.toggle('shop-open', acik);
 
   if (!acik && deneme) {
+    const adaDenendi = deneme.slot === 'island';
     deneme = null;
+    if (adaDenendi) ada.temaDegistir(oyuncu.island);
     dukkanCiz();
   }
   haptic.tap();
@@ -367,58 +423,133 @@ function dukkanGoster(acik) {
   ciz();
 }
 
-/* Kutucuktaki mini onizleme */
+/* Kutucuktaki mini onizleme.
+   Her slot kendi kucuk gorselini uretiyor; ada icin adanin renklerinden
+   kucuk bir izometrik karo cizilir. */
 function onizleme(slot, id, item) {
   const bos = `<span class="swatch" style="background:rgba(255,255,255,.06)">—</span>`;
 
+  if (slot === 'island') {
+    const z = item.zemin;
+    return `<span class="swatch" style="background:linear-gradient(180deg, ${item.gok[0]}, ${item.gok[1]})">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 6 L22 11 L12 16 L2 11 Z" fill="${z.ustAcik}"/>
+        <path d="M2 11 L12 16 v4 L2 15 Z" fill="${z.yanSol}"/>
+        <path d="M22 11 L12 16 v4 L22 15 Z" fill="${z.yanSag}"/>
+        <path d="M12 20 L15 22 L12 24 L9 22 Z" fill="${z.kaya}"/>
+      </svg></span>`;
+  }
+
   if (slot === 'color') {
-    return `<span class="swatch" style="background:linear-gradient(140deg, ${item.body}, ${item.dark})"></span>`;
+    /* Aurora'da tek renk yerine bantlar: mythic oldugu kutucukta belli olsun */
+    const zemin = item.aurora
+      ? `linear-gradient(140deg, ${item.aurora.join(', ')})`
+      : `linear-gradient(140deg, ${item.body}, ${item.dark})`;
+    return `<span class="swatch" style="background:${zemin}"></span>`;
   }
 
   if (slot === 'skin') {
-    if (id === 'none') return bos;
+    if (!item.kind) return bos;
     const ink = item.ink || '#ffffff';
     const sekil = {
-      scales: `<g fill="none" stroke="${ink}" stroke-width="1.5" opacity=".8">
-                 <path d="M2 7q3 4 6 0M8 7q3 4 6 0M14 7q3 4 6 0
-                          M5 13q3 4 6 0M11 13q3 4 6 0
-                          M2 19q3 4 6 0M8 19q3 4 6 0M14 19q3 4 6 0"/></g>`,
-      plates: `<g stroke="${ink}" fill="none" stroke-width="1.5" opacity=".85">
-                 <path d="M3 7q9 -4 18 0M3 13q9 -4 18 0M3 19q9 -4 18 0"/></g>
-               <path d="M12 2 l3 3 l-3 3 l-3 -3z" fill="${ink}"/>`,
-      cracks: `<path d="M7 2 l3 6 l-3 5 l4 5 l-2 4 M17 3 l-2 7 l3 5 l-2 6"
-                     fill="none" stroke="${ink}" stroke-width="1.8"
-                     stroke-linecap="round" stroke-linejoin="round"/>`,
-      runes:  `<circle cx="12" cy="12" r="8" fill="none" stroke="${ink}" stroke-width="1.2" opacity=".6"/>
-               <path d="M12 7 v5 M9.5 9 h5 M12 12 l2.5 4 h-5 z" fill="none" stroke="${ink}"
-                     stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>`,
-      frost:  `<path d="M12 3 V21 M4 8 L20 16 M20 8 L4 16" stroke="${ink}"
-                     stroke-width="1.7" stroke-linecap="round"/>
-               <path d="M12 7 l-3 -3 M12 7 l3 -3 M12 17 l-3 3 M12 17 l3 3" stroke="${ink}"
-                     stroke-width="1.5" stroke-linecap="round"/>`,
+      stripes:  `<g stroke="${ink}" stroke-width="2" opacity=".75"><path d="M3 8h18M3 13h18M3 18h18"/></g>`,
+      flame:    `<path d="M12 3 C16 8 18 11 18 14 C18 18 15 20 12 20 C9 20 6 18 6 14 C6 11 8 8 12 3 Z"
+                       fill="${ink}" opacity=".9"/>`,
+      tribal:   `<g fill="none" stroke="${ink}" stroke-width="1.6" opacity=".85">
+                   <path d="M2 8l4 5 4-5M10 8l4 5 4-5M6 15l4 5 4-5M14 15l4 5 4-5"/></g>`,
+      lightning:`<path d="M14 2 L6 12 h5 L8 22 L18 10 h-5 z" fill="${ink}"/>`,
+      runes:    `<circle cx="12" cy="12" r="8" fill="none" stroke="${ink}" stroke-width="1.3" opacity=".7"/>
+                 <path d="M12 7v5M9.5 9h5M12 12l2.5 4h-5z" fill="none" stroke="${ink}"
+                       stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>`,
+      armor:    `<g stroke="${ink}" fill="none" stroke-width="1.7" opacity=".9">
+                   <path d="M3 8q9 -4 18 0M3 14q9 -4 18 0M3 20q9 -4 18 0"/></g>
+                 <path d="M12 2 l3 3 l-3 3 l-3 -3z" fill="${ink}"/>`,
+      cosmic:   `<ellipse cx="12" cy="12" rx="10" ry="6" fill="${ink}" opacity=".25"
+                          transform="rotate(-20 12 12)"/>
+                 <g fill="#fff"><circle cx="7" cy="9" r="1.4"/><circle cx="15" cy="8" r="1"/>
+                 <circle cx="12" cy="14" r="1.6"/><circle cx="18" cy="15" r="1.1"/>
+                 <circle cx="5" cy="16" r="1"/></g>`,
+      celestial:`<circle cx="12" cy="12" r="9" fill="none" stroke="${ink}" stroke-width="1.4"
+                         stroke-dasharray="3 2.5"/>
+                 <path d="M12 6 L16 12 L12 18 L8 12 Z" fill="none" stroke="${ink}" stroke-width="1.6"/>
+                 <path d="M12 9 L14 12 L12 15 L10 12 Z" fill="${ink}"/>`,
     }[item.kind] || '';
     return `<span class="swatch" style="background:rgba(255,255,255,.07)">
       <svg viewBox="0 0 24 24">${sekil}</svg></span>`;
   }
 
   if (slot === 'head') {
-    if (id === 'none') return bos;
+    if (!item.kind) return bos;
     return `<span class="swatch" style="background:rgba(255,255,255,.06)">
-      <svg viewBox="${HEAD_BOX[id]}">${headSvg(id, 0)}</svg></span>`;
+      <svg viewBox="${HEAD_BOX[item.kind] || '-24 -40 48 44'}">${headSvg(id, 0)}</svg></span>`;
   }
 
   if (slot === 'face') {
-    if (id === 'none') return bos;
+    if (!item.kind) return bos;
     /* Yuz parcalari ejderha kafasinin koordinatlarinda cizildigi icin
        kutucukta o bolgeye bakan bir cerceve kullaniliyor */
     return `<span class="swatch" style="background:rgba(255,255,255,.06)">
-      <svg viewBox="-30 -74 60 32">${faceSvg(id)}</svg></span>`;
+      <svg viewBox="-34 -80 68 40">${faceSvg(id)}</svg></span>`;
+  }
+
+  if (slot === 'wings' || slot === 'tail') {
+    /* Kanat ve kuyruk ancak siluetiyle anlasiliyor: notr renkte kucuk bir
+       ejderha cizilip sadece o parca degistiriliyor, sonra CSS o bolgeye
+       yakinlastiriyor (tum ejderha 46 pikselde okunmuyordu). */
+    const look = { ...VARSAYILAN_ONIZLEME, [slot]: id };
+    return `<span class="swatch zoom ${slot}">${dragonSvg(99, look, 'happy')}</span>`;
   }
 
   /* aura */
-  if (id === 'none') return bos;
+  if (!item.kind) return bos;
   return `<span class="swatch" style="background:radial-gradient(circle, ${item.color}55, rgba(255,255,255,.05))">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="${item.color}"/></svg></span>`;
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="${item.color}"/>
+      <circle cx="12" cy="12" r="2" fill="#fff" opacity=".8"/></svg></span>`;
+}
+
+/* Kanat/kuyruk kutucuklarindaki silueti sade tutmak icin notr bir gorunum */
+const VARSAYILAN_ONIZLEME = {
+  color: 'ocean', skin: 'none', wings: 'leather', tail: 'basic',
+  head: 'none', face: 'none', aura: 'none',
+};
+
+/* Bir grubu (slot ya da ada) ciz */
+function grupCiz(baslikKey, girdiler) {
+  const kutu = document.createElement('div');
+  kutu.className = 'shop-group';
+
+  const baslik = document.createElement('h3');
+  baslik.className = 'shop-title';
+  baslik.textContent = t(baslikKey);
+  kutu.appendChild(baslik);
+
+  const sira = document.createElement('div');
+  sira.className = 'shop-row';
+
+  for (const g of girdiler) {
+    const btn = document.createElement('button');
+    const r = RARITIES[g.item.rarity] || RARITIES.common;
+
+    btn.className = 'shop-item' + (g.secili ? ' on' : '') + (g.deniyor ? ' trying' : '') +
+                    ((!g.sahip && (g.kilit || coins < g.item.price)) ? ' locked' : '');
+    btn.style.setProperty('--rar', r.renk);
+    btn.innerHTML = `
+      <span class="rar-dot"></span>
+      ${onizleme(g.slot, g.id, g.item)}
+      <span class="shop-name"></span>
+      <span class="${g.sahip ? 'shop-price owned' : (g.kilit ? 'shop-need' : 'shop-price')}"></span>`;
+
+    btn.querySelector('.shop-name').textContent = t(g.item.nameKey);
+    btn.querySelector('.shop-price, .shop-need').textContent = g.sahip
+      ? t(g.secili ? 'equipped' : 'owned')
+      : (g.kilit ? t('needLevel', { level: g.item.needLevel }) : `◆ ${bicim(g.item.price)}`);
+
+    btn.addEventListener('click', () => parcaSec(g.slot, g.id, g.item));
+    sira.appendChild(btn);
+  }
+
+  kutu.appendChild(sira);
+  shopEl.appendChild(kutu);
 }
 
 function dukkanCiz() {
@@ -426,55 +557,40 @@ function dukkanCiz() {
   shopEl.textContent = '';
 
   for (const slot of SLOTS) {
-    const tablo = KATALOG[slot.key];
-
-    const kutu = document.createElement('div');
-    kutu.className = 'shop-group';
-
-    const baslik = document.createElement('h3');
-    baslik.className = 'shop-title';
-    baslik.textContent = t(slot.title);
-    kutu.appendChild(baslik);
-
-    const sira = document.createElement('div');
-    sira.className = 'shop-row';
-
-    for (const [id, item] of Object.entries(tablo)) {
-      const sahip = sahipMi(oyuncu, slot.key, id);
-      const secili = ejderha.look[slot.key] === id;
-      const kilit = item.needLevel && ejderha.level < item.needLevel;
-      const deniyor = deneme?.slot === slot.key && deneme.id === id;
-
-      const btn = document.createElement('button');
-      btn.className = 'shop-item' + (secili ? ' on' : '') + (deniyor ? ' trying' : '') +
-                      ((!sahip && (kilit || coins < item.price)) ? ' locked' : '');
-      btn.innerHTML = `
-        ${onizleme(slot.key, id, item)}
-        <span class="shop-name"></span>
-        <span class="${sahip ? 'shop-price owned' : (kilit ? 'shop-need' : 'shop-price')}"></span>`;
-
-      btn.querySelector('.shop-name').textContent = t(item.nameKey);
-      btn.querySelector('.shop-price, .shop-need').textContent = sahip
-        ? t(secili ? 'equipped' : 'owned')
-        : (kilit ? t('needLevel', { level: item.needLevel }) : `◆ ${bicim(item.price)}`);
-
-      btn.addEventListener('click', () => parcaSec(slot.key, id, item));
-      sira.appendChild(btn);
-    }
-
-    kutu.appendChild(sira);
-    shopEl.appendChild(kutu);
+    grupCiz(slot.title, Object.entries(KATALOG[slot.key]).map(([id, item]) => ({
+      slot: slot.key, id, item,
+      sahip: sahipMi(oyuncu, slot.key, id),
+      secili: ejderha.look[slot.key] === id,
+      kilit: !!(item.needLevel && ejderha.level < item.needLevel),
+      deniyor: deneme?.slot === slot.key && deneme.id === id,
+    })));
   }
+
+  /* Ada da ayni dukkanda: oyuncuya ait, ejderhaya degil */
+  grupCiz('shopIslands', Object.entries(ISLANDS).map(([id, item]) => ({
+    slot: 'island', id, item,
+    sahip: adaSahipMi(oyuncu, id),
+    secili: oyuncu.island === id,
+    kilit: !!(item.needLevel && ejderha.level < item.needLevel),
+    deniyor: deneme?.slot === 'island' && deneme.id === id,
+  })));
 }
 
-/* Dukkanda bir parcaya dokunmak: sahip oldugunu kusandirir, olmadigini DENER.
-   Deneme hicbir jeton harcamaz; alim deneme cubugundan onaylanir. */
+/* Dukkanda bir seye dokunmak: sahip oldugunu kusandirir/tasinir, olmadigini
+   DENER. Deneme hicbir jeton harcamaz; alim deneme cubugundan onaylanir. */
 function parcaSec(slot, id, item) {
   if (busy) return;
 
-  if (sahipMi(oyuncu, slot, id)) {
+  const sahip = slot === 'island' ? adaSahipMi(oyuncu, id) : sahipMi(oyuncu, slot, id);
+
+  if (sahip) {
     deneme = null;
-    ejderha.look[slot] = id;
+    if (slot === 'island') {
+      oyuncu.island = id;
+      ada.temaDegistir(id);
+    } else {
+      ejderha.look[slot] = id;
+    }
     shopMsgEl.hidden = true;
     haptic.tap();
     kaydet();
@@ -487,6 +603,8 @@ function parcaSec(slot, id, item) {
   deneme = { slot, id, item };
   shopMsgEl.hidden = true;
   haptic.tap();
+  /* Ada denemesi sahneyi gecici olarak degistirir */
+  if (slot === 'island') ada.temaDegistir(id);
   dukkanCiz();
   ciz();
 }
@@ -512,8 +630,15 @@ async function satinAlOnayla() {
 
   coins = sonuc.bakiye;
   deneme = null;
-  dolabaEkle(oyuncu, slot, id);
-  ejderha.look[slot] = id;
+
+  if (slot === 'island') {
+    adaEkle(oyuncu, id);
+    oyuncu.island = id;
+    ada.temaDegistir(id);
+  } else {
+    dolabaEkle(oyuncu, slot, id);
+    ejderha.look[slot] = id;
+  }
 
   haptic.success();
   shopMsgEl.hidden = true;
@@ -581,15 +706,19 @@ function denemeCubuguCiz() {
   const kilit = item.needLevel && ejderha.level < item.needLevel;
   const parasiz = coins < item.price;
 
+  const r = RARITIES[item.rarity] || RARITIES.common;
+
   tryBar.hidden = false;
+  tryBar.style.setProperty('--rar', r.renk);
   tryName.textContent = t(item.nameKey);
+  tryRar.textContent = t(r.nameKey);
   tryBuy.textContent = `◆ ${bicim(item.price)}`;
   tryBuy.disabled = busy || kilit || parasiz;
 
   tryNote.classList.toggle('warn', !!(kilit || parasiz));
   if (kilit) tryNote.textContent = t('lockedMsg', { level: item.needLevel });
   else if (parasiz) tryNote.textContent = t('tryNoCoins');
-  else tryNote.textContent = t('tryHint');
+  else tryNote.textContent = t(item.descKey);
 }
 
 /* --- Satin alinan animasyonlar ---
@@ -603,12 +732,11 @@ const EFEKT_SEKLI = {
   ember: `<svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.4" fill="currentColor"/>
           <circle cx="6" cy="6" r="2" fill="#fff" opacity=".7"/></svg>`,
 
-  flame: `<svg viewBox="0 0 24 26">
-            <path d="M12 1 C17 8 21 12 21 17 C21 22 17 25 12 25 C7 25 3 22 3 17
-                     C3 12 7 8 12 1 Z" fill="currentColor"/>
-            <path d="M12 9 C15 13 16.5 15 16.5 17.5 C16.5 20.5 14.5 22 12 22
-                     C9.5 22 7.5 20.5 7.5 17.5 C7.5 15 9 13 12 9 Z"
-                  fill="#fff" opacity=".55"/>
+  frost: `<svg viewBox="0 0 24 24">
+            <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M12 2 V22 M3.5 7 L20.5 17 M20.5 7 L3.5 17"/>
+              <path d="M12 6 l-3 -3 M12 6 l3 -3 M12 18 l-3 3 M12 18 l3 3" stroke-width="1.6"/>
+            </g>
           </svg>`,
 
   bolt:  `<svg viewBox="0 0 22 30">
@@ -622,6 +750,26 @@ const EFEKT_SEKLI = {
                      C10.8 15.4 8.6 13.2 0 12 C8.6 10.8 10.8 8.6 12 0 Z"
                   fill="currentColor"/>
           </svg>`,
+
+  mist:  `<svg viewBox="0 0 40 18">
+            <ellipse cx="20" cy="9" rx="19" ry="7" fill="currentColor" opacity=".6"/>
+            <ellipse cx="13" cy="10" rx="11" ry="5" fill="currentColor" opacity=".45"/>
+          </svg>`,
+
+  cosmic:`<svg viewBox="0 0 20 20">
+            <circle cx="10" cy="10" r="6" fill="currentColor" opacity=".45"/>
+            <circle cx="10" cy="10" r="2.6" fill="#fff" opacity=".9"/>
+          </svg>`,
+};
+
+/* Her aura turunun kendi hareketi ve yogunlugu */
+const EFEKT_AYAR = {
+  ember:  { sekil: 'ember',  adet: 16, boy: [5, 9],   sure: [2.0, 3.4], gecikme: 2.2, alt: [0, 24] },
+  frost:  { sekil: 'frost',  adet: 12, boy: [8, 14],  sure: [2.4, 3.8], gecikme: 2.4, alt: [10, 60] },
+  bolt:   { sekil: 'bolt',   adet: 5,  boy: [16, 26], sure: [2.4, 4.0], gecikme: 3.0, alt: [10, 70] },
+  star:   { sekil: 'star',   adet: 13, boy: [9, 16],  sure: [1.6, 2.8], gecikme: 2.0, alt: [10, 70] },
+  mist:   { sekil: 'mist',   adet: 6,  boy: [34, 58], sure: [3.0, 4.6], gecikme: 2.6, alt: [0, 10] },
+  cosmic: { sekil: 'cosmic', adet: 14, boy: [7, 13],  sure: [2.2, 3.6], gecikme: 2.4, alt: [5, 65] },
 };
 
 function efektCiz(auraId) {
@@ -629,10 +777,10 @@ function efektCiz(auraId) {
   fxEl.textContent = '';
   fxEl.className = 'fx';
   fxEl.style.color = fx.color || '';
-  if (auraId === 'none') return;
+  if (!fx.kind) return;
 
-  /* Hale: parcacik degil, ejderhanin cevresinde donen bir halka */
-  if (fx.kind === 'halo') {
+  /* Celestial: parcacik + ejderhanin cevresinde donen isik halkasi */
+  if (fx.kind === 'celestial') {
     fxEl.classList.add('halo');
     fxEl.style.setProperty('--aura', fx.color);
     fxEl.innerHTML = `
@@ -642,32 +790,32 @@ function efektCiz(auraId) {
         <ellipse cx="50" cy="50" rx="38" ry="12" fill="none" stroke="${fx.color}"
                  stroke-width="1.2" stroke-dasharray="4 9" opacity=".5"/>
       </svg>`;
+    parcacikSac({ ...EFEKT_AYAR.star, adet: 9 }, fx);
     return;
   }
 
-  /* Adet ve gecikme araligi birlikte secildi: her an ekranda birkac tanesi
-     gorunur olsun ama sahne kalabaliga donmesin. */
-  const ayar = {
-    ember: { adet: 18, boy: [5, 9],   sure: [2.0, 3.4], gecikme: 2.2 },
-    flame: { adet: 12, boy: [12, 22], sure: [1.1, 1.9], gecikme: 1.4 },
-    bolt:  { adet: 5,  boy: [16, 26], sure: [2.4, 4.0], gecikme: 3.0 },
-    star:  { adet: 14, boy: [9, 16],  sure: [1.6, 2.8], gecikme: 2.0 },
-  }[fx.kind];
+  const ayar = EFEKT_AYAR[fx.kind];
+  if (!ayar) return;
+  parcacikSac(ayar, fx);
+}
 
+function parcacikSac(ayar, fx) {
   const rast = ([a, b]) => a + Math.random() * (b - a);
+  const carpan = fx.yogunluk ?? 1;
+  const adet = Math.max(3, Math.round(ayar.adet * carpan));
 
-  for (let i = 0; i < ayar.adet; i++) {
+  for (let i = 0; i < adet; i++) {
     const s = document.createElement('span');
-    s.className = `p ${fx.kind}`;
+    s.className = `p ${ayar.sekil}`;
     const boy = rast(ayar.boy);
     s.style.cssText = `
       left:${4 + Math.random() * 92}%;
-      bottom:${(fx.kind === 'bolt' || fx.kind === 'star' ? 10 + Math.random() * 70 : Math.random() * 24)}%;
+      bottom:${rast(ayar.alt)}%;
       width:${boy}px;
       --dx:${(Math.random() * 26 - 13).toFixed(1)}px;
       --dur:${rast(ayar.sure).toFixed(2)}s;
       --delay:${(Math.random() * ayar.gecikme).toFixed(2)}s;`;
-    s.innerHTML = EFEKT_SEKLI[fx.kind];
+    s.innerHTML = EFEKT_SEKLI[ayar.sekil];
     fxEl.appendChild(s);
   }
 }
