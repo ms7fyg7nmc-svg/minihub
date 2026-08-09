@@ -353,6 +353,124 @@ function yumurtaSvg(level, pal) {
     </svg>`;
 }
 
+/* --- BAS PARCALARI ---
+
+   Boyunun ustunde kalan her sey: boynuzlar, kafa, gozler, burun, agiz, yanak
+   dikenleri, yuz aksesuari ve tac. Tek yerde durmasinin sebebi, kafanin hem
+   tam boy ejderhada hem de sadece-kafa cizimlerinde (bot profil fotografi,
+   dukkandaki tac/yuz onizlemeleri) ayni gorunmesi gerektigi. */
+function basParcalari(pal, look, mood, hornOlcek, uid) {
+  const acik = ton(pal.body, 0.24);
+  const cokKoyu = ton(pal.dark, -0.2);
+  const boynuzAcik = ton(pal.horn, 0.4);
+  const boynuzKoyu = ton(pal.horn, -0.32);
+
+  return `
+        <!-- BOYNUZLAR
+             Kafanin arkasindan cikip GERIYE ve disariya supurulurler. Onceki
+             surumde dimdik yukari gidiyor ve tavsan kulagi gibi duruyorlardi.
+             Buyume tabanlarindan olceklendigi icin boy ve kalinlik birlikte
+             artiyor - sadece dikey esnetmek onlari spagettiye ceviriyordu. -->
+        <g transform="translate(0 -74) scale(${hornOlcek.toFixed(3)}) translate(0 74)">
+          ${[-1, 1].map((yon) => `
+          <g transform="scale(${yon} 1)">
+            <path d="M-19 -76 C-30 -80 -41 -92 -47 -110
+                     C-45 -112 -42 -113 -40 -112
+                     C-34 -97 -25 -85 -11 -79 Z" fill="url(#bn${uid})"/>
+            <path d="M-19 -76 C-30 -80 -41 -92 -47 -110
+                     C-42 -95 -32 -83 -16 -77 Z" fill="${boynuzKoyu}" opacity=".4"/>
+            <path d="M-24 -79.5 l3.5 -5 M-31 -84 l3 -5.4 M-38 -93 l3 -5"
+                  stroke="${boynuzKoyu}" stroke-width="1.6" opacity=".55" stroke-linecap="round"/>
+          </g>`).join('')}
+        </g>
+
+        <!-- BAS: cenesine dogru daralan, surungen hatli tek parca -->
+        <path d="M-28 -62 C-30 -81 -18 -92 0 -92 C18 -92 30 -81 28 -62
+                 C27 -54 24 -48 20 -45 C18 -38 10 -34 0 -34
+                 C-10 -34 -18 -38 -20 -45 C-24 -48 -27 -54 -28 -62 Z"
+              fill="url(#gv${uid}g)"/>
+        <!-- Yanak golgesi -->
+        <path d="M28 -62 C27 -54 24 -48 20 -45 C18 -38 10 -34 0 -34
+                 C10 -39 16 -46 18 -56 C20 -70 15 -84 6 -90
+                 C19 -88 29 -76 28 -62 Z" fill="${cokKoyu}" opacity=".22"/>
+        <!-- Alin isigi -->
+        <path d="M-13 -86 C-6 -90 6 -90 13 -86 C6 -82 -6 -82 -13 -86 Z"
+              fill="${ton(pal.body, 0.5)}" opacity=".45"/>
+
+        <!-- BURUN SIRTI: ayri bir leke degil, kafanin uzerinde hafif kabartma -->
+        <path d="M-10 -58 C-11 -47 -7 -39 0 -39 C7 -39 11 -47 10 -58
+                 C6 -60 -6 -60 -10 -58 Z" fill="${cokKoyu}" opacity=".18"/>
+        <path d="M-10 -58 C-6 -60 6 -60 10 -58 C6 -57 -6 -57 -10 -58 Z"
+              fill="${acik}" opacity=".3"/>
+
+        <!-- Kas cikintisi -->
+        <path d="M-27 -72 C-20 -75 -12 -73 -8 -68" fill="none" stroke="${cokKoyu}"
+              stroke-width="4.6" stroke-linecap="round" opacity=".75"/>
+        <path d="M27 -72 C20 -75 12 -73 8 -68" fill="none" stroke="${cokKoyu}"
+              stroke-width="4.6" stroke-linecap="round" opacity=".75"/>
+
+        ${gozler(mood, pal)}
+
+        <!-- Burun delikleri -->
+        <path d="M-5.2 -46 C-5.6 -43.4 -4.2 -42 -3.2 -42.6 C-3.6 -44.4 -4.4 -45.8 -5.2 -46 Z
+                 M5.2 -46 C5.6 -43.4 4.2 -42 3.2 -42.6 C3.6 -44.4 4.4 -45.8 5.2 -46 Z"
+              fill="#150f1d" opacity=".85"/>
+
+        <!-- Agiz: cene hattini takip eder, ustunden iki fildisi sarkar -->
+        <path d="M-13 -40 C-7 -35 7 -35 13 -40" fill="none" stroke="#150f1d"
+              stroke-width="2" stroke-linecap="round" opacity=".75"/>
+        <path d="M-7.4 -37.4 C-6.6 -34 -5.6 -32.6 -4.6 -32.4 C-4 -34.6 -4.2 -36.6 -4.6 -38.2 Z
+                 M7.4 -37.4 C6.6 -34 5.6 -32.6 4.6 -32.4 C4 -34.6 4.2 -36.6 4.6 -38.2 Z"
+              fill="#fff" opacity=".92"/>
+
+        <!-- Yanak dikenleri: cene hattina yapisik, geriye dogru -->
+        <path d="M-24 -56 L-39 -50 L-25 -45 Z" fill="${boynuzKoyu}"/>
+        <path d="M-24 -56 L-39 -50 L-29 -50 Z" fill="${boynuzAcik}"/>
+        <path d="M24 -56 L39 -50 L25 -45 Z" fill="${boynuzKoyu}"/>
+        <path d="M24 -56 L39 -50 L29 -50 Z" fill="${boynuzAcik}"/>
+
+        ${faceSvg(look.face)}
+        ${headSvg(look.head, -90)}
+  `;
+}
+
+/* Bas parcalarinin ihtiyac duydugu degradeler.
+   Hem dragonSvg hem dragonHeadSvg ayni tanimlari kullaniyor. */
+function basDefs(pal, uid) {
+  return `
+    <linearGradient id="gv${uid}g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${ton(pal.body, 0.24)}"/>
+      <stop offset="0.45" stop-color="${pal.body}"/>
+      <stop offset="1" stop-color="${ton(pal.body, -0.26)}"/>
+    </linearGradient>
+    <linearGradient id="bn${uid}" x1="0" y1="1" x2="0.3" y2="0">
+      <stop offset="0" stop-color="${ton(pal.horn, -0.32)}"/>
+      <stop offset="0.6" stop-color="${pal.horn}"/>
+      <stop offset="1" stop-color="${ton(pal.horn, 0.4)}"/>
+    </linearGradient>`;
+}
+
+/* --- SADECE BAS ---
+
+   Govde, kanat ve kuyruk olmadan sadece kafa. Bot profil fotografi ve
+   dukkandaki tac/yuz onizlemeleri icin. Tam boy sprite'i kirpmak ise
+   yaramiyordu: kanatlar kafanin iki yaninda kalip kadraji kirletiyordu.
+
+   Kadraj: bas + boynuzlar kutusu yerel koordinatlarda x ±47, y -110..-34.
+   Bu kutu 200'luk cerceveye ortalanip buyutuluyor. */
+export function dragonHeadSvg(look, mood = 'happy') {
+  const pal = palet(look);
+  const uid = ++uidSayaci;
+  const olcek = 1.85;
+  return `
+    <svg viewBox="0 0 200 200" aria-hidden="true">
+      <defs>${basDefs(pal, uid)}</defs>
+      <g transform="translate(100 ${100 + 72 * olcek}) scale(${olcek})">
+        ${basParcalari(pal, look, mood, 1, uid)}
+      </g>
+    </svg>`;
+}
+
 /* --- EJDERHA ---
    look : { color, skin, head, face }
    mood : 'happy' | 'sad' */
@@ -559,71 +677,7 @@ export function dragonSvg(level, look, mood = 'happy') {
         <path d="M11 -52 C14 -48 17 -38 15 -24 L8 -24 C10 -38 9 -46 6 -52 Z"
               fill="${cokKoyu}" opacity=".35"/>
 
-        <!-- BOYNUZLAR
-             Kafanin arkasindan cikip GERIYE ve disariya supurulurler. Onceki
-             surumde dimdik yukari gidiyor ve tavsan kulagi gibi duruyorlardi.
-             Buyume tabanlarindan olceklendigi icin boy ve kalinlik birlikte
-             artiyor - sadece dikey esnetmek onlari spagettiye ceviriyordu. -->
-        <g transform="translate(0 -74) scale(${horn.toFixed(3)}) translate(0 74)">
-          ${[-1, 1].map((yon) => `
-          <g transform="scale(${yon} 1)">
-            <path d="M-19 -76 C-30 -80 -41 -92 -47 -110
-                     C-45 -112 -42 -113 -40 -112
-                     C-34 -97 -25 -85 -11 -79 Z" fill="url(#bn${uid})"/>
-            <path d="M-19 -76 C-30 -80 -41 -92 -47 -110
-                     C-42 -95 -32 -83 -16 -77 Z" fill="${boynuzKoyu}" opacity=".4"/>
-            <path d="M-24 -79.5 l3.5 -5 M-31 -84 l3 -5.4 M-38 -93 l3 -5"
-                  stroke="${boynuzKoyu}" stroke-width="1.6" opacity=".55" stroke-linecap="round"/>
-          </g>`).join('')}
-        </g>
-
-        <!-- BAS: cenesine dogru daralan, surungen hatli tek parca -->
-        <path d="M-28 -62 C-30 -81 -18 -92 0 -92 C18 -92 30 -81 28 -62
-                 C27 -54 24 -48 20 -45 C18 -38 10 -34 0 -34
-                 C-10 -34 -18 -38 -20 -45 C-24 -48 -27 -54 -28 -62 Z"
-              fill="url(#gv${uid}g)"/>
-        <!-- Yanak golgesi -->
-        <path d="M28 -62 C27 -54 24 -48 20 -45 C18 -38 10 -34 0 -34
-                 C10 -39 16 -46 18 -56 C20 -70 15 -84 6 -90
-                 C19 -88 29 -76 28 -62 Z" fill="${cokKoyu}" opacity=".22"/>
-        <!-- Alin isigi -->
-        <path d="M-13 -86 C-6 -90 6 -90 13 -86 C6 -82 -6 -82 -13 -86 Z"
-              fill="${ton(pal.body, 0.5)}" opacity=".45"/>
-
-        <!-- BURUN SIRTI: ayri bir leke degil, kafanin uzerinde hafif kabartma -->
-        <path d="M-10 -58 C-11 -47 -7 -39 0 -39 C7 -39 11 -47 10 -58
-                 C6 -60 -6 -60 -10 -58 Z" fill="${cokKoyu}" opacity=".18"/>
-        <path d="M-10 -58 C-6 -60 6 -60 10 -58 C6 -57 -6 -57 -10 -58 Z"
-              fill="${acik}" opacity=".3"/>
-
-        <!-- Kas cikintisi -->
-        <path d="M-27 -72 C-20 -75 -12 -73 -8 -68" fill="none" stroke="${cokKoyu}"
-              stroke-width="4.6" stroke-linecap="round" opacity=".75"/>
-        <path d="M27 -72 C20 -75 12 -73 8 -68" fill="none" stroke="${cokKoyu}"
-              stroke-width="4.6" stroke-linecap="round" opacity=".75"/>
-
-        ${gozler(mood, pal)}
-
-        <!-- Burun delikleri -->
-        <path d="M-5.2 -46 C-5.6 -43.4 -4.2 -42 -3.2 -42.6 C-3.6 -44.4 -4.4 -45.8 -5.2 -46 Z
-                 M5.2 -46 C5.6 -43.4 4.2 -42 3.2 -42.6 C3.6 -44.4 4.4 -45.8 5.2 -46 Z"
-              fill="#150f1d" opacity=".85"/>
-
-        <!-- Agiz: cene hattini takip eder, ustunden iki fildisi sarkar -->
-        <path d="M-13 -40 C-7 -35 7 -35 13 -40" fill="none" stroke="#150f1d"
-              stroke-width="2" stroke-linecap="round" opacity=".75"/>
-        <path d="M-7.4 -37.4 C-6.6 -34 -5.6 -32.6 -4.6 -32.4 C-4 -34.6 -4.2 -36.6 -4.6 -38.2 Z
-                 M7.4 -37.4 C6.6 -34 5.6 -32.6 4.6 -32.4 C4 -34.6 4.2 -36.6 4.6 -38.2 Z"
-              fill="#fff" opacity=".92"/>
-
-        <!-- Yanak dikenleri: cene hattina yapisik, geriye dogru -->
-        <path d="M-24 -56 L-39 -50 L-25 -45 Z" fill="${boynuzKoyu}"/>
-        <path d="M-24 -56 L-39 -50 L-29 -50 Z" fill="${boynuzAcik}"/>
-        <path d="M24 -56 L39 -50 L25 -45 Z" fill="${boynuzKoyu}"/>
-        <path d="M24 -56 L39 -50 L29 -50 Z" fill="${boynuzAcik}"/>
-
-        ${faceSvg(look.face)}
-        ${headSvg(look.head, -90)}
+        ${basParcalari(pal, look, mood, horn, uid)}
       </g>
     </svg>`;
 }
