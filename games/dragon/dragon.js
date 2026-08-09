@@ -13,7 +13,7 @@ import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../j
 import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js';
 
 import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES } from './data.js';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js';
 import { bakiyeOku, harca } from './economy.js';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
          adaSahipMi, adaEkle } from './model.js';
@@ -153,11 +153,34 @@ islandEl.addEventListener('click', durt);
 tryBuy.addEventListener('click', satinAlOnayla);
 tryCancel.addEventListener('click', denemeyiBirak);
 
-/* Denemeyi biraktiginda ada denenmisse sahne sahip olunan adaya doner */
+/* Sahnedeki ada HER ZAMAN buradan belirlenir: deneme bir adaysa o, degilse
+   oyuncunun sahip oldugu ada.
+
+   Onceki surumde tema yalnizca "ada denemesi biraktiginda" geri aliniyordu.
+   Oyuncu adayi deneyip BASKA bir kategoriye (ornegin kuyruga) gecince deneme
+   degisiyor ama sahne volkanik kaliyordu - satin alinmamis bir ada ana
+   ekranda gorunuyordu. Artik her deneme degisiminde burasi cagriliyor. */
+/* Markette ne gosterilecegini belirler.
+
+   Normalde ejderha buyuk ve ada gizli - satin alacagin kozmetigi gormek
+   icin. Ama ADA deniyorsan tam tersi gerekiyor: ada gorunmeli, ejderha
+   normal boyutuna donmeli. Yoksa ada denerken ekranda hicbir sey degismiyor. */
+function onizlemeModu() {
+  const adaOnizleme = dukkanAcik && deneme?.slot === 'island';
+  document.body.classList.toggle('island-preview', adaOnizleme);
+  requestAnimationFrame(adaYerlestir);
+}
+
+function adaSahnesiniTazele() {
+  if (!oyuncu) return;
+  const istenen = deneme?.slot === 'island' ? deneme.id : oyuncu.island;
+  if (ada.temaBilgisi() !== adaTemasi(istenen)) ada.temaDegistir(istenen);
+}
+
 function denemeyiBirak() {
-  const adaDenendi = deneme?.slot === 'island';
   deneme = null;
-  if (adaDenendi) ada.temaDegistir(oyuncu.island);
+  adaSahnesiniTazele();
+  onizlemeModu();
   haptic.tap();
   dukkanCiz();
   ciz();
@@ -210,7 +233,8 @@ function adaYerlestir() {
   const kutu = islandEl.getBoundingClientRect();
   slotEl.style.setProperty('--dx', `${(p.x / kutu.width) * 100}%`);
   slotEl.style.setProperty('--dy', `${(p.y / kutu.height) * 100}%`);
-  slotEl.style.width = `${Math.max(30, 38 * p.olcek)}%`;
+  /* Genislik de degisken uzerinden: market modunda CSS onu devraliyor */
+  slotEl.style.setProperty('--w', `${Math.max(30, 38 * p.olcek)}%`);
 }
 
 /* ---------- Doyum / keyif ---------- */
@@ -410,13 +434,15 @@ function dukkanGoster(acik) {
   controlsEl.hidden = acik;
   shopControlsEl.hidden = !acik;
   document.body.classList.toggle('shop-open', acik);
+  onizlemeModu();
 
-  if (!acik && deneme) {
-    const adaDenendi = deneme.slot === 'island';
+  /* Dukkandan cikarken deneme her zaman birakilir: onizleme yalnizca
+     markette yasar, ana ekrana sizmaz. */
+  if (!acik) {
     deneme = null;
-    if (adaDenendi) ada.temaDegistir(oyuncu.island);
     dukkanCiz();
   }
+  adaSahnesiniTazele();
   haptic.tap();
   /* Ada kutusu boyut degistirdi */
   requestAnimationFrame(adaYerlestir);
@@ -549,11 +575,22 @@ function grupCiz(baslikKey, girdiler) {
   }
 
   kutu.appendChild(sira);
+
+  /* Deneme cubugu panelin tepesinde degil, DENENEN kategorinin hemen altinda
+     duruyor. Tepede oldugunda kuyruk gibi asagidaki bir kategoriyi denerken
+     fiyat ve "Satin al" ekranin disinda kaliyordu. */
+  if (deneme && girdiler.length && girdiler[0].slot === deneme.slot) {
+    kutu.appendChild(tryBar);
+  }
+
   shopEl.appendChild(kutu);
 }
 
 function dukkanCiz() {
   if (!oyuncu) return;
+  /* Cubuk bir gruba tasinmis olabilir; listeyi temizlemeden once geri al
+     ki DOM'dan tamamen kopmasin. */
+  panelShop.appendChild(tryBar);
   shopEl.textContent = '';
 
   for (const slot of SLOTS) {
@@ -585,12 +622,10 @@ function parcaSec(slot, id, item) {
 
   if (sahip) {
     deneme = null;
-    if (slot === 'island') {
-      oyuncu.island = id;
-      ada.temaDegistir(id);
-    } else {
-      ejderha.look[slot] = id;
-    }
+    if (slot === 'island') oyuncu.island = id;
+    else ejderha.look[slot] = id;
+    adaSahnesiniTazele();
+    onizlemeModu();
     shopMsgEl.hidden = true;
     haptic.tap();
     kaydet();
@@ -603,8 +638,8 @@ function parcaSec(slot, id, item) {
   deneme = { slot, id, item };
   shopMsgEl.hidden = true;
   haptic.tap();
-  /* Ada denemesi sahneyi gecici olarak degistirir */
-  if (slot === 'island') ada.temaDegistir(id);
+  adaSahnesiniTazele();
+  onizlemeModu();
   dukkanCiz();
   ciz();
 }
@@ -634,11 +669,12 @@ async function satinAlOnayla() {
   if (slot === 'island') {
     adaEkle(oyuncu, id);
     oyuncu.island = id;
-    ada.temaDegistir(id);
   } else {
     dolabaEkle(oyuncu, slot, id);
     ejderha.look[slot] = id;
   }
+  adaSahnesiniTazele();
+  onizlemeModu();
 
   haptic.success();
   shopMsgEl.hidden = true;
