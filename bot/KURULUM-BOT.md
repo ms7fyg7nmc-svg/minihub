@@ -142,3 +142,11 @@ help - How points work
 
 Değiştirdikten sonra kodu tekrar Cloudflare editörüne yapıştırıp **Deploy**
 demen yeterli.
+
+---
+
+## Jeton bakiyesini sunucuda tutmak istersen
+
+Bot şu an sadece hoş geldin mesajı gönderiyor — jeton/ilerleme hâlâ
+kullanıcının kendi cihazında tutuluyor. Bunu sunucuya taşımak (ve teknik
+olarak değiştirilemez hale getirmek) istersen: [KURULUM-SUNUCU.md](KURULUM-SUNUCU.md)

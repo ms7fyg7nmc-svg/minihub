@@ -73,6 +73,14 @@ export function getUser() {
    };
 }
 
+/* Ham, IMZALI initData metni - initDataUnsafe'in aksine bu sunucuda
+   dogrulanabilir. Sunucuya giden her istekte bu gonderilir; sunucu Telegram'in
+   verdigi HMAC imzasini kontrol edip kullanici kimligini BURADAN degil,
+   kendi cozdugu imzali veriden cikarir - istemci kendi kimligini soyleyemez. */
+export function getInitData() {
+   return tg?.initData || '';
+}
+
 /* Titresim / dokunsal geri bildirim */
 export const haptic = {
    tap(style = 'light') {

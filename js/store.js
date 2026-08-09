@@ -1,29 +1,50 @@
-/* Puan kaydetme sistemi.
+/* Puan ve ilerleme kaydetme sistemi.
 
-   Saklanan veriler:
-     hub_points        -> toplam hub puani (ileride token'a cevrilecek)
-     best_<oyunAdi>    -> o oyundaki en yuksek skor
-     state_<oyunAdi>   -> yarim kalan oyunun kayitli hali
+   IKI KATMAN VAR: SUNUCU (yetkili) VE YEREL (yedek/dusme yolu)
 
-   NEDEN "ONCE YEREL, BULUT SADECE YEDEK"?
+   Telegram icinde acilmissa, bu dosya jeton bakiyesini ve ilerlemeyi artik
+   SUNUCUDA (Cloudflare Worker + D1) tutuyor - bot/worker.js'teki /api/*
+   uclarini cagirarak. Neden: bakiye sadece bu cihazda tutulursa tarayici
+   konsolundan degistirilebiliyordu (`localStorage.hub_points = '999999'`
+   yazmak yetiyordu). Sunucu, her istegi Telegram'in imzaladigi initData ile
+   dogruladigi icin kullanici kendi bakiyesini soyleyemiyor.
 
-   Onceki surumde okuma once Telegram CloudStorage'a gidiyordu. Ama bulut
-   yazmasi gecikmeli: set() yerel kayda aninda yaziyor, buluta ise yazma
-   birkac yuz milisaniye sonra ulasiyordu. Art arda besleme yapinca bir
-   sonraki okuma buluttan ESKI (yuksek) bakiyeyi aliyor ve harcama o eski
-   sayidan dusuluyordu - yani jetonlar gercekte eksilmiyordu. Ustelik get()
-   o eski bulut degerini localStorage'in uzerine de geri yaziyordu.
-   Olculdu: 2.232 jetonluk harcamanin sadece 724'u hesaba yansidi.
+   Asagidaki durumlarda YEREL moda (bu dosyanin eskiden beri yaptigi sey)
+   sessizce dusulur - oyun hicbir zaman kirilmaz:
+     - Telegram disinda aciliyorsa (misafir - zaten "puanlar bu cihazda
+       kalir" uyarisi gosteriliyor, davranis hic degismedi)
+     - Sunucuya hic ulasilamazsa (kurulum tamamlanmamis, ag sorunu) - ilk
+       senkron denemesi basarisiz olunca o oturum boyunca yerel moda gecilir
 
-   Simdi yetkili kaynak bu cihazdaki kayit:
-     - Bellekteki 'onbellek' ilk okumadan sonra dogrudan cevap verir
-       (bulut gidip gelmesi yok, "1 saniye bekleme" hissi de kalkti).
-     - Bulut sadece YEDEK: yerel kayit bossa (yeni telefon, temizlenmis
-       tarayici) oradan geri yuklenir.
-     - Buluta yazma geciktirilerek yapilir, boylece hizli oynarken her
-       harekette bir bulut istegi gitmez; uygulama kapanirken bekleyenler
-       hemen gonderilir.
+   Disa acilan fonksiyonlarin ISIMLERI VE IMZALARI DEGISMEDI - bu dosyayi
+   kullanan 12 dosyanin (oyunlar + ejderha) hicbiri degismek zorunda kalmadi.
+
+   YEREL MODUN KENDI GECMISI (hala gecerli - asagidaki kod aynen duruyor):
+   Once okuma her zaman once Telegram CloudStorage'a gidiyordu. Ama bulut
+   yazmasi gecikmeli oldugu icin art arda islemlerde eski deger okunuyor ve
+   harcamalar gercekte dusmuyordu (olculdu: 2.232 jetonun sadece 724'u
+   yansidi). Simdi bu cihazdaki kayit yetkili, bulut sadece yedek.
 */
+
+import { isTelegramUser, getInitData } from './tg.js';
+
+/* Worker'in gercek adresiyle degistir: Cloudflare Worker sayfasinin en
+   ustunde yazan adres - KURULUM-BOT.md'nin C adiminda not ettigin adresin
+   AYNISI (https://minihub-bot.XXXXX.workers.dev seklinde). Degistirmeden
+   birakirsan sunucuya baglanma denemesi basarisiz olur ve oyun otomatik
+   olarak yerel moda duser - hicbir sey kirilmaz, sadece bakiyeler bu
+   cihazdan cihaza tasinmaz. */
+const API_BASE = 'https://minihub-bot.KULLANICIADIN.workers.dev';
+
+function uuid() {
+  if (globalThis.crypto?.randomUUID) return crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+/* ==========================================================================
+   YEREL MOD - Telegram disinda ya da sunucuya hic ulasilamazken kullanilir.
+   Bu bolum, sunucu eklenmeden onceki davranisin AYNISI.
+   ========================================================================== */
 
 const tg = window.Telegram?.WebApp ?? null;
 const cloud = tg?.CloudStorage ?? null;
@@ -31,11 +52,8 @@ const cloudReady = !!cloud && !!tg?.version && parseFloat(tg.version) >= 6.9;
 
 const BULUT_BEKLEME = 600; /* ms - art arda yazmalari tek istekte toplar */
 
-/* Bu oturumun yetkili degerleri. Bir kez doldurulunca okuma hep buradan. */
 const onbellek = new Map();
 const bekleyenYazmalar = new Map(); /* key -> zamanlayici */
-
-/* --- Dusuk seviye okuma/yazma --- */
 
 function localGet(key) {
   try {
@@ -60,13 +78,11 @@ function get(key) {
 
   const yerel = localGet(key);
 
-  /* Bu cihazda kayit varsa yetkili odur - buluta hic sormuyoruz */
   if (!bos(yerel) || !cloudReady) {
     onbellek.set(key, yerel);
     return Promise.resolve(yerel);
   }
 
-  /* Yerel bosken bulut yedegi geri yuklenir (yeni cihaz / temiz tarayici) */
   return new Promise((resolve) => {
     cloud.getItem(key, (err, value) => {
       const sonuc = err || bos(value) ? yerel : value;
@@ -93,8 +109,6 @@ function bulutaYaz(key) {
   }, BULUT_BEKLEME));
 }
 
-/* Uygulama kapanirken/arka plana gecerken bekleyenleri hemen gonder,
-   yoksa son birkac saniyelik ilerleme buluta hic ulasmaz. */
 function bulutuBosalt() {
   if (!cloudReady || !bekleyenYazmalar.size) return;
   for (const [key, zamanlayici] of bekleyenYazmalar) {
@@ -109,59 +123,44 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) bulutuBosalt();
 });
 
-/* --- Uygulamanin kullandigi fonksiyonlar --- */
-
-export async function getPoints() {
+async function getPointsYerel() {
   return Number(await get('hub_points')) || 0;
 }
 
-/* Puan ekleme "oku, topla, yaz" seklinde calistigi icin iki ekleme ust uste
-gelirse biri digerini silebilir. Eklemeleri sirayla calistirarak bunu onluyoruz. */
 let pointsQueue = Promise.resolve(0);
 
-/** Hub puanina ekleme yapar, yeni toplami dondurur. */
-export function addPoints(amount) {
-  const n = Math.max(0, Math.round(Number(amount) || 0));
+function addPointsYerel(n) {
   pointsQueue = pointsQueue
-    .catch(() => 0) /* onceki ekleme patlasa bile sira devam etsin */
+    .catch(() => 0)
     .then(async () => {
-      const total = (await getPoints()) + n;
+      const total = (await getPointsYerel()) + n;
       set('hub_points', total);
       return total;
     });
   return pointsQueue;
 }
 
-/** Hub puanindan harcama yapar.
-    { ok, total } dondurur - bakiye yetmiyorsa ok:false ve hicbir sey degismez.
-
-    Eklemelerle AYNI siraya bagli calisir: yoksa "oku, cikar, yaz" arasina bir
-    kazanc girip bakiyeyi bozabilirdi. */
-export function spendPoints(amount) {
-  const n = Math.max(0, Math.round(Number(amount) || 0));
-
+function spendPointsYerel(n) {
   const sonuc = pointsQueue
     .catch(() => 0)
     .then(async () => {
-      const total = await getPoints();
+      const total = await getPointsYerel();
       if (total < n) return { ok: false, total };
       const kalan = total - n;
       set('hub_points', kalan);
       return { ok: true, total: kalan };
     });
 
-  /* Siradaki islem guncel bakiyeyi gorsun */
   pointsQueue = sonuc.then((r) => r.total).catch(() => 0);
   return sonuc;
 }
 
-export async function getBest(game) {
+async function getBestYerel(game) {
   return Number(await get(`best_${game}`)) || 0;
 }
 
-/** Skor rekoru kirildiysa kaydeder. { best, isRecord } dondurur. */
-export async function submitScore(game, score) {
-  const best = await getBest(game);
+async function submitScoreYerel(game, score) {
+  const best = await getBestYerel(game);
   if (score > best) {
     set(`best_${game}`, score);
     return { best: score, isRecord: true };
@@ -169,9 +168,7 @@ export async function submitScore(game, score) {
   return { best, isRecord: false };
 }
 
-/* --- Yarim kalan oyunu saklama --- */
-
-export async function loadState(game) {
+async function loadStateYerel(game) {
   const raw = await get(`state_${game}`);
   if (!raw) return null;
   try {
@@ -181,10 +178,280 @@ export async function loadState(game) {
   }
 }
 
-export function saveState(game, state) {
+function saveStateYerel(game, state) {
   set(`state_${game}`, JSON.stringify(state));
 }
 
-export function clearState(game) {
+function clearStateYerel(game) {
   set(`state_${game}`, '');
+}
+
+/* ==========================================================================
+   SUNUCU MODU
+   ========================================================================== */
+
+let sunucuAktif = isTelegramUser();
+
+/* localStorage'da biriken best_ ve state_ degerlerini tarar - ilk senkronda
+   sunucuya tasinacak "gecmis ilerleme" budur. Sadece bir kez, ilk senkron
+   isteginde kullanilir. */
+function yerelAnlikGoruntu() {
+  const anlik = {};
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !(k.startsWith('best_') || k.startsWith('state_'))) continue;
+      const v = localStorage.getItem(k);
+      if (bos(v)) continue;
+      if (k.startsWith('best_')) {
+        anlik[k] = Number(v) || 0;
+      } else {
+        try {
+          anlik[k] = JSON.parse(v);
+        } catch {
+          /* bozuk kayit, atla */
+        }
+      }
+    }
+  } catch {
+    /* localStorage'a erisilemiyor, bos gonder */
+  }
+  return anlik;
+}
+
+/* Kimlik dogrulamali bir /api/* ucuna POST atar. Basarisiz olursa (ag
+   sorunu, sunucu hatasi, initData yok) null doner - hicbir zaman fırlatmaz,
+   cagiran taraf null'u "sunucuya ulasilamadi" olarak yorumlar. */
+async function sunucuGonder(yol, ekBody) {
+  try {
+    const initData = getInitData();
+    if (!initData) return null;
+    const yanit = await fetch(`${API_BASE}${yol}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ initData, ...ekBody }),
+    });
+    if (!yanit.ok) return null;
+    return await yanit.json();
+  } catch {
+    return null;
+  }
+}
+
+/* Modul yuklenir yuklenmez baslar (Telegram icindeyse), boylece ilk okuma
+   cagrisi geldiginde cogunlukla ya bitmis ya da bitmek uzeredir. Asla
+   reddetmez (throw etmez) - basarisizlikta null'a duser ve sunucuAktif'i
+   false yapar, boylece sonraki her cagri dogrudan yerel moda gider. */
+const senkron = sunucuAktif ? (async () => {
+  try {
+    const initData = getInitData();
+    if (!initData) throw new Error('initData yok');
+
+    const yanit = await fetch(`${API_BASE}/api/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        initData,
+        points: Number(localGet('hub_points')) || 0,
+        state: yerelAnlikGoruntu(),
+      }),
+    });
+    if (!yanit.ok) throw new Error(`sync basarisiz: ${yanit.status}`);
+    const veri = await yanit.json();
+
+    return {
+      points: Number(veri.points) || 0,
+      state: veri.state && typeof veri.state === 'object' ? veri.state : {},
+      meta: veri.meta && typeof veri.meta === 'object' ? veri.meta : {},
+    };
+  } catch {
+    sunucuAktif = false;
+    return null;
+  }
+})() : Promise.resolve(null);
+
+/* --- Basarisiz sunucu yazmalarini kuyruklayip yeniden dener ---
+
+   Sadece jeton DISINDAKI yazmalar (rekor, oyun durumu) kuyruklaniyor - jeton
+   harcama/kazanma dogrudan sonucuna gore davraniyor (asagida acikliyor).
+   Kuyruk localStorage'da tutuluyor ki sayfa kapanip acilsa bile kaybolmasin. */
+const KUYRUK_ANAHTARI = 'mh_pending_sync';
+
+function kuyruguOku() {
+  try {
+    return JSON.parse(localGet(KUYRUK_ANAHTARI) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function kuyruguYaz(liste) {
+  localSet(KUYRUK_ANAHTARI, JSON.stringify(liste));
+}
+
+function kuyrugaEkle(giris) {
+  const liste = kuyruguOku();
+  liste.push(giris);
+  kuyruguYaz(liste);
+}
+
+async function kuyruguBosalt() {
+  if (!sunucuAktif) return;
+  const v = await senkron;
+  if (!v) return;
+
+  const liste = kuyruguOku();
+  if (!liste.length) return;
+
+  const kalan = [];
+  for (const giris of liste) {
+    let sonuc = null;
+
+    if (giris.tur === 'earn') {
+      sonuc = await sunucuGonder('/api/points/earn', { opId: giris.opId, amount: giris.amount });
+      if (sonuc) v.points = sonuc.total;
+    } else if (giris.tur === 'best') {
+      sonuc = await sunucuGonder('/api/best', { game: giris.game, score: giris.score });
+      if (sonuc) v.state[`best_${giris.game}`] = sonuc.best;
+    } else if (giris.tur === 'state') {
+      sonuc = await sunucuGonder('/api/state', {
+        game: giris.game,
+        state: giris.state,
+        expectedVersion: giris.expectedVersion,
+      });
+      if (sonuc) {
+        v.state[`state_${giris.game}`] = sonuc.state;
+        v.meta[`state_${giris.game}`] = sonuc.version;
+      }
+    }
+
+    if (!sonuc) kalan.push(giris); /* hala basarisiz, kuyrukta kalsin */
+  }
+  kuyruguYaz(kalan);
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) kuyruguBosalt();
+});
+window.addEventListener('online', kuyruguBosalt);
+kuyruguBosalt();
+
+/* --- Disa acilan fonksiyonlar ---
+
+   Her biri once senkronun sonucunu bekler: sunucu modundaysa oradan okur/
+   yazar, degilse (misafir veya sunucuya hic ulasilamadiysa) Yerel
+   fonksiyona duser. Cagiran hicbir dosya bu ayrimin farkinda olmak zorunda
+   degil. */
+
+export async function getPoints() {
+  const v = await senkron;
+  if (v) return v.points;
+  return getPointsYerel();
+}
+
+export async function addPoints(amount) {
+  const n = Math.max(0, Math.round(Number(amount) || 0));
+  const v = await senkron;
+  if (!v) return addPointsYerel(n);
+
+  const opId = uuid();
+  const sonuc = await sunucuGonder('/api/points/earn', { opId, amount: n });
+  if (!sonuc) {
+    /* Ag sorunu: kazanci kuyruga koyup mevcut (degismemis) bakiyeyi
+       donduruyoruz - sunucu onaylamadan bakiyeyi yerelde sisirmiyoruz. */
+    kuyrugaEkle({ tur: 'earn', opId, amount: n });
+    return v.points;
+  }
+  v.points = sonuc.total;
+  return v.points;
+}
+
+export async function spendPoints(amount) {
+  const n = Math.max(0, Math.round(Number(amount) || 0));
+  const v = await senkron;
+  if (!v) return spendPointsYerel(n);
+
+  const sonuc = await sunucuGonder('/api/points/spend', { opId: uuid(), amount: n });
+  if (!sonuc) {
+    /* Ag sorunu: "yeterli bakiye yok" ile ayni sonuc - hicbir sey
+       harcanmadi, oyuncu jeton kaybetmez, ister tekrar dener. Bunu
+       kuyruklamiyoruz cunku oyuncu "basarisiz" gorup baska bir sey yapmaya
+       devam edebilir; gecikmeli bir harcamanin sessizce uygulanmasi kafa
+       karistirir. */
+    return { ok: false, total: v.points };
+  }
+  v.points = sonuc.total;
+  return sonuc;
+}
+
+export async function getBest(game) {
+  const v = await senkron;
+  if (v) return Number(v.state[`best_${game}`]) || 0;
+  return getBestYerel(game);
+}
+
+export async function submitScore(game, score) {
+  const v = await senkron;
+  if (!v) return submitScoreYerel(game, score);
+
+  const key = `best_${game}`;
+  const mevcut = Number(v.state[key]) || 0;
+  const yeniRekor = score > mevcut;
+  const enIyi = yeniRekor ? score : mevcut;
+
+  /* Iyimser: ekrana hemen yansitiyoruz, sunucu cevabi arka planda gelir.
+     Boylece "yeni rekor!" animasyonu bir ag isteği kadar gecikmez -
+     eskisi de zaten yerelde aninda donuyordu, ayni his korunuyor. */
+  v.state[key] = enIyi;
+
+  sunucuGonder('/api/best', { game, score }).then((sonuc) => {
+    if (sonuc) v.state[key] = sonuc.best;
+    else kuyrugaEkle({ tur: 'best', game, score });
+  });
+
+  return { best: enIyi, isRecord: yeniRekor };
+}
+
+export async function loadState(game) {
+  const v = await senkron;
+  if (v) return v.state[`state_${game}`] ?? null;
+  return loadStateYerel(game);
+}
+
+export function saveState(game, state) {
+  senkron.then((v) => {
+    if (!v) return saveStateYerel(game, state);
+
+    const key = `state_${game}`;
+    const beklenen = v.meta[key] || 0;
+    v.state[key] = state; /* iyimser: yerel onbellek hemen guncellenir */
+
+    sunucuGonder('/api/state', { game, state, expectedVersion: beklenen }).then((sonuc) => {
+      if (sonuc) {
+        v.state[key] = sonuc.state;
+        v.meta[key] = sonuc.version;
+      } else {
+        kuyrugaEkle({ tur: 'state', game, state, expectedVersion: beklenen });
+      }
+    });
+  });
+}
+
+export function clearState(game) {
+  senkron.then((v) => {
+    if (!v) return clearStateYerel(game);
+
+    const key = `state_${game}`;
+    const beklenen = v.meta[key] || 0;
+    v.state[key] = null;
+
+    sunucuGonder('/api/state', { game, state: null, expectedVersion: beklenen }).then((sonuc) => {
+      if (sonuc) {
+        v.state[key] = sonuc.state;
+        v.meta[key] = sonuc.version;
+      } else {
+        kuyrugaEkle({ tur: 'state', game, state: null, expectedVersion: beklenen });
+      }
+    });
+  });
 }
