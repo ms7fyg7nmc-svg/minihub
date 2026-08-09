@@ -67,6 +67,51 @@ fazlasıyla yeter).
 çalıştırırsan hata vermez, hiçbir şeyi silmez (dosyanın en başında bu
 açıklanıyor).
 
+### "Requests without any query are not supported" hatası alırsan
+
+Bazı hesaplarda D1 konsolu üç `CREATE TABLE` komutunu **tek seferde** kabul
+etmiyor. Çözüm: aşağıdaki üç bloğu **teker teker** kopyala — her birini
+konsola yapıştır, **Run**'a bas, konsolu temizle, sıradakine geç.
+
+**1. blok:**
+```sql
+CREATE TABLE IF NOT EXISTS players (
+  id         TEXT PRIMARY KEY,
+  points     INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+```
+
+**2. blok:**
+```sql
+CREATE TABLE IF NOT EXISTS player_data (
+  player_id  TEXT NOT NULL,
+  key        TEXT NOT NULL,
+  value      TEXT NOT NULL,
+  version    INTEGER NOT NULL DEFAULT 1,
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (player_id, key)
+);
+```
+
+**3. blok:**
+```sql
+CREATE TABLE IF NOT EXISTS spend_log (
+  player_id      TEXT NOT NULL,
+  op_id          TEXT NOT NULL,
+  delta          INTEGER NOT NULL,
+  balance_after  INTEGER NOT NULL,
+  created_at     INTEGER NOT NULL,
+  PRIMARY KEY (player_id, op_id)
+);
+```
+
+Üçü de hatasız çalıştıysa D adımına geç. (Hâlâ aynı hatayı alıyorsan konsol
+kutusuna gerçekten bir şey yapıştırıldığından emin ol — bazen kopyalama
+GitHub'ın önizleme ekranından değil, dosyanın "Raw" görünümünden yapılmalı:
+schema.sql sayfasında **Raw** butonuna basıp oradan kopyala.)
+
 ---
 
 ## D. Oyunun sunucu adresini gir
