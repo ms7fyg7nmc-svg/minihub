@@ -2,7 +2,7 @@
 Yeni oyun eklemek istedigimizde sadece asagidaki gameList() fonksiyonuna satir ekliyoruz. */
 
 import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js';
-import { getPoints, getBest } from './store.js';
+import { getPoints, getBest, sunucuDurumu } from './store.js';
 import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js';
 
 /* Botun Telegram adresi. Kendi botunun adini yazarsan tarayicida acan
@@ -262,11 +262,13 @@ renderLangSwitcher(document.getElementById('lang-switcher'));
 renderProfile();
 renderGames();
 renderTelegramNotice();
+renderSyncBadge();
 
 document.addEventListener('langchange', () => {
    applyTranslations();
    renderProfile();
    renderGames();
+   renderSyncBadge();
 });
 
 /* Sayfa Telegram disinda acildiysa puanlarin kaybolabilecegini hatirlatir */
@@ -282,6 +284,24 @@ function renderTelegramNotice() {
    } else {
       notice.classList.add('is-static'); /* gidilecek adres yok, ok isareti gizlensin */
    }
+}
+
+/* "Kurulumu bitirdim ama degisiklik gormuyorum" sorusunun cevabi: Telegram
+   icindeyken jeton/ilerlemenin sunucuya mi baglandigini yoksa (D1/Worker/
+   API_BASE eksik oldugu icin) hala cihazda mi kaldigini gosterir. Misafir
+   modunda hicbir sey gostermez - o zaten buyuk uyariyla anlatiliyor. */
+async function renderSyncBadge() {
+   const badge = document.getElementById('sync-badge');
+   if (!badge) return;
+
+   const durum = await sunucuDurumu();
+   if (durum === 'misafir') return; /* hidden kalir */
+
+   badge.hidden = false;
+   badge.classList.toggle('is-sunucu', durum === 'sunucu');
+   badge.classList.toggle('is-yerel', durum === 'yerel');
+   document.getElementById('sync-text').textContent =
+      durum === 'sunucu' ? t('hub.sync.server') : t('hub.sync.local');
 }
 
 function renderProfile() {

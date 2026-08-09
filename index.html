@@ -22,9 +22,17 @@
           <strong id="username">Player</strong>
         </div>
       </div>
-      <div class="points-chip">
-        <span class="coin">◆</span>
-        <span id="points">0</span>
+      <div class="points-side">
+        <div class="points-chip">
+          <span class="coin">◆</span>
+          <span id="points">0</span>
+        </div>
+        <!-- Sadece Telegram icindeyken gorunur: sunucuya baglanip
+             baglanmadigini DevTools acmadan gostermek icin. -->
+        <div class="sync-badge" id="sync-badge" hidden>
+          <span class="sync-dot"></span>
+          <span id="sync-text"></span>
+        </div>
       </div>
     </header>
 

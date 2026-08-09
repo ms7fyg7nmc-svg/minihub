@@ -121,6 +121,35 @@ body.hub::before {
 
 .coin { color: var(--gold); filter: drop-shadow(0 0 6px rgba(245, 185, 66, 0.55)); }
 
+.points-side { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+
+/* --- Sunucu baglanti rozeti ---
+   Telegram icindeyken jeton/ilerleme sunucuya mi baglandi, yoksa (kurulum
+   eksik oldugu icin) cihazda mi kaldi - bunu gormek icin DevTools acmaya
+   gerek kalmasin diye. */
+.sync-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  color: var(--muted);
+  padding: 2px 2px;
+}
+
+.sync-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex: none;
+}
+
+.sync-badge.is-sunucu .sync-dot { background: #4ecb8b; box-shadow: 0 0 5px rgba(78, 203, 139, 0.7); }
+.sync-badge.is-sunucu { color: #4ecb8b; }
+
+.sync-badge.is-yerel .sync-dot { background: #f2884b; }
+.sync-badge.is-yerel { color: #f2884b; }
+
 /* --- Telegram uyarisi ---
    Sayfa tarayicida acildiginda cikar: puanlar Telegram bulutuna yazilamiyor. */
 

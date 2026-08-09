@@ -455,3 +455,18 @@ export function clearState(game) {
     });
   });
 }
+
+/* Kurulumu dogrulamak icin: hub bu bilgiyi kucuk bir rozette gosteriyor.
+   Sunucu kurulumu (D1, Worker, API_BASE) tamamlanip tamamlanmadigini
+   DevTools'a girmeden gormek icin var - "kurulum bitti ama degisiklik
+   gormuyorum" sorusunun cevabi bu rozet.
+
+     'misafir' -> Telegram disinda aciliyor, zaten yerelde kaliyor (normal)
+     'sunucu'  -> Telegram icinde VE ilk senkron basarili oldu
+     'yerel'   -> Telegram icinde AMA sunucuya hic ulasilamadi (kurulum
+                  eksik/yanlis olabilir - API_BASE, D1 binding, worker.js) */
+export async function sunucuDurumu() {
+  if (!isTelegramUser()) return 'misafir';
+  const v = await senkron;
+  return v ? 'sunucu' : 'yerel';
+}
