@@ -34,6 +34,35 @@ const BOT_USERNAME = 'minihubgames_bot';
    atilamamasi gerekiyor. */
 const ALLOWED_ORIGIN = 'https://ms7fyg7nmc-svg.github.io';
 
+/* --- Enerji, gunluk seri ve gunluk cark ayarlari ---
+   Rakamlar oyunlarin olculen kazanc hizina gore secildi (bir tur ortalama
+   10-30 Coin veriyor - bkz. her oyunun POINTS_DIVISOR/POINTS_PER_LEVEL
+   sabiti). Sadece burayi degistirerek dengeyi ayarlayabilirsin, baska hicbir
+   yeri degistirmen gerekmez. */
+const MAX_ENERGY = 8;             /* enerji tavani, reklam bunu dolduruyor */
+const ENERGY_PER_EARN = 1;        /* her Coin kazanma istegi 1 enerji harcar */
+const EMPTY_ENERGY_CARPAN = 0.25; /* enerji bittiyse kazanc bu orana duser (kesilmez) */
+
+/* 7 gunluk dongu, 7. gun buyuk odul. Dongu sonunda 1. gune donuluyor. */
+const STREAK_REWARDS = [20, 30, 40, 60, 80, 100, 200];
+const STREAK_MIN_GAP_MS = 20 * 3600 * 1000;   /* bundan once tekrar alinamaz */
+const STREAK_RESET_GAP_MS = 48 * 3600 * 1000; /* bundan sonra seri sifirlanir */
+
+const SPIN_MIN_GAP_MS = 20 * 3600 * 1000;
+
+/* Agirlik toplami 1000 - tahmini kazanc ~1 oyun turu kadar, cok nadir buyuk
+   odul ve cok nadir "enerji dolumu" dilimi var. */
+const SPIN_PRIZES = [
+  { tur: 'coin',   miktar: 10,          agirlik: 260 },
+  { tur: 'coin',   miktar: 20,          agirlik: 250 },
+  { tur: 'coin',   miktar: 30,          agirlik: 200 },
+  { tur: 'coin',   miktar: 50,          agirlik: 150 },
+  { tur: 'coin',   miktar: 75,          agirlik: 80  },
+  { tur: 'coin',   miktar: 100,         agirlik: 45  },
+  { tur: 'enerji', miktar: MAX_ENERGY,  agirlik: 10  },
+  { tur: 'coin',   miktar: 150,         agirlik: 5   },
+];
+
 /* Karsilama mesajinin ustundeki banner gorseli. Ayni repo'da barinir,
    degistirmek istersen bot/assets/banner.png dosyasinin uzerine yaz ve
    GitHub'a yolla - adres ayni kalir. */
@@ -281,9 +310,52 @@ async function verifyInitData(initData, botToken) {
 async function ensurePlayer(env, playerId, initialPoints = 0) {
   const now = Date.now();
   const res = await env.DB.prepare(
-    'INSERT INTO players (id, points, created_at, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO NOTHING',
-  ).bind(playerId, initialPoints, now, now).run();
+    'INSERT INTO players (id, points, energy, created_at, updated_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING',
+  ).bind(playerId, initialPoints, MAX_ENERGY, now, now).run();
   return res.meta.changes === 1;
+}
+
+/* Su an kacinci gunun odulu alinabilir, ne kadar, ne zaman - hem
+   handleSync'in gosterdigi "bugun alinabilir mi" bilgisi hem de
+   handleStreakClaim'in kendisi bunu kullanir, iki yerde ayni mantik
+   tekrarlanmasin diye tek fonksiyonda toplandi. */
+function streakDurumu(row, now) {
+  const sonAlim = row.last_claim_at || 0;
+  const gecenSure = sonAlim ? now - sonAlim : Infinity;
+  const canClaim = gecenSure >= STREAK_MIN_GAP_MS;
+  const devamEdiyor = sonAlim > 0 && gecenSure <= STREAK_RESET_GAP_MS;
+  const gelecekGun = devamEdiyor ? (row.streak_count % STREAK_REWARDS.length) + 1 : 1;
+  return {
+    count: row.streak_count,
+    canClaim,
+    nextDay: gelecekGun,
+    nextReward: STREAK_REWARDS[gelecekGun - 1],
+    nextInMs: canClaim ? 0 : STREAK_MIN_GAP_MS - gecenSure,
+    /* true: gun kacirildi, seri kirildi - istemci "1..count gunleri alindi"
+       gostermemeli, yeni bir dongu basliyor. Sadece bilgi amacli - claim
+       kendi kararini zaten gelecekGun uzerinden bagimsiz veriyor. */
+    broken: sonAlim > 0 && gecenSure > STREAK_RESET_GAP_MS,
+  };
+}
+
+function spinDurumu(row, now) {
+  const sonCark = row.last_spin_at || 0;
+  const gecenSure = sonCark ? now - sonCark : Infinity;
+  const canSpin = gecenSure >= SPIN_MIN_GAP_MS;
+  return { canSpin, nextInMs: canSpin ? 0 : SPIN_MIN_GAP_MS - gecenSure };
+}
+
+/* Agirlikli rastgele secim - sunucu tarafinda, istemci sadece sonucu
+   gosterir. Boylece cark "hangi dilime dusecegini" kimse onceden bilemez
+   ya da degistiremez. */
+function carkCek() {
+  const toplam = SPIN_PRIZES.reduce((s, p) => s + p.agirlik, 0);
+  let r = Math.random() * toplam;
+  for (let i = 0; i < SPIN_PRIZES.length; i++) {
+    r -= SPIN_PRIZES[i].agirlik;
+    if (r < 0) return i;
+  }
+  return SPIN_PRIZES.length - 1;
 }
 
 /* Ilk acilista tum bakiyeyi/durumu tek istekte doner.
@@ -325,7 +397,9 @@ async function handleSync(env, playerId, body) {
     if (stmts.length) await env.DB.batch(stmts);
   }
 
-  const player = await env.DB.prepare('SELECT points FROM players WHERE id = ?').bind(playerId).first();
+  const player = await env.DB.prepare(
+    'SELECT points, energy, streak_count, last_claim_at, last_spin_at FROM players WHERE id = ?',
+  ).bind(playerId).first();
   const rows = await env.DB.prepare('SELECT key, value, version FROM player_data WHERE player_id = ?').bind(playerId).all();
 
   const state = {};
@@ -334,7 +408,16 @@ async function handleSync(env, playerId, body) {
     state[r.key] = JSON.parse(r.value);
     meta[r.key] = r.version;
   }
-  return { points: player.points, state, meta };
+
+  return {
+    points: player.points,
+    energy: player.energy,
+    maxEnergy: MAX_ENERGY,
+    streak: streakDurumu(player, now),
+    spin: { ...spinDurumu(player, now), prizes: SPIN_PRIZES.map((p) => ({ tur: p.tur, miktar: p.miktar })) },
+    state,
+    meta,
+  };
 }
 
 /* Jeton harcar (delta<0) veya kazandirir (delta>0). Tek bir kosullu SQL
@@ -379,6 +462,123 @@ async function applyDelta(env, playerId, opId, delta) {
   ).bind(playerId, key, delta, total, now).run();
 
   return { ok: true, total };
+}
+
+/* Oyun ici kazanc (bir turun/bolumun sonunda cagrilir) - applyDelta'dan
+   farkli olarak enerjiye bakiyor: enerji varsa istenen miktarin tamami
+   verilir ve 1 enerji harcanir, enerji 0'sa miktar EMPTY_ENERGY_CARPAN
+   oranina duser (kesilmez) ve enerji degismez.
+
+   points VE energy AYNI ANDA degistigi icin applyDelta'nin tek WHERE
+   kosulu yetmiyor - "okudugum enerji hala aynı mi" diye WHERE energy = ?
+   ile korunuyor (handleState'teki version kontroluyle ayni fikir). Araya
+   baska bir istek girip enerjiyi degistirsimse (ornegin reklam izlendi)
+   bu deneme basarisiz olur, en fazla 3 kez tekrar dener. */
+async function applyEarn(env, playerId, opId, requestedAmount) {
+  const key = opId || crypto.randomUUID();
+  const now = Date.now();
+
+  const prior = await env.DB.prepare(
+    'SELECT balance_after FROM spend_log WHERE player_id = ? AND op_id = ?',
+  ).bind(playerId, key).first();
+  if (prior) return { ok: true, total: prior.balance_after };
+
+  for (let deneme = 0; deneme < 3; deneme++) {
+    const row = await env.DB.prepare('SELECT energy FROM players WHERE id = ?').bind(playerId).first();
+    const enerji = row ? row.energy : 0;
+    const doluMu = enerji > 0;
+    const verilecek = doluMu ? requestedAmount : Math.round(requestedAmount * EMPTY_ENERGY_CARPAN);
+    const yeniEnerji = doluMu ? Math.max(0, enerji - ENERGY_PER_EARN) : 0;
+
+    const res = await env.DB.prepare(
+      'UPDATE players SET points = points + ?, energy = ?, updated_at = ? WHERE id = ? AND energy = ?',
+    ).bind(verilecek, yeniEnerji, now, playerId, enerji).run();
+
+    if (res.meta.changes === 0) continue; /* araya baska istek girdi, tekrar dene */
+
+    const player = await env.DB.prepare('SELECT points FROM players WHERE id = ?').bind(playerId).first();
+    const total = player.points;
+
+    await env.DB.prepare(
+      'INSERT INTO spend_log (player_id, op_id, delta, balance_after, created_at) VALUES (?, ?, ?, ?, ?)',
+    ).bind(playerId, key, verilecek, total, now).run();
+
+    return { ok: true, total, energy: yeniEnerji, credited: verilecek };
+  }
+
+  /* 3 denemede de yaris kaybedildi (cok nadir) - enerjisiz varsayip en
+     azindan azaltilmis odulu vermeyi garanti et, kazanci hic kaybetme. */
+  const azaltilmis = Math.round(requestedAmount * EMPTY_ENERGY_CARPAN);
+  const yedek = await applyDelta(env, playerId, key, azaltilmis);
+  return { ...yedek, energy: 0, credited: azaltilmis };
+}
+
+/* Gunluk seri odulunu talep eder - streakDurumu'nun hesapladigi gunu ve
+   odulu, "hala o an okudugum last_claim_at mi" korumasiyla (WHERE
+   last_claim_at = ?) atomik olarak uygular. */
+async function handleStreakClaim(env, playerId) {
+  const now = Date.now();
+  for (let deneme = 0; deneme < 3; deneme++) {
+    const row = await env.DB.prepare(
+      'SELECT streak_count, last_claim_at FROM players WHERE id = ?',
+    ).bind(playerId).first();
+    if (!row) return { ok: false, reason: 'oyuncu yok' };
+
+    const durum = streakDurumu(row, now);
+    if (!durum.canClaim) return { ok: false, reason: 'erken', nextInMs: durum.nextInMs, streak: durum.count };
+
+    const res = await env.DB.prepare(
+      `UPDATE players SET points = points + ?, streak_count = ?, last_claim_at = ?, updated_at = ?
+       WHERE id = ? AND last_claim_at = ?`,
+    ).bind(durum.nextReward, durum.nextDay, now, now, playerId, row.last_claim_at).run();
+
+    if (res.meta.changes === 0) continue;
+
+    const player = await env.DB.prepare('SELECT points FROM players WHERE id = ?').bind(playerId).first();
+    return { ok: true, streak: durum.nextDay, reward: durum.nextReward, total: player.points };
+  }
+  return { ok: false, reason: 'yeniden dene' };
+}
+
+/* Gunluk carki cevirir - sonucu sunucu secer (carkCek), istemci sadece o
+   sonuca kilitlenen bir animasyon oynatir. */
+async function handleSpin(env, playerId) {
+  const now = Date.now();
+  for (let deneme = 0; deneme < 3; deneme++) {
+    const row = await env.DB.prepare('SELECT last_spin_at FROM players WHERE id = ?').bind(playerId).first();
+    if (!row) return { ok: false, reason: 'oyuncu yok' };
+
+    const durum = spinDurumu(row, now);
+    if (!durum.canSpin) return { ok: false, reason: 'erken', nextInMs: durum.nextInMs };
+
+    const index = carkCek();
+    const odul = SPIN_PRIZES[index];
+
+    const sql = odul.tur === 'enerji'
+      ? 'UPDATE players SET energy = ?, last_spin_at = ?, updated_at = ? WHERE id = ? AND last_spin_at = ?'
+      : 'UPDATE players SET points = points + ?, last_spin_at = ?, updated_at = ? WHERE id = ? AND last_spin_at = ?';
+    const deger = odul.tur === 'enerji' ? MAX_ENERGY : odul.miktar;
+
+    const res = await env.DB.prepare(sql).bind(deger, now, now, playerId, row.last_spin_at).run();
+    if (res.meta.changes === 0) continue;
+
+    const player = await env.DB.prepare('SELECT points, energy FROM players WHERE id = ?').bind(playerId).first();
+    return { ok: true, index, prize: odul, total: player.points, energy: player.energy };
+  }
+  return { ok: false, reason: 'yeniden dene' };
+}
+
+/* Reklam izleme onayi GERCEK REKLAM SDK'si BAGLANANA KADAR burada yok -
+   bu uc nokta enerjiyi kosulsuz dolduruyor. Demo/erken asama icin bilerek
+   boyle birakildi (kullanici talebi). Ileride bir reklam SDK'si (Monetag
+   vb.) entegre edilince, buraya SDK'nin sunucu tarafli "izlendi" onayi
+   (postback/callback) dogrulamasi eklenmeden bu uc nokta canliya (gercek
+   oyunculara) acik birakilmamali - su an demo/test icin. */
+async function handleEnergyRefill(env, playerId) {
+  const now = Date.now();
+  await env.DB.prepare('UPDATE players SET energy = ?, updated_at = ? WHERE id = ?')
+    .bind(MAX_ENERGY, now, playerId).run();
+  return { ok: true, energy: MAX_ENERGY };
 }
 
 /* Bir oyunun rekorunu gunceller - sadece gelen skor mevcut rekordan
@@ -487,11 +687,17 @@ async function handleApi(request, env, url) {
       case '/api/points/spend':
         return json(await applyDelta(env, playerId, body.opId, -Math.abs(Math.round(Number(body.amount) || 0))));
       case '/api/points/earn':
-        return json(await applyDelta(env, playerId, body.opId, Math.abs(Math.round(Number(body.amount) || 0))));
+        return json(await applyEarn(env, playerId, body.opId, Math.abs(Math.round(Number(body.amount) || 0))));
       case '/api/best':
         return json(await handleBest(env, playerId, body));
       case '/api/state':
         return json(await handleState(env, playerId, body));
+      case '/api/energy/refill':
+        return json(await handleEnergyRefill(env, playerId));
+      case '/api/streak/claim':
+        return json(await handleStreakClaim(env, playerId));
+      case '/api/spin':
+        return json(await handleSpin(env, playerId));
       default:
         return json({ error: 'bulunamadi' }, 404);
     }

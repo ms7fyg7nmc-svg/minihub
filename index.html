@@ -51,6 +51,20 @@
       <p data-i18n="hub.subtitle">Play, collect points. What they unlock later is still a surprise.</p>
     </section>
 
+    <!-- Sadece Telegram icinde (sunucu modunda) gorunur - anlami sunucu
+         tarafli hile korumasi, misafirde gostermenin anlami yok. -->
+    <button class="daily-card" id="daily-card" hidden>
+      <div class="daily-card-energy">
+        <span class="daily-card-bolt">⚡</span>
+        <div class="energy-pips" id="energy-pips"></div>
+      </div>
+      <div class="daily-card-info">
+        <strong data-i18n="hub.daily.title">Günlük Ödüller</strong>
+        <span id="daily-card-hint" class="daily-card-hint"></span>
+      </div>
+      <span class="daily-card-dot" id="daily-card-dot" hidden></span>
+    </button>
+
     <h2 class="section-title" data-i18n="hub.gamesTitle">Games</h2>
     <div class="game-grid" id="games"></div>
 
@@ -60,6 +74,40 @@
       <div id="lang-switcher"></div>
     </footer>
 
+  </div>
+
+  <!-- Gunluk Oduller paneli: enerji + seri + cark. Sadece Telegram/sunucu
+       modunda acilir (daily-card zaten misafirde hidden kaliyor). -->
+  <div class="daily-overlay" id="daily-overlay" hidden>
+    <div class="daily-modal">
+      <button class="daily-close" id="daily-close" aria-label="Kapat">✕</button>
+
+      <section class="daily-section daily-energy-section">
+        <h3><span class="daily-card-bolt">⚡</span> <span data-i18n="hub.daily.energy">Enerji</span></h3>
+        <div class="energy-row">
+          <div class="energy-pips" id="energy-pips-modal"></div>
+          <span id="energy-label" class="energy-label"></span>
+        </div>
+        <button class="daily-btn daily-btn-ghost" id="watch-ad-btn" data-i18n="hub.daily.watchAd">Reklam izle, doldur</button>
+      </section>
+
+      <section class="daily-section">
+        <h3 data-i18n="hub.daily.streak">Günlük Seri</h3>
+        <div class="streak-row" id="streak-row"></div>
+        <button class="daily-btn" id="streak-claim-btn"></button>
+      </section>
+
+      <section class="daily-section">
+        <h3 data-i18n="hub.daily.spin">Günlük Çark</h3>
+        <div class="wheel-wrap">
+          <div class="wheel-pointer"></div>
+          <svg class="wheel" id="wheel" viewBox="0 0 200 200"></svg>
+          <button class="wheel-center" id="spin-btn"><span id="spin-btn-text">ÇEVİR</span></button>
+        </div>
+      </section>
+
+      <div class="daily-toast" id="daily-toast" hidden></div>
+    </div>
   </div>
 
   <script type="module" src="js/hub.js"></script>

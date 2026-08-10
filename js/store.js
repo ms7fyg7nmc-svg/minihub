@@ -261,6 +261,10 @@ const senkron = sunucuAktif ? (async () => {
 
     return {
       points: Number(veri.points) || 0,
+      energy: Number(veri.energy) || 0,
+      maxEnergy: Number(veri.maxEnergy) || 0,
+      streak: veri.streak && typeof veri.streak === 'object' ? veri.streak : null,
+      spin: veri.spin && typeof veri.spin === 'object' ? veri.spin : null,
       state: veri.state && typeof veri.state === 'object' ? veri.state : {},
       meta: veri.meta && typeof veri.meta === 'object' ? veri.meta : {},
     };
@@ -309,7 +313,7 @@ async function kuyruguBosalt() {
 
     if (giris.tur === 'earn') {
       sonuc = await sunucuGonder('/api/points/earn', { opId: giris.opId, amount: giris.amount });
-      if (sonuc) v.points = sonuc.total;
+      if (sonuc) { v.points = sonuc.total; v.energy = sonuc.energy; }
     } else if (giris.tur === 'best') {
       sonuc = await sunucuGonder('/api/best', { game: giris.game, score: giris.score });
       if (sonuc) v.state[`best_${giris.game}`] = sonuc.best;
@@ -363,7 +367,67 @@ export async function addPoints(amount) {
     return v.points;
   }
   v.points = sonuc.total;
+  v.energy = sonuc.energy;
   return v.points;
+}
+
+/* --- Enerji / gunluk seri / gunluk cark ---
+
+   Ucu de sadece Telegram icinde (sunucu modunda) anlamli - hile korumasi
+   sunucuda oldugu icin misafir modunda bunlari taklit etmenin bir anlami
+   yok. Misafirde hepsi null doner, hub.js bunu gorunce ilgili karti hic
+   gostermez (tipki sync-badge'in 'misafir' durumunda gizlenmesi gibi). */
+
+export async function getEnergy() {
+  const v = await senkron;
+  if (!v) return null;
+  return { energy: v.energy, max: v.maxEnergy };
+}
+
+export async function refillEnergy() {
+  const v = await senkron;
+  if (!v) return null;
+  const sonuc = await sunucuGonder('/api/energy/refill', {});
+  if (!sonuc) return null;
+  v.energy = sonuc.energy;
+  return { energy: v.energy, max: v.maxEnergy };
+}
+
+export async function getStreak() {
+  const v = await senkron;
+  if (!v) return null;
+  return v.streak;
+}
+
+export async function claimStreak() {
+  const v = await senkron;
+  if (!v) return { ok: false, reason: 'misafir' };
+  const sonuc = await sunucuGonder('/api/streak/claim', {});
+  if (!sonuc) return { ok: false, reason: 'ag' };
+  if (sonuc.ok) {
+    v.points = sonuc.total;
+    v.streak = { ...v.streak, count: sonuc.streak, canClaim: false };
+  }
+  return sonuc;
+}
+
+export async function getSpin() {
+  const v = await senkron;
+  if (!v) return null;
+  return v.spin;
+}
+
+export async function spinWheel() {
+  const v = await senkron;
+  if (!v) return { ok: false, reason: 'misafir' };
+  const sonuc = await sunucuGonder('/api/spin', {});
+  if (!sonuc) return { ok: false, reason: 'ag' };
+  if (sonuc.ok) {
+    v.points = sonuc.total;
+    v.energy = sonuc.energy;
+    if (v.spin) v.spin.canSpin = false;
+  }
+  return sonuc;
 }
 
 export async function spendPoints(amount) {

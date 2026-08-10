@@ -11,12 +11,32 @@
 -- Her oyuncunun jeton bakiyesi. id, Telegram kullanici kimligi (initData
 -- icinden dogrulanarak cikarilir - istemci hicbir zaman kendi id'sini
 -- soyleyemez).
+--
+-- energy: gunluk oyun enerjisi (bkz. worker.js MAX_ENERGY). Bittiginde
+-- Coin kazanci kesilmiyor, sadece azaliyor - reklamla aninda doluyor.
+-- streak_count / last_claim_at: gunluk seri odulu icin.
+-- last_spin_at: gunluk cark hakki icin.
 CREATE TABLE IF NOT EXISTS players (
-  id         TEXT PRIMARY KEY,
-  points     INTEGER NOT NULL DEFAULT 0,
-  created_at INTEGER NOT NULL,
-  updated_at INTEGER NOT NULL
+  id            TEXT PRIMARY KEY,
+  points        INTEGER NOT NULL DEFAULT 0,
+  energy        INTEGER NOT NULL DEFAULT 8,
+  streak_count  INTEGER NOT NULL DEFAULT 0,
+  last_claim_at INTEGER NOT NULL DEFAULT 0,
+  last_spin_at  INTEGER NOT NULL DEFAULT 0,
+  created_at    INTEGER NOT NULL,
+  updated_at    INTEGER NOT NULL
 );
+
+-- ONEMLI: eger bu semayi DAHA ONCE calistirdiysan (players tablosu zaten
+-- varsa), yukaridaki CREATE TABLE IF NOT EXISTS hicbir sey yapmaz - var olan
+-- tabloya yeni sutun eklemez. O zaman D1 konsolunda asagidaki UC satiri TEK
+-- TEK, bir kez calistir (zaten calistirdiysan "duplicate column" hatasi
+-- alirsin, zararsizdir, gormezden gel):
+--
+--   ALTER TABLE players ADD COLUMN energy INTEGER NOT NULL DEFAULT 8;
+--   ALTER TABLE players ADD COLUMN streak_count INTEGER NOT NULL DEFAULT 0;
+--   ALTER TABLE players ADD COLUMN last_claim_at INTEGER NOT NULL DEFAULT 0;
+--   ALTER TABLE players ADD COLUMN last_spin_at INTEGER NOT NULL DEFAULT 0;
 
 -- Rekorlar (best_2048 gibi) ve oyun durumlari (state_dragon gibi) tek
 -- tabloda: key alani hangisi oldugunu ayirt eder. value her zaman JSON

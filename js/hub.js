@@ -2,7 +2,10 @@
 Yeni oyun eklemek istedigimizde sadece asagidaki gameList() fonksiyonuna satir ekliyoruz. */
 
 import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js';
-import { getPoints, getBest, sunucuDurumu } from './store.js';
+import {
+   getPoints, getBest, sunucuDurumu,
+   getEnergy, refillEnergy, getStreak, claimStreak, getSpin, spinWheel,
+} from './store.js';
 import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js';
 
 /* Botun Telegram adresi. Kendi botunun adini yazarsan tarayicida acan
@@ -263,12 +266,15 @@ renderProfile();
 renderGames();
 renderTelegramNotice();
 renderSyncBadge();
+renderDailyCard();
+wireDailyPanel();
 
 document.addEventListener('langchange', () => {
    applyTranslations();
    renderProfile();
    renderGames();
    renderSyncBadge();
+   renderDailyCard();
 });
 
 /* Sayfa Telegram disinda acildiysa puanlarin kaybolabilecegini hatirlatir */
@@ -304,6 +310,12 @@ async function renderSyncBadge() {
       durum === 'sunucu' ? t('hub.sync.server') : t('hub.sync.local');
 }
 
+function refreshPointsChip() {
+   getPoints().then((points) => {
+      document.getElementById('points').textContent = points.toLocaleString(locale());
+   });
+}
+
 function renderProfile() {
    const user = getUser();
    document.getElementById('username').textContent = user.name;
@@ -315,9 +327,7 @@ const avatar = document.getElementById('avatar');
       avatar.textContent = user.name.charAt(0).toUpperCase();
    }
 
-getPoints().then((points) => {
-   document.getElementById('points').textContent = points.toLocaleString(locale());
-});
+refreshPointsChip();
 }
 
 function renderGames() {
@@ -371,4 +381,240 @@ gameList().forEach((game, index) => {
 
    container.appendChild(card);
 });
+}
+
+/* --- Gunluk Oduller: enerji + gunluk seri + gunluk cark ---
+
+   Ucu de sadece Telegram/sunucu modunda anlamli (bkz. store.js) - hepsi
+   sunucu tarafinda dogrulaniyor, misafirde null doner ve kart hic
+   gosterilmez. Cark dilimlerinin renkleri worker.js'teki SPIN_PRIZES
+   dizisiyle AYNI SIRADA olmali (10, 20, 30, 50, 75, 100, enerji, 150). */
+const WHEEL_COLORS = ['#5b8cff', '#4ecb8b', '#f2884b', '#c079f2', '#e2679c', '#3fc7d4', '#8be9ff', '#ffd166'];
+
+let dailyPrizes = null;   /* /api/sync'ten gelen cark dilim listesi, bir kez cekilir */
+let wheelRotation = 0;    /* birikimli aci - cark her zaman ileri doner, geriye siçramaz */
+let panelOpen = false;
+
+function polar(cx, cy, r, angleDeg) {
+   const a = (angleDeg * Math.PI) / 180;
+   return { x: cx + r * Math.sin(a), y: cy - r * Math.cos(a) };
+}
+
+function buildWheel(prizes) {
+   const svg = document.getElementById('wheel');
+   if (!svg || !prizes?.length) return;
+   const n = prizes.length;
+   const segAngle = 360 / n;
+   const cx = 100, cy = 100, r = 94, labelR = r * 0.62;
+
+   let html = '';
+   prizes.forEach((prize, i) => {
+      const start = polar(cx, cy, r, i * segAngle);
+      const end = polar(cx, cy, r, (i + 1) * segAngle);
+      const mid = i * segAngle + segAngle / 2;
+      const label = polar(cx, cy, labelR, mid);
+      const color = WHEEL_COLORS[i % WHEEL_COLORS.length];
+      const isEnergy = prize.tur === 'enerji';
+      const text = isEnergy ? '⚡' : prize.miktar;
+
+      html += `
+      <path d="M${cx},${cy} L${start.x.toFixed(2)},${start.y.toFixed(2)}
+               A${r},${r} 0 0,1 ${end.x.toFixed(2)},${end.y.toFixed(2)} Z"
+            fill="${color}" stroke="${'var(--bg-soft)'}" stroke-width="2"/>
+      <text x="${label.x.toFixed(2)}" y="${label.y.toFixed(2)}" text-anchor="middle"
+            dominant-baseline="middle" fill="#fff" font-weight="800"
+            font-size="${isEnergy ? 15 : 13}" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))">${text}</text>`;
+   });
+   svg.innerHTML = html;
+}
+
+/* Carkin index'i pointer'in (ustte, 0 derece) tam altina getirecek sekilde
+   dondurulmesi. Segment ortasina degil, icinde kucuk rastgele bir kaymayla
+   duruyor - hep tam ortada durmasi robotik gorunuyordu. Aci her cagrida
+   sadece ARTIYOR (asla geriye siçramiyor), yoksa cark bir onceki sonuctan
+   bu sonuca "geri sarma" gibi goruyor. */
+function spinToIndex(index, segmentCount) {
+   const svg = document.getElementById('wheel');
+   if (!svg) return;
+   const segAngle = 360 / segmentCount;
+   const mid = index * segAngle + segAngle / 2;
+   const jitter = (Math.random() - 0.5) * (segAngle * 0.5);
+   const targetMod = (((360 - mid - jitter) % 360) + 360) % 360;
+   const current = ((wheelRotation % 360) + 360) % 360;
+   let delta = targetMod - current;
+   if (delta <= 0) delta += 360;
+   wheelRotation += delta + 5 * 360; /* +5 tam tur, gorsel etki icin */
+   svg.style.transform = `rotate(${wheelRotation}deg)`;
+}
+
+function pipsHtml(energy, max, small) {
+   let html = '';
+   for (let i = 0; i < max; i++) html += `<span class="energy-pip${i < energy ? ' is-full' : ''}"></span>`;
+   return html;
+}
+
+async function renderDailyCard() {
+   const card = document.getElementById('daily-card');
+   if (!card) return;
+
+   const [energy, streak, spin] = await Promise.all([getEnergy(), getStreak(), getSpin()]);
+   /* misafirde energy null donuyor; sunucu GUNCELLENMEDEN once (eski
+      worker.js hala calisiyorsa) energy/maxEnergy alanlari yanitta hic
+      olmayabilir - o zaman ikisi de 0 gelir, "0/0 enerji" gibi bozuk
+      gorunmesin diye kart hic gosterilmiyor. Worker guncellenince
+      maxEnergy>0 gelmeye baslar, kart otomatik gorunur olur. */
+   if (!energy || !energy.max) { card.hidden = true; return; }
+
+   card.hidden = false;
+   document.getElementById('energy-pips').innerHTML = pipsHtml(energy.energy, energy.max);
+
+   const hazir = (streak && streak.canClaim) || (spin && spin.canSpin);
+   document.getElementById('daily-card-dot').hidden = !hazir;
+   document.getElementById('daily-card-hint').textContent = hazir
+      ? t('hub.daily.hintReady')
+      : t('hub.daily.hintEnergy', { energy: energy.energy, max: energy.max });
+}
+
+function wireDailyPanel() {
+   const card = document.getElementById('daily-card');
+   const overlay = document.getElementById('daily-overlay');
+   const closeBtn = document.getElementById('daily-close');
+   const watchAdBtn = document.getElementById('watch-ad-btn');
+   const streakBtn = document.getElementById('streak-claim-btn');
+   const spinBtn = document.getElementById('spin-btn');
+   if (!card || !overlay) return;
+
+   card?.addEventListener('click', openDailyModal);
+   closeBtn?.addEventListener('click', closeDailyModal);
+   overlay.addEventListener('click', (e) => { if (e.target === overlay) closeDailyModal(); });
+
+   watchAdBtn?.addEventListener('click', async () => {
+      watchAdBtn.disabled = true;
+      const sonuc = await refillEnergy();
+      watchAdBtn.disabled = false;
+      if (!sonuc) return;
+      haptic.success();
+      showDailyToast(t('hub.daily.wonEnergy'));
+      await renderEnergySection();
+      await renderDailyCard();
+   });
+
+   streakBtn?.addEventListener('click', async () => {
+      streakBtn.disabled = true;
+      const sonuc = await claimStreak();
+      if (sonuc?.ok) {
+         haptic.success();
+         showDailyToast(t('hub.daily.won', { amount: sonuc.reward }));
+         refreshPointsChip();
+      }
+      await renderStreakSection();
+      await renderDailyCard();
+      streakBtn.disabled = false;
+   });
+
+   spinBtn?.addEventListener('click', async () => {
+      spinBtn.disabled = true;
+      spinBtn.classList.add('is-spinning');
+      const sonuc = await spinWheel();
+      if (sonuc?.ok && dailyPrizes) {
+         spinToIndex(sonuc.index, dailyPrizes.length);
+         const onWheel = () => {
+            document.getElementById('wheel').removeEventListener('transitionend', onWheel);
+            spinBtn.classList.remove('is-spinning');
+            haptic.success();
+            const kazanilan = sonuc.prize.tur === 'enerji' ? t('hub.daily.wonEnergy') : t('hub.daily.won', { amount: sonuc.prize.miktar });
+            showDailyToast(kazanilan);
+            refreshPointsChip();
+            renderEnergySection();
+            renderSpinSection();
+            renderDailyCard();
+         };
+         document.getElementById('wheel').addEventListener('transitionend', onWheel);
+      } else {
+         spinBtn.classList.remove('is-spinning');
+         spinBtn.disabled = false;
+      }
+   });
+}
+
+async function openDailyModal() {
+   const overlay = document.getElementById('daily-overlay');
+   if (!overlay) return;
+   overlay.hidden = false;
+   panelOpen = true;
+   haptic.tap();
+   await Promise.all([renderEnergySection(), renderStreakSection(), renderSpinSection()]);
+}
+
+function closeDailyModal() {
+   const overlay = document.getElementById('daily-overlay');
+   if (overlay) overlay.hidden = true;
+   panelOpen = false;
+}
+
+async function renderEnergySection() {
+   const energy = await getEnergy();
+   if (!energy) return;
+   document.getElementById('energy-pips-modal').innerHTML = pipsHtml(energy.energy, energy.max);
+   document.getElementById('energy-label').textContent = energy.energy >= energy.max
+      ? t('hub.daily.energyFull')
+      : `${energy.energy}/${energy.max}`;
+   document.getElementById('watch-ad-btn').disabled = energy.energy >= energy.max;
+}
+
+async function renderStreakSection() {
+   const streak = await getStreak();
+   const row = document.getElementById('streak-row');
+   const btn = document.getElementById('streak-claim-btn');
+   if (!streak || !row || !btn) return;
+
+   const rewards = [20, 30, 40, 60, 80, 100, 200];
+   /* streak.nextDay ve streak.broken sunucudan (streakDurumu) geliyor -
+      burada tekrar hesaplamiyoruz. Seri kirildiyse (broken) 1..count
+      gunleri "alindi" gostermek yanlis olur, yeni dongu 1'den basliyor. */
+   const gecerliSayim = streak.broken ? 0 : streak.count;
+
+   row.innerHTML = rewards.map((odul, i) => {
+      const gun = i + 1;
+      let durum = 'is-future';
+      if (gun <= gecerliSayim) durum = 'is-done';
+      else if (gun === streak.nextDay) durum = streak.canClaim ? 'is-current' : 'is-future';
+      const jackpot = gun === 7 ? ' is-jackpot' : '';
+      return `
+      <div class="streak-pill ${durum}${jackpot}">
+        <span class="day">${gun}</span>
+        <span class="amt">${odul}</span>
+      </div>`;
+   }).join('');
+
+   btn.textContent = streak.canClaim
+      ? `${t('hub.daily.claim')} · +${streak.nextReward}`
+      : t('hub.daily.comeTomorrow');
+   btn.disabled = !streak.canClaim;
+}
+
+async function renderSpinSection() {
+   const spin = await getSpin();
+   const btn = document.getElementById('spin-btn');
+   const btnText = document.getElementById('spin-btn-text');
+   if (!spin || !btn) return;
+
+   if (!dailyPrizes) {
+      dailyPrizes = spin.prizes;
+      buildWheel(dailyPrizes);
+   }
+
+   btn.disabled = !spin.canSpin;
+   if (btnText) btnText.textContent = spin.canSpin ? t('hub.daily.spinBtn') : '—';
+}
+
+function showDailyToast(text) {
+   const toast = document.getElementById('daily-toast');
+   if (!toast) return;
+   toast.textContent = text;
+   toast.hidden = false;
+   /* animasyonu her seferinde bastan oynatmak icin klonla-degistir hilesi */
+   const yeni = toast.cloneNode(true);
+   toast.parentNode.replaceChild(yeni, toast);
+   setTimeout(() => { yeni.hidden = true; }, 2600);
 }
