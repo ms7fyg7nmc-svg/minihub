@@ -17,8 +17,8 @@
    Olcekler seviye 99'da bile 200x200 kadraja sigacak sekilde secildi:
    en genis nokta kanat ucu (x = ±120), yani 120 * wing * s <= ~96. */
 
-import { palet, HEADS, FACES } from './data.js?v22';
-import { CONFIG, growthRatio } from './config.js?v22';
+import { palet, HEADS, FACES } from './data.js?v24';
+import { CONFIG, growthRatio } from './config.js?v24';
 
 /* Ayni sayfada birden fazla ejderha olabilir; degrade ve maske id'leri
    catismasin diye sayac. */
@@ -985,7 +985,50 @@ const GORSEL = {
   x0: 188, y0: 139, x1: 831, y1: 891,
 };
 
-function gorselEjderha(level, mood) {
+/* KATMANLAR
+
+   Kanat ve kuyruk govdeye basili DEGIL, ayri gorseller olarak arkasina
+   bindiriliyor - ikisi de satin alinabilir kozmetik oldugu icin (bkz.
+   data.js WINGS/TAILS). Govdeye basili olsalardi oyuncu Anka Kanadi
+   aldiginda eski kanat altindan gorunurdu.
+
+   Her katman icin: dosya, gorunen kutusu (kirpma icin) ve govdeye gore
+   nereye oturacagi. Konum degerleri 200'luk kadrajdaki GOVDE kutusuna
+   oranli - boylece ejderha seviyeyle buyudukce katman da onunla buyuyor.
+
+   ayna: gorsel ters yonde uretildiyse yatay cevirir. Yeniden urettirmek
+   yerine burada cevirmek bedava. */
+const KATMAN = {
+  wings: {
+    leather: {
+      yol: 'assets/wing-leather.png',
+      kare: 1024, x0: 221, y0: 189, x1: 865, y1: 840,
+      ayna: true,
+      /* Govde genisliginin kati olarak boy, ve govde kutusuna gore kayma */
+      olcek: 0.78, dx: 0.30, dy: -0.30,
+    },
+  },
+};
+
+/* Bir katmani govde kutusuna gore yerlestirip <image> etiketi uretir.
+   gx,gy,gw = govdenin GORUNEN kutusu (200'luk kadrajda). */
+function katmanCiz(k, gx, gy, gw) {
+  const gen = (k.x1 - k.x0), yuk = (k.y1 - k.y0);
+  const hedefGen = gw * k.olcek;
+  const olcek = hedefGen * k.kare / gen;
+  const x = gx + gw * k.dx - (k.x0 / k.kare) * olcek;
+  const y = gy + gw * k.dy - (k.y0 / k.kare) * olcek;
+
+  /* Aynalama, gorselin kendi merkezi etrafinda */
+  const merkez = x + (k.x0 / k.kare) * olcek + hedefGen / 2;
+  const cevir = k.ayna ? ` transform="translate(${(merkez * 2).toFixed(1)} 0) scale(-1 1)"` : '';
+
+  return `<image href="${k.yol}" x="${x.toFixed(1)}" y="${y.toFixed(1)}"
+                 width="${olcek.toFixed(1)}" height="${olcek.toFixed(1)}"
+                 preserveAspectRatio="xMidYMid meet"${cevir}/>`;
+}
+
+function gorselEjderha(level, mood, look) {
   const uid = ++uidSayaci;
   const g = growthRatio(level);
 
@@ -1005,13 +1048,19 @@ function gorselEjderha(level, mood) {
     ? `<filter id="ruh${uid}"><feColorMatrix type="saturate" values="0.45"/></filter>`
     : '';
 
+  /* Govdenin gorunen kutusu - katmanlar buna gore yerlesiyor */
+  const gy = iy + (GORSEL.y0 / GORSEL.kare) * olcek;
+  const kanat = KATMAN.wings[look?.wings];
+
   return `
     <svg viewBox="0 0 200 200" aria-hidden="true">
       ${suzgec ? `<defs>${suzgec}</defs>` : ''}
-      <image href="${GORSEL.yol}" x="${ix.toFixed(1)}" y="${iy.toFixed(1)}"
-             width="${olcek.toFixed(1)}" height="${olcek.toFixed(1)}"
-             ${suzgec ? `filter="url(#ruh${uid})"` : ''}
-             preserveAspectRatio="xMidYMid meet"/>
+      <g ${suzgec ? `filter="url(#ruh${uid})"` : ''}>
+        ${kanat ? katmanCiz(kanat, 100 - hedefGen / 2, gy, hedefGen) : ''}
+        <image href="${GORSEL.yol}" x="${ix.toFixed(1)}" y="${iy.toFixed(1)}"
+               width="${olcek.toFixed(1)}" height="${olcek.toFixed(1)}"
+               preserveAspectRatio="xMidYMid meet"/>
+      </g>
     </svg>`;
 }
 
@@ -1021,7 +1070,7 @@ export function dragonSvg(level, look, mood = 'happy') {
 
   /* Gorsel tabanli cizim. Kozmetik katmanlari henuz baglanmadi - simdilik
      yalnizca ana govde gosteriliyor (bkz. GORSEL). */
-  return gorselEjderha(level, mood);
+  return gorselEjderha(level, mood, look);
 
   const uid = ++uidSayaci;
   const g = growthRatio(level);
