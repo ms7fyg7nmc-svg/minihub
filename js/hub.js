@@ -1,12 +1,12 @@
 /* Hub (ana menu) ekraninin mantigi.
 Yeni oyun eklemek istedigimizde sadece asagidaki gameList() fonksiyonuna satir ekliyoruz. */
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v13';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v14';
 import {
    getPoints, getBest, sunucuDurumu,
-   getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulKilitli,
-} from './store.js?v13';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v13';
+   getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu,
+} from './store.js?v14';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v14';
 
 /* Botun Telegram adresi. Kendi botunun adini yazarsan tarayicida acan
    kullanicilar uyariya dokununca dogrudan bota gider. Bos birakilirsa
@@ -500,7 +500,12 @@ async function renderDailyCard() {
       gorunmesin diye kart hic gosterilmiyor. Worker guncellenince
       maxEnergy>0 gelmeye baslar, kart otomatik gorunur olur. */
    if (!energy || !energy.max) { card.hidden = true; return; }
-   const kilitli = await odulKilitli();
+
+   const durum = await odulDurumu();
+   /* Telegram icinde olup sunucuya ulasamiyorsak oyuncunun gercek seri ve
+      cark durumunu bilmiyoruz - "HAZIR!" demek yaniltici olur. */
+   if (durum === 'yerel') { card.hidden = true; return; }
+   const kilitli = durum === 'misafir';
 
    card.hidden = false;
    document.getElementById('daily-card-energy').textContent = `${energy.energy}/${energy.max}`;
@@ -629,7 +634,7 @@ async function renderStreakSection() {
       sunucudaki odul 5 katina cikinca ekranda hala eski sayilar
       goruyordu - tam olarak bu hata yasandi. */
    const rewards = streak.rewards || [100, 150, 200, 300, 400, 500, 1000];
-   const kilitli = await odulKilitli();
+   const kilitli = (await odulDurumu()) === 'misafir';
    /* streak.nextDay ve streak.broken sunucudan (streakDurumu) geliyor -
       burada tekrar hesaplamiyoruz. Seri kirildiyse (broken) 1..count
       gunleri "alindi" gostermek yanlis olur, yeni dongu 1'den basliyor. */
@@ -674,7 +679,7 @@ async function renderSpinSection() {
       buildWheel(dailyPrizes);
    }
 
-   const kilitli = await odulKilitli();
+   const kilitli = (await odulDurumu()) === 'misafir';
    btn.disabled = kilitli || !spin.canSpin;
    btn.classList.toggle('is-locked', kilitli);
    /* Geri sayim carkin TAM ORTASINDA (dugmenin icinde) - altta ayri bir

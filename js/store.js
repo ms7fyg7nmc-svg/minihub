@@ -26,7 +26,7 @@
    yansidi). Simdi bu cihazdaki kayit yetkili, bulut sadece yedek.
 */
 
-import { isTelegramUser, getInitData } from './tg.js?v13';
+import { isTelegramUser, getInitData } from './tg.js?v14';
 
 /* Worker'in gercek adresiyle degistir: Cloudflare Worker sayfasinin en
    ustunde yazan adres - KURULUM-BOT.md'nin C adiminda not ettigin adresin
@@ -243,7 +243,23 @@ async function sunucuGonder(yol, ekBody) {
    reddetmez (throw etmez) - basarisizlikta null'a duser ve sunucuAktif'i
    false yapar, boylece sonraki her cagri dogrudan yerel moda gider. */
 const senkron = sunucuAktif ? (async () => {
-  try {
+  /* Gecici bir ag hatasi butun oturumu yerel moda kilitlemesin: kisa
+     araliklarla birkac kez denenir. Onceden TEK bir basarisiz istek
+     yetiyordu ve oyuncu Telegram icinde olmasina ragmen oturum boyunca
+     sunucuya hic baglanamiyordu (bakiyesi eski yerel degerde kaliyordu). */
+  for (let deneme = 0; deneme < 3; deneme++) {
+    try {
+      return await senkronDene();
+    } catch {
+      if (deneme < 2) await new Promise((r) => setTimeout(r, 400 * (deneme + 1)));
+    }
+  }
+  sunucuAktif = false;
+  return null;
+})() : Promise.resolve(null);
+
+async function senkronDene() {
+  {
     const initData = getInitData();
     if (!initData) throw new Error('initData yok');
 
@@ -269,11 +285,8 @@ const senkron = sunucuAktif ? (async () => {
       state: veri.state && typeof veri.state === 'object' ? veri.state : {},
       meta: veri.meta && typeof veri.meta === 'object' ? veri.meta : {},
     };
-  } catch {
-    sunucuAktif = false;
-    return null;
   }
-})() : Promise.resolve(null);
+}
 
 /* --- Basarisiz sunucu yazmalarini kuyruklayip yeniden dener ---
 
@@ -398,9 +411,21 @@ const MISAFIR = {
   ] },
 };
 
-/* Ekranin kilitli mi (misafir) yoksa gercek mi oldugunu soyler */
-export async function odulKilitli() {
-  return !(await senkron);
+/* Gunluk odul ekraninin hangi durumda oldugunu soyler:
+
+     'sunucu'  - her sey normal, oduller alinabilir
+     'misafir' - Telegram DISINDA aciliyor: odul vitrin olarak gosterilir
+                 ama alinamaz (amac Telegram'dan girmeye tesvik etmek)
+     'yerel'   - Telegram ICINDE ama sunucuya ulasilamadi. Bu durumda
+                 oyuncunun gercek serisini/carkini BILMIYORUZ; "HAZIR!"
+                 demek yalan olur - bu yuzden ekran hic gosterilmiyor.
+
+   Onceden misafir ile 'yerel' ayni sayiliyordu: senkron bir kez basarisiz
+   olunca Telegram icindeki oyuncuya, geri sayim surerken bile "HAZIR!"
+   yaziliyordu. */
+export async function odulDurumu() {
+  if (!isTelegramUser()) return 'misafir';
+  return (await senkron) ? 'sunucu' : 'yerel';
 }
 
 export async function getEnergy() {
