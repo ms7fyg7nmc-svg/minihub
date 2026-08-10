@@ -417,18 +417,18 @@ function buildWheel(prizes) {
       const isEnergy = prize.tur === 'enerji';
       const text = isEnergy ? '⚡' : prize.miktar;
 
-      /* Etiket kendi dilim acisi kadar donduruluyor: o dilim ibrenin
-         altina geldiginde yazi TAM YATAY okunuyor. Donmeyen etiketler
-         cark rastgele bir acida durunca yan yatmis goruyordu. */
+      /* Etiketler carkin donusune KARSI donduruluyor (bkz. .wheel text
+         kurali): cark hangi acida olursa olsun butun sayilar dimdik
+         duruyor. Sadece dilimle birlikte dondurulseydi cark durdugunda
+         cogu sayi yan yatmis olurdu. */
       html += `
       <path d="M${cx},${cy} L${start.x.toFixed(2)},${start.y.toFixed(2)}
                A${r},${r} 0 0,1 ${end.x.toFixed(2)},${end.y.toFixed(2)} Z"
             fill="${color}" stroke="rgba(0,0,0,.28)" stroke-width="1.5"/>
-      <g transform="translate(${label.x.toFixed(2)} ${label.y.toFixed(2)}) rotate(${mid.toFixed(1)})">
-        <text text-anchor="middle" dominant-baseline="middle" fill="#fff" font-weight="800"
-              font-size="${isEnergy ? 17 : 14}"
-              style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))">${text}</text>
-      </g>`;
+      <text x="${label.x.toFixed(2)}" y="${label.y.toFixed(2)}" text-anchor="middle"
+            dominant-baseline="middle" fill="#fff" font-weight="800"
+            font-size="${isEnergy ? 17 : 14}"
+            style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))">${text}</text>`;
    });
    svg.innerHTML = html;
 }
@@ -450,6 +450,7 @@ function spinToIndex(index, segmentCount) {
    let delta = targetMod - current;
    if (delta <= 0) delta += 360;
    wheelRotation += delta + 5 * 360; /* +5 tam tur, gorsel etki icin */
+   svg.style.setProperty('--don', `${wheelRotation}deg`);
    svg.style.transform = `rotate(${wheelRotation}deg)`;
 }
 
@@ -468,8 +469,12 @@ let sayacTimer = null;
 function sayaclariBaslat() {
    clearInterval(sayacTimer);
    sayacTimer = setInterval(() => {
-      if (!panelOpen) { clearInterval(sayacTimer); sayacTimer = null; return; }
-      document.querySelectorAll('[data-bitis]').forEach((el) => {
+      /* Panel kapaliyken de calisiyor: ana sayfadaki kartin geri sayimi
+         da ayni mekanizmayi kullaniyor. Geri sayilacak bir sey kalmazsa
+         zamanlayici kendini durduruyor. */
+      const hedefler = document.querySelectorAll('[data-bitis]');
+      if (!hedefler.length) { clearInterval(sayacTimer); sayacTimer = null; return; }
+      hedefler.forEach((el) => {
          const kalan = Number(el.dataset.bitis) - Date.now();
          el.textContent = kalan > 0 ? kalanMetin(kalan) : '';
          if (kalan <= 0) { delete el.dataset.bitis; renderStreakSection(); renderSpinSection(); }
@@ -497,15 +502,29 @@ async function renderDailyCard() {
    const kilitli = await odulKilitli();
 
    card.hidden = false;
-   document.getElementById('energy-pips').innerHTML = pipsHtml(energy.energy, energy.max);
+   document.getElementById('daily-card-energy').textContent = `${energy.energy}/${energy.max}`;
 
-   /* Misafirde de kart gorunuyor ve "seni bekleyen bir sey var" diyor -
-      amac odulu gosterip Telegram'dan girmeye tesvik etmek. */
-   const hazir = kilitli || (streak && streak.canClaim) || (spin && spin.canSpin);
+   /* Misafirde de "HAZIR!" gosteriliyor - amac odulu gosterip Telegram'dan
+      girmeye tesvik etmek. */
+   const hazir = kilitli || streak?.canClaim || spin?.canSpin;
+   const ipucu = document.getElementById('daily-card-hint');
    document.getElementById('daily-card-dot').hidden = !hazir;
-   document.getElementById('daily-card-hint').textContent = hazir
-      ? t('hub.daily.hintReady')
-      : t('hub.daily.hintEnergy', { energy: energy.energy, max: energy.max });
+
+   if (hazir) {
+      ipucu.textContent = t('hub.daily.ready');
+      ipucu.className = 'daily-card-hint is-ready';
+      delete ipucu.dataset.bitis;
+   } else {
+      /* Ikisi de beklemedeyse EN ERKEN bitecek olanin geri sayimi */
+      const kalanlar = [];
+      if (streak && !streak.canClaim) kalanlar.push(streak.nextInMs || 0);
+      if (spin && !spin.canSpin) kalanlar.push(spin.nextInMs || 0);
+      const enYakin = kalanlar.length ? Math.min(...kalanlar) : 0;
+      ipucu.className = 'daily-card-hint geri-sayim';
+      ipucu.textContent = kalanMetin(enYakin);
+      ipucu.dataset.bitis = String(Date.now() + enYakin);
+   }
+   sayaclariBaslat();
 }
 
 function wireDailyPanel() {
@@ -649,16 +668,20 @@ async function renderSpinSection() {
    const kilitli = await odulKilitli();
    btn.disabled = kilitli || !spin.canSpin;
    btn.classList.toggle('is-locked', kilitli);
-   const alt = document.getElementById('spin-note');
+   /* Geri sayim carkin TAM ORTASINDA (dugmenin icinde) - altta ayri bir
+      satirda dururken bosta kaliyor ve kotu duruyordu. */
    if (kilitli) {
-      if (btnText) btnText.textContent = '🔒';
-      if (alt) { alt.textContent = t('hub.daily.loginToClaim'); delete alt.dataset.bitis; }
+      btnText.textContent = '🔒';
+      delete btnText.dataset.bitis;
+      btn.classList.remove('is-bekliyor');
    } else if (spin.canSpin) {
-      if (btnText) btnText.textContent = t('hub.daily.spinBtn');
-      if (alt) { alt.textContent = ''; delete alt.dataset.bitis; }
+      btnText.textContent = t('hub.daily.spinBtn');
+      delete btnText.dataset.bitis;
+      btn.classList.remove('is-bekliyor');
    } else {
-      if (btnText) btnText.textContent = '—';
-      if (alt) alt.dataset.bitis = String(Date.now() + (spin.nextInMs || 0));
+      btnText.textContent = kalanMetin(spin.nextInMs || 0);
+      btnText.dataset.bitis = String(Date.now() + (spin.nextInMs || 0));
+      btn.classList.add('is-bekliyor');
    }
 }
 

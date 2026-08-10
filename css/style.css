@@ -392,7 +392,26 @@ body.hub::before {
 .daily-card[hidden] { display: none; }
 .daily-card:active { transform: scale(0.98); }
 
-.daily-card-energy { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: none; }
+.daily-card-energy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  flex: none;
+  min-width: 56px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  background: rgba(245, 185, 66, 0.12);
+  border: 1px solid rgba(245, 185, 66, 0.25);
+}
+.card-energy {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.card-energy-alt { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
 .daily-card-bolt { font-size: 15px; filter: drop-shadow(0 0 5px rgba(245, 185, 66, 0.6)); }
 
 .energy-pips { display: flex; gap: 3px; }
@@ -410,6 +429,21 @@ body.hub::before {
 .daily-card-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .daily-card-info strong { font-size: 14px; }
 .daily-card-hint { font-size: 11.5px; color: var(--muted); }
+
+/* "HAZIR!" - kartin en dikkat ceken parcasi olmali, insan tiklasin diye */
+.daily-card-hint.is-ready {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.6px;
+  background: linear-gradient(95deg, #ffe28a, var(--gold) 40%, var(--c-pink));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: hazir-parla 1.8s ease-in-out infinite;
+}
+
+@keyframes hazir-parla { 50% { opacity: 0.6; } }
 
 .daily-card-dot {
   width: 9px;
@@ -482,6 +516,14 @@ body.hub::before {
   cursor: pointer;
 }
 
+.daily-intro {
+  margin: 0 0 20px;
+  padding-right: 34px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
 .daily-section { margin: 0 0 22px; }
 .daily-section:last-of-type { margin-bottom: 4px; }
 
@@ -541,11 +583,17 @@ body.hub::before {
 #energy-pips-modal .energy-pip { flex: 1 1 0; width: auto; height: 18px; border-radius: 3px; }
 
 .energy-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
-.energy-label { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.energy-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  margin-left: auto; /* cubuk sagdan sola azaldigi icin etiket de sagda */
+}
 
 /* Geri sayimlar: "3s 12d" gibi kucuk, soluk metin */
 .geri-sayim { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
-.spin-note { display: block; text-align: center; margin-top: 10px; min-height: 14px; }
+
 
 /* Gunluk seri seridi */
 .streak-row {
@@ -619,6 +667,16 @@ body.hub::before {
   transition: transform 4.2s cubic-bezier(0.12, 0.68, 0.15, 1);
 }
 
+/* Cark donerken sayilar dik kalsin: her etiket carkin acisinin TERSI kadar
+   donduruluyor. Ikisi de ayni sure ve egriyle gectigi icin donus boyunca
+   senkron kaliyorlar. */
+.wheel text {
+  transform: rotate(calc(-1 * var(--don, 0deg)));
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 4.2s cubic-bezier(0.12, 0.68, 0.15, 1);
+}
+
 .wheel-pointer {
   position: absolute;
   top: -13px;
@@ -658,6 +716,18 @@ body.hub::before {
   box-shadow: none;
   cursor: default;
 }
+
+/* Beklemedeyken merkez, geri sayimi tasiyor - alttaki ayri satir kaldirildi */
+.wheel-center.is-bekliyor {
+  width: 66px;
+  height: 66px;
+  font-size: 12px;
+  letter-spacing: 0;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+.wheel-center.is-bekliyor .geri-sayim { color: #fff; }
 
 .wheel-center.is-spinning { animation: center-pulse 0.5s ease-in-out infinite; }
 @keyframes center-pulse { 50% { transform: translate(-50%, -50%) scale(0.94); } }

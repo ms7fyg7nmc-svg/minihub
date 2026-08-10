@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Mini Hub Pocket Games</title>
-  <script src="https://telegram.org/js/telegram-web-app.js?v3"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js?v6"></script>
   <script>
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
@@ -55,8 +55,8 @@
          tarafli hile korumasi, misafirde gostermenin anlami yok. -->
     <button class="daily-card" id="daily-card" hidden>
       <div class="daily-card-energy">
-        <span class="daily-card-bolt">⚡</span>
-        <div class="energy-pips" id="energy-pips"></div>
+        <span class="card-energy" id="daily-card-energy">24/24</span>
+        <span class="card-energy-alt" data-i18n="hub.daily.energy">Enerji</span>
       </div>
       <div class="daily-card-info">
         <strong data-i18n="hub.daily.title">Günlük Ödüller</strong>
@@ -82,12 +82,14 @@
     <div class="daily-modal">
       <button class="daily-close" id="daily-close" aria-label="Kapat">✕</button>
 
+      <p class="daily-intro" data-i18n="hub.daily.intro"></p>
+
       <section class="daily-section daily-energy-section">
         <h3><span class="daily-card-bolt">⚡</span> <span data-i18n="hub.daily.energy">Enerji</span></h3>
         <div class="energy-pips" id="energy-pips-modal"></div>
         <div class="energy-row">
-          <span id="energy-label" class="energy-label"></span>
           <span id="energy-next" class="geri-sayim"></span>
+          <span id="energy-label" class="energy-label"></span>
         </div>
       </section>
 
@@ -104,13 +106,12 @@
           <svg class="wheel" id="wheel" viewBox="0 0 200 200"></svg>
           <button class="wheel-center" id="spin-btn"><span id="spin-btn-text">ÇEVİR</span></button>
         </div>
-        <div class="spin-note geri-sayim" id="spin-note"></div>
       </section>
 
       <div class="daily-toast" id="daily-toast" hidden></div>
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v3"></script>
+  <script type="module" src="js/hub.js?v6"></script>
 </body>
 </html>
