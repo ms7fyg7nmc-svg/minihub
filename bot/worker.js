@@ -757,8 +757,10 @@ async function handleLeaderboard(env, playerId) {
 
   /* Oyuncu ilk 50'de degilse kendi sirasini ayrica bildir - insan once
      kendini arar, listede yoksa nerede oldugunu bilmek ister. */
-  /* Haric tutulan hesap kendi sirasini da gormuyor - hub karti gizleniyor */
-  if (LIDER_HARIC.has(playerId)) return { liste, kendi: null, toplam: liste.length };
+  /* Haric tutulan hesap listede YER ALMIYOR ama listeyi GORUYOR - kimin ne
+     kadar oynadigini takip edebilmesi gerekiyor. Kendi sirasi olmadigi icin
+     kendi=null, haric=true ile bildiriliyor. */
+  if (LIDER_HARIC.has(playerId)) return { liste, kendi: null, haric: true, toplam: liste.length };
 
   let kendi = liste.find((x) => x.ben) || null;
   if (!kendi) {

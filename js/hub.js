@@ -1,12 +1,12 @@
 /* Hub (ana menu) ekraninin mantigi.
 Yeni oyun eklemek istedigimizde sadece asagidaki gameList() fonksiyonuna satir ekliyoruz. */
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v18';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v19';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu,
-} from './store.js?v18';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v18';
+} from './store.js?v19';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v19';
 
 /* Botun Telegram adresi. Kendi botunun adini yazarsan tarayicida acan
    kullanicilar uyariya dokununca dogrudan bota gider. Bos birakilirsa
@@ -733,10 +733,13 @@ async function renderLiderCard() {
    if ((await odulDurumu()) !== 'sunucu') { card.hidden = true; return; }
 
    const veri = await liderTablosu();
-   if (!veri || !veri.kendi) { card.hidden = true; return; }
+   if (!veri) { card.hidden = true; return; }
 
    card.hidden = false;
-   document.getElementById('lider-sira').textContent = `#${veri.kendi.sira}`;
+   /* Siralama disi hesap (bkz. worker.js LIDER_HARIC) listeyi goruyor ama
+      kendi sirasi yok - rozette tire duruyor. */
+   document.getElementById('lider-sira').textContent =
+      veri.kendi ? `#${veri.kendi.sira}` : '—';
    document.getElementById('lider-hint').textContent =
       t('hub.rank.of', { n: veri.toplam });
 }
