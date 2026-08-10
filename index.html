@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Mini Hub Pocket Games</title>
-  <script src="https://telegram.org/js/telegram-web-app.js?v8"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
@@ -22,23 +22,17 @@
           <strong id="username">Player</strong>
         </div>
       </div>
-      <div class="points-side">
-        <div class="points-chip">
-          <span class="coin">◆</span>
-          <span id="points">0</span>
-        </div>
-        <!-- Sadece Telegram icindeyken gorunur: sunucuya baglanip
-             baglanmadigini DevTools acmadan gostermek icin. -->
-        <div class="sync-badge" id="sync-badge" hidden>
-          <span class="sync-dot"></span>
-          <span id="sync-text"></span>
-        </div>
+      <div class="points-chip">
+        <span class="coin">◆</span>
+        <span id="points">0</span>
       </div>
     </header>
 
     <!-- Telegram disinda acilinca cikan uyari; hub.js gorunurlugunu ayarlar -->
     <a class="tg-notice" id="tg-notice" hidden>
-      <span class="tg-notice-icon">✈</span>
+      <span class="tg-notice-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M21.5 3.2 2.9 10.4c-1 .4-1 1.8.1 2.1l4.6 1.4 1.8 5.5c.3.9 1.4 1.1 2 .4l2.5-2.7 4.6 3.4c.7.5 1.7.1 1.9-.7l3.2-15c.2-.9-.7-1.6-1.6-1.3z" fill="#fff"/></svg>
+      </span>
       <span class="tg-notice-text">
         <strong data-i18n="hub.notice.title">Open in Telegram</strong>
         <small data-i18n="hub.notice.body">Your points are only saved on this device right now.</small>
@@ -54,13 +48,13 @@
     <!-- Sadece Telegram icinde (sunucu modunda) gorunur - anlami sunucu
          tarafli hile korumasi, misafirde gostermenin anlami yok. -->
     <button class="daily-card" id="daily-card" hidden>
-      <div class="daily-card-energy">
-        <span class="card-energy" id="daily-card-energy">24/24</span>
-        <span class="card-energy-alt" data-i18n="hub.daily.energy">Enerji</span>
-      </div>
       <div class="daily-card-info">
         <strong data-i18n="hub.daily.title">Günlük Ödüller</strong>
         <span id="daily-card-hint" class="daily-card-hint"></span>
+      </div>
+      <div class="daily-card-energy">
+        <span class="card-energy" id="daily-card-energy">24/24</span>
+        <span class="card-energy-alt" data-i18n="hub.daily.energy">Enerji</span>
       </div>
       <span class="daily-card-dot" id="daily-card-dot" hidden></span>
     </button>
@@ -71,6 +65,12 @@
     <!-- Alt satir: solda surum, saginda dil sectirici -->
     <footer class="foot">
       <span data-i18n="hub.version">Version 0.1</span>
+      <!-- Sunucuya baglanip baglanmadigini gosterir. Ust barda dikkat
+           dagitiyordu; teknik bir ayrinti oldugu icin surumun yanina alindi. -->
+      <span class="sync-badge" id="sync-badge" hidden>
+        <span class="sync-dot"></span>
+        <span id="sync-text"></span>
+      </span>
       <div id="lang-switcher"></div>
     </footer>
 
@@ -85,7 +85,7 @@
       <p class="daily-intro" data-i18n="hub.daily.intro"></p>
 
       <section class="daily-section daily-energy-section">
-        <h3><span class="daily-card-bolt">⚡</span> <span data-i18n="hub.daily.energy">Enerji</span></h3>
+        <h3><span data-i18n="hub.daily.energy">Enerji</span></h3>
         <div class="energy-pips" id="energy-pips-modal"></div>
         <div class="energy-row">
           <span id="energy-next" class="geri-sayim"></span>
@@ -112,6 +112,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v8"></script>
+  <script type="module" src="js/hub.js?v10"></script>
 </body>
 </html>

@@ -415,7 +415,7 @@ function buildWheel(prizes) {
       const label = polar(cx, cy, labelR, mid);
       const color = WHEEL_COLORS[i % WHEEL_COLORS.length];
       const isEnergy = prize.tur === 'enerji';
-      const text = isEnergy ? '⚡' : prize.miktar;
+      const text = isEnergy ? t('hub.daily.energy').toUpperCase() : prize.miktar;
 
       /* Sayilar dilimin DIS YAYINA PARALEL duruyor (teget yonu).
          polar()'da aci tepeden saat yonunde olctugu icin teget yonu tam
@@ -428,7 +428,7 @@ function buildWheel(prizes) {
             fill="${color}" stroke="rgba(0,0,0,.28)" stroke-width="1.5"/>
       <g transform="translate(${label.x.toFixed(2)} ${label.y.toFixed(2)}) rotate(${yazAci.toFixed(1)})">
         <text text-anchor="middle" dominant-baseline="middle" fill="#fff" font-weight="800"
-              font-size="${isEnergy ? 17 : 14}"
+              font-size="${isEnergy ? 10 : 14}"
               style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))">${text}</text>
       </g>`;
    });
@@ -511,11 +511,18 @@ async function renderDailyCard() {
    const ipucu = document.getElementById('daily-card-hint');
    document.getElementById('daily-card-dot').hidden = !hazir;
 
+   /* Hazirsa oyunlarin USTUNDE, beklemedeyse ALTINDA duruyor: alinacak
+      bir sey yokken ekranin tepesini isgal etmesi rahatsiz ediyordu. */
+   const oyunlar = document.getElementById('games');
+   const basliklar = document.querySelectorAll('.section-title');
+
    if (hazir) {
+      if (basliklar[0]) basliklar[0].before(card);
       ipucu.textContent = t('hub.daily.ready');
       ipucu.className = 'daily-card-hint is-ready';
       delete ipucu.dataset.bitis;
    } else {
+      if (oyunlar) oyunlar.after(card);
       /* Ikisi de beklemedeyse EN ERKEN bitecek olanin geri sayimi */
       const kalanlar = [];
       if (streak && !streak.canClaim) kalanlar.push(streak.nextInMs || 0);
@@ -672,7 +679,7 @@ async function renderSpinSection() {
    /* Geri sayim carkin TAM ORTASINDA (dugmenin icinde) - altta ayri bir
       satirda dururken bosta kaliyor ve kotu duruyordu. */
    if (kilitli) {
-      btnText.textContent = '🔒';
+      btnText.textContent = '—';
       delete btnText.dataset.bitis;
       btn.classList.remove('is-bekliyor');
    } else if (spin.canSpin) {
