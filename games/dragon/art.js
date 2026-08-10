@@ -17,8 +17,8 @@
    Olcekler seviye 99'da bile 200x200 kadraja sigacak sekilde secildi:
    en genis nokta kanat ucu (x = ±120), yani 120 * wing * s <= ~96. */
 
-import { palet, HEADS, FACES } from './data.js?v14';
-import { CONFIG, growthRatio } from './config.js?v14';
+import { palet, HEADS, FACES } from './data.js?v16';
+import { CONFIG, growthRatio } from './config.js?v16';
 
 /* Ayni sayfada birden fazla ejderha olabilir; degrade ve maske id'leri
    catismasin diye sayac. */

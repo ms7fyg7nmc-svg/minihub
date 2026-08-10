@@ -59,6 +59,17 @@
       <span class="daily-card-dot" id="daily-card-dot" hidden></span>
     </button>
 
+    <button class="daily-card lider-card" id="lider-card" hidden>
+      <div class="daily-card-info">
+        <strong data-i18n="hub.rank.title">Liderlik Tablosu</strong>
+        <span id="lider-hint" class="daily-card-hint"></span>
+      </div>
+      <div class="daily-card-energy">
+        <span class="card-energy" id="lider-sira">—</span>
+        <span class="card-energy-alt" data-i18n="hub.rank.you">Sıran</span>
+      </div>
+    </button>
+
     <h2 class="section-title" data-i18n="hub.gamesTitle">Games</h2>
     <div class="game-grid" id="games"></div>
 
@@ -112,6 +123,15 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v14"></script>
+  <div class="daily-overlay" id="lider-overlay" hidden>
+    <div class="daily-modal">
+      <button class="daily-close" id="lider-close" aria-label="Kapat">✕</button>
+      <p class="daily-intro" data-i18n="hub.rank.intro"></p>
+      <div class="lider-liste" id="lider-liste"></div>
+      <div class="lider-kendi" id="lider-kendi" hidden></div>
+    </div>
+  </div>
+
+  <script type="module" src="js/hub.js?v16"></script>
 </body>
 </html>

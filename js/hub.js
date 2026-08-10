@@ -1,12 +1,12 @@
 /* Hub (ana menu) ekraninin mantigi.
 Yeni oyun eklemek istedigimizde sadece asagidaki gameList() fonksiyonuna satir ekliyoruz. */
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v14';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v16';
 import {
    getPoints, getBest, sunucuDurumu,
-   getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu,
-} from './store.js?v14';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v14';
+   getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu,
+} from './store.js?v16';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v16';
 
 /* Botun Telegram adresi. Kendi botunun adini yazarsan tarayicida acan
    kullanicilar uyariya dokununca dogrudan bota gider. Bos birakilirsa
@@ -268,6 +268,8 @@ renderTelegramNotice();
 renderSyncBadge();
 renderDailyCard();
 wireDailyPanel();
+renderLiderCard();
+wireLiderPanel();
 
 document.addEventListener('langchange', () => {
    applyTranslations();
@@ -275,6 +277,7 @@ document.addEventListener('langchange', () => {
    renderGames();
    renderSyncBadge();
    renderDailyCard();
+   renderLiderCard();
 });
 
 /* Sayfa Telegram disinda acildiysa puanlarin kaybolabilecegini hatirlatir */
@@ -455,13 +458,16 @@ function spinToIndex(index, segmentCount) {
    svg.style.transform = `rotate(${wheelRotation}deg)`;
 }
 
-/* "5s 42d" gibi kisa geri sayim metni */
+/* "5h 42m" gibi kisa geri sayim metni.
+   Kisaltmalar SABIT DEGIL, secili dilden geliyor - onceden Turkce 's/d/sn'
+   sabit yazilmisti ve oyunu Ingilizce oynayan da saat/dakika kisaltmasini
+   Turkce goruyordu. */
 function kalanMetin(ms) {
    const sn = Math.max(0, Math.ceil(ms / 1000));
    const saat = Math.floor(sn / 3600), dk = Math.floor((sn % 3600) / 60);
-   if (saat > 0) return `${saat}s ${dk}d`;
-   if (dk > 0) return `${dk}d`;
-   return `${sn % 60}sn`;
+   if (saat > 0) return `${saat}${t('hub.time.h')} ${dk}${t('hub.time.m')}`;
+   if (dk > 0) return `${dk}${t('hub.time.m')}`;
+   return `${sn % 60}${t('hub.time.s')}`;
 }
 
 /* Panel acikken saniyede bir geri sayimlari tazeler. Tek zamanlayici
@@ -708,4 +714,86 @@ function showDailyToast(text) {
    const yeni = toast.cloneNode(true);
    toast.parentNode.replaceChild(yeni, toast);
    setTimeout(() => { yeni.hidden = true; }, 2600);
+}
+
+/* ==========================================================================
+   LIDERLIK TABLOSU
+
+   Siralama toplam KAZANCA gore (bkz. worker.js handleLeaderboard) - mevcut
+   bakiyeye gore olsaydi ejderhasina harcayan oyuncu listede geriye duserdi.
+
+   Isimler Telegram'dan dogrulanmis olarak geliyor ama yine de textContent
+   ile basiliyor: baskasinin adinda HTML olsa bile calismasin. */
+
+async function renderLiderCard() {
+   const card = document.getElementById('lider-card');
+   if (!card) return;
+
+   /* Sadece sunucuya bagliyken anlamli - misafirde siralama yok */
+   if ((await odulDurumu()) !== 'sunucu') { card.hidden = true; return; }
+
+   const veri = await liderTablosu();
+   if (!veri || !veri.kendi) { card.hidden = true; return; }
+
+   card.hidden = false;
+   document.getElementById('lider-sira').textContent = `#${veri.kendi.sira}`;
+   document.getElementById('lider-hint').textContent =
+      t('hub.rank.of', { n: veri.toplam });
+}
+
+function wireLiderPanel() {
+   const card = document.getElementById('lider-card');
+   const overlay = document.getElementById('lider-overlay');
+   if (!card || !overlay) return;
+   card.addEventListener('click', acLiderPanel);
+   document.getElementById('lider-close')?.addEventListener('click', () => { overlay.hidden = true; });
+   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.hidden = true; });
+}
+
+async function acLiderPanel() {
+   const overlay = document.getElementById('lider-overlay');
+   overlay.hidden = false;
+   haptic.tap();
+
+   const veri = await liderTablosu();
+   const liste = document.getElementById('lider-liste');
+   liste.textContent = '';
+   if (!veri) return;
+
+   for (const s of veri.liste) {
+      const satir = document.createElement('div');
+      satir.className = 'lider-satir' + (s.ben ? ' benim' : '') + (s.sira <= 3 ? ' tepe' : '');
+
+      const sira = document.createElement('span');
+      sira.className = 'lider-no';
+      sira.textContent = s.sira;
+
+      const ad = document.createElement('span');
+      ad.className = 'lider-ad';
+      ad.textContent = s.ad || t('hub.player');
+
+      const puan = document.createElement('span');
+      puan.className = 'lider-puan';
+      puan.textContent = s.kazanilan.toLocaleString(locale());
+
+      satir.append(sira, ad, puan);
+      liste.appendChild(satir);
+   }
+
+   /* Ilk 50'de degilse kendi sirasi altta sabit gosterilir */
+   const kendi = document.getElementById('lider-kendi');
+   if (veri.kendi && !veri.liste.some((x) => x.ben)) {
+      kendi.hidden = false;
+      kendi.textContent = '';
+      const satir = document.createElement('div');
+      satir.className = 'lider-satir benim';
+      const a = document.createElement('span'); a.className = 'lider-no'; a.textContent = veri.kendi.sira;
+      const b = document.createElement('span'); b.className = 'lider-ad'; b.textContent = t('hub.rank.you');
+      const c = document.createElement('span'); c.className = 'lider-puan';
+      c.textContent = veri.kendi.kazanilan.toLocaleString(locale());
+      satir.append(a, b, c);
+      kendi.appendChild(satir);
+   } else {
+      kendi.hidden = true;
+   }
 }

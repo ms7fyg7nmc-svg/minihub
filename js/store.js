@@ -26,7 +26,7 @@
    yansidi). Simdi bu cihazdaki kayit yetkili, bulut sadece yedek.
 */
 
-import { isTelegramUser, getInitData } from './tg.js?v14';
+import { isTelegramUser, getInitData } from './tg.js?v16';
 
 /* Worker'in gercek adresiyle degistir: Cloudflare Worker sayfasinin en
    ustunde yazan adres - KURULUM-BOT.md'nin C adiminda not ettigin adresin
@@ -450,6 +450,13 @@ export async function claimStreak() {
     v.streak = { ...v.streak, count: sonuc.streak, canClaim: false };
   }
   return sonuc;
+}
+
+/* Lider tablosu. Misafirde sunucu yok - null doner, hub tabloyu gostermez. */
+export async function liderTablosu() {
+  const v = await senkron;
+  if (!v) return null;
+  return sunucuGonder('/api/leaderboard', {});
 }
 
 export async function getSpin() {

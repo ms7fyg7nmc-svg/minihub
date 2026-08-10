@@ -376,7 +376,11 @@ async function verifyInitData(initData, botToken) {
   }
   if (!user || !user.id) return null;
 
-  return { id: String(user.id), authDate };
+  /* Ad yalnizca lider tablosunda gostermek icin. Telegram'in verdigi
+     first_name aliniyor; soyad ve kullanici adi ALINMIYOR - tabloda
+     kimsenin tam kimligi tesir etmesin. */
+  const ad = typeof user.first_name === 'string' ? user.first_name.slice(0, 24) : '';
+  return { id: String(user.id), ad, authDate };
 }
 
 /* players satirinin var oldugundan emin olur, yoksa olusturur.
@@ -462,7 +466,7 @@ function carkCek() {
    ayni oyuncuyu actiginda biri digerinin ilerlemesini silmesin diye. Sadece
    best_* rekorlari "buyukse guncelle" ile her seferinde birlestirilir, cunku
    bu islem kayipsiz ve tekrar uygulanmasi zararsizdir. */
-async function handleSync(env, playerId, body) {
+async function handleSync(env, playerId, body, ad) {
   const now = Date.now();
   /* Ilk senkronda istemcinin "yerelde su kadar jetonum vardi" beyani
      kabul ediliyor - sunucu oncesi ilerleme baska turlu kurtarilamiyor.
@@ -473,6 +477,10 @@ async function handleSync(env, playerId, body) {
      dusuk secildi. */
   const seedPoints = guvenliSayi(body.points, MAX_SEED_POINTS);
   const isNew = await ensurePlayer(env, playerId, seedPoints);
+
+  /* Ad her senkronda tazeleniyor - oyuncu Telegram'da adini degistirirse
+     tabloda da degissin. */
+  if (ad) await env.DB.prepare('UPDATE players SET name = ? WHERE id = ?').bind(ad, playerId).run();
 
   const gelenState = (body.state && typeof body.state === 'object') ? body.state : {};
 
@@ -711,6 +719,52 @@ async function handleSpin(env, playerId) {
   return { ok: false, reason: 'yeniden dene' };
 }
 
+/* LIDER TABLOSU
+
+   Siralama MEVCUT BAKIYEYE degil TOPLAM KAZANCA gore. Bakiyeye gore
+   siralamak, ejderhasina jeton harcayan oyuncuyu cezalandirip hic
+   harcamayani one cikarirdi - yani oyunu oynamak siralamada geriye
+   dusururdu. Toplam kazanc = su anki bakiye + bugune kadarki tum harcama
+   (harcamalar spend_log'da negatif delta olarak duruyor).
+
+   Isimler istemciden DEGIL, dogrulanmis initData'dan geliyor (bkz.
+   handleSync) - kimse baskasinin adiyla listeye giremez. */
+const LIDER_LIMIT = 50;
+
+async function handleLeaderboard(env, playerId) {
+  const kazanc = `p.points + COALESCE((SELECT -SUM(s.delta) FROM spend_log s
+                    WHERE s.player_id = p.id AND s.delta < 0), 0)`;
+
+  const rows = await env.DB.prepare(
+    `SELECT p.id, p.name, ${kazanc} AS kazanilan
+     FROM players p ORDER BY kazanilan DESC, p.created_at ASC LIMIT ?`,
+  ).bind(LIDER_LIMIT).all();
+
+  const liste = rows.results.map((r, i) => ({
+    sira: i + 1,
+    ad: r.name || '',
+    kazanilan: r.kazanilan,
+    ben: r.id === playerId,
+  }));
+
+  /* Oyuncu ilk 50'de degilse kendi sirasini ayrica bildir - insan once
+     kendini arar, listede yoksa nerede oldugunu bilmek ister. */
+  let kendi = liste.find((x) => x.ben) || null;
+  if (!kendi) {
+    const benim = await env.DB.prepare(
+      `SELECT ${kazanc} AS kazanilan FROM players p WHERE p.id = ?`,
+    ).bind(playerId).first();
+    if (benim) {
+      const ust = await env.DB.prepare(
+        `SELECT COUNT(*) AS n FROM players p WHERE ${kazanc} > ?`,
+      ).bind(benim.kazanilan).first();
+      kendi = { sira: (ust?.n || 0) + 1, ad: '', kazanilan: benim.kazanilan, ben: true };
+    }
+  }
+
+  return { liste, kendi, toplam: liste.length };
+}
+
 /* Bir oyunun rekorunu gunceller - sadece gelen skor mevcut rekordan
    buyukse. Okuma-sonra-yazma yerine tek UPSERT ifadesi kullaniliyor ki iki
    istek ayni anda gelince biri digerinin guncellemesini kaybetmesin. */
@@ -816,7 +870,7 @@ async function handleApi(request, env, url) {
 
   try {
     if (url.pathname === '/api/sync') {
-      return json(await handleSync(env, playerId, body));
+      return json(await handleSync(env, playerId, body, auth.ad));
     }
 
     /* Diger uc noktalar icin guvenlik agi: oyuncu satiri yoksa olustur.
@@ -837,6 +891,8 @@ async function handleApi(request, env, url) {
         return json(await handleStreakClaim(env, playerId));
       case '/api/spin':
         return json(await handleSpin(env, playerId));
+      case '/api/leaderboard':
+        return json(await handleLeaderboard(env, playerId));
       default:
         return json({ error: 'bulunamadi' }, 404);
     }

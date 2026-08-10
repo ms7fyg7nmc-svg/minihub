@@ -21,6 +21,7 @@
 -- gecen sureye gore ilerletilip kalici hale getirilir.
 CREATE TABLE IF NOT EXISTS players (
   id            TEXT PRIMARY KEY,
+  name          TEXT,
   points        INTEGER NOT NULL DEFAULT 0,
   energy        INTEGER NOT NULL DEFAULT 24,
   streak_count  INTEGER NOT NULL DEFAULT 0,
@@ -42,6 +43,7 @@ CREATE TABLE IF NOT EXISTS players (
 --   ALTER TABLE players ADD COLUMN last_claim_at INTEGER NOT NULL DEFAULT 0;
 --   ALTER TABLE players ADD COLUMN last_spin_at INTEGER NOT NULL DEFAULT 0;
 --   ALTER TABLE players ADD COLUMN energy_at INTEGER NOT NULL DEFAULT 0;
+--   ALTER TABLE players ADD COLUMN name TEXT;
 
 -- Rekorlar (best_2048 gibi) ve oyun durumlari (state_dragon gibi) tek
 -- tabloda: key alani hangisi oldugunu ayirt eder. value her zaman JSON
