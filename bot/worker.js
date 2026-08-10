@@ -121,6 +121,8 @@ const MAX_SEED_POINTS = 5000;
    Onceden istemci istedigi anahtari uydurabildigi icin tek bir oyuncu
    sinirsiz satir acabiliyordu. */
 function gecerliVeriAnahtari(key) {
+  /* Sunucunun kendi tuttugu dahili anahtar - istemci yazamaz */
+  if (key === 'dragon_taban') return false;
   if (typeof key !== 'string') return false;
   const ayrac = key.indexOf('_');
   if (ayrac < 0) return false;
@@ -719,6 +721,81 @@ async function handleSpin(env, playerId) {
   return { ok: false, reason: 'yeniden dene' };
 }
 
+/* ==========================================================================
+   EJDERHA DURUMU DOGRULAMASI
+
+   state_dragon icinde ejderhanin SEVIYESI ve sahip olunan KOZMETIKLER
+   duruyor ve bunlari istemci yaziyor. Dogrulama olmadan degistirilmis bir
+   istemci "seviye 99, butun mythic esyalar bende" diye yazabiliyordu -
+   tek jeton harcamadan. Jeton bakiyesi korunuyordu ama ilerlemenin kendisi
+   korunmuyordu; NFT plani da tam olarak bu ilerlemeye yaslanacagi icin
+   burasi acik kalamazdi.
+
+   NASIL DOGRULANIYOR: iddia edilen durumun MINIMUM maliyeti hesaplaniyor
+   (seviye icin besleme + sahip olunan her esyanin fiyati) ve oyuncunun
+   spend_log'daki gercek harcamasiyla karsilastiriliyor. Harcamanin
+   uzerindeki iddia reddediliyor; sunucudaki son gecerli durum geri
+   donduruluyor.
+
+   ESKI OYUNCULAR: bu kontrol eklenmeden onceki ilerleme dogrulanamaz
+   (harcama sunucuya hic ugramamis olabilir). Ilk yazmada mevcut durum
+   TABAN olarak kaydediliyor ve o taban her zaman kabul ediliyor; kontrol
+   yalnizca tabanin USTUNE cikan yeni iddialar icin isliyor. */
+
+/* Fiyatlar games/dragon/data.js'ten kopyalandi. Sunucu istemcinin
+   bildirdigi fiyata guvenemez, kendi kopyasi olmali. Iki tarafin
+   ayrisip ayrismadigini bot/test-guvenlik.mjs kontrol ediyor. */
+const FIYAT = {
+  color: { ocean: 350, emerald: 800, royal: 1800, obsidian: 4000, frost: 9000, celestial: 20000, aurora: 45000 },
+  skin: { stripes: 100, flame: 300, tribal: 700, lightning: 1600, runes: 3600, armor: 8000, cosmic: 18000, celestial: 40000 },
+  wings: { flame: 450, crystal: 1000, demon: 2300, phoenix: 5200, lightning: 11700, king: 26000, celestial: 58000 },
+  tail: { spiked: 350, flame: 800, crystal: 1800, demon: 4000, lightning: 9000, king: 20000, celestial: 45000 },
+  head: { tiny: 150, bronze: 400, silver: 900, golden: 2000, flame: 4400, ice: 10000, king: 22000, celestial: 50000 },
+  face: { scar: 80, twinScar: 200, warPaint: 500, darkMark: 1100, flameFace: 2400, runeFace: 5400, demon: 12000, kingMark: 27000 },
+  aura: { sparkle: 120, ember: 350, frost: 800, electric: 1800, shadow: 4000, golden: 9000, cosmic: 20000, celestial: 45000 },
+  island: { fire: 2500, ice: 7000, volcanic: 18000, celestial: 45000, kingdom: 110000 },
+};
+
+/* games/dragon/config.js ile ayni egri */
+const xpGerekli = (seviye) => 2 + Math.floor(seviye / 8);
+const beslemeUcreti = (seviye) => 8 + Math.floor(seviye * 1.5);
+
+/* 1. seviyeden hedefe kadar TOPLAM besleme maliyeti */
+function seviyeMaliyeti(seviye) {
+  let toplam = 0;
+  for (let l = 1; l < Math.min(seviye, 99); l++) toplam += xpGerekli(l) * beslemeUcreti(l);
+  return toplam;
+}
+
+/* Ejderha "Oyna" ile de XP kazaniyor (4 saatte 1, bedava). Bu yuzden
+   seviyenin tamami harcamayla aciklanmak zorunda degil - hesabin yasina
+   dusen bedava XP kadari mazur goruluyor. Cömert tutuldu: mesru oyuncu
+   yanlislikla engellenmesin. */
+const BEDAVA_XP_GUNLUK = 6;
+
+function iddiaMaliyeti(durum, hesapYasiGun) {
+  const ejderha = durum?.dragons?.[0];
+  if (!ejderha) return 0;
+
+  const seviye = Math.max(1, Math.min(99, Number(ejderha.level) || 1));
+  let toplamXp = 0;
+  for (let l = 1; l < seviye; l++) toplamXp += xpGerekli(l);
+  const bedavaXp = Math.min(toplamXp, hesapYasiGun * BEDAVA_XP_GUNLUK + BEDAVA_XP_GUNLUK);
+  const odenenOran = toplamXp > 0 ? Math.max(0, (toplamXp - bedavaXp) / toplamXp) : 0;
+  let maliyet = Math.round(seviyeMaliyeti(seviye) * odenenOran);
+
+  /* Sahip olunan kozmetikler */
+  const dolap = durum?.owned || {};
+  for (const [slot, idler] of Object.entries(dolap)) {
+    const tablo = FIYAT[slot];
+    if (!tablo || !Array.isArray(idler)) continue;
+    for (const id of idler) maliyet += tablo[id] || 0;
+  }
+  for (const id of (durum?.ownedIslands || [])) maliyet += FIYAT.island[id] || 0;
+
+  return maliyet;
+}
+
 /* LIDER TABLOSU
 
    Siralama MEVCUT BAKIYEYE degil TOPLAM KAZANCA gore. Bakiyeye gore
@@ -808,6 +885,48 @@ async function handleBest(env, playerId, body) {
   return { best, isRecord };
 }
 
+/* Iddia edilen ejderha durumu harcamayla aciklanabiliyor mu?
+
+   Doner: true  -> reddet (harcamanin ustunde bir ilerleme iddia ediliyor)
+          false -> kabul et
+
+   TABAN: kontrol eklenmeden onceki ilerleme dogrulanamayacagi icin ilk
+   yazmada mevcut iddia taban olarak kaydedilir ve hep kabul edilir. */
+async function ejderhaIddiasiReddedilsinMi(env, playerId, durum, now) {
+  if (!durum || typeof durum !== 'object') return false;
+
+  const oyuncu = await env.DB.prepare('SELECT created_at FROM players WHERE id = ?')
+    .bind(playerId).first();
+  const yasGun = oyuncu ? Math.max(0, (now - oyuncu.created_at) / 86400000) : 0;
+
+  const iddia = iddiaMaliyeti(durum, yasGun);
+
+  /* Bugune kadarki gercek harcama (spend_log'da negatif delta) */
+  const h = await env.DB.prepare(
+    'SELECT COALESCE(-SUM(delta), 0) AS toplam FROM spend_log WHERE player_id = ? AND delta < 0',
+  ).bind(playerId).first();
+  const harcama = h ? h.toplam : 0;
+
+  /* Taban: ilk kez dogrulanan durum */
+  const tabanSatir = await env.DB.prepare(
+    "SELECT value FROM player_data WHERE player_id = ? AND key = 'dragon_taban'",
+  ).bind(playerId).first();
+
+  if (!tabanSatir) {
+    await env.DB.prepare(
+      `INSERT INTO player_data (player_id, key, value, version, updated_at)
+       VALUES (?, 'dragon_taban', ?, 1, ?)`,
+    ).bind(playerId, JSON.stringify({ maliyet: iddia }), now).run();
+    return false;
+  }
+
+  let taban = 0;
+  try { taban = JSON.parse(tabanSatir.value).maliyet || 0; } catch { taban = 0; }
+
+  /* Tabanin ustundeki her sey harcamayla aciklanmali */
+  return iddia > taban + harcama;
+}
+
 /* Bir oyunun kayitli durumunu (yarim kalan oyun, ejderha dolabi, vs) yazar.
 
    ESKIYEN YAZMAYA KARSI KORUMA: istemci "en son gordugum surum buydu" diye
@@ -842,6 +961,19 @@ async function handleState(env, playerId, body) {
     return mevcut
       ? { state: JSON.parse(mevcut.value), version: mevcut.version }
       : { state: null, version: 0 };
+  }
+
+  /* Ejderha durumu: iddia edilen ilerleme gercek harcamayla ortusuyor mu */
+  if (game === 'dragon') {
+    const red = await ejderhaIddiasiReddedilsinMi(env, playerId, body.state, now);
+    if (red) {
+      const mevcut = await env.DB.prepare(
+        'SELECT value, version FROM player_data WHERE player_id = ? AND key = ?',
+      ).bind(playerId, key).first();
+      return mevcut
+        ? { state: JSON.parse(mevcut.value), version: mevcut.version, reddedildi: true }
+        : { state: null, version: 0, reddedildi: true };
+    }
   }
 
   await env.DB.prepare(

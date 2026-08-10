@@ -182,5 +182,58 @@ check('harcama hala calisiyor', r.ok === true, `-> ${JSON.stringify(r)}`);
 r = await api(env5, 'points/spend', { initData: id5, opId: 'harca-2', amount: 99999999 });
 check('bakiyeden fazla harcanamiyor', r.ok === false, `-> ${JSON.stringify(r)}`);
 
+/* ================= 11. SALDIRI: BEDAVA SEVIYE 99 + TUM ESYALAR =================
+   Ejderha durumu istemci tarafindan yaziliyor. Dogrulama olmadan
+   degistirilmis bir istemci hic harcama yapmadan "seviye 99, butun mythic
+   esyalar bende" diyebiliyordu. */
+const DB6 = makeDb(); const env6 = { DB: DB6, BOT_TOKEN }; const id6 = signedInitData(777);
+await api(env6, 'sync', { initData: id6, points: 0, state: {} });
+
+const mutevazi = { v: 2, dragons: [{ id: 'd1', level: 3, xp: 0, look: {} }],
+                   owned: { color: ['ember'] }, ownedIslands: ['grassland'] };
+r = await api(env6, 'state', { initData: id6, game: 'dragon', state: mutevazi, expectedVersion: 0 });
+check('yeni oyuncunun ilk durumu taban olarak kabul edildi', r.state?.dragons?.[0]?.level === 3,
+      `-> ${JSON.stringify(r).slice(0, 80)}`);
+
+const hileli = { v: 2, dragons: [{ id: 'd1', level: 99, xp: 0, look: {} }],
+                 owned: { color: ['ember', 'aurora'], wings: ['celestial'], head: ['celestial'] },
+                 ownedIslands: ['grassland', 'dragonKingdom'] };
+r = await api(env6, 'state', { initData: id6, game: 'dragon', state: hileli, expectedVersion: 1 });
+check('harcamasiz seviye 99 + mythic esyalar REDDEDILDI', r.reddedildi === true, `-> ${JSON.stringify(r).slice(0, 90)}`);
+check('reddedilince sunucudaki eski durum korundu', r.state?.dragons?.[0]?.level === 3, `-> ${r.state?.dragons?.[0]?.level}`);
+
+/* Gercekten harcayan oyuncu ayni ilerlemeyi yazabilmeli */
+const DB7 = makeDb(); const env7 = { DB: DB7, BOT_TOKEN }; const id7 = signedInitData(888);
+await api(env7, 'sync', { initData: id7, points: 0, state: {} });
+DB7.prepare('UPDATE players SET points = 900000 WHERE id = ?').bind('888').run();
+r = await api(env7, 'state', { initData: id7, game: 'dragon', state: mutevazi, expectedVersion: 0 });
+for (let i = 0; i < 9; i++) {
+  await api(env7, 'points/spend', { initData: id7, opId: `harca-${i}`, amount: 100000 });
+}
+r = await api(env7, 'state', { initData: id7, game: 'dragon', state: hileli, expectedVersion: 1 });
+check('gercekten harcayan oyuncu ayni ilerlemeyi YAZABILDI', r.reddedildi !== true && r.state?.dragons?.[0]?.level === 99,
+      `-> ${JSON.stringify(r).slice(0, 90)}`);
+
+/* Istemci sunucunun dahili taban anahtarini yazamamali */
+r = await api(env6, 'state', { initData: id6, game: 'taban', state: { maliyet: 0 }, expectedVersion: 0 });
+check('istemci dahili taban anahtarini yazamiyor', r.error === 'bilinmeyen oyun', `-> ${JSON.stringify(r)}`);
+
+/* ================= 12. FIYAT TABLOLARI AYRISMIS MI =================
+   worker.js kendi fiyat kopyasini tutuyor (istemciye guvenemez). Iki taraf
+   ayrisirsa dogrulama yanlis calisir - burada yakalaniyor. */
+const dataJs = await import('/Users/vtredi/minihub/games/dragon/data.js');
+const workerKaynak = readFileSync('/Users/vtredi/minihub/bot/worker.js', 'utf8');
+const gruplar = { color: 'COLORS', skin: 'SKINS', wings: 'WINGS', tail: 'TAILS',
+                  head: 'HEADS', face: 'FACES', aura: 'AURAS', island: 'ISLANDS' };
+let ayrisan = [];
+for (const [slot, disaAd] of Object.entries(gruplar)) {
+  for (const [id, item] of Object.entries(dataJs[disaAd])) {
+    if (!item.price) continue;
+    const kalip = new RegExp(`\\b${id}: ${item.price}\\b`);
+    if (!kalip.test(workerKaynak)) ayrisan.push(`${slot}.${id}=${item.price}`);
+  }
+}
+check('sunucu fiyat tablosu data.js ile ayni', ayrisan.length === 0, `-> ayrisan: ${ayrisan.join(', ')}`);
+
 console.log(`\n${passed} basarili, ${failed} basarisiz`);
 process.exit(failed > 0 ? 1 : 0);
