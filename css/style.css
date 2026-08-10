@@ -2,6 +2,12 @@
    Renkler once Telegram temasindan gelir, Telegram yoksa yedek renkler kullanilir. */
 
 :root {
+  /* Temaya gore koyulasan/aciklasan ayirici ve yuzey renkleri.
+     --text zaten Telegram temasindan geliyor (koyu temada beyaz, acik
+     temada siyah), bunlari ondan turetince iki temada da goruluyorlar. */
+  --cizgi: color-mix(in srgb, var(--tg-text-color, #fff) 18%, transparent);
+  --cizgi-soft: color-mix(in srgb, var(--tg-text-color, #fff) 10%, transparent);
+  --yuzey: color-mix(in srgb, var(--tg-text-color, #fff) 5%, transparent);
   --bg: var(--tg-bg-color, #12131a);
   --bg-soft: var(--tg-secondary-bg-color, #1c1e29);
   --text: var(--tg-text-color, #ffffff);
@@ -544,7 +550,7 @@ body.hub::before {
   content: '';
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, rgba(255,255,255,.14), transparent);
+  background: linear-gradient(90deg, var(--cizgi), transparent);
 }
 
 /* Cark basligi ortada: iki yanina da cizgi geliyor */
@@ -553,10 +559,10 @@ body.hub::before {
   content: '';
   flex: 1;
   height: 1px;
-  background: linear-gradient(270deg, rgba(255,255,255,.14), transparent);
+  background: linear-gradient(270deg, var(--cizgi), transparent);
 }
 .daily-section.is-orta h3::after {
-  background: linear-gradient(90deg, rgba(255,255,255,.14), transparent);
+  background: linear-gradient(90deg, var(--cizgi), transparent);
 }
 
 .daily-btn {
@@ -575,12 +581,12 @@ body.hub::before {
 }
 .daily-btn:active { transform: scale(0.98); }
 .daily-btn:disabled {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--yuzey);
   color: var(--muted);
   box-shadow: none;
   cursor: default;
   opacity: 0.55;
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--cizgi-soft);
 }
 .daily-btn:disabled .geri-sayim { color: inherit; opacity: .85; margin-left: 6px; }
 
@@ -624,8 +630,8 @@ body.hub::before {
   margin-bottom: 12px;
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--cizgi);
+  background: var(--yuzey);
 }
 
 .streak-pill {
@@ -634,7 +640,7 @@ body.hub::before {
   align-items: center;
   gap: 3px;
   padding: 10px 2px;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 1px solid var(--cizgi-soft);
 }
 .streak-pill:first-child { border-left: none; }
 
@@ -660,6 +666,9 @@ body.hub::before {
 .streak-pill.is-jackpot .amt { color: var(--c-pink); }
 
 /* Gunluk cark */
+/* Baslik carkin ustune binmesin: ibre yukari tastigi icin ekstra pay */
+.daily-section.is-orta h3 { margin-bottom: 22px; }
+
 .wheel-wrap {
   position: relative;
   width: 220px;
@@ -729,13 +738,16 @@ body.hub::before {
 
 /* Beklemedeyken merkez, geri sayimi tasiyor - alttaki ayri satir kaldirildi */
 .wheel-center.is-bekliyor {
-  width: 66px;
-  height: 66px;
+  width: 76px;
+  height: 76px;
   font-size: 12px;
+  font-weight: 800;
   letter-spacing: 0;
-  background: rgba(0, 0, 0, 0.45);
+  white-space: nowrap;   /* "18s 54d" iki satira bolunmesin */
+  background: #2a2438;
   color: #fff;
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
 }
 .wheel-center.is-bekliyor .geri-sayim { color: #fff; }
 
