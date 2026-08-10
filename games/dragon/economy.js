@@ -22,7 +22,7 @@
    gibi kaynaklar eklenebilsin diye tek bir string'e ('coins') gomulmedi;
    harcama ve kazanc her zaman bir kaynak anahtariyla cagriliyor. */
 
-import { getPoints, addPoints, spendPoints } from '../../js/store.js?v11';
+import { getPoints, addPoints, spendPoints } from '../../js/store.js?v12';
 
 /* Tanimli kaynaklar. Yeni bir kaynak eklemek icin buraya satir yazilir;
    okuma/yazma islerini kendi oku/dus fonksiyonlari yapar. */

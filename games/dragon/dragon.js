@@ -9,17 +9,17 @@
    Burada hicbir fiyat, hicbir XP degeri ve hicbir bakiye aritmetigi yok -
    ileride dengeleme yaparken bu dosyayi acmak gerekmemeli. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v11';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v11';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v12';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v12';
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v11';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v11';
-import { bakiyeOku, harca } from './economy.js?v11';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v12';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v12';
+import { bakiyeOku, harca } from './economy.js?v12';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v11';
-import { dragonSvg, headSvg, faceSvg, HEAD_BOX } from './art.js?v11';
-import { ITEM_TEXTS } from './i18n-items.js?v11';
-import { createIsland } from './island.js?v11';
+         adaSahipMi, adaEkle } from './model.js?v12';
+import { dragonSvg, headSvg, faceSvg, HEAD_BOX } from './art.js?v12';
+import { ITEM_TEXTS } from './i18n-items.js?v12';
+import { createIsland } from './island.js?v12';
 
 const GAME_ID = 'dragon';
 
@@ -543,6 +543,8 @@ const VARSAYILAN_ONIZLEME = {
 function grupCiz(baslikKey, girdiler) {
   const kutu = document.createElement('div');
   kutu.className = 'shop-group';
+  /* Kaydirma konumunu geri yuklerken hangi kategori oldugunu bilmek icin */
+  if (girdiler.length) kutu.dataset.slot = girdiler[0].slot;
 
   const baslik = document.createElement('h3');
   baslik.className = 'shop-title';
@@ -588,6 +590,20 @@ function grupCiz(baslikKey, girdiler) {
 
 function dukkanCiz() {
   if (!oyuncu) return;
+
+  /* KAYDIRMA KONUMLARINI SAKLA
+
+     Bir urune dokununca dukkan bastan cizilyor. Onceden bu, her kategorinin
+     yatay kaydirmasini sifira dondurdugu icin saga kaydirip bir urunu
+     denediginde kategori en basa atiyor ve denedigin urunu goremiyordun.
+     Konumlari once alip cizimden sonra geri koyuyoruz. */
+  const kaydirma = new Map();
+  for (const grup of shopEl.querySelectorAll('.shop-group[data-slot]')) {
+    const sira = grup.querySelector('.shop-row');
+    if (sira && sira.scrollLeft > 0) kaydirma.set(grup.dataset.slot, sira.scrollLeft);
+  }
+  const dikey = panelShop.scrollTop;
+
   /* Cubuk bir gruba tasinmis olabilir; listeyi temizlemeden once geri al
      ki DOM'dan tamamen kopmasin. */
   panelShop.appendChild(tryBar);
@@ -611,6 +627,21 @@ function dukkanCiz() {
     kilit: !!(item.needLevel && ejderha.level < item.needLevel),
     deniyor: deneme?.slot === 'island' && deneme.id === id,
   })));
+
+  /* Saklanan konumlari geri koy */
+  for (const grup of shopEl.querySelectorAll('.shop-group[data-slot]')) {
+    const konum = kaydirma.get(grup.dataset.slot);
+    if (konum) {
+      const sira = grup.querySelector('.shop-row');
+      if (sira) sira.scrollLeft = konum;
+    }
+  }
+  panelShop.scrollTop = dikey;
+
+  /* Denenen urun gorus alaninda kalsin - kaydirma korunsa bile deneme
+     cubugu araya girdiginde kayabiliyor. */
+  const denenen = shopEl.querySelector('.shop-item.trying');
+  if (denenen) denenen.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
 
 /* Dukkanda bir seye dokunmak: sahip oldugunu kusandirir/tasinir, olmadigini

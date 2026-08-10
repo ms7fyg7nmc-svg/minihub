@@ -14,9 +14,9 @@
    Ilk dokunus da her zaman guvenlidir: mayinlar ilk dokunustan SONRA,
    dokundugun hucrenin ve komsularinin disina yerlestirilir. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v11';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v11';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v11';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v12';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v12';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v12';
 
 const GAME_ID = 'minesweeper';
 const POINTS_PER_LEVEL = 20; /* temizlenen her bolum = 20 hub puani */
