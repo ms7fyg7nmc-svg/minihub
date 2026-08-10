@@ -72,9 +72,12 @@ const initData = signedInitData(111);
 
 /* ================= 1. TEMEL DAVRANIS BOZULMADI MI ================= */
 let r = await api(env, 'sync', { initData, points: 0, state: {} });
-check('sync: energy 8', r.energy === 8);
+check('sync: energy 24', r.energy === 24);
 check('sync: streak var', !!r.streak);
 check('sync: spin var', !!r.spin);
+check('odul merdiveni sunucudan geliyor (5x)',
+      JSON.stringify(r.streak.rewards) === JSON.stringify([100,150,200,300,400,500,1000]),
+      `-> ${JSON.stringify(r.streak.rewards)}`);
 
 /* ================= 2. SALDIRI: DEV MIKTAR ISTEMEK ================= */
 r = await api(env, 'points/earn', { initData, opId: 'atk-1', amount: 999999999 });
@@ -134,38 +137,39 @@ check('32 KB ustu durum yazilmadi', r.state === null, `-> ${JSON.stringify(r).sl
 r = await api(env3, 'state', { initData: id3, game: 'dragon', state: { level: 5 }, expectedVersion: 0 });
 check('normal boyutlu durum hala yaziliyor', r.state?.level === 5, `-> ${JSON.stringify(r)}`);
 
-/* ================= 8. SALDIRI: SONSUZ ENERJI DOLUMU ================= */
-const DB4 = makeDb(); const env4 = { DB: DB4, BOT_TOKEN }; const id4 = signedInitData(444);
-await api(env4, 'sync', { initData: id4, points: 0, state: {} });
-let basarili = 0;
-for (let i = 0; i < 20; i++) {
-  const rr = await api(env4, 'energy/refill', { initData: id4 });
-  if (rr.ok) basarili++;
-}
-check('enerji dolumu gunde 12 ile sinirli', basarili === 12, `-> ${basarili}`);
-r = await api(env4, 'energy/refill', { initData: id4 });
-check('limit dolunca duzgun sebep donuyor', r.ok === false && r.reason === 'gunluk-limit', `-> ${JSON.stringify(r)}`);
 
 /* ================= 9. SALDIRI: SAHTE IMZA ================= */
 const sahte = new URLSearchParams({ user: JSON.stringify({ id: 555 }), auth_date: String(Math.floor(Date.now() / 1000)), hash: 'a'.repeat(64) }).toString();
 const sahteRes = await worker.default.fetch(new Request('https://x/api/points/earn', {
   method: 'POST', headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({ initData: sahte, opId: 'x', amount: 1000 }),
-}), env4);
+}), env);
 check('sahte imza 401 ile reddedildi', sahteRes.status === 401, `-> ${sahteRes.status}`);
 
 /* ================= 10. ONCEKI DAVRANIS KORUNDU MU ================= */
 const DB5 = makeDb(); const env5 = { DB: DB5, BOT_TOKEN }; const id5 = signedInitData(666);
 await api(env5, 'sync', { initData: id5, points: 0, state: {} });
-/* enerji dolu: 8 tur tam odul */
+/* enerji dolu: 24 tur tam odul */
 let toplamKazanc = 0;
-for (let i = 0; i < 8; i++) {
+for (let i = 0; i < 24; i++) {
   const rr = await api(env5, 'points/earn', { initData: id5, opId: `n-${i}`, amount: 100 });
   toplamKazanc += rr.credited;
 }
-check('meshru oyun: 8 tur tam odul aldi (800)', toplamKazanc === 800, `-> ${toplamKazanc}`);
+check('meshru oyun: 24 tur tam odul aldi (2400)', toplamKazanc === 2400, `-> ${toplamKazanc}`);
 r = await api(env5, 'points/earn', { initData: id5, opId: 'n-bos', amount: 100 });
 check('enerji bitince odul %25e dustu (25)', r.credited === 25, `-> ${r.credited}`);
+
+/* --- ENERJI ZAMANLA YENILENIYOR MU ---
+   Reklam butonu kaldirildi; enerjinin dolmasinin tek yolu bu kaldi.
+   Calismazsa oyuncu bir kez tuketince kalici olarak dusuk kazanca duser. */
+DB5.prepare('UPDATE players SET energy = 0, energy_at = ? WHERE id = ?')
+  .bind(Date.now() - 2 * 3600 * 1000, '666').run();
+let re1 = await api(env5, 'sync', { initData: id5, points: 0, state: {} });
+check('2 saat sonra 4 enerji yenilendi', re1.energy === 4, `-> ${re1.energy}`);
+DB5.prepare('UPDATE players SET energy = 0, energy_at = ? WHERE id = ?')
+  .bind(Date.now() - 400 * 3600 * 1000, '666').run();
+re1 = await api(env5, 'sync', { initData: id5, points: 0, state: {} });
+check('cok bekleyince tavanda duruyor (24)', re1.energy === 24, `-> ${re1.energy}`);
 const oncekiBakiye = r.total;
 r = await api(env5, 'points/earn', { initData: id5, opId: 'n-bos', amount: 100 });
 check('ayni opId tekrar uygulanmadi', r.total === oncekiBakiye && r.credited === 0, `-> ${JSON.stringify(r)}`);

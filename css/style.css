@@ -513,11 +513,18 @@ body.hub::before {
 }
 .daily-btn:active { transform: scale(0.98); }
 .daily-btn:disabled {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--muted);
   box-shadow: none;
   cursor: default;
+  opacity: 0.55;
+  border: 1px solid rgba(255, 255, 255, 0.07);
 }
+.daily-btn:disabled .geri-sayim { color: inherit; opacity: .85; margin-left: 6px; }
+
+/* Misafir (Telegram disi): odul gorunur ama alinamaz - amac merak
+   uyandirip Telegram'dan girise yonlendirmek. */
+.daily-btn.is-locked { opacity: 0.6; }
 
 .daily-btn-ghost {
   background: rgba(255, 255, 255, 0.06);
@@ -526,11 +533,19 @@ body.hub::before {
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-/* Enerji bolumu */
-.energy-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
-.energy-row .energy-pips { gap: 5px; }
-.energy-row .energy-pip { width: 9px; height: 18px; border-radius: 3px; }
+/* Enerji cubugu: panelde TAM GENISLIK.
+   Once sabit genislikli 8 parca vardi ve doluyken bile satirin ucte birini
+   kapladigi icin "yarim dolu" gibi goruyordu. Artik parcalar esnek: kac
+   birim olursa olsun (su an 24) cubuk hep uctan uca uzuyor. */
+#energy-pips-modal { display: flex; gap: 3px; width: 100%; margin-bottom: 8px; }
+#energy-pips-modal .energy-pip { flex: 1 1 0; width: auto; height: 18px; border-radius: 3px; }
+
+.energy-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
 .energy-label { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Geri sayimlar: "3s 12d" gibi kucuk, soluk metin */
+.geri-sayim { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.spin-note { display: block; text-align: center; margin-top: 10px; min-height: 14px; }
 
 /* Gunluk seri seridi */
 .streak-row {
@@ -585,27 +600,37 @@ body.hub::before {
   margin: 4px auto 0;
 }
 
+.wheel-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #ffe28a, var(--gold), #b8860b, var(--gold), #ffe28a);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45), inset 0 0 12px rgba(0, 0, 0, 0.35);
+}
+
 .wheel {
+  position: relative;
   width: 100%;
   height: 100%;
   display: block;
   border-radius: 50%;
-  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.35));
+  box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.22);
   transition: transform 4.2s cubic-bezier(0.12, 0.68, 0.15, 1);
 }
 
 .wheel-pointer {
   position: absolute;
-  top: -4px;
+  top: -13px;
   left: 50%;
   width: 0;
   height: 0;
   transform: translateX(-50%);
   border-left: 9px solid transparent;
   border-right: 9px solid transparent;
-  border-top: 16px solid var(--gold);
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
-  z-index: 2;
+  border-top: 18px solid #fff;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.55));
+  z-index: 3;
 }
 
 .wheel-center {

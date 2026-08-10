@@ -263,6 +263,7 @@ const senkron = sunucuAktif ? (async () => {
       points: Number(veri.points) || 0,
       energy: Number(veri.energy) || 0,
       maxEnergy: Number(veri.maxEnergy) || 0,
+      energyNextMs: Number(veri.energyNextMs) || 0,
       streak: veri.streak && typeof veri.streak === 'object' ? veri.streak : null,
       spin: veri.spin && typeof veri.spin === 'object' ? veri.spin : null,
       state: veri.state && typeof veri.state === 'object' ? veri.state : {},
@@ -378,27 +379,39 @@ export async function addPoints(amount) {
    yok. Misafirde hepsi null doner, hub.js bunu gorunce ilgili karti hic
    gostermez (tipki sync-badge'in 'misafir' durumunda gizlenmesi gibi). */
 
-export async function getEnergy() {
-  const v = await senkron;
-  if (!v) return null;
-  return { energy: v.energy, max: v.maxEnergy };
+/* Telegram DISINDAKI ziyaretci icin kilitli bir onizleme.
+
+   Amac: gunluk odul ekranini misafire de gostermek - odulu goren kisi
+   Telegram'dan girip almak istiyor. Buradaki degerler yalnizca VITRIN;
+   hicbiri sunucuya yazilmiyor, kilitli oldugu icin de bir anlami yok.
+   Merdiven sunucudan gelmiyorsa (misafir) burasi kullaniliyor; giris
+   yapan oyuncuda her zaman sunucunun bildirdigi rakamlar gecerli. */
+const MISAFIR = {
+  energy: 24, maxEnergy: 24, energyNextMs: 0,
+  streak: { count: 0, canClaim: false, nextDay: 1, nextReward: 100,
+            nextInMs: 0, broken: false, rewards: [100, 150, 200, 300, 400, 500, 1000] },
+  spin: { canSpin: false, nextInMs: 0, prizes: [
+    { tur: 'coin', miktar: 50 }, { tur: 'coin', miktar: 100 },
+    { tur: 'coin', miktar: 150 }, { tur: 'coin', miktar: 250 },
+    { tur: 'coin', miktar: 375 }, { tur: 'coin', miktar: 500 },
+    { tur: 'enerji', miktar: 24 }, { tur: 'coin', miktar: 750 },
+  ] },
+};
+
+/* Ekranin kilitli mi (misafir) yoksa gercek mi oldugunu soyler */
+export async function odulKilitli() {
+  return !(await senkron);
 }
 
-export async function refillEnergy() {
+export async function getEnergy() {
   const v = await senkron;
-  if (!v) return null;
-  const sonuc = await sunucuGonder('/api/energy/refill', {});
-  if (!sonuc) return null;
-  /* Sunucu gunluk dolum limitini uyguluyor (bkz. worker.js
-     MAX_REFILL_PER_DAY). Limit dolduysa enerji degismiyor - o zaman da
-     sunucunun bildirdigi guncel enerjiyi kabul ediyoruz. */
-  if (typeof sonuc.energy === 'number') v.energy = sonuc.energy;
-  return { ok: sonuc.ok === true, energy: v.energy, max: v.maxEnergy, reason: sonuc.reason };
+  if (!v) return { energy: MISAFIR.energy, max: MISAFIR.maxEnergy, nextMs: 0, kilitli: true };
+  return { energy: v.energy, max: v.maxEnergy, nextMs: v.energyNextMs, kilitli: false };
 }
 
 export async function getStreak() {
   const v = await senkron;
-  if (!v) return null;
+  if (!v) return MISAFIR.streak;
   return v.streak;
 }
 
@@ -416,7 +429,7 @@ export async function claimStreak() {
 
 export async function getSpin() {
   const v = await senkron;
-  if (!v) return null;
+  if (!v) return MISAFIR.spin;
   return v.spin;
 }
 

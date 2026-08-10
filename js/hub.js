@@ -4,7 +4,7 @@ Yeni oyun eklemek istedigimizde sadece asagidaki gameList() fonksiyonuna satir e
 import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js';
 import {
    getPoints, getBest, sunucuDurumu,
-   getEnergy, refillEnergy, getStreak, claimStreak, getSpin, spinWheel,
+   getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulKilitli,
 } from './store.js';
 import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js';
 
@@ -417,13 +417,18 @@ function buildWheel(prizes) {
       const isEnergy = prize.tur === 'enerji';
       const text = isEnergy ? '⚡' : prize.miktar;
 
+      /* Etiket kendi dilim acisi kadar donduruluyor: o dilim ibrenin
+         altina geldiginde yazi TAM YATAY okunuyor. Donmeyen etiketler
+         cark rastgele bir acida durunca yan yatmis goruyordu. */
       html += `
       <path d="M${cx},${cy} L${start.x.toFixed(2)},${start.y.toFixed(2)}
                A${r},${r} 0 0,1 ${end.x.toFixed(2)},${end.y.toFixed(2)} Z"
-            fill="${color}" stroke="${'var(--bg-soft)'}" stroke-width="2"/>
-      <text x="${label.x.toFixed(2)}" y="${label.y.toFixed(2)}" text-anchor="middle"
-            dominant-baseline="middle" fill="#fff" font-weight="800"
-            font-size="${isEnergy ? 15 : 13}" style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))">${text}</text>`;
+            fill="${color}" stroke="rgba(0,0,0,.28)" stroke-width="1.5"/>
+      <g transform="translate(${label.x.toFixed(2)} ${label.y.toFixed(2)}) rotate(${mid.toFixed(1)})">
+        <text text-anchor="middle" dominant-baseline="middle" fill="#fff" font-weight="800"
+              font-size="${isEnergy ? 17 : 14}"
+              style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))">${text}</text>
+      </g>`;
    });
    svg.innerHTML = html;
 }
@@ -438,13 +443,38 @@ function spinToIndex(index, segmentCount) {
    if (!svg) return;
    const segAngle = 360 / segmentCount;
    const mid = index * segAngle + segAngle / 2;
-   const jitter = (Math.random() - 0.5) * (segAngle * 0.5);
-   const targetMod = (((360 - mid - jitter) % 360) + 360) % 360;
+   /* Rastgele kayma YOK: dilim tam ibrenin altinda duruyor, boylece
+      etiketin kendi donusu yaziyi tam yatay birakiyor. */
+   const targetMod = (((360 - mid) % 360) + 360) % 360;
    const current = ((wheelRotation % 360) + 360) % 360;
    let delta = targetMod - current;
    if (delta <= 0) delta += 360;
    wheelRotation += delta + 5 * 360; /* +5 tam tur, gorsel etki icin */
    svg.style.transform = `rotate(${wheelRotation}deg)`;
+}
+
+/* "5s 42d" gibi kisa geri sayim metni */
+function kalanMetin(ms) {
+   const sn = Math.max(0, Math.ceil(ms / 1000));
+   const saat = Math.floor(sn / 3600), dk = Math.floor((sn % 3600) / 60);
+   if (saat > 0) return `${saat}s ${dk}d`;
+   if (dk > 0) return `${dk}d`;
+   return `${sn % 60}sn`;
+}
+
+/* Panel acikken saniyede bir geri sayimlari tazeler. Tek zamanlayici
+   kullaniliyor; panel kapaninca durduruluyor ki arka planda calismasin. */
+let sayacTimer = null;
+function sayaclariBaslat() {
+   clearInterval(sayacTimer);
+   sayacTimer = setInterval(() => {
+      if (!panelOpen) { clearInterval(sayacTimer); sayacTimer = null; return; }
+      document.querySelectorAll('[data-bitis]').forEach((el) => {
+         const kalan = Number(el.dataset.bitis) - Date.now();
+         el.textContent = kalan > 0 ? kalanMetin(kalan) : '';
+         if (kalan <= 0) { delete el.dataset.bitis; renderStreakSection(); renderSpinSection(); }
+      });
+   }, 1000);
 }
 
 function pipsHtml(energy, max, small) {
@@ -464,11 +494,14 @@ async function renderDailyCard() {
       gorunmesin diye kart hic gosterilmiyor. Worker guncellenince
       maxEnergy>0 gelmeye baslar, kart otomatik gorunur olur. */
    if (!energy || !energy.max) { card.hidden = true; return; }
+   const kilitli = await odulKilitli();
 
    card.hidden = false;
    document.getElementById('energy-pips').innerHTML = pipsHtml(energy.energy, energy.max);
 
-   const hazir = (streak && streak.canClaim) || (spin && spin.canSpin);
+   /* Misafirde de kart gorunuyor ve "seni bekleyen bir sey var" diyor -
+      amac odulu gosterip Telegram'dan girmeye tesvik etmek. */
+   const hazir = kilitli || (streak && streak.canClaim) || (spin && spin.canSpin);
    document.getElementById('daily-card-dot').hidden = !hazir;
    document.getElementById('daily-card-hint').textContent = hazir
       ? t('hub.daily.hintReady')
@@ -479,7 +512,6 @@ function wireDailyPanel() {
    const card = document.getElementById('daily-card');
    const overlay = document.getElementById('daily-overlay');
    const closeBtn = document.getElementById('daily-close');
-   const watchAdBtn = document.getElementById('watch-ad-btn');
    const streakBtn = document.getElementById('streak-claim-btn');
    const spinBtn = document.getElementById('spin-btn');
    if (!card || !overlay) return;
@@ -488,23 +520,6 @@ function wireDailyPanel() {
    closeBtn?.addEventListener('click', closeDailyModal);
    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeDailyModal(); });
 
-   watchAdBtn?.addEventListener('click', async () => {
-      watchAdBtn.disabled = true;
-      const sonuc = await refillEnergy();
-      watchAdBtn.disabled = false;
-      if (!sonuc) return;
-      if (!sonuc.ok) {
-         /* Gunluk dolum hakki bitti - sunucu reddetti */
-         haptic.error();
-         showDailyToast(t('hub.daily.refillLimit'));
-         await renderEnergySection();
-         return;
-      }
-      haptic.success();
-      showDailyToast(t('hub.daily.wonEnergy'));
-      await renderEnergySection();
-      await renderDailyCard();
-   });
 
    streakBtn?.addEventListener('click', async () => {
       streakBtn.disabled = true;
@@ -551,6 +566,7 @@ async function openDailyModal() {
    panelOpen = true;
    haptic.tap();
    await Promise.all([renderEnergySection(), renderStreakSection(), renderSpinSection()]);
+   sayaclariBaslat();
 }
 
 function closeDailyModal() {
@@ -563,10 +579,16 @@ async function renderEnergySection() {
    const energy = await getEnergy();
    if (!energy) return;
    document.getElementById('energy-pips-modal').innerHTML = pipsHtml(energy.energy, energy.max);
-   document.getElementById('energy-label').textContent = energy.energy >= energy.max
-      ? t('hub.daily.energyFull')
-      : `${energy.energy}/${energy.max}`;
-   document.getElementById('watch-ad-btn').disabled = energy.energy >= energy.max;
+   const etiket = document.getElementById('energy-label');
+   if (energy.energy >= energy.max) {
+      etiket.textContent = t('hub.daily.energyFull');
+      delete etiket.dataset.bitis;
+   } else {
+      /* Bir sonraki enerjiye kalan sure - enerji artik zamanla doluyor */
+      etiket.textContent = `${energy.energy}/${energy.max}`;
+      const ipucu = document.getElementById('energy-next');
+      if (ipucu && energy.nextMs > 0) ipucu.dataset.bitis = String(Date.now() + energy.nextMs);
+   }
 }
 
 async function renderStreakSection() {
@@ -575,7 +597,11 @@ async function renderStreakSection() {
    const btn = document.getElementById('streak-claim-btn');
    if (!streak || !row || !btn) return;
 
-   const rewards = [20, 30, 40, 60, 80, 100, 200];
+   /* Merdiven SUNUCUDAN geliyor. Onceden burada sabit yaziliydi ve
+      sunucudaki odul 5 katina cikinca ekranda hala eski sayilar
+      goruyordu - tam olarak bu hata yasandi. */
+   const rewards = streak.rewards || [100, 150, 200, 300, 400, 500, 1000];
+   const kilitli = await odulKilitli();
    /* streak.nextDay ve streak.broken sunucudan (streakDurumu) geliyor -
       burada tekrar hesaplamiyoruz. Seri kirildiyse (broken) 1..count
       gunleri "alindi" gostermek yanlis olur, yeni dongu 1'den basliyor. */
@@ -594,10 +620,19 @@ async function renderStreakSection() {
       </div>`;
    }).join('');
 
-   btn.textContent = streak.canClaim
-      ? `${t('hub.daily.claim')} · +${streak.nextReward}`
-      : t('hub.daily.comeTomorrow');
-   btn.disabled = !streak.canClaim;
+   if (kilitli) {
+      btn.textContent = t('hub.daily.loginToClaim');
+      btn.disabled = true;
+      btn.classList.add('is-locked');
+   } else if (streak.canClaim) {
+      btn.innerHTML = `${t('hub.daily.claim')} · +${streak.nextReward}`;
+      btn.disabled = false;
+      btn.classList.remove('is-locked');
+   } else {
+      btn.innerHTML = `${t('hub.daily.comeTomorrow')} <span class="geri-sayim" data-bitis="${Date.now() + (streak.nextInMs || 0)}"></span>`;
+      btn.disabled = true;
+      btn.classList.remove('is-locked');
+   }
 }
 
 async function renderSpinSection() {
@@ -611,8 +646,20 @@ async function renderSpinSection() {
       buildWheel(dailyPrizes);
    }
 
-   btn.disabled = !spin.canSpin;
-   if (btnText) btnText.textContent = spin.canSpin ? t('hub.daily.spinBtn') : '—';
+   const kilitli = await odulKilitli();
+   btn.disabled = kilitli || !spin.canSpin;
+   btn.classList.toggle('is-locked', kilitli);
+   const alt = document.getElementById('spin-note');
+   if (kilitli) {
+      if (btnText) btnText.textContent = '🔒';
+      if (alt) { alt.textContent = t('hub.daily.loginToClaim'); delete alt.dataset.bitis; }
+   } else if (spin.canSpin) {
+      if (btnText) btnText.textContent = t('hub.daily.spinBtn');
+      if (alt) { alt.textContent = ''; delete alt.dataset.bitis; }
+   } else {
+      if (btnText) btnText.textContent = '—';
+      if (alt) alt.dataset.bitis = String(Date.now() + (spin.nextInMs || 0));
+   }
 }
 
 function showDailyToast(text) {

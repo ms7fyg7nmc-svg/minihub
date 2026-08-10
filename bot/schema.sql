@@ -12,22 +12,21 @@
 -- icinden dogrulanarak cikarilir - istemci hicbir zaman kendi id'sini
 -- soyleyemez).
 --
--- energy: gunluk oyun enerjisi (bkz. worker.js MAX_ENERGY). Bittiginde
--- Coin kazanci kesilmiyor, sadece azaliyor - reklamla aninda doluyor.
+-- energy: oyun enerjisi (bkz. worker.js MAX_ENERGY). Bittiginde Coin
+-- kazanci kesilmiyor, sadece azaliyor.
 -- streak_count / last_claim_at: gunluk seri odulu icin.
 -- last_spin_at: gunluk cark hakki icin.
--- refill_day / refill_count: gunluk enerji dolum sayaci (bkz. worker.js
--- handleEnergyRefill). Reklam dogrulamasi eklenene kadar dolum ucu kosulsuz
--- calistigi icin tek gercek sinir bu sayac.
+-- energy_at: enerji zamanla kendiliginden doluyor (bkz. worker.js
+-- enerjiTazele). energy_at son hesaplama anini tutar; enerji okundugu anda
+-- gecen sureye gore ilerletilip kalici hale getirilir.
 CREATE TABLE IF NOT EXISTS players (
   id            TEXT PRIMARY KEY,
   points        INTEGER NOT NULL DEFAULT 0,
-  energy        INTEGER NOT NULL DEFAULT 8,
+  energy        INTEGER NOT NULL DEFAULT 24,
   streak_count  INTEGER NOT NULL DEFAULT 0,
   last_claim_at INTEGER NOT NULL DEFAULT 0,
   last_spin_at  INTEGER NOT NULL DEFAULT 0,
-  refill_day    INTEGER NOT NULL DEFAULT 0,
-  refill_count  INTEGER NOT NULL DEFAULT 0,
+  energy_at     INTEGER NOT NULL DEFAULT 0,
   created_at    INTEGER NOT NULL,
   updated_at    INTEGER NOT NULL
 );
@@ -38,12 +37,11 @@ CREATE TABLE IF NOT EXISTS players (
 -- TEK, bir kez calistir (zaten calistirdiysan "duplicate column" hatasi
 -- alirsin, zararsizdir, gormezden gel):
 --
---   ALTER TABLE players ADD COLUMN energy INTEGER NOT NULL DEFAULT 8;
+--   ALTER TABLE players ADD COLUMN energy INTEGER NOT NULL DEFAULT 24;
 --   ALTER TABLE players ADD COLUMN streak_count INTEGER NOT NULL DEFAULT 0;
 --   ALTER TABLE players ADD COLUMN last_claim_at INTEGER NOT NULL DEFAULT 0;
 --   ALTER TABLE players ADD COLUMN last_spin_at INTEGER NOT NULL DEFAULT 0;
---   ALTER TABLE players ADD COLUMN refill_day INTEGER NOT NULL DEFAULT 0;
---   ALTER TABLE players ADD COLUMN refill_count INTEGER NOT NULL DEFAULT 0;
+--   ALTER TABLE players ADD COLUMN energy_at INTEGER NOT NULL DEFAULT 0;
 
 -- Rekorlar (best_2048 gibi) ve oyun durumlari (state_dragon gibi) tek
 -- tabloda: key alani hangisi oldugunu ayirt eder. value her zaman JSON

@@ -39,7 +39,12 @@ const ALLOWED_ORIGIN = 'https://ms7fyg7nmc-svg.github.io';
    10-30 Coin veriyor - bkz. her oyunun POINTS_DIVISOR/POINTS_PER_LEVEL
    sabiti). Sadece burayi degistirerek dengeyi ayarlayabilirsin, baska hicbir
    yeri degistirmen gerekmez. */
-const MAX_ENERGY = 8;             /* enerji tavani, reklam bunu dolduruyor */
+const MAX_ENERGY = 24;            /* enerji tavani */
+/* Enerji kendiliginden dolar: her ENERGY_REGEN_MS'de 1. Reklam butonu
+   kaldirildigi icin (su an reklam agimiz yok) enerjinin dolmasinin BASKA
+   yolu kalmadi - bu olmadan oyuncu bir kez tuketince kalici olarak dusuk
+   kazanca mahkum oluyordu. 30 dk x 24 = tam dolum 12 saat. */
+const ENERGY_REGEN_MS = 30 * 60 * 1000;
 const ENERGY_PER_EARN = 1;        /* her Coin kazanma istegi 1 enerji harcar */
 const EMPTY_ENERGY_CARPAN = 0.25; /* enerji bittiyse kazanc bu orana duser (kesilmez) */
 
@@ -62,11 +67,6 @@ const SPIN_PRIZES = [
   { tur: 'enerji', miktar: MAX_ENERGY,  agirlik: 10  },
   { tur: 'coin',   miktar: 750,         agirlik: 5   },
 ];
-
-/* Gunde en fazla kac kez enerji doldurulabilir. Reklam dogrulamasi
-   eklenene kadar bu uc nokta kosulsuz doldurdugu icin (bkz.
-   handleEnergyRefill) tek gercek sinir bu sayi. */
-const MAX_REFILL_PER_DAY = 12;
 
 /* ==========================================================================
    HILE KORUMASI - KAZANC SINIRLARI
@@ -386,8 +386,8 @@ async function verifyInitData(initData, botToken) {
 async function ensurePlayer(env, playerId, initialPoints = 0) {
   const now = Date.now();
   const res = await env.DB.prepare(
-    'INSERT INTO players (id, points, energy, created_at, updated_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING',
-  ).bind(playerId, initialPoints, MAX_ENERGY, now, now).run();
+    'INSERT INTO players (id, points, energy, energy_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING',
+  ).bind(playerId, initialPoints, MAX_ENERGY, now, now, now).run();
   return res.meta.changes === 1;
 }
 
@@ -407,11 +407,28 @@ function streakDurumu(row, now) {
     nextDay: gelecekGun,
     nextReward: STREAK_REWARDS[gelecekGun - 1],
     nextInMs: canClaim ? 0 : STREAK_MIN_GAP_MS - gecenSure,
+    /* Odul merdivenini sunucu bildiriyor. Onceden istemci bunu kendi
+       icinde sabit tutuyordu ve sunucudaki rakamlar degisince ekranda
+       eski sayilar kaliyordu (5x guncellemesinde tam bu oldu). */
+    rewards: STREAK_REWARDS,
     /* true: gun kacirildi, seri kirildi - istemci "1..count gunleri alindi"
        gostermemeli, yeni bir dongu basliyor. Sadece bilgi amacli - claim
        kendi kararini zaten gelecekGun uzerinden bagimsiz veriyor. */
     broken: sonAlim > 0 && gecenSure > STREAK_RESET_GAP_MS,
   };
+}
+
+/* Gecen sureye gore kazanilmis enerjiyi hesaplar. Cagiran taraf sonucu
+   veritabanina yazmakla yukumlu (degisti=true ise). */
+function enerjiTazele(row, now) {
+  const son = row.energy_at || now;
+  const kazanilan = Math.floor((now - son) / ENERGY_REGEN_MS);
+  if (kazanilan <= 0) return { energy: row.energy, energyAt: son, degisti: !row.energy_at };
+  const yeni = Math.min(MAX_ENERGY, row.energy + kazanilan);
+  /* Tavandaysa sayac simdiye cekilir; degilse yalnizca tam bolum kadar
+     ilerletilir ki artan sure bir sonraki birime sayilsin. */
+  const yeniAt = yeni >= MAX_ENERGY ? now : son + kazanilan * ENERGY_REGEN_MS;
+  return { energy: yeni, energyAt: yeniAt, degisti: true };
 }
 
 function spinDurumu(row, now) {
@@ -487,8 +504,17 @@ async function handleSync(env, playerId, body) {
   }
 
   const player = await env.DB.prepare(
-    'SELECT points, energy, streak_count, last_claim_at, last_spin_at FROM players WHERE id = ?',
+    'SELECT points, energy, energy_at, streak_count, last_claim_at, last_spin_at FROM players WHERE id = ?',
   ).bind(playerId).first();
+
+  /* Enerji zamanla doluyor - okundugu anda hesaplanip kalici hale getiriliyor */
+  const enj = enerjiTazele(player, now);
+  if (enj.degisti) {
+    await env.DB.prepare('UPDATE players SET energy = ?, energy_at = ? WHERE id = ?')
+      .bind(enj.energy, enj.energyAt, playerId).run();
+    player.energy = enj.energy;
+    player.energy_at = enj.energyAt;
+  }
   const rows = await env.DB.prepare('SELECT key, value, version FROM player_data WHERE player_id = ?').bind(playerId).all();
 
   const state = {};
@@ -502,6 +528,9 @@ async function handleSync(env, playerId, body) {
     points: player.points,
     energy: player.energy,
     maxEnergy: MAX_ENERGY,
+    /* Bir sonraki enerji birimine kalan sure - istemci geri sayim gosteriyor */
+    energyNextMs: player.energy >= MAX_ENERGY
+      ? 0 : Math.max(0, ENERGY_REGEN_MS - (now - player.energy_at)),
     streak: streakDurumu(player, now),
     spin: { ...spinDurumu(player, now), prizes: SPIN_PRIZES.map((p) => ({ tur: p.tur, miktar: p.miktar })) },
     state,
@@ -588,8 +617,10 @@ async function applyEarn(env, playerId, opId, requestedAmount) {
   const kalanHak = Math.max(0, DAILY_EARN_CAP - (pencere ? pencere.toplam : 0));
 
   for (let deneme = 0; deneme < 3; deneme++) {
-    const row = await env.DB.prepare('SELECT energy FROM players WHERE id = ?').bind(playerId).first();
-    const enerji = row ? row.energy : 0;
+    const row = await env.DB.prepare('SELECT energy, energy_at FROM players WHERE id = ?').bind(playerId).first();
+    /* Once gecen surede kazanilmis enerjiyi ekle, sonra harcamayi uygula */
+    const tz = row ? enerjiTazele(row, now) : { energy: 0, energyAt: now };
+    const enerji = tz.energy;
     const doluMu = enerji > 0;
     const hamMiktar = doluMu ? requestedAmount : Math.round(requestedAmount * EMPTY_ENERGY_CARPAN);
     /* Gunluk tavani asan kisim reddedilmiyor, KIRPILIYOR: meshru bir
@@ -598,9 +629,12 @@ async function applyEarn(env, playerId, opId, requestedAmount) {
     const verilecek = Math.min(hamMiktar, kalanHak);
     const yeniEnerji = doluMu ? Math.max(0, enerji - ENERGY_PER_EARN) : 0;
 
+    /* Enerji tavandan dustugu an sayac simdiden baslar; zaten doluysa
+       (harcama yok) sayaci ileri tasimaya gerek yok. */
+    const yeniAt = enerji >= MAX_ENERGY && yeniEnerji < MAX_ENERGY ? now : tz.energyAt;
     const res = await env.DB.prepare(
-      'UPDATE players SET points = points + ?, energy = ?, updated_at = ? WHERE id = ? AND energy = ?',
-    ).bind(verilecek, yeniEnerji, now, playerId, enerji).run();
+      'UPDATE players SET points = points + ?, energy = ?, energy_at = ?, updated_at = ? WHERE id = ? AND energy = ?',
+    ).bind(verilecek, yeniEnerji, yeniAt, now, playerId, row ? row.energy : 0).run();
 
     if (res.meta.changes === 0) continue; /* araya baska istek girdi, tekrar dene */
 
@@ -675,43 +709,6 @@ async function handleSpin(env, playerId) {
     return { ok: true, index, prize: odul, total: player.points, energy: player.energy };
   }
   return { ok: false, reason: 'yeniden dene' };
-}
-
-/* Reklam izleme onayi GERCEK REKLAM SDK'si BAGLANANA KADAR burada yok -
-   bu uc nokta enerjiyi kosulsuz dolduruyor. Demo/erken asama icin bilerek
-   boyle birakildi (kullanici talebi). Ileride bir reklam SDK'si (Monetag
-   vb.) entegre edilince, buraya SDK'nin sunucu tarafli "izlendi" onayi
-   (postback/callback) dogrulamasi eklenmeden bu uc nokta canliya (gercek
-   oyunculara) acik birakilmamali - su an demo/test icin. */
-async function handleEnergyRefill(env, playerId) {
-  const now = Date.now();
-  const gun = Math.floor(now / 86400000);
-
-  const row = await env.DB.prepare(
-    'SELECT energy, refill_day, refill_count FROM players WHERE id = ?',
-  ).bind(playerId).first();
-  if (!row) return { ok: false, reason: 'oyuncu yok' };
-
-  /* Gun degistiyse sayac sifirdan baslar */
-  const bugunku = row.refill_day === gun ? row.refill_count : 0;
-  if (bugunku >= MAX_REFILL_PER_DAY) {
-    return { ok: false, reason: 'gunluk-limit', energy: row.energy, kalanHak: 0 };
-  }
-
-  /* WHERE ... refill_count kontrolu: ayni anda iki istek gelirse ikisi de
-     ayni sayaci gorup ikisi de dolduramasin (bkz. applyEarn'deki ayni
-     desen). Kaybeden istek 0 satir gunceller ve limit dolmus gibi doner. */
-  const res = await env.DB.prepare(
-    `UPDATE players SET energy = ?, refill_day = ?, refill_count = ?, updated_at = ?
-     WHERE id = ? AND refill_day IS ? AND refill_count IS ?`,
-  ).bind(MAX_ENERGY, gun, bugunku + 1, now, playerId, row.refill_day, row.refill_count).run();
-
-  if (res.meta.changes === 0) {
-    const guncel = await env.DB.prepare('SELECT energy FROM players WHERE id = ?').bind(playerId).first();
-    return { ok: false, reason: 'yeniden dene', energy: guncel ? guncel.energy : 0 };
-  }
-
-  return { ok: true, energy: MAX_ENERGY, kalanHak: MAX_REFILL_PER_DAY - (bugunku + 1) };
 }
 
 /* Bir oyunun rekorunu gunceller - sadece gelen skor mevcut rekordan
@@ -836,8 +833,6 @@ async function handleApi(request, env, url) {
         return json(await handleBest(env, playerId, body));
       case '/api/state':
         return json(await handleState(env, playerId, body));
-      case '/api/energy/refill':
-        return json(await handleEnergyRefill(env, playerId));
       case '/api/streak/claim':
         return json(await handleStreakClaim(env, playerId));
       case '/api/spin':
