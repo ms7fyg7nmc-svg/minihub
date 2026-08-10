@@ -5,14 +5,26 @@
    ustundekiler asagi duser, yukaridan yenileri gelir. Zincirleme patlamalar
    daha cok puan verir. Tur 60 saniye surer. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v12';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v12';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v12';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v13';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v13';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v13';
 
 const GAME_ID = 'match3';
 const SIZE = 8;
 const ROUND_SECONDS = 60;
-const POINTS_DIVISOR = 10; /* her 10 oyun skoru = 1 hub puani */
+/* EKONOMI DENGESI
+
+   Butun oyunlar dakikada yaklasik AYNI jetonu vermeli - yoksa oyuncu en
+   verimli oyunu bulup sadece onu oynuyor, digerleri olu yatiriyor.
+
+   Olculen durum (kod uzerinden modellendi): en dusuk 8 jeton/dk (Mayin
+   Tarlasi), en yuksek 136 jeton/dk (2048) - arada 17 KAT fark vardi.
+   Asagidaki sabit, hedef olan ~60 jeton/dk'ya gore secildi.
+
+   Model her oyunun kendi puanlama mekanigi + makul bir oturum suresi
+   varsayimina dayaniyor; gercek oyuncu verisi geldiginde bu sayilar
+   yeniden ayarlanmali. */
+const POINTS_DIVISOR = 19; /* 60 sn tur, ~1.350 skor -> ~70 jeton */
 const POINTS_PER_TILE = 10;
 
 registerTexts(GAME_ID, {

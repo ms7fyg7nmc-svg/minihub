@@ -9,12 +9,24 @@
    calisiriz - her adimda o an oynanabilir durumdaki uc tasi secip ayni
    cesidi veririz. Boylece her bolumun cozumu kesin vardir. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v12';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v12';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v12';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v13';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v13';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v13';
 
 const GAME_ID = 'tripletile';
-const POINTS_DIVISOR = 10;  /* her 10 oyun skoru = 1 hub puani */
+/* EKONOMI DENGESI
+
+   Butun oyunlar dakikada yaklasik AYNI jetonu vermeli - yoksa oyuncu en
+   verimli oyunu bulup sadece onu oynuyor, digerleri olu yatiriyor.
+
+   Olculen durum (kod uzerinden modellendi): en dusuk 8 jeton/dk (Mayin
+   Tarlasi), en yuksek 136 jeton/dk (2048) - arada 17 KAT fark vardi.
+   Asagidaki sabit, hedef olan ~60 jeton/dk'ya gore secildi.
+
+   Model her oyunun kendi puanlama mekanigi + makul bir oturum suresi
+   varsayimina dayaniyor; gercek oyuncu verisi geldiginde bu sayilar
+   yeniden ayarlanmali. */
+const POINTS_DIVISOR = 6;   /* ~6 dk, ~2.100 skor -> ~350 jeton */
 const SLOTS = 7;            /* raftaki goz sayisi */
 const TRIPLE_SCORE = 30;    /* bir uclu kac puan */
 const LEVEL_BONUS = 100;    /* tahtayi bitirince bolum basina bonus */

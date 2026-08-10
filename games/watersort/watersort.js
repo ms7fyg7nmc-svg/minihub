@@ -8,12 +8,24 @@
    sonra geri alinabilir hamlelerle karistir. Boylece her bolumun cozumu
    kesin vardir (karistirma hamlelerini tersten oynamak yeter). */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v12';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v12';
-import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js?v12';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v13';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v13';
+import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js?v13';
 
 const GAME_ID = 'watersort';
-const POINTS_PER_LEVEL = 25; /* tamamlanan her bolum = 25 hub puani */
+/* EKONOMI DENGESI
+
+   Butun oyunlar dakikada yaklasik AYNI jetonu vermeli - yoksa oyuncu en
+   verimli oyunu bulup sadece onu oynuyor, digerleri olu yatiriyor.
+
+   Olculen durum (kod uzerinden modellendi): en dusuk 8 jeton/dk (Mayin
+   Tarlasi), en yuksek 136 jeton/dk (2048) - arada 17 KAT fark vardi.
+   Asagidaki sabit, hedef olan ~60 jeton/dk'ya gore secildi.
+
+   Model her oyunun kendi puanlama mekanigi + makul bir oturum suresi
+   varsayimina dayaniyor; gercek oyuncu verisi geldiginde bu sayilar
+   yeniden ayarlanmali. */
+const POINTS_PER_LEVEL = 90; /* bolum ~1,5 dk surer */
 const CAPACITY = 4;          /* bir tupe kac katman sigar */
 const EMPTY_TUBES = 2;       /* her bolumde kac bos tup verilir */
 

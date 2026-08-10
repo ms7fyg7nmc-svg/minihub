@@ -4,13 +4,25 @@ Tahta 16 kutudan olusur (4x4). Her kutuda ya bir tas vardir ya da bostur.
 Bir yone kaydirinca tum taslar o yone gider, ayni sayilar birlesir,
 sonra bos bir kutuya yeni bir tas dogar. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v12';
-import { submitScore, getBest, addPoints, saveState, loadState, clearState } from '../../js/store.js?v12';
-import { initLang, t, locale, applyTranslations } from '../../js/i18n.js?v12';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v13';
+import { submitScore, getBest, addPoints, saveState, loadState, clearState } from '../../js/store.js?v13';
+import { initLang, t, locale, applyTranslations } from '../../js/i18n.js?v13';
 
 const SIZE = 4;
 const GAME_ID = '2048';
-const POINTS_DIVISOR = 10; /* oyun skorunun kaci hub puani oldugu: 1000 skor = 100 puan */
+/* EKONOMI DENGESI
+
+   Butun oyunlar dakikada yaklasik AYNI jetonu vermeli - yoksa oyuncu en
+   verimli oyunu bulup sadece onu oynuyor, digerleri olu yatiriyor.
+
+   Olculen durum (kod uzerinden modellendi): en dusuk 8 jeton/dk (Mayin
+   Tarlasi), en yuksek 136 jeton/dk (2048) - arada 17 KAT fark vardi.
+   Asagidaki sabit, hedef olan ~60 jeton/dk'ya gore secildi.
+
+   Model her oyunun kendi puanlama mekanigi + makul bir oturum suresi
+   varsayimina dayaniyor; gercek oyuncu verisi geldiginde bu sayilar
+   yeniden ayarlanmali. */
+const POINTS_DIVISOR = 23; /* ~7.500 skorluk 5,5 dk oyun -> ~325 jeton */
 
 const VECTORS = {
    up: { dr: -1, dc: 0 },
