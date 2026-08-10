@@ -1,21 +1,26 @@
 /* Dragon Island - EJDERHA CIZIMI
 
    Ejderha tek bir SVG olarak uretiliyor. Cizim tamamen VERIYE bagli: girdi
-   olarak seviye ve gorunum (renk/desen/bas/yuz) aliyor, baska hicbir sey
-   bilmiyor. Ayni fonksiyon hem ada sahnesinde hem dukkan onizlemesinde
-   kullaniliyor.
+   olarak seviye ve gorunum (renk/desen/tac/yuz/kanat/kuyruk) aliyor, baska
+   hicbir sey bilmiyor. Ayni fonksiyon hem ada sahnesinde hem dukkan
+   onizlemesinde kullaniliyor.
 
-   HACIM NEREDEN GELIYOR
+   NEDEN 3/4 PROFIL (ve neden onceki surum "domuz" gibi duruyordu)
 
-   Onceki surum duz renk lekelerinden olusuyordu ve yapistirma gibi duruyordu.
-   Simdi her parca ustten aydinlik, altta koyu bir degradeyle doluyor; govdenin
-   kenarinda ince bir isik cizgisi (rim light) var; kanat zarinin altinda parmak
-   kemikleri geciyor. Ara tonlar elle yazilmiyor - ton() fonksiyonu paletin ana
-   rengini beyaza/siyaha dogru karistirarak uretiyor, boylece 9 rengin hepsi
-   ayni hacim dilini kendiliginden kazaniyor.
+   Onceki ejderha tam CEPHEDEN, dikey eksende simetrik ciziliyordu. Boyle
+   bir kadrajda burun delikleri izleyiciye dogru bakiyor - bu anatomik
+   olarak domuz burnudur; ne kadar detay eklenirse eklensin ejderha
+   okunmuyordu. Simdi govde ve kafa 3/4 profilde, SOLA bakiyor: namlu uzuyor,
+   cene hatti gorunuyor, boynuzlar geriye supuruluyor.
 
-   Olcekler seviye 99'da bile 200x200 kadraja sigacak sekilde secildi:
-   en genis nokta kanat ucu (x = ±120), yani 120 * wing * s <= ~96. */
+   UZUVLAR AYRI KUTLELER
+
+   But, on bacak ve patiler govde siluetinin ICINE gomulmuyor; ust uste binen
+   ayri sekiller olarak cizilyor. Bacak tanimini veren tek sey bu - hepsi tek
+   siluetin icindeyken govde ozelliksiz bir yumurta gibi duruyordu.
+
+   Olcekler: yerel koordinatlarda cizim x -95..85, y -125..50 araliginda
+   kaliyor; asagidaki montaj bunu 200x200 kadraja sigdiriyor. */
 
 import { palet, HEADS, FACES } from './data.js';
 import { CONFIG, growthRatio } from './config.js';
@@ -25,81 +30,357 @@ import { CONFIG, growthRatio } from './config.js';
 let uidSayaci = 0;
 
 /* --- Ton yardimcisi ---
-   miktar > 0 beyaza, < 0 siyaha dogru karistirir (-1..1). */
-function ton(hex, miktar) {
-  const n = parseInt(hex.slice(1), 16);
+   miktar > 0 beyaza, < 0 siyaha dogru karistirir (-1..1).
+
+   HEM "#rrggbb" HEM "rgb(r,g,b)" kabul ediyor. Onceki hali yalnizca hex
+   anliyordu; zaten ton()'dan cikmis bir renk tekrar verilince parseInt NaN
+   uretip her seyi SIYAH yapiyordu (patiler bu yuzden siyah bot gibi
+   goruyordu). */
+function ton(renk, miktar) {
+  let r, g, b;
+  if (renk[0] === '#') {
+    const n = parseInt(renk.slice(1), 16);
+    r = (n >> 16) & 255; g = (n >> 8) & 255; b = n & 255;
+  } else {
+    [r, g, b] = renk.match(/\d+/g).map(Number);
+  }
   const hedef = miktar > 0 ? 255 : 0;
   const k = Math.abs(miktar);
-  const kanal = (kaydir) => {
-    const v = (n >> kaydir) & 255;
-    return Math.round(v + (hedef - v) * k);
-  };
-  return `rgb(${kanal(16)},${kanal(8)},${kanal(0)})`;
+  const c = (v) => Math.round(v + (hedef - v) * k);
+  return `rgb(${c(r)},${c(g)},${c(b)})`;
 }
 
-/* --- Govde silueti ---
-   Hem dolgu hem desen maskesi hem de rim light bu yoldan uretiliyor. */
-const GOVDE = `M-36 -4
-  C-38 -22 -22 -34 0 -34
-  C22 -34 38 -22 38 -4
-  C40 16 26 33 0 35
-  C-26 33 -40 14 -36 -4 Z`;
+/* ==========================================================================
+   GEOMETRI
+   Butun parcalar bu yollara gore yerlesiyor. Yeni bir kozmetik eklerken
+   nereye koyacagini tahmin etmek yerine buradaki noktalara bakilir.
+   ========================================================================== */
 
-/* --- KAFA GEOMETRISI ---
+/* Kafa: genis alin, uzun sivri namlu, belirgin cene. x -88..-15, y -108..-54 */
+const KAFA_YOL = `M-88 -66
+  C-86 -74 -80 -80 -70 -84 C-60 -88 -54 -92 -50 -99
+  C-45 -106 -34 -108 -26 -104 C-18 -100 -15 -92 -17 -83
+  C-19 -74 -24 -67 -33 -62 C-45 -56 -60 -54 -72 -57
+  C-82 -60 -87 -62 -88 -66 Z`;
 
-   Butun yuz parcalari bu olculere gore yerlesiyor. Tek yerde durmalari,
-   yeni bir yuz aksesuari eklerken nereye koyacagini tahmin etmeyi
-   gereksiz kiliyor.
+/* Govde: gogus onde dik, sirt omuzdan kalcaya egimli, kompakt */
+const GOVDE_YOL = `M-31 -24
+  C-36 -10 -36 10 -31 24 C-26 35 -14 42 2 43
+  C20 44 36 38 44 26 C50 16 51 0 45 -12
+  C39 -24 25 -32 7 -33 C-11 -34 -27 -31 -31 -24 Z`;
 
-     alin      y -88 .. -74     kafanin ust bolgesi, run/muhur buraya
-     kas       y -70            kas cikintisi
-     goz       y -62            goz merkezi, x = ±16
-     yanak     x ±22..30, y -58..-46
-     burun     y -46 .. -38     one dogru cikan agiz bolgesi
-     cene      y -34            en alt nokta */
+/* Arka but: govdenin uzerine binen ayri kutle */
+const BUT_YOL = `M22 -28
+  C44 -25 58 -5 55 15 C52 34 38 46 20 45
+  C11 44.6 5 41 3 36 C17 33 26 23 28 9
+  C30 -6 27 -19 22 -28 Z`;
+
+/* Yakin on bacak: govdenin onunde ayri uzuv */
+const BACAK_YOL = `M-30 -16
+  C-37 -2 -37 16 -33 30 C-31 36 -25 38 -19 37
+  C-16 36 -15 33 -15 29 C-17 16 -17 2 -13 -12 Z`;
+
+/* Boyun: kisa ve kalin - kafa govdeye yakin durmali, yoksa dinozor okunuyor */
+const BOYUN_YOL = `M-41 -55
+  C-35 -43 -27 -34 -15 -27 L3 -33
+  C-11 -39 -21 -49 -25 -64 Z`;
+
+/* Kozmetiklerin tutundugu noktalar (yerel koordinat).
+     tac    : kafatasinin tepesi, taclar buraya oturur
+     yuz    : gorunen yanak/alin bolgesi
+     goz    : goz merkezi
+     omuz   : kanadin ciktigi yer
+     kuyruk : kuyrugun govdeden ciktigi yer */
 export const KAFA = {
-  alin: -80, kas: -70, goz: -62, gozX: 16,
-  burunUst: -50, burun: -42, agiz: -37, cene: -33,
+  tac: [-33, -101], tacAci: -14,
+  yuz: [-48, -80], goz: [-44.5, -80],
+  omuz: [2, -30], kuyruk: [40, -8],
 };
 
-/* --- Gozler ---
-   Badem sekilli, ice dogru egimli: sert bir bakis veriyor. Ac ejderhada
-   goz kapaklari yariya iniyor. */
-function gozler(mood, pal) {
-  const parlak = ton(pal.horn, 0.55);
-  const goz = (yon) => `
-    <g transform="scale(${yon} 1)">
-      <path d="M8 -62 C14 -67 24 -66 27 -60 C24 -55 13 -55 8 -58 Z"
-            fill="#1a1424"/>
-      <path d="M9.5 -61.4 C15 -65.4 23 -64.6 25.6 -60 C23 -56.4 14 -56.6 9.5 -59 Z"
-            fill="${parlak}"/>
-      <path d="M17 -63.4 C19.4 -63.4 20.4 -61.6 20.4 -60 C20.4 -58.4 19.4 -57 17 -57
-               C15.6 -58 15.2 -62.4 17 -63.4 Z" fill="#1a1424"/>
-      <circle cx="21.5" cy="-62" r="1.7" fill="#fff" opacity=".9"/>
-    </g>`;
-  if (mood === 'sad') {
-    /* Yorgun bakis: ust kapak gozun yarisini kapatiyor */
-    return `${goz(-1)}${goz(1)}
-      <path d="M-27 -64 C-20 -68 -10 -67 -7 -61 L-27 -61 Z" fill="${ton(pal.body, -0.18)}"/>
-      <path d="M27 -64 C20 -68 10 -67 7 -61 L27 -61 Z" fill="${ton(pal.body, -0.18)}"/>`;
+/* ==========================================================================
+   ORTAK CIZIM YARDIMCILARI
+   ========================================================================== */
+
+/* Pul dokusu: ust uste binen kucuk yaylar. Her zaman bir kirpma yolunun
+   ICINDE cizilyor, boylece siluetin disina tasmiyor. */
+function pullar(x0, y0, gen, yuk, sutun, satir, renk, opak) {
+  let s = '';
+  for (let r = 0; r < satir; r++) {
+    for (let c = 0; c < sutun; c++) {
+      const x = x0 + c * gen + (r % 2) * gen / 2;
+      const y = y0 + r * yuk;
+      s += `<path d="M${x} ${y + yuk} Q${x + gen / 2} ${y - yuk * 0.35} ${x + gen} ${y + yuk}"
+            fill="none" stroke="${renk}" stroke-width="0.9" opacity="${opak}"/>`;
+    }
   }
-  return `${goz(-1)}${goz(1)}`;
+  return s;
 }
 
-/* --- BAS AKSESUARI (taclar) ---
-   Hepsi y=0 tabaninda cizilir, sonra alin cizgisine tasinir. Boylece hem
-   ejderhanin kafasina oturtmak hem de dukkan kutucugunda tek basina
-   gostermek ayni koddan cikar. */
+/* Boynuz: dipte kalin, uca dogru inceliyor, geriye-yukari supurulmus */
+function boynuzYol(bx, by, L, k, H) {
+  return `M${bx} ${by - k}
+    C${bx + L * 0.4} ${by - k - H * 0.45} ${bx + L * 0.75} ${by - H * 0.92} ${bx + L} ${by - H}
+    C${bx + L * 0.68} ${by - H * 0.58} ${bx + L * 0.36} ${by - H * 0.1 + k * 0.4} ${bx} ${by + k} Z`;
+}
+
+/* Pati: SADECE ayak. Bacagi BACAK_YOL ciziyor - burada tekrar bacak kutugu
+   cizilince ust uste binip siyah bot gibi duruyordu. */
+function pati(cx, cy, o, renk, pence) {
+  const pad = ton(renk, 0.1), lob = ton(renk, 0.24);
+  return `<g transform="translate(${cx} ${cy}) scale(${o})">
+    <path d="M-13 -2 C-16 7 -10 14 0 14 C11 14 17 8 14 -2 C7 -6 -8 -6 -13 -2 Z" fill="${pad}"/>
+    ${[-9, 0, 8.5].map((tx) => `
+      <ellipse cx="${tx}" cy="10" rx="5.4" ry="5.6" fill="${lob}"/>
+      <path d="M${tx - 5} 11.4 C${tx - 8.2} 13.4 ${tx - 8.4} 16 ${tx - 5.8} 16.2
+               C${tx - 3.4} 15.2 ${tx - 3.2} 12.8 ${tx - 5} 11.4 Z" fill="${pence}"/>`).join('')}
+    <path d="M-13 -2 C-15 5 -12 11 -6 13 C-3 8 -5 2 -10 -2 Z" fill="#000" opacity=".12"/>
+  </g>`;
+}
+
+/* ==========================================================================
+   KANAT - 8 varyant
+
+   Hepsi ayni iskeletten cikiyor (kol -> bilek -> parmak kemikleri -> zar);
+   kademe yukseldikce zar dolgusu, kenar isleme ve ek susler degisiyor.
+   Boylece yeni bir kanat eklemek data.js'e bir satir yazmak demek.
+   ========================================================================== */
+
+function kanatSvg(w, pal, uid, uzak) {
+  const o = uzak ? 0.7 : 1;
+  const kind = w.kind || 'plain';
+  const parmak = w.parmak || 4;
+  const kenar = w.kenar || ton(pal.horn, -0.1);
+  const kemik = ton(pal.horn, uzak ? -0.5 : -0.15);
+
+  const bx = 34 * o, by = -96 * o;
+  /* Parmak uclari: sayiya gore yelpaze acilir */
+  const tabanUc = [[72, -92], [84, -66], [80, -38], [62, -18]];
+  const uc = (parmak >= 5 ? [[66, -100], ...tabanUc] : tabanUc).map(([x, y]) => [x * o, y * o]);
+
+  /* Zar: bilekten parmak uclarina, aralari ice cukur (Q) */
+  let zar = `M${bx} ${by} L${uc[0][0]} ${uc[0][1]}`;
+  for (let i = 1; i < uc.length; i++) {
+    const cukur = kind === 'demon' ? 14 : kind === 'lightning' ? 3 : 9;
+    zar += ` Q${(uc[i - 1][0] + uc[i][0]) / 2 - cukur * o} ${(uc[i - 1][1] + uc[i][1]) / 2 + 5 * o} ${uc[i][0]} ${uc[i][1]}`;
+  }
+  zar += ` Q${28 * o} ${-16 * o} ${2 * o} ${-30 * o} Z`;
+
+  /* Kademeye ozel ekler */
+  let ek = '';
+  if (kind === 'flame') {
+    ek = uc.slice(0, 3).map(([x, y], i) => `
+      <path d="M${x} ${y} C${x + 9 * o} ${y - 12 * o} ${x + 4 * o} ${y - 18 * o} ${x + 11 * o} ${y - 24 * o}
+               C${x + 5 * o} ${y - 16 * o} ${x + 12 * o} ${y - 10 * o} ${x} ${y} Z"
+            fill="${kenar}" opacity="${0.85 - i * 0.15}"/>`).join('');
+  } else if (kind === 'crystal') {
+    ek = uc.map(([x, y]) => `
+      <path d="M${x} ${y} L${x + 7 * o} ${y - 4 * o} L${x + 3 * o} ${y + 6 * o} Z"
+            fill="${kenar}" opacity=".85"/>`).join('');
+  } else if (kind === 'demon') {
+    ek = uc.map(([x, y]) => `
+      <path d="M${x} ${y} L${x + 10 * o} ${y - 6 * o} L${x + 2 * o} ${y + 3 * o} Z" fill="${kemik}"/>`).join('');
+  } else if (kind === 'phoenix') {
+    ek = uc.map(([x, y], i) => `
+      <path d="M${x} ${y} C${x + 14 * o} ${y - 6 * o} ${x + 20 * o} ${y + 2 * o} ${x + 13 * o} ${y + 9 * o}
+               C${x + 8 * o} ${y + 6 * o} ${x + 4 * o} ${y + 2 * o} ${x} ${y} Z"
+            fill="${kenar}" opacity="${0.9 - i * 0.1}"/>`).join('');
+  } else if (kind === 'lightning') {
+    ek = `<path d="M${uc[0][0]} ${uc[0][1]} L${uc[0][0] - 8 * o} ${uc[0][1] + 16 * o}
+                   L${uc[0][0] - 2 * o} ${uc[0][1] + 15 * o} L${uc[1][0] - 6 * o} ${uc[1][1] + 12 * o}"
+            fill="none" stroke="${kenar}" stroke-width="${2.2 * o}" opacity=".95"/>`;
+  } else if (kind === 'king') {
+    ek = `<path d="${zar}" fill="none" stroke="${kenar}" stroke-width="${2.6 * o}" opacity=".9"/>
+          <circle cx="${bx}" cy="${by}" r="${5 * o}" fill="${kenar}"/>
+          <circle cx="${bx}" cy="${by}" r="${2.2 * o}" fill="#fff" opacity=".8"/>`;
+  } else if (kind === 'celestial') {
+    ek = `<path d="${zar}" fill="none" stroke="${kenar}" stroke-width="${2.4 * o}" opacity=".95"/>
+      ${uc.map(([x, y], i) => `
+        <path d="M${x - 4 * o} ${y} l${2.6 * o} ${-6 * o} l${2.6 * o} ${6 * o} l${-2.6 * o} ${5 * o} Z"
+              fill="#fff" opacity="${0.85 - i * 0.12}"/>`).join('')}
+      <circle cx="${bx}" cy="${by}" r="${5.5 * o}" fill="${kenar}"/>`;
+  }
+
+  return `<g${uzak ? ' opacity=".5"' : ''}>
+    <path d="${zar}" fill="url(#kn${uid}${uzak ? 'u' : 'y'})"/>
+    ${ek}
+    <path d="M${2 * o} ${-30 * o} C${12 * o} ${-56 * o} ${22 * o} ${-80 * o} ${bx} ${by}"
+          fill="none" stroke="${kemik}" stroke-width="${5 * o}" stroke-linecap="round"/>
+    ${uc.map(([x, y]) => `<path d="M${bx} ${by} L${x} ${y}" stroke="${kemik}"
+      stroke-width="${2.6 * o}" stroke-linecap="round" opacity=".85"/>`).join('')}
+    ${uc.map(([x, y]) => {
+      const mx = bx + (x - bx) * 0.55, my = by + (y - by) * 0.55;
+      return `<path d="M${mx} ${my} Q${mx + (x - bx) * 0.18} ${my + (y - by) * 0.42} ${mx + (x - bx) * 0.1} ${my + (y - by) * 0.62}"
+        fill="none" stroke="${kemik}" stroke-width="${0.9 * o}" opacity=".4"/>`;
+    }).join('')}
+    <circle cx="${bx}" cy="${by}" r="${3.4 * o}" fill="${kemik}"/>
+    <path d="M${bx} ${by} C${bx + 5 * o} ${by - 7 * o} ${bx + 11 * o} ${by - 8 * o} ${bx + 13 * o} ${by - 5 * o}
+             C${bx + 10 * o} ${by - 3 * o} ${bx + 4 * o} ${by - 1 * o} ${bx} ${by} Z" fill="${kemik}"/>
+  </g>`;
+}
+
+/* ==========================================================================
+   KUYRUK - 8 varyant
+   Buttan cikip saga-asagi, sonra one dogru kivriliyor. Kademe uc suslerini
+   ve uzerindeki detaylari degistiriyor.
+   ========================================================================== */
+
+const KUYRUK_YOL = `M40 -8
+  C60 -6 76 8 78 24 C80 39 69 49 53 50
+  C42 50.6 33 47 28 43 C38 44 50 42 57 36
+  C64 29 63 18 53 11 C46 6 41 1 40 -8 Z`;
+
+/* Kuyruk uzerindeki suslerin oturdugu noktalar (dis kenar boyunca) */
+const KUYRUK_NOKTA = [[58, -2, 8], [71, 10, 7.5], [78, 24, 7], [73, 39, 6]];
+
+function kuyrukSvg(k, pal, uid, t) {
+  const kind = k.kind || 'plain';
+  const kenar = k.kenar || t.boynuzAcik;
+  let sus = '';
+
+  if (kind === 'plain') {
+    sus = '';
+  } else if (kind === 'spiked' || kind === 'king' || kind === 'demon') {
+    sus = KUYRUK_NOKTA.map(([x, y, h]) => `
+      <path d="M${x - h * 0.8} ${y + h * 0.5} L${x + h * 1.5} ${y - h * 0.4} L${x - h * 0.3} ${y - h * 0.9} Z"
+            fill="${kind === 'king' ? kenar : t.boynuzKoyu}"/>
+      <path d="M${x - h * 0.8} ${y + h * 0.5} L${x + h * 1.5} ${y - h * 0.4} L${x + h * 0.1} ${y - h * 0.1} Z"
+            fill="${kind === 'king' ? ton(kenar, 0.4) : t.boynuzAcik}"/>`).join('');
+    if (kind === 'demon') {
+      /* iblis kuyrugu: ucta ok basi */
+      sus += `<path d="M53 50 L70 58 L56 62 L44 56 Z" fill="${t.boynuzKoyu}"/>
+              <path d="M53 50 L70 58 L57 57 Z" fill="${t.boynuzAcik}"/>`;
+    }
+    if (kind === 'king') {
+      sus += KUYRUK_NOKTA.map(([x, y]) => `<circle cx="${x - 2}" cy="${y + 2}" r="2" fill="${ton(kenar, 0.5)}" opacity=".8"/>`).join('');
+    }
+  } else if (kind === 'flame') {
+    sus = KUYRUK_NOKTA.map(([x, y, h], i) => `
+      <path d="M${x} ${y} C${x + h} ${y - h} ${x + h * 0.6} ${y - h * 2} ${x} ${y - h * 2.6}
+               C${x - h * 0.6} ${y - h * 2} ${x - h} ${y - h} ${x} ${y} Z"
+            fill="${kenar}" opacity="${0.9 - i * 0.12}"/>`).join('');
+  } else if (kind === 'crystal') {
+    sus = KUYRUK_NOKTA.map(([x, y, h]) => `
+      <path d="M${x} ${y - h * 1.6} L${x + h * 0.7} ${y - h * 0.3} L${x} ${y + h * 0.5}
+               L${x - h * 0.7} ${y - h * 0.3} Z" fill="${kenar}" opacity=".9"/>
+      <path d="M${x} ${y - h * 1.6} L${x + h * 0.7} ${y - h * 0.3} L${x} ${y - h * 0.4} Z"
+            fill="#fff" opacity=".55"/>`).join('');
+  } else if (kind === 'lightning') {
+    sus = `<path d="M44 2 L56 8 L50 14 L64 22 L57 26 L70 36" fill="none"
+             stroke="${kenar}" stroke-width="2.6" stroke-linecap="round" opacity=".95"/>`;
+  } else if (kind === 'celestial') {
+    sus = KUYRUK_NOKTA.map(([x, y, h], i) => `
+      <path d="M${x} ${y - h * 1.5} l${h * 0.5} ${h * 1.1} l${-h * 0.5} ${h * 0.9} l${-h * 0.5} ${-h * 0.9} Z"
+            fill="${kenar}"/>
+      <circle cx="${x + 6}" cy="${y - 4}" r="${2.2 - i * 0.3}" fill="#fff" opacity=".8"/>`).join('');
+  }
+
+  return `
+    <path d="${KUYRUK_YOL}" fill="${ton(pal.body, -0.28)}"/>
+    <path d="M40 -8 C60 -6 76 8 78 24 C80 39 69 49 53 50 C61 45 68 38 68 28
+             C68 15 56 5 42 1 Z" fill="${t.cokKoyu}" opacity=".5"/>
+    ${sus}`;
+}
+
+/* ==========================================================================
+   DESEN - 8 varyant
+   Govde kirpma yolunun icinde cizilyor, siluetin disina tasmiyor.
+   ========================================================================== */
+
+function desen(pal, uid) {
+  const k = pal.pattern;
+  if (!k) return '';
+  const m = pal.ink;
+  const ic = (icerik) => `<g clip-path="url(#gv${uid})" opacity=".85">${icerik}</g>`;
+
+  if (k === 'stripes') {
+    return ic([0, 1, 2, 3, 4].map((i) => {
+      const x = -22 + i * 15;
+      return `<path d="M${x} -34 C${x + 5} -16 ${x + 4} 8 ${x - 3} 44"
+        fill="none" stroke="${m}" stroke-width="4.5" opacity=".5"/>`;
+    }).join(''));
+  }
+  if (k === 'flame') {
+    return ic([0, 1, 2].map((i) => {
+      const x = -14 + i * 20, y = 42 - i * 4;
+      return `<path d="M${x} ${y} C${x + 8} ${y - 18} ${x - 4} ${y - 26} ${x + 3} ${y - 40}
+        C${x + 12} ${y - 26} ${x + 16} ${y - 12} ${x} ${y} Z" fill="${m}" opacity=".55"/>`;
+    }).join(''));
+  }
+  if (k === 'tribal') {
+    return ic(`
+      <path d="M-20 -20 L-6 -28 L4 -16 L18 -26 L30 -14" fill="none" stroke="${m}"
+            stroke-width="3.4" stroke-linecap="round" opacity=".6"/>
+      <path d="M-16 6 L-2 -2 L8 10 L22 0" fill="none" stroke="${m}"
+            stroke-width="3" stroke-linecap="round" opacity=".5"/>
+      <path d="M-10 28 L4 20 L16 30" fill="none" stroke="${m}"
+            stroke-width="2.6" stroke-linecap="round" opacity=".4"/>`);
+  }
+  if (k === 'lightning') {
+    return ic(`
+      <path d="M-6 -32 L-16 -8 L-4 -6 L-14 26" fill="none" stroke="${m}"
+            stroke-width="3.4" stroke-linejoin="round" opacity=".8"/>
+      <path d="M20 -26 L10 -6 L20 -4 L12 20" fill="none" stroke="${m}"
+            stroke-width="2.6" stroke-linejoin="round" opacity=".6"/>`);
+  }
+  if (k === 'runes') {
+    return ic([[-16, -12], [6, -20], [24, -4], [-6, 14], [16, 22]].map(([x, y], i) => `
+      <g transform="translate(${x} ${y}) scale(${1 - i * 0.08})" opacity=".75">
+        <circle r="7" fill="none" stroke="${m}" stroke-width="1.6"/>
+        <path d="M-4 -3 L0 4 L4 -3 M0 4 L0 -6" fill="none" stroke="${m}"
+              stroke-width="1.6" stroke-linecap="round"/>
+      </g>`).join(''));
+  }
+  if (k === 'armor') {
+    return ic([-24, -10, 4, 18, 32].map((y, i) => `
+      <path d="M${-30 + i * 1.5} ${y} C${-10 + i * 2} ${y + 7} ${20 + i} ${y + 6} ${44} ${y - 2}"
+            fill="none" stroke="${m}" stroke-width="3" opacity=".55"/>
+      <path d="M${-28 + i * 1.5} ${y - 2.5} C${-10 + i * 2} ${y + 3} ${20 + i} ${y + 2} ${42} ${y - 5}"
+            fill="none" stroke="${ton(m, 0.5)}" stroke-width="1.2" opacity=".5"/>`).join(''));
+  }
+  if (k === 'cosmic') {
+    return ic(`
+      ${[[-18, -18, 4], [4, -26, 3], [26, -10, 3.4], [-8, 8, 2.6], [18, 20, 3], [-22, 26, 2.2]]
+        .map(([x, y, r]) => `
+        <path d="M${x} ${y - r * 2} C${x + r * 0.5} ${y - r * 0.5} ${x + r * 0.5} ${y - r * 0.5} ${x + r * 2} ${y}
+                 C${x + r * 0.5} ${y + r * 0.5} ${x + r * 0.5} ${y + r * 0.5} ${x} ${y + r * 2}
+                 C${x - r * 0.5} ${y + r * 0.5} ${x - r * 0.5} ${y + r * 0.5} ${x - r * 2} ${y}
+                 C${x - r * 0.5} ${y - r * 0.5} ${x - r * 0.5} ${y - r * 0.5} ${x} ${y - r * 2} Z"
+              fill="${m}" opacity=".85"/>`).join('')}
+      <path d="M-30 4 C-10 -6 20 -2 46 -14" fill="none" stroke="${m}"
+            stroke-width="1.4" opacity=".35"/>`);
+  }
+  if (k === 'celestial') {
+    return ic(`
+      ${[[-16, -16, 5], [8, -24, 4], [28, -6, 4.4], [-6, 10, 3.4], [20, 24, 3.6]]
+        .map(([x, y, r]) => `
+        <path d="M${x} ${y - r * 2.2} L${x + r * 0.6} ${y - r * 0.6} L${x + r * 2.2} ${y}
+                 L${x + r * 0.6} ${y + r * 0.6} L${x} ${y + r * 2.2} L${x - r * 0.6} ${y + r * 0.6}
+                 L${x - r * 2.2} ${y} L${x - r * 0.6} ${y - r * 0.6} Z" fill="${m}"/>
+        <circle cx="${x}" cy="${y}" r="${r * 0.5}" fill="#fff" opacity=".9"/>`).join('')}
+      <path d="M-32 -6 C-6 -20 22 -14 48 -22" fill="none" stroke="${m}"
+            stroke-width="1.6" opacity=".45"/>`);
+  }
+  return '';
+}
+
+/* ==========================================================================
+   TAC (bas aksesuari) - 8 kademe
+
+   3/4 profilde ciziliyor: bant duz bir dikdortgen degil, one dogru alcalan
+   bir elips dilimi. Hepsi y=0 tabaninda cizilir, montajda kafatasinin
+   tepesine tasinip hafifce dondurulur - boylece hem ejderhanin kafasina
+   oturuyor hem dukkan kutucugunda tek basina gosterilebiliyor.
+   ========================================================================== */
 
 export const HEAD_BOX = {
-  tiny:      '-15 -24 30 28',
-  simple:    '-18 -27 36 31',
-  points:    '-20 -30 40 34',
-  jewel:     '-23 -40 46 44',
-  flame:     '-24 -44 48 48',
-  ice:       '-28 -48 56 52',
-  king:      '-38 -46 76 50',
-  celestial: '-42 -52 84 56',
+  tiny:      '-20 -26 40 32',
+  simple:    '-23 -30 46 36',
+  points:    '-26 -34 52 40',
+  jewel:     '-28 -44 56 50',
+  flame:     '-30 -48 60 54',
+  ice:       '-32 -52 64 58',
+  king:      '-42 -50 84 56',
+  celestial: '-46 -58 92 64',
 };
 
 export function headSvg(key, headTop = 0) {
@@ -110,7 +391,6 @@ export function headSvg(key, headTop = 0) {
   const parlak = ton(c.metal, 0.45);
   const golge = ton(c.metal, -0.28);
 
-  /* Metal degrade: ustte parlak, altta koyu - dumduz sari lekeler kalmiyor */
   const defs = `
     <defs>
       <linearGradient id="${uid}" x1="0" y1="1" x2="0" y2="0">
@@ -121,11 +401,13 @@ export function headSvg(key, headTop = 0) {
     </defs>`;
   const metal = `url(#${uid})`;
 
+  /* Bant: 3/4'te one dogru alcalan elips dilimi. Duz dikdortgen bir bant
+     kafanin uzerine "yapistirilmis" gibi duruyordu. */
   const bant = (w, h) => `
-    <path d="M${-w} 2 h${w * 2} v${-h} h${-w * 2} z"
+    <path d="M${-w} 0 Q0 ${h * 0.85} ${w} 0 L${w} ${-h} Q0 ${-h * 0.2} ${-w} ${-h} Z"
           fill="${metal}" stroke="${c.edge}" stroke-width="1.4" stroke-linejoin="round"/>
-    <path d="M${-w + 2} -1.5 h${w * 2 - 4}" stroke="${parlak}"
-          stroke-width="1.2" opacity=".5"/>`;
+    <path d="M${-w + 2} ${-h * 0.55} Q0 ${h * 0.2} ${w - 2} ${-h * 0.55}"
+          fill="none" stroke="${parlak}" stroke-width="1.2" opacity=".5"/>`;
 
   const tas = (x, y, r, renk) => `
     <circle cx="${x}" cy="${y}" r="${r}" fill="${renk}"/>
@@ -136,39 +418,34 @@ export function headSvg(key, headTop = 0) {
 
   /* Kademe 1: ince halka, tek kucuk uc */
   if (c.kind === 'tiny') {
-    ic = `
-      ${bant(12, 4)}
-      <path d="M-6 -2 L0 -13 L6 -2 Z" fill="${metal}" stroke="${c.edge}" stroke-width="1.2"/>
-      ${tas(0, -15, 2.2, c.gem)}`;
+    ic = `${bant(13, 4)}
+      <path d="M-6 -3 L0 -14 L6 -3 Z" fill="${metal}" stroke="${c.edge}" stroke-width="1.2"/>
+      ${tas(0, -16, 2.2, c.gem)}`;
 
   /* Kademe 2: bronz, uc kucuk uc */
   } else if (c.kind === 'simple') {
-    ic = `
-      ${bant(15, 5)}
-      <path d="M-15 -3 L-10 -15 L-5 -7 L0 -18 L5 -7 L10 -15 L15 -3 Z"
+    ic = `${bant(16, 5)}
+      <path d="M-16 -4 L-11 -16 L-5.5 -8 L0 -19 L5.5 -8 L11 -16 L16 -4 Z"
             fill="${metal}" stroke="${c.edge}" stroke-width="1.4" stroke-linejoin="round"/>
-      ${tas(0, -20, 2.6, c.gem)}`;
+      ${tas(0, -21, 2.6, c.gem)}`;
 
   /* Kademe 3: bes uclu gumus */
   } else if (c.kind === 'points') {
-    const uclar = [[-16, -15], [-8, -18], [0, -24], [8, -18], [16, -15]];
-    ic = `
-      ${bant(18, 6)}
-      <path d="M-18 -4 L-16 -15 L-11 -8 L-8 -18 L-4 -9 L0 -24
-               L4 -9 L8 -18 L11 -8 L16 -15 L18 -4 Z"
+    const uclar = [[-17, -16], [-8.5, -19], [0, -25], [8.5, -19], [17, -16]];
+    ic = `${bant(19, 6)}
+      <path d="M-19 -5 L-17 -16 L-11.5 -9 L-8.5 -19 L-4 -10 L0 -25
+               L4 -10 L8.5 -19 L11.5 -9 L17 -16 L19 -5 Z"
             fill="${metal}" stroke="${c.edge}" stroke-width="1.4" stroke-linejoin="round"/>
       ${uclar.map(([x, y]) => tas(x, y - 3, 2.2, c.gem)).join('')}`;
 
   /* Kademe 4: altin kral taci, tepesinde elmas */
   } else if (c.kind === 'jewel') {
-    ic = `
-      ${bant(20, 7)}
-      <path d="M-20 -5 L-16 -20 L-10 -11 L0 -30 L10 -11 L16 -20 L20 -5 Z"
+    ic = `${bant(21, 7)}
+      <path d="M-21 -6 L-17 -21 L-10.5 -12 L0 -31 L10.5 -12 L17 -21 L21 -6 Z"
             fill="${metal}" stroke="${c.edge}" stroke-width="1.5" stroke-linejoin="round"/>
-      <path d="M0 -37 l5.5 6.5 l-5.5 7.5 l-5.5 -7.5 z" fill="${c.gem}"/>
-      <path d="M0 -37 l5.5 6.5 l-5.5 1.5 z" fill="#fff" opacity=".5"/>
-      ${tas(-16, -23, 2.8, c.gem)}${tas(16, -23, 2.8, c.gem)}
-      ${tas(0, -2, 2.4, c.gem)}`;
+      <path d="M0 -38 l5.5 6.5 l-5.5 7.5 l-5.5 -7.5 z" fill="${c.gem}"/>
+      <path d="M0 -38 l5.5 6.5 l-5.5 1.5 z" fill="#fff" opacity=".5"/>
+      ${tas(-17, -24, 2.8, c.gem)}${tas(17, -24, 2.8, c.gem)}`;
 
   /* Kademe 5: uclarinda alev yanan tac */
   } else if (c.kind === 'flame') {
@@ -178,11 +455,10 @@ export function headSvg(key, headTop = 0) {
       <path d="M${x} ${y - b * 0.5} C${x + b * 0.5} ${y - b} ${x + b * 0.3} ${y - b * 1.6} ${x} ${y - b * 2}
                C${x - b * 0.3} ${y - b * 1.6} ${x - b * 0.5} ${y - b} ${x} ${y - b * 0.5} Z"
             fill="#ffe066" opacity=".9"/>`;
-    ic = `
-      ${bant(21, 7)}
-      <path d="M-21 -5 L-16 -18 L-8 -10 L0 -24 L8 -10 L16 -18 L21 -5 Z"
+    ic = `${bant(22, 7)}
+      <path d="M-22 -6 L-17 -19 L-8.5 -11 L0 -25 L8.5 -11 L17 -19 L22 -6 Z"
             fill="${metal}" stroke="${c.edge}" stroke-width="1.5" stroke-linejoin="round"/>
-      ${alev(0, -24, 6)}${alev(-16, -18, 4)}${alev(16, -18, 4)}`;
+      ${alev(0, -25, 6)}${alev(-17, -19, 4)}${alev(17, -19, 4)}`;
 
   /* Kademe 6: buz kristallerinden tac */
   } else if (c.kind === 'ice') {
@@ -191,853 +467,235 @@ export function headSvg(key, headTop = 0) {
                L${x - 5} ${y - h * 0.35} Z" fill="${c.metal}" opacity=".92"/>
       <path d="M${x} ${y - h} L${x + 5} ${y - h * 0.35} L${x} ${y - h * 0.3} Z"
             fill="#fff" opacity=".7"/>`;
-    ic = `
-      ${bant(23, 7)}
-      ${kristal(-17, -4, 16)}${kristal(-7, -4, 24)}${kristal(3, -4, 30)}
-      ${kristal(13, -4, 22)}${kristal(21, -4, 14)}
-      <circle cx="3" cy="-36" r="3" fill="#fff" opacity=".85"/>`;
+    ic = `${bant(24, 7)}
+      ${kristal(-18, -5, 16)}${kristal(-8, -6, 25)}${kristal(2, -6, 31)}
+      ${kristal(12, -6, 23)}${kristal(21, -5, 15)}
+      <circle cx="2" cy="-38" r="3" fill="#fff" opacity=".85"/>`;
 
   /* Kademe 7: ejder krali taci - yan kanatlar, buyuk tas */
   } else if (c.kind === 'king') {
     ic = `
-      <path d="M-36 -10 q13 -6 20 6 l-4 7 q-9 -9 -16 -5z
-               M36 -10 q-13 -6 -20 6 l4 7 q9 -9 16 -5z"
-            fill="${metal}" opacity=".9"/>
-      <path d="M-28 -22 q-6 -11 2 -18 q2 9 8 13z
-               M28 -22 q6 -11 -2 -18 q-2 9 -8 13z"
-            fill="${metal}" stroke="${c.edge}" stroke-width="1.2"/>
-      ${bant(24, 9)}
-      <path d="M-24 -7 L-19 -25 L-13 -13 L-7 -33 L0 -25 L7 -33 L13 -13 L19 -25 L24 -7 Z"
+      <path d="M-38 -10 q13 -6 20 6 l-4 7 q-9 -9 -16 -5z
+               M38 -10 q-13 -6 -20 6 l4 7 q9 -9 16 -5z" fill="${metal}" opacity=".9"/>
+      <path d="M-29 -23 q-6 -11 2 -18 q2 9 8 13z
+               M29 -23 q6 -11 -2 -18 q-2 9 -8 13z" fill="${metal}" stroke="${c.edge}" stroke-width="1.2"/>
+      ${bant(25, 9)}
+      <path d="M-25 -8 L-20 -26 L-13.5 -14 L-7 -34 L0 -26 L7 -34 L13.5 -14 L20 -26 L25 -8 Z"
             fill="${metal}" stroke="${c.edge}" stroke-width="1.6" stroke-linejoin="round"/>
-      <path d="M0 -42 l6 7 l-6 8 l-6 -8 z" fill="${c.gem}"/>
-      <path d="M0 -42 l6 7 l-6 2 z" fill="#fff" opacity=".5"/>
-      ${tas(-19, -28, 3, c.gem)}${tas(19, -28, 3, c.gem)}
-      <path d="M-18 -2 h36" stroke="${c.gem}" stroke-width="1.6" opacity=".65"/>`;
+      <path d="M0 -43 l6 7 l-6 8 l-6 -8 z" fill="${c.gem}"/>
+      <path d="M0 -43 l6 7 l-6 2 z" fill="#fff" opacity=".5"/>
+      ${tas(-20, -29, 3, c.gem)}${tas(20, -29, 3, c.gem)}`;
 
-  /* Kademe 8: celestial - hale, yuzen kristaller, isik */
+  /* Kademe 8: semavi - hale, yuzen kristaller, isik */
   } else {
     ic = `
-      <ellipse cx="0" cy="-30" rx="40" ry="13" fill="none" stroke="${c.gem}"
+      <ellipse cx="0" cy="-31" rx="41" ry="13" fill="none" stroke="${c.gem}"
                stroke-width="2.4" opacity=".55" stroke-dasharray="8 6"/>
-      <path d="M-40 -12 q15 -8 23 5 l-4 8 q-11 -10 -19 -6z
-               M40 -12 q-15 -8 -23 5 l4 8 q11 -10 19 -6z"
-            fill="${metal}" opacity=".9"/>
-      ${bant(26, 9)}
-      <path d="M-26 -7 L-20 -28 L-13 -15 L-7 -38 L0 -30 L7 -38 L13 -15 L20 -28 L26 -7 Z"
+      <path d="M-42 -12 q15 -8 23 5 l-4 8 q-11 -10 -19 -6z
+               M42 -12 q-15 -8 -23 5 l4 8 q11 -10 19 -6z" fill="${metal}" opacity=".9"/>
+      ${bant(27, 9)}
+      <path d="M-27 -8 L-20 -29 L-13.5 -16 L-7 -39 L0 -31 L7 -39 L13.5 -16 L20 -29 L27 -8 Z"
             fill="${metal}" stroke="${c.edge}" stroke-width="1.6" stroke-linejoin="round"/>
-      <circle cx="0" cy="-46" r="9" fill="${c.gem}" opacity=".3"/>
-      <path d="M0 -46 C1.6 -39 3.4 -37.4 10 -36 C3.4 -34.6 1.6 -33 0 -26
-               C-1.6 -33 -3.4 -34.6 -10 -36 C-3.4 -37.4 -1.6 -39 0 -46 Z" fill="#fff"/>
-      ${tas(-20, -31, 3.2, c.gem)}${tas(20, -31, 3.2, c.gem)}
-      <circle cx="-32" cy="-24" r="2.2" fill="#fff" opacity=".8"/>
-      <circle cx="32" cy="-24" r="2.2" fill="#fff" opacity=".8"/>
-      <path d="M-19 -2 h38" stroke="${c.gem}" stroke-width="1.8" opacity=".7"/>`;
+      <circle cx="0" cy="-47" r="9" fill="${c.gem}" opacity=".3"/>
+      <path d="M0 -47 C1.6 -40 3.4 -38.4 10 -37 C3.4 -35.6 1.6 -34 0 -27
+               C-1.6 -34 -3.4 -35.6 -10 -37 C-3.4 -38.4 -1.6 -40 0 -47 Z" fill="#fff"/>
+      ${tas(-20, -32, 3.2, c.gem)}${tas(20, -32, 3.2, c.gem)}
+      <circle cx="-33" cy="-25" r="2.2" fill="#fff" opacity=".8"/>
+      <circle cx="33" cy="-25" r="2.2" fill="#fff" opacity=".8"/>`;
   }
 
   return `${defs}<g transform="translate(0 ${headTop})">${ic}</g>`;
 }
 
-/* --- YUZ AKSESUARI (ikincil slot) ---
-   Gozlerin uzerine ciziliyor, yani gozlerden SONRA cagrilmali. */
+/* ==========================================================================
+   YUZ ISARETI - 8 kademe
 
-/* --- YUZ AKSESUARI (ikincil slot) ---
+   3/4 profilde GORUNEN yanaga/aline ciziliyor (kafanin sol yarisi izleyiciye
+   donuk). Onceki surumde iki yana simetrik cizildigi icin profilde kafanin
+   disina tasip kulak gibi duruyorlardi.
 
-   Hepsi KAFA olculerine gore yerlesiyor (bkz. KAFA sabiti):
+   Kafa olculeri (bkz. KAFA_YOL):
+     alin    x -60..-30, y -100..-88
+     goz     (-44, -80)
+     yanak   x -70..-40, y -78..-60
+     namlu   x -88..-60, y -74..-58
+   ========================================================================== */
 
-     alin    y -88..-72   x ±20     run, muhur
-     kas     y -74..-66             kas uzeri isaretler
-     goz     (±16, -62)             goz cevresi
-     yanak   x ±20..29, y -58..-44  boya, alev, yara
-     burun   x ±14, y -52..-36      buranin uzerine bir sey konmuyor:
-                                    burun kutlesi zaten one cikik
-
-   Gozlerden SONRA cizilir, yani gozun uzerine binebilir. */
-
-export const FACE_BOX = '-34 -94 68 46';
+export const FACE_BOX = '-92 -110 84 60';
 
 export function faceSvg(key) {
   const f = FACES[key];
   if (!f || key === 'none' || !f.kind) return '';
   const c = f.color;
 
-  /* Kademe 1: sag kas ve yanaktan gecen tek iz */
+  /* Kademe 1: gozun ustunden yanaga inen tek iz */
   if (f.kind === 'scar') {
     return `
-      <path d="M18 -76 C20 -68 21 -60 21.5 -53" fill="none" stroke="${c}"
+      <path d="M-52 -92 C-50 -84 -48 -76 -46 -70" fill="none" stroke="${c}"
             stroke-width="2.8" stroke-linecap="round" opacity=".95"/>
-      <path d="M15 -68 h7.5 M16.5 -60 h7.5" stroke="${c}" stroke-width="2"
+      <path d="M-56 -86 h7 M-54 -78 h7" stroke="${c}" stroke-width="2"
             stroke-linecap="round" opacity=".8"/>`;
   }
 
-  /* Kademe 2: iki capraz iz - biri sag kasta, biri sol yanakta */
+  /* Kademe 2: iki capraz iz */
   if (f.kind === 'twinScar') {
     return `
-      <path d="M15 -78 C18 -70 20 -62 21 -55" fill="none" stroke="${c}"
+      <path d="M-54 -94 C-51 -85 -49 -77 -47 -70" fill="none" stroke="${c}"
             stroke-width="2.8" stroke-linecap="round" opacity=".95"/>
-      <path d="M25 -71 C21 -65 17 -60 13 -56" fill="none" stroke="${c}"
+      <path d="M-62 -84 C-56 -80 -50 -76 -44 -74" fill="none" stroke="${c}"
             stroke-width="2.4" stroke-linecap="round" opacity=".85"/>
-      <path d="M-18 -74 C-20 -66 -21 -59 -22 -53" fill="none" stroke="${c}"
-            stroke-width="2.2" stroke-linecap="round" opacity=".75"/>`;
+      <path d="M-70 -70 C-64 -68 -58 -66 -52 -65" fill="none" stroke="${c}"
+            stroke-width="2" stroke-linecap="round" opacity=".7"/>`;
   }
 
-  /* Kademe 3: iki yanakta tribal boya.
-     x araligi kafanin silueti icinde tutuldu - disari tasinca kulak gibi
-     duruyordu. */
+  /* Kademe 3: yanakta tribal boya */
   if (f.kind === 'paint') {
-    const yan = (yon) => `
-      <g transform="scale(${yon} 1)">
-        <path d="M11 -58 l6 -3 l-1.5 6.5 l6 -2 l-2 6.5" fill="none" stroke="${c}"
-              stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity=".95"/>
-      </g>`;
-    return yan(1) + yan(-1);
+    return `
+      <path d="M-64 -74 l7 -3 l-2 7 l7 -2 l-2.5 7" fill="none" stroke="${c}"
+            stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity=".95"/>
+      <path d="M-48 -66 l5 -2 l-1.5 5" fill="none" stroke="${c}"
+            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>`;
   }
 
-  /* Kademe 4: goz cevresinde karanlik buyu izi */
+  /* Kademe 4: gozun cevresinde karanlik buyu izi */
   if (f.kind === 'darkMark') {
-    const yan = (yon) => `
-      <g transform="scale(${yon} 1)">
-        <path d="M6 -66 C12 -73 22 -72 26 -63 C22 -56 10 -57 6 -62 Z"
-              fill="${c}" opacity=".5"/>
-        <path d="M20 -53 l-3 7" stroke="${c}" stroke-width="2.4"
-              stroke-linecap="round" opacity=".7"/>
-      </g>`;
-    return yan(1) + yan(-1);
+    return `
+      <path d="M-56 -86 C-50 -93 -38 -92 -34 -83 C-38 -74 -52 -76 -56 -82 Z"
+            fill="${c}" opacity=".5"/>
+      <path d="M-46 -70 l-3 8" stroke="${c}" stroke-width="2.4"
+            stroke-linecap="round" opacity=".7"/>
+      <path d="M-38 -72 l2 7" stroke="${c}" stroke-width="2"
+            stroke-linecap="round" opacity=".6"/>`;
   }
 
-  /* Kademe 5: yanaklardan yukari uzanan alev isareti.
-     Kafanin kenarina degil ICINE cizildi; disarida kalinca kulak oluyordu. */
+  /* Kademe 5: yanaktan yukari uzanan alev isareti */
   if (f.kind === 'flame') {
-    const yan = (yon) => `
-      <g transform="scale(${yon} 1)">
-        <path d="M13 -46 C19 -52 21 -60 18 -68
-                 C24 -62 25 -51 20 -44 C17 -42 14 -43.5 13 -46 Z"
-              fill="${c}" opacity=".92"/>
-        <path d="M15 -48 C18.5 -53 19.5 -57 18 -61 C21.5 -56 21 -50 18 -46 Z"
-              fill="#ffe066" opacity=".8"/>
-      </g>`;
-    return yan(1) + yan(-1);
+    return `
+      <path d="M-62 -64 C-56 -70 -54 -80 -58 -88
+               C-50 -82 -48 -70 -54 -62 C-57 -60 -60 -61 -62 -64 Z"
+            fill="${c}" opacity=".92"/>
+      <path d="M-59 -66 C-55.5 -71 -54.5 -76 -56 -80 C-52.5 -75 -53 -69 -56 -64 Z"
+            fill="#ffe066" opacity=".8"/>`;
   }
 
   /* Kademe 6: alinda parlayan run */
   if (f.kind === 'rune') {
     return `
-      <circle cx="0" cy="-78" r="10" fill="${c}" opacity=".22"/>
-      <path d="M0 -85 v13 M-5 -81 h10 M0 -72 l4 6 h-8 z" fill="none" stroke="${c}"
-            stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M-25 -58 l4 4 M25 -58 l-4 4" stroke="${c}" stroke-width="2"
-            stroke-linecap="round" opacity=".7"/>`;
+      <g transform="translate(-46 -95)" opacity=".95">
+        <circle r="8" fill="none" stroke="${c}" stroke-width="1.8"/>
+        <path d="M-4 -3 L0 5 L4 -3 M0 5 L0 -7" fill="none" stroke="${c}"
+              stroke-width="1.8" stroke-linecap="round"/>
+      </g>
+      <path d="M-62 -80 h8 M-64 -72 h6" stroke="${c}" stroke-width="1.8"
+            stroke-linecap="round" opacity=".6"/>`;
   }
 
-  /* Kademe 7: agresif demon boyasi
-     Kas uzerinden yanaga inen kalin bantlar - onceki surumde bantlar kafanin
-     disinda kaliyor ve yuze oturmuyordu. */
+  /* Kademe 7: iblis savas boyasi - gozun cevresi ve yanak boyunca */
   if (f.kind === 'demon') {
-    const yan = (yon) => `
-      <g transform="scale(${yon} 1)">
-        <path d="M9 -74 L25 -77 L22 -69 L26 -67 L11 -61 Z" fill="${c}" opacity=".9"/>
-        <path d="M12 -55 L23 -52 L17 -46 Z" fill="${c}" opacity=".75"/>
-        <path d="M6 -44 L13 -42 L9 -38 Z" fill="${c}" opacity=".6"/>
-      </g>`;
-    return `${yan(1)}${yan(-1)}
-      <path d="M0 -86 L4 -77 L0 -73 L-4 -77 Z" fill="${c}" opacity=".9"/>`;
+    return `
+      <path d="M-58 -90 C-50 -96 -36 -94 -32 -84 C-36 -76 -50 -78 -58 -86 Z"
+            fill="${c}" opacity=".65"/>
+      <path d="M-56 -72 l-4 10 M-48 -68 l-2 11 M-40 -68 l1 10"
+            stroke="${c}" stroke-width="2.6" stroke-linecap="round" opacity=".8"/>
+      <path d="M-70 -66 C-62 -62 -50 -60 -40 -62" fill="none" stroke="${c}"
+            stroke-width="2.2" stroke-linecap="round" opacity=".55"/>`;
   }
 
-  /* Kademe 8: ejder krali muhru - alin, kaslar ve yanaklar birlikte parlar */
+  /* Kademe 8: ejder krali muhru - alinda taş, altin hatlar */
   return `
-    <circle cx="0" cy="-79" r="12" fill="${c}" opacity=".22"/>
-    <path d="M0 -89 C2 -81 4 -79 12 -77 C4 -75 2 -73 0 -65
-             C-2 -73 -4 -75 -12 -77 C-4 -79 -2 -81 0 -89 Z" fill="${c}"/>
-    <path d="M-29 -69 C-23 -75 -12 -74 -8 -67" fill="none" stroke="${c}"
-          stroke-width="2.4" stroke-linecap="round" opacity=".9"/>
-    <path d="M29 -69 C23 -75 12 -74 8 -67" fill="none" stroke="${c}"
-          stroke-width="2.4" stroke-linecap="round" opacity=".9"/>
-    <path d="M-21 -54 l-3 8 M21 -54 l3 8" stroke="${c}" stroke-width="2.2"
-          stroke-linecap="round" opacity=".8"/>
-    <circle cx="-24" cy="-45" r="2" fill="${c}"/>
-    <circle cx="24" cy="-45" r="2" fill="${c}"/>`;
+    <path d="M-52 -100 C-44 -104 -34 -102 -30 -95 C-36 -91 -48 -93 -52 -98 Z"
+          fill="${c}" opacity=".55"/>
+    <path d="M-42 -98 l4.5 5 l-4.5 6 l-4.5 -6 z" fill="${c}"/>
+    <path d="M-42 -98 l4.5 5 l-4.5 1 z" fill="#fff" opacity=".6"/>
+    <path d="M-60 -86 C-54 -82 -46 -80 -38 -81" fill="none" stroke="${c}"
+          stroke-width="2" stroke-linecap="round" opacity=".7"/>
+    <path d="M-58 -72 l-3 9 M-48 -68 l-1 10" stroke="${c}" stroke-width="2.4"
+          stroke-linecap="round" opacity=".7"/>`;
 }
 
-/* --- GOVDE DESENI ---
-   Govde yoluna kirpilir, boylece siluetten tasmaz. Desenler artik duz
-   cizgi degil: her birinin kendi golgesi/parlamasi var. */
-function desen(pal, uid) {
-  if (!pal.pattern) return '';
-  const ink = pal.ink || pal.dark;
-  const koyu = ton(pal.body, -0.32);
-  const acik = ton(ink, 0.4);
-  let icerik = '';
+/* ==========================================================================
+   YUMURTA - ilk seviyeler
+   ========================================================================== */
 
-  /* --- Kademe 1: duz yatay bantlar --- */
-  if (pal.pattern === 'stripes') {
-    for (let i = 0; i < 5; i++) {
-      const y = -24 + i * 13;
-      icerik += `<path d="M-44 ${y} Q0 ${y + 5} 44 ${y}" fill="none"
-                       stroke="${koyu}" stroke-width="5" opacity=".3"/>`;
-    }
-
-  /* --- Kademe 2: sirtta kucuk alev isaretleri --- */
-  } else if (pal.pattern === 'flame') {
-    const alev = (x, y, b) => `
-      <path d="M${x} ${y} C${x + b} ${y - b} ${x + b * 0.6} ${y - b * 2} ${x} ${y - b * 2.6}
-               C${x - b * 0.6} ${y - b * 2} ${x - b} ${y - b} ${x} ${y} Z"
-            fill="${ink}" opacity=".8"/>
-      <path d="M${x} ${y - b * 0.4} C${x + b * 0.5} ${y - b} ${x + b * 0.3} ${y - b * 1.5} ${x} ${y - b * 1.9}
-               C${x - b * 0.3} ${y - b * 1.5} ${x - b * 0.5} ${y - b} ${x} ${y - b * 0.4} Z"
-            fill="#fff6d8" opacity=".55"/>`;
-    icerik = alev(-20, 24, 7) + alev(4, 30, 9) + alev(24, 20, 6) + alev(-6, 6, 6);
-
-  /* --- Kademe 3: kabile tarzi geometrik pullar --- */
-  } else if (pal.pattern === 'tribal') {
-    for (let sira = 0; sira < 6; sira++) {
-      const y = -26 + sira * 11;
-      const kaydir = sira % 2 ? 7 : 0;
-      for (let x = -44 + kaydir; x <= 44; x += 14) {
-        icerik += `
-          <path d="M${x} ${y} L${x + 7} ${y + 8} L${x + 14} ${y}" fill="none"
-                stroke="${koyu}" stroke-width="2.4" opacity=".42" stroke-linejoin="round"/>
-          <path d="M${x + 2} ${y - 1} L${x + 7} ${y + 5} L${x + 12} ${y - 1}" fill="none"
-                stroke="${acik}" stroke-width="1.1" opacity=".35" stroke-linejoin="round"/>`;
-      }
-    }
-
-  /* --- Kademe 4: yildirim damarlari --- */
-  } else if (pal.pattern === 'lightning') {
-    const yol = `M-22 -30 L-12 -10 L-20 -6 L-8 14 L-16 18 L-6 34
-                 M18 -32 L8 -14 L16 -10 L4 8 L12 12 L2 30
-                 M-2 -18 L4 -6 L-2 -2 L4 10`;
-    icerik = `
-      <path d="${yol}" fill="none" stroke="${koyu}" stroke-width="5.5" opacity=".4"
-            stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="${yol}" fill="none" stroke="${ink}" stroke-width="2.4" opacity=".95"
-            stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="${yol}" fill="none" stroke="#fff" stroke-width="0.9" opacity=".7"
-            stroke-linecap="round"/>`;
-
-  /* --- Kademe 5: kadim runler, cift halka --- */
-  } else if (pal.pattern === 'runes') {
-    const runler = `M-31 -22 v9 M-35 -18 h8 M-31 -13 l4 5
-                    M29 -20 v10 M25 -20 l8 5 l-8 5
-                    M-29 15 l5 -8 l5 8 M-27 12 h6
-                    M27 13 v10 M23 13 h8 M27 18 h5
-                    M0 -13 v7 M-4 -9 h8 M0 -6 l4 6 l-8 0 z`;
-    icerik = `
-      <circle cx="0" cy="-1" r="22" fill="none" stroke="${koyu}" stroke-width="4" opacity=".35"/>
-      <circle cx="0" cy="-1" r="22" fill="none" stroke="${ink}" stroke-width="1.8" opacity=".8"/>
-      <circle cx="0" cy="-1" r="14.5" fill="none" stroke="${ink}" stroke-width="1.1" opacity=".45"/>
-      <path d="${runler}" fill="none" stroke="${koyu}" stroke-width="4" opacity=".4"
-            stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="${runler}" fill="none" stroke="${ink}" stroke-width="2.1" opacity=".95"
-            stroke-linecap="round" stroke-linejoin="round"/>`;
-
-  /* --- Kademe 6: zirh plakalari --- */
-  } else if (pal.pattern === 'armor') {
-    for (let i = 0; i < 4; i++) {
-      const y = -20 + i * 14;
-      icerik += `
-        <path d="M-42 ${y} q42 -13 84 0" fill="none" stroke="${koyu}"
-              stroke-width="5" opacity=".42"/>
-        <path d="M-42 ${y - 1.8} q42 -13 84 0" fill="none" stroke="${ink}"
-              stroke-width="2.2" opacity=".8"/>`;
-    }
-    icerik += `
-      <path d="M-23 -32 v66 M23 -32 v66" stroke="${koyu}" stroke-width="2.6" opacity=".3"/>
-      <path d="M-35 -25 l6 -6 l6 6 l-6 6 z M29 -21 l5.5 -5.5 l5.5 5.5 l-5.5 5.5 z
-               M-33 17 l5.5 -5.5 l5.5 5.5 l-5.5 5.5 z M27 19 l6 -6 l6 6 l-6 6 z"
-            fill="${ink}" opacity=".85"/>`;
-
-  /* --- Kademe 7: kozmik toz ve yildizlar --- */
-  } else if (pal.pattern === 'cosmic') {
-    icerik = `
-      <ellipse cx="-4" cy="0" rx="40" ry="26" fill="${ink}" opacity=".16"
-               transform="rotate(-18 -4 0)"/>
-      <ellipse cx="-4" cy="0" rx="26" ry="15" fill="${acik}" opacity=".14"
-               transform="rotate(-18 -4 0)"/>`;
-    /* Sabit dagilim: her cizimde ayni yerde dursun */
-    const noktalar = [[-30, -18, 2.2], [-16, -26, 1.4], [-8, -6, 2.6], [6, -20, 1.6],
-                      [18, -8, 2.2], [28, 6, 1.5], [12, 14, 2.4], [-22, 8, 1.8],
-                      [-6, 24, 2], [20, 26, 1.4], [-32, 18, 1.6], [2, -32, 1.5]];
-    for (const [x, y, r] of noktalar) {
-      icerik += `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" opacity=".85"/>
-                 <circle cx="${x}" cy="${y}" r="${r * 2.2}" fill="${ink}" opacity=".25"/>`;
-    }
-
-  /* --- Kademe 8: parlayan celestial runeler --- */
-  } else if (pal.pattern === 'celestial') {
-    const glif = (x, y, s2) => `
-      <g transform="translate(${x} ${y}) scale(${s2})">
-        <path d="M0 -9 L7 0 L0 9 L-7 0 Z" fill="none" stroke="${ink}" stroke-width="2"/>
-        <path d="M0 -4.5 L3.5 0 L0 4.5 L-3.5 0 Z" fill="${ink}" opacity=".8"/>
-      </g>`;
-    icerik = `
-      <circle cx="0" cy="-2" r="26" fill="none" stroke="${ink}" stroke-width="5" opacity=".22"/>
-      <circle cx="0" cy="-2" r="26" fill="none" stroke="${ink}" stroke-width="1.6" opacity=".75"
-              stroke-dasharray="7 5"/>
-      <circle cx="0" cy="-2" r="17" fill="none" stroke="${ink}" stroke-width="1.2" opacity=".55"
-              stroke-dasharray="4 6"/>
-      <circle cx="0" cy="-2" r="9" fill="${ink}" opacity=".18"/>
-      ${glif(0, -2, 1.15)}${glif(-27, -18, 0.7)}${glif(27, -14, 0.7)}
-      ${glif(-24, 18, 0.62)}${glif(25, 20, 0.62)}
-      <path d="M-40 -6 h12 M28 -6 h12 M-14 30 h28" stroke="${ink}"
-            stroke-width="1.6" opacity=".5" stroke-linecap="round"/>`;
-  }
-
-  return `<g clip-path="url(#gv${uid})">${icerik}</g>`;
-}
-
-/* --- YUMURTA: seviye yukseldikce catlaklar artar --- */
 function yumurtaSvg(level, pal) {
   const uid = ++uidSayaci;
-  const c1 = level >= 2
-    ? `<path d="M-6 -16 l8 11 l-10 9 l9 10" fill="none" stroke="${ton(pal.body, -0.35)}"
-             stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" opacity=".75"/>` : '';
-  const c2 = level >= 3
-    ? `<path d="M15 -5 l-8 10 l10 8" fill="none" stroke="${ton(pal.body, -0.35)}"
-             stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity=".6"/>` : '';
+  const catlak = level >= 3;
+  const acik = ton(pal.body, 0.3), koyu = ton(pal.body, -0.3);
   return `
     <svg viewBox="0 0 200 200" aria-hidden="true">
       <defs>
-        <radialGradient id="yum${uid}" cx="0.36" cy="0.28" r="0.82">
-          <stop offset="0" stop-color="${ton(pal.belly, 0.4)}"/>
-          <stop offset="0.6" stop-color="${pal.belly}"/>
-          <stop offset="1" stop-color="${ton(pal.body, -0.15)}"/>
-        </radialGradient>
+        <linearGradient id="ym${uid}" x1="0.2" y1="0" x2="0.8" y2="1">
+          <stop offset="0" stop-color="${acik}"/>
+          <stop offset="0.5" stop-color="${pal.body}"/>
+          <stop offset="1" stop-color="${koyu}"/>
+        </linearGradient>
       </defs>
-      <g transform="translate(100 112)">
-        <ellipse cx="0" cy="0" rx="42" ry="53" fill="url(#yum${uid})"/>
-        <ellipse cx="0" cy="0" rx="42" ry="53" fill="none"
-                 stroke="${ton(pal.body, -0.2)}" stroke-width="2.5" opacity=".5"/>
-        <ellipse cx="-15" cy="-25" rx="12" ry="8" fill="#fff" opacity=".45"
-                 transform="rotate(-24 -15 -25)"/>
-        <path d="M-30 22 q30 16 60 -4 q-14 26 -32 26 q-20 -2 -28 -22 z"
-              fill="${pal.body}" opacity=".16"/>
-        <ellipse cx="16" cy="12" rx="9" ry="6" fill="${pal.body}" opacity=".2"/>
-        ${c1}${c2}
-      </g>
+      <ellipse cx="100" cy="176" rx="42" ry="8" fill="#000" opacity=".3"/>
+      <path d="M100 44 C132 44 152 84 152 118 C152 152 128 174 100 174
+               C72 174 48 152 48 118 C48 84 68 44 100 44 Z" fill="url(#ym${uid})"/>
+      <path d="M100 44 C82 52 70 84 70 118 C70 146 82 166 100 174
+               C78 172 48 152 48 118 C48 84 68 44 100 44 Z" fill="${koyu}" opacity=".3"/>
+      ${[0, 1, 2, 3].map((i) => `
+        <path d="M${72 + i * 14} ${96 + (i % 2) * 22} q8 6 16 0" fill="none"
+              stroke="${ton(pal.belly, -0.1)}" stroke-width="3" opacity=".5"/>`).join('')}
+      ${catlak ? `<path d="M92 84 L102 100 L92 110 L104 128" fill="none"
+              stroke="${ton(pal.dark, -0.3)}" stroke-width="2.6" stroke-linejoin="round"/>` : ''}
     </svg>`;
 }
 
-/* --- BAS PARCALARI ---
+/* ==========================================================================
+   MONTAJ
+   ========================================================================== */
 
-   Boyunun ustunde kalan her sey: boynuzlar, kafa, gozler, burun, agiz, yanak
-   dikenleri, yuz aksesuari ve tac. Tek yerde durmasinin sebebi, kafanin hem
-   tam boy ejderhada hem de sadece-kafa cizimlerinde (bot profil fotografi,
-   dukkandaki tac/yuz onizlemeleri) ayni gorunmesi gerektigi. */
-function basParcalari(pal, look, mood, hornOlcek, uid) {
-  const acik = ton(pal.body, 0.24);
-  const koyu = ton(pal.body, -0.26);
-  const cokKoyu = ton(pal.dark, -0.2);
-  const boynuzAcik = ton(pal.horn, 0.4);
-  const boynuzKoyu = ton(pal.horn, -0.32);
-
-  /* --- BOYNUZ ---
-
-     Onceki surumde ince, duz bir dilimdi ve kulaga/disge benziyordu. Simdi
-     tabaninda kalin, uca dogru inceliyor, geriye ve disariya kivriliyor;
-     uzerinde halka halka boyum cizgileri var - gercek bir boynuz gibi.
-
-     Kafanin ARKA-UST kosesinden cikiyor (yandan degil), yani on gorunumde
-     alnin iki yanindan yukselip disari aciliyor. */
-  const boynuz = (yon) => `
-    <g transform="scale(${yon} 1)">
-      <!-- Ana govde: genis taban, sivri uc -->
-      <path d="M-14 -84
-               C-22 -86 -30 -94 -36 -108
-               C-39 -116 -40 -122 -38 -126
-               C-34 -124 -30 -118 -27 -110
-               C-23 -100 -18 -92 -10 -88 Z"
-            fill="url(#bn${uid})"/>
-      <!-- Alt yuz golgesi: boynuz yassi durmasin -->
-      <path d="M-14 -84
-               C-22 -86 -30 -94 -36 -108
-               C-39 -116 -40 -122 -38 -126
-               C-36 -118 -32 -108 -26 -99
-               C-22 -92 -18 -87 -12 -85 Z"
-            fill="${boynuzKoyu}" opacity=".45"/>
-      <!-- Boyum halkalari -->
-      <path d="M-17 -87.5 C-15 -90 -13 -91.5 -11.5 -92"
-            stroke="${boynuzKoyu}" stroke-width="1.5" fill="none" opacity=".6" stroke-linecap="round"/>
-      <path d="M-23 -93 C-21 -96 -19 -98 -17.5 -99"
-            stroke="${boynuzKoyu}" stroke-width="1.4" fill="none" opacity=".55" stroke-linecap="round"/>
-      <path d="M-29 -102 C-28 -105 -26 -107 -25 -108"
-            stroke="${boynuzKoyu}" stroke-width="1.2" fill="none" opacity=".5" stroke-linecap="round"/>
-      <!-- Tabandaki isik: boynuz kafadan cikiyormus gibi otursun -->
-      <path d="M-14 -84 C-18 -85 -21 -87 -23 -89 C-19 -88 -16 -86 -13 -85 Z"
-            fill="${boynuzAcik}" opacity=".7"/>
-    </g>`;
-
-  return `
-        <!-- BOYUN: govde ile bas arasinda kalir, ayri bir yaka gibi
-             gorunmesin diye ustune acik renk konmuyor -->
-        <path d="M-15 -24 C-17 -38 -14 -48 -11 -52 L11 -52 C14 -48 17 -38 15 -24 Z"
-              fill="${koyu}"/>
-        <path d="M11 -52 C14 -48 17 -38 15 -24 L8 -24 C10 -38 9 -46 6 -52 Z"
-              fill="${cokKoyu}" opacity=".35"/>
-
-        <!-- BOYNUZLAR: buyume tabanlarindan olcekleniyor, boy ve kalinlik
-             birlikte artiyor -->
-        <g transform="translate(0 -80) scale(${hornOlcek.toFixed(3)}) translate(0 80)">
-          ${boynuz(-1)}${boynuz(1)}
-        </g>
-
-        <!-- BAS
-             Genis alin, belirgin yanaklar, one dogru cikan bir burun bolgesi
-             ve altta toplanan cene. Onceki surumde kafa duz bir damla gibiydi;
-             burun ayri bir kutle olarak cikinca surungen hatti oturuyor. -->
-        <path d="M-29 -64
-                 C-31 -80 -20 -91 0 -91
-                 C20 -91 31 -80 29 -64
-                 C28 -56 25 -50 20 -46
-                 C17 -38 10 -33 0 -33
-                 C-10 -33 -17 -38 -20 -46
-                 C-25 -50 -28 -56 -29 -64 Z"
-              fill="url(#gv${uid}g)"/>
-
-        <!-- Yanak golgesi: kafa yassi durmasin -->
-        <path d="M29 -64 C28 -56 25 -50 20 -46 C17 -38 10 -33 0 -33
-                 C10 -38 16 -45 18 -56 C20 -70 15 -84 6 -89
-                 C20 -87 30 -78 29 -64 Z" fill="${cokKoyu}" opacity=".24"/>
-
-        <!-- Alin isigi -->
-        <path d="M-14 -85 C-6 -89 6 -89 14 -85 C6 -81 -6 -81 -14 -85 Z"
-              fill="${ton(pal.body, 0.5)}" opacity=".45"/>
-
-        <!-- KAS CIKINTISI: gozlerin uzerinde kalin bir kemer, sert bakis -->
-        <path d="M-28 -71 C-21 -75 -12 -73 -8 -67" fill="none" stroke="${cokKoyu}"
-              stroke-width="5" stroke-linecap="round" opacity=".8"/>
-        <path d="M28 -71 C21 -75 12 -73 8 -67" fill="none" stroke="${cokKoyu}"
-              stroke-width="5" stroke-linecap="round" opacity=".8"/>
-
-        ${gozler(mood, pal)}
-
-        <!-- BURUN KUTLESI
-             Yuzden ONE cikan ayri bir hacim: ustu isikli, alti golgeli.
-             Kafanin geri kalanindan bir tik acik ki one cikmis gorunsun. -->
-        <path d="M-15 -52
-                 C-15 -43 -11 -35 0 -35
-                 C11 -35 15 -43 15 -52
-                 C10 -55 -10 -55 -15 -52 Z"
-              fill="${acik}" opacity=".55"/>
-        <path d="M-15 -52 C-10 -55 10 -55 15 -52 C10 -53.5 -10 -53.5 -15 -52 Z"
-              fill="${ton(pal.body, 0.6)}" opacity=".5"/>
-        <path d="M15 -52 C15 -43 11 -35 0 -35 C7 -38 11 -44 12 -52 Z"
-              fill="${cokKoyu}" opacity=".25"/>
-
-        <!-- Burun delikleri: burun kutlesinin ust yarisinda -->
-        <path d="M-6 -47.5 C-6.6 -44.5 -5 -43 -3.8 -43.8 C-4.2 -45.8 -5.1 -47.2 -6 -47.5 Z
-                 M6 -47.5 C6.6 -44.5 5 -43 3.8 -43.8 C4.2 -45.8 5.1 -47.2 6 -47.5 Z"
-              fill="#150f1d" opacity=".85"/>
-
-        <!-- AGIZ: cene hattini takip eden cizgi, ustunden iki fildisi sarkiyor -->
-        <path d="M-13 -39 C-7 -34 7 -34 13 -39" fill="none" stroke="#150f1d"
-              stroke-width="2" stroke-linecap="round" opacity=".75"/>
-        <path d="M-7.4 -36.4 C-6.6 -33 -5.6 -31.6 -4.6 -31.4
-                 C-4 -33.6 -4.2 -35.6 -4.6 -37.2 Z
-                 M7.4 -36.4 C6.6 -33 5.6 -31.6 4.6 -31.4
-                 C4 -33.6 4.2 -35.6 4.6 -37.2 Z"
-              fill="#fff" opacity=".92"/>
-
-        <!-- CENE ALTI: kucuk bir golge, kafa govdeye yapisik durmasin -->
-        <path d="M-11 -34 C-5 -31 5 -31 11 -34 C6 -30 -6 -30 -11 -34 Z"
-              fill="${cokKoyu}" opacity=".3"/>
-
-        ${faceSvg(look.face)}
-        ${headSvg(look.head, -89)}`;
-}
-
-/* ---------- KANAT VARYANTLARI ----------
-
-   Hepsi ayni iskeletten cikiyor: omuzdan bilege bir kol kemigi, bilekten
-   disari acilan parmaklar, aralarina gerilmis zar. Varyantlar acikligi
-   (span), parmak sayisini ve zarin islenisini degistiriyor.
-
-   Sekiz tasarim ucuzdan pahaliya siluetin belirginligi artacak sekilde
-   siralandi: deri kanat sade ve dar, celestial devasa ve isikli. */
-
-const KANAT_UCLARI = {
-  4: [[120, -26], [102, 14], [72, 34], [42, 28]],
-  5: [[124, -30], [112, 4], [92, 26], [66, 38], [40, 30]],
-};
-
-function kanatSvg(w, pal, uid, t) {
-  const span = w.span ?? 0.9;
-  const bilek = { x: 98 * span, y: -80 - (span - 0.86) * 26 };
-  const omuz = { x: 15, y: -28 };
-  const kenarRenk = w.kenar || t.boynuzAcik;
-
-  const uclar = (KANAT_UCLARI[w.parmak] || KANAT_UCLARI[4])
-    .map(([x, y]) => ({ x: x * span, y: y * (1 + (span - 0.9) * 0.5) }));
-
-  /* Zar: kol kemiginden ilk uca, sonra uclar arasinda fistolu kavisler */
-  const fisto = (derinlik) => {
-    let d = `M${omuz.x} ${omuz.y} L${bilek.x.toFixed(1)} ${bilek.y.toFixed(1)}
-             L${uclar[0].x.toFixed(1)} ${uclar[0].y.toFixed(1)}`;
-    for (let i = 1; i < uclar.length; i++) {
-      const a = uclar[i - 1];
-      const b = uclar[i];
-      const cx = (a.x + b.x) / 2 + (bilek.x - (a.x + b.x) / 2) * derinlik;
-      const cy = (a.y + b.y) / 2 + (bilek.y - (a.y + b.y) / 2) * derinlik;
-      d += ` Q${cx.toFixed(1)} ${cy.toFixed(1)} ${b.x.toFixed(1)} ${b.y.toFixed(1)}`;
-    }
-    return `${d} Z`;
-  };
-
-  const parmakKemikleri = (kalinlik = 3.4) => uclar
-    .map((u) => `<path d="M${bilek.x.toFixed(1)} ${bilek.y.toFixed(1)} L${u.x.toFixed(1)} ${u.y.toFixed(1)}"
-                       stroke="${t.cokKoyu}" stroke-width="${kalinlik}"
-                       stroke-linecap="round" fill="none"/>`).join('');
-
-  const kolKemigi = `
-    <path d="M${omuz.x} ${omuz.y} L${bilek.x.toFixed(1)} ${bilek.y.toFixed(1)}"
-          stroke="${t.cokKoyu}" stroke-width="5" stroke-linecap="round" fill="none"/>
-    <path d="M${omuz.x} ${omuz.y} L${bilek.x.toFixed(1)} ${bilek.y.toFixed(1)}"
-          stroke="${kenarRenk}" stroke-width="1.6" stroke-linecap="round"
-          fill="none" opacity=".55"/>`;
-
-  const bilekTirnagi = `
-    <path d="M${bilek.x.toFixed(1)} ${bilek.y.toFixed(1)} q10 -7 15 -1 q-8 2 -13 6 z"
-          fill="${kenarRenk}"/>`;
-
-  /* --- PHOENIX: zar yerine katmanli tuyler --- */
-  if (w.kind === 'phoenix') {
-    const tuyler = uclar.map((u, i) => {
-      const p = i / (uclar.length - 1);
-      const genislik = 15 - p * 4;
-      const orta = {
-        x: bilek.x + (u.x - bilek.x) * 0.55,
-        y: bilek.y + (u.y - bilek.y) * 0.55,
-      };
-      const renk = i % 2 ? '#e8571f' : '#f2884b';
-      return `
-        <path d="M${bilek.x.toFixed(1)} ${bilek.y.toFixed(1)}
-                 Q${(orta.x + genislik).toFixed(1)} ${(orta.y - genislik * 0.5).toFixed(1)}
-                  ${u.x.toFixed(1)} ${u.y.toFixed(1)}
-                 Q${(orta.x - genislik * 0.4).toFixed(1)} ${(orta.y + genislik).toFixed(1)}
-                  ${bilek.x.toFixed(1)} ${bilek.y.toFixed(1)} Z"
-              fill="${renk}" opacity=".95"/>
-        <path d="M${bilek.x.toFixed(1)} ${bilek.y.toFixed(1)} L${u.x.toFixed(1)} ${u.y.toFixed(1)}"
-              stroke="#ffd76e" stroke-width="1.4" opacity=".7"/>`;
-    }).join('');
-    return `<g>
-      <path d="${fisto(0.3)}" fill="#a8321a" opacity=".55"/>
-      ${tuyler}${kolKemigi}
-      <path d="M${bilek.x.toFixed(1)} ${bilek.y.toFixed(1)} q12 -8 18 -1 q-9 2 -15 7 z" fill="#ffd76e"/>
-    </g>`;
-  }
-
-  /* --- KRISTAL: kavisli zar yerine kirikli, cok yuzlu yapi --- */
-  if (w.kind === 'crystal') {
-    let kirik = `M${omuz.x} ${omuz.y} L${bilek.x.toFixed(1)} ${bilek.y.toFixed(1)}`;
-    for (const u of uclar) kirik += ` L${u.x.toFixed(1)} ${u.y.toFixed(1)}`;
-    kirik += ' Z';
-    return `<g>
-      <path d="${kirik}" fill="url(#kn${uid})" opacity=".78"/>
-      <path d="${kirik}" fill="none" stroke="${kenarRenk}" stroke-width="2.4" opacity=".9"/>
-      ${uclar.map((u) => `
-        <path d="M${bilek.x.toFixed(1)} ${bilek.y.toFixed(1)} L${u.x.toFixed(1)} ${u.y.toFixed(1)}"
-              stroke="${kenarRenk}" stroke-width="1.6" opacity=".55"/>`).join('')}
-      ${kolKemigi}
-      <path d="M${bilek.x.toFixed(1)} ${bilek.y.toFixed(1)} l14 -10 l-3 9 l-9 4 z" fill="${kenarRenk}"/>
-    </g>`;
-  }
-
-  /* --- Ortak zarli govde (plain / flame / demon / lightning / king / celestial) --- */
-  const derin = w.kind === 'demon' ? 0.34 : 0.26;
-  const zar = fisto(derin);
-
-  let sus = '';
-
-  if (w.kind === 'flame') {
-    /* Zarin arka kenarinda alev dilleri */
-    sus = uclar.slice(0, -1).map((u, i) => {
-      const b = uclar[i + 1];
-      const mx = (u.x + b.x) / 2;
-      const my = (u.y + b.y) / 2;
-      return `<path d="M${mx.toFixed(1)} ${my.toFixed(1)}
-                       q${6} ${8} ${1} ${14} q${-8} ${-4} ${-1} ${-14} z"
-                    fill="${kenarRenk}" opacity=".85"/>`;
-    }).join('');
-
-  } else if (w.kind === 'demon') {
-    /* Her parmak ucunda kivrik pence */
-    sus = uclar.map((u) => `
-      <path d="M${u.x.toFixed(1)} ${u.y.toFixed(1)} q7 -2 10 4 q-6 -1 -10 -1 z"
-            fill="${t.boynuzAcik}"/>`).join('');
-
-  } else if (w.kind === 'lightning') {
-    /* Zar uzerinde catallanan enerji hatlari */
-    sus = uclar.map((u) => {
-      const mx = bilek.x + (u.x - bilek.x) * 0.5;
-      const my = bilek.y + (u.y - bilek.y) * 0.5;
-      return `<path d="M${bilek.x.toFixed(1)} ${bilek.y.toFixed(1)}
-                       L${(mx + 6).toFixed(1)} ${my.toFixed(1)}
-                       L${(mx - 4).toFixed(1)} ${(my + 7).toFixed(1)}
-                       L${u.x.toFixed(1)} ${u.y.toFixed(1)}"
-                    fill="none" stroke="${kenarRenk}" stroke-width="1.8" opacity=".85"/>`;
-    }).join('');
-
-  } else if (w.kind === 'king') {
-    /* Kol boyunca zirh plakalari ve uclarda kiymetli tas */
-    sus = `
-      <path d="M${(omuz.x + 8)} ${(omuz.y - 4)} L${(bilek.x * 0.6).toFixed(1)} ${(bilek.y * 0.72).toFixed(1)}"
-            stroke="${kenarRenk}" stroke-width="7" stroke-linecap="round" opacity=".9"/>
-      ${uclar.map((u) => `<circle cx="${u.x.toFixed(1)}" cy="${u.y.toFixed(1)}" r="3.6"
-                                  fill="${kenarRenk}"/>`).join('')}`;
-
-  } else if (w.kind === 'celestial') {
-    /* Yari isik: parlayan kenar, yildiz serpintisi */
-    sus = `
-      <path d="${zar}" fill="none" stroke="${kenarRenk}" stroke-width="3.4" opacity=".85"/>
-      ${uclar.map((u, i) => `
-        <circle cx="${(bilek.x + (u.x - bilek.x) * (0.4 + i * 0.12)).toFixed(1)}"
-                cy="${(bilek.y + (u.y - bilek.y) * (0.4 + i * 0.12)).toFixed(1)}"
-                r="${(2.6 - i * 0.3).toFixed(1)}" fill="#fff" opacity=".8"/>`).join('')}`;
-  }
-
-  return `<g>
-    <path d="${zar}" fill="url(#kn${uid})"${w.kind === 'celestial' ? ' opacity=".82"' : ''}/>
-    ${parmakKemikleri(w.kind === 'demon' ? 4 : 3.4)}
-    ${kolKemigi}
-    ${bilekTirnagi}
-    <path d="${zar}" fill="none" stroke="${t.boynuzKoyu}" stroke-width="1.6" opacity=".5"/>
-    ${sus}
-  </g>`;
-}
-
-/* ---------- KUYRUK VARYANTLARI ----------
-
-   Govdenin arkasindan cikip kanadin ALTINDAN sag alta kivriliyor. Ortak
-   govde ayni, varyantlar ucu ve uzerindeki susu degistiriyor. */
-
-/* Kuyrugun ortak govdesi ve ust kenari (sus yerlestirmek icin) */
-const KUYRUK_GOVDE = `M12 20 C40 42 66 48 84 38 C92 33 96 26 95 20
-                      L105 17 C108 28 100 42 86 48 C62 58 30 46 12 32 Z`;
-
-/* Ust kenar boyunca ornek noktalar: diken/tas/kivilcim buraya diziliyor */
-const KUYRUK_NOKTA = [[30, 30], [46, 38], [62, 42], [77, 41], [89, 34]];
-
-function kuyrukSvg(k, pal, uid, t) {
-  const kenarRenk = k.kenar || t.boynuzAcik;
-
-  const govde = `
-    <path d="${KUYRUK_GOVDE}" fill="${pal.dark}"/>
-    <path d="M95 20 L105 17 C108 28 100 42 86 48 C96 38 99 28 95 20 Z"
-          fill="${t.cokKoyu}" opacity=".45"/>`;
-
-  /* Varsayilan uc: kanat zariyla ayni dilde membran yelken */
-  const yelken = `
-    <path d="M96 20 C103 4 115 -3 122 1 C114 8 107 18 104 29
-             C102 25 99 21 96 20 Z" fill="url(#kn${uid})"/>
-    <path d="M96 20 C103 4 115 -3 122 1" fill="none" stroke="${kenarRenk}"
-          stroke-width="2.4" stroke-linecap="round"/>
-    <path d="M99 14 L116 3 M101 21 L112 12" stroke="${t.cokKoyu}"
-          stroke-width="1.6" opacity=".55" stroke-linecap="round"/>`;
-
-  if (k.kind === 'spiked') {
-    const dikenler = KUYRUK_NOKTA.map(([x, y]) => `
-      <path d="M${x - 4} ${y} L${x} ${y - 11} L${x + 4} ${y} Z" fill="${t.boynuzKoyu}"/>
-      <path d="M${x - 4} ${y} L${x} ${y - 11} L${x} ${y} Z" fill="${t.boynuzAcik}"/>`).join('');
-    return `<g>${dikenler}${govde}${yelken}</g>`;
-  }
-
-  if (k.kind === 'flame') {
-    return `<g>${govde}
-      <path d="M96 20 C104 2 118 -6 126 -2 C116 6 108 16 105 30
-               C103 25 99 21 96 20 Z" fill="${kenarRenk}"/>
-      <path d="M100 17 C106 6 115 0 120 1 C112 8 106 16 104 25 Z"
-            fill="#ffe066" opacity=".85"/>
-      ${KUYRUK_NOKTA.slice(2).map(([x, y]) => `
-        <path d="M${x} ${y - 2} q4 -7 0 -12 q-4 5 0 12 z" fill="${kenarRenk}" opacity=".8"/>`).join('')}
-    </g>`;
-  }
-
-  if (k.kind === 'crystal') {
-    const sivri = KUYRUK_NOKTA.map(([x, y], i) => `
-      <path d="M${x - 3.5} ${y} L${x + (i % 2 ? 2 : -2)} ${y - 13} L${x + 3.5} ${y} Z"
-            fill="${kenarRenk}" opacity=".9"/>`).join('');
-    return `<g>${sivri}${govde}
-      <path d="M96 20 L112 -6 L120 4 L106 30 Z" fill="${kenarRenk}" opacity=".8"/>
-      <path d="M96 20 L112 -6 L120 4 L106 30 Z" fill="none" stroke="#fff"
-            stroke-width="1.2" opacity=".55"/>
-    </g>`;
-  }
-
-  if (k.kind === 'demon') {
-    return `<g>
-      ${KUYRUK_NOKTA.map(([x, y]) => `
-        <path d="M${x - 5} ${y} L${x} ${y - 14} L${x + 5} ${y} Z" fill="${t.boynuzKoyu}"/>`).join('')}
-      ${govde}
-      <!-- Zipkin uc -->
-      <path d="M94 22 L124 -8 L118 8 L128 6 L102 34 L106 20 Z" fill="${t.cokKoyu}"/>
-      <path d="M94 22 L124 -8 L118 8 L110 10 Z" fill="${t.boynuzKoyu}" opacity=".8"/>
-    </g>`;
-  }
-
-  if (k.kind === 'lightning') {
-    return `<g>${govde}
-      <path d="M20 26 L38 30 L30 36 L54 40 L44 44 L72 44 L62 40 L88 38"
-            fill="none" stroke="${kenarRenk}" stroke-width="2.2" opacity=".9"
-            stroke-linejoin="round"/>
-      <path d="M96 20 L118 -6 L110 8 L126 4 L104 32 L108 18 Z" fill="${kenarRenk}"/>
-      <path d="M96 20 L118 -6 L110 8 L126 4 L104 32 L108 18 Z" fill="none"
-            stroke="#fff" stroke-width="1" opacity=".7"/>
-    </g>`;
-  }
-
-  if (k.kind === 'king') {
-    return `<g>${govde}
-      ${KUYRUK_NOKTA.map(([x, y], i) => `
-        <path d="M${x - 7} ${y - 5} q7 6 14 0" fill="none" stroke="${kenarRenk}"
-              stroke-width="3" opacity=".85"/>
-        ${i % 2 === 0 ? `<circle cx="${x}" cy="${y - 8}" r="2.6" fill="${kenarRenk}"/>` : ''}`).join('')}
-      <path d="M94 22 C104 0 120 -8 128 -2 C118 6 110 18 107 32 C104 27 98 23 94 22 Z"
-            fill="${kenarRenk}"/>
-      <path d="M100 18 C107 6 117 0 122 2 C113 8 107 16 105 24 Z"
-            fill="#fff" opacity=".35"/>
-      <circle cx="116" cy="6" r="3.4" fill="#e2544e"/>
-    </g>`;
-  }
-
-  if (k.kind === 'celestial') {
-    return `<g>
-      ${KUYRUK_NOKTA.map(([x, y], i) => `
-        <circle cx="${x}" cy="${y - 10 - i}" r="${(2.8 - i * 0.3).toFixed(1)}"
-                fill="${kenarRenk}" opacity="${(0.85 - i * 0.1).toFixed(2)}"/>`).join('')}
-      ${govde}
-      <path d="${KUYRUK_GOVDE}" fill="none" stroke="${kenarRenk}"
-            stroke-width="2" opacity=".7"/>
-      <path d="M94 22 C106 -4 124 -14 134 -8 C120 2 110 16 106 34
-               C104 29 98 23 94 22 Z" fill="url(#kn${uid})" opacity=".9"/>
-      <path d="M94 22 C106 -4 124 -14 134 -8" fill="none" stroke="${kenarRenk}"
-            stroke-width="3" stroke-linecap="round"/>
-      <circle cx="126" cy="-6" r="3" fill="#fff" opacity=".9"/>
-      <circle cx="114" cy="6" r="2" fill="#fff" opacity=".7"/>
-    </g>`;
-  }
-
-  /* plain */
-  return `<g>${govde}${yelken}</g>`;
-}
-
-/* Bas parcalarinin ihtiyac duydugu degradeler.
-   Hem dragonSvg hem dragonHeadSvg ayni tanimlari kullaniyor. */
-function basDefs(pal, uid) {
-  return `
-    <linearGradient id="gv${uid}g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="${ton(pal.body, 0.24)}"/>
-      <stop offset="0.45" stop-color="${pal.body}"/>
-      <stop offset="1" stop-color="${ton(pal.body, -0.26)}"/>
-    </linearGradient>
-    <linearGradient id="bn${uid}" x1="0" y1="1" x2="0.3" y2="0">
-      <stop offset="0" stop-color="${ton(pal.horn, -0.32)}"/>
-      <stop offset="0.6" stop-color="${pal.horn}"/>
-      <stop offset="1" stop-color="${ton(pal.horn, 0.4)}"/>
-    </linearGradient>`;
-}
-
-/* --- SADECE BAS ---
-
-   Govde, kanat ve kuyruk olmadan sadece kafa. Bot profil fotografi ve
-   dukkandaki tac/yuz onizlemeleri icin. Tam boy sprite'i kirpmak ise
-   yaramiyordu: kanatlar kafanin iki yaninda kalip kadraji kirletiyordu.
-
-   Kadraj: bas + boynuzlar kutusu yerel koordinatlarda x ±47, y -110..-34.
-   Bu kutu 200'luk cerceveye ortalanip buyutuluyor. */
-export function dragonHeadSvg(look, mood = 'happy') {
-  const pal = palet(look);
-  const uid = ++uidSayaci;
-  /* Kadraj: boynuz ucu (y -126) ile cene (y -33) arasi 93 birim.
-     1.72 olcekle 160 piksel eder; 20 piksel ustten pay birakiliyor ki
-     boynuzlarin ucu cerceveye degmesin. */
-  const olcek = 1.72;
-  const ustPay = 20;
-  return `
-    <svg viewBox="0 0 200 200" aria-hidden="true">
-      <defs>${basDefs(pal, uid)}</defs>
-      <g transform="translate(100 ${(ustPay + 126 * olcek).toFixed(1)}) scale(${olcek})">
-        ${basParcalari(pal, look, mood, 1, uid)}
-      </g>
-    </svg>`;
-}
-
-/* --- EJDERHA ---
-   look : { color, skin, head, face }
-   mood : 'happy' | 'sad' */
 export function dragonSvg(level, look, mood = 'happy') {
   const pal = palet(look);
   if (level <= CONFIG.EGG_UNTIL) return yumurtaSvg(level, pal);
 
   const uid = ++uidSayaci;
   const g = growthRatio(level);
-  const s = 0.62 + g * 0.26;     /* genel olcek    0.62 -> 0.88 */
-  /* Buyume carpani. Varyantin kendi span'i (0.86 - 1.26) bununla CARPILIYOR,
-     o yuzden burasi eskisinden dusuk: en genis kanat (celestial, span 1.26)
-     seviye 99'da bile 120 * 1.26 * 0.72 * 0.88 = 96 pikselde kaliyor, yani
-     200'luk kadraja tam sigiyor. */
-  const wing = 0.50 + g * 0.22;
-  const horn = 0.60 + g * 0.38;  /* boynuz uzunlugu 0.60 -> 0.98 */
-  const dikenSayisi = Math.round(4 + g * 8);
+  /* Yerel cizim 180 birim genisliginde; 200'luk kadraja sigmasi icin olcek
+     eski surumden dusuk. Ayaklar alt kenara yakin dursun diye ty seviyeye
+     gore kayiyor. */
+  const s = 0.50 + g * 0.24;
+  const ty = 182 - 50 * s;
 
-  const acik = ton(pal.body, 0.24);
-  const koyu = ton(pal.body, -0.26);
-  const cokKoyu = ton(pal.dark, -0.2);
-  const kanatAcik = ton(pal.dark, 0.18);
-  const boynuzAcik = ton(pal.horn, 0.4);
-  const boynuzKoyu = ton(pal.horn, -0.32);
+  const acik = ton(pal.body, 0.26);
+  const koyu = ton(pal.body, -0.28);
+  const cokKoyu = ton(pal.dark, -0.15);
+  const boynuzAcik = ton(pal.horn, 0.35);
+  const boynuzKoyu = ton(pal.horn, -0.38);
+  const t = { cokKoyu, boynuzAcik, boynuzKoyu };
 
-  /* --- Sirt dikenleri ---
-     Govdeden ONCE cizilir; tabanlari govdenin arkasinda kalir ve sirttan
-     cikiyormus gibi gorunur. Boyun/bas ustunu ortmesin diye orta serit bos. */
-  const sirtY = (x) => -34 + (x / 36) ** 2 * 26;
-  let dikenler = '';
-  const yanBasi = Math.max(2, Math.round(dikenSayisi / 2));
-  for (let taraf = -1; taraf <= 1; taraf += 2) {
-    for (let i = 0; i < yanBasi; i++) {
-      const p = yanBasi === 1 ? 0 : i / (yanBasi - 1);
-      /* Ice dogru daha fazla girilirse dikenler boynun arkasinda kayboluyor,
-         o yuzden omuzdan disariya diziliyorlar. */
-      const x = taraf * (20 + p * 16);
-      const uzun = 1 - p * 0.5;
-      const kenar = sirtY(x);
-      const uc = kenar - (6 + uzun * 11);
-      const w = 3.8 + uzun * 1.8;
-      dikenler += `
-        <path d="M${(x - w).toFixed(1)} ${(kenar + 9).toFixed(1)}
-                 L${x.toFixed(1)} ${uc.toFixed(1)}
-                 L${(x + w).toFixed(1)} ${(kenar + 9).toFixed(1)} Z" fill="${boynuzKoyu}"/>
-        <path d="M${(x - w).toFixed(1)} ${(kenar + 9).toFixed(1)}
-                 L${x.toFixed(1)} ${uc.toFixed(1)}
-                 L${(x + w * 0.15).toFixed(1)} ${(kenar + 9).toFixed(1)} Z" fill="${boynuzAcik}"/>`;
-    }
-  }
+  const kanatOlcek = pal.wings.span || 1;
+  const dikenSayisi = Math.round(4 + g * 3);
 
-  /* --- KANAT ---
-     Sekiz varyant tek fonksiyondan cikiyor: acikliK (span), parmak sayisi ve
-     tur (kind) veriden geliyor, geri kalan cizim ortak. Boylece yeni bir
-     kanat eklemek data.js'e bir satir yazmak demek. */
-  const kanat = kanatSvg(pal.wings, pal, uid, { cokKoyu, boynuzAcik, boynuzKoyu });
+  /* Sirt dikenleri: sirt cizgisini takip ediyor, ortada en uzun */
+  const sirtNokta = [[-14, -33], [-4, -34], [6, -33], [16, -31], [26, -27], [35, -21], [42, -13]];
+  const dikenler = sirtNokta.slice(0, 3 + dikenSayisi).map(([x, y], i, a) => {
+    const p = i / Math.max(1, a.length - 1);
+    const h = 8 + Math.sin(p * Math.PI) * (5 + g * 5);
+    return `
+      <path d="M${x - 5.5} ${y + 3} L${x + 1} ${y - h} L${x + 5.5} ${y + 2} Z" fill="${boynuzKoyu}"/>
+      <path d="M${x - 5.5} ${y + 3} L${x + 1} ${y - h} L${x + 1.6} ${y + 2.5} Z" fill="${boynuzAcik}"/>`;
+  }).join('');
 
-  /* --- AYAK: bacak + uc parmak + kivrik pencelar --- */
-  const ayak = (cx, yon) => `
-    <g transform="translate(${cx} 0)">
-      <path d="M-11 12 C-14 24 -13 32 -10 36 L11 36 C14 31 14 22 11 12 Z" fill="${koyu}"/>
-      <path d="M-13 34 C-15 42 -8 46 0 46 C9 46 15 42 13 34 C9 30 -9 30 -13 34 Z"
-            fill="${ton(pal.dark, 0.05)}"/>
-      <path d="M-13 34 C-15 42 -8 46 0 46 C4 46 8 45 10 43 C2 42 -6 39 -13 34 Z"
-            fill="#000" opacity=".16"/>
-      ${[-9, 0, 9].map((tx) => `
-        <path d="M${tx - 3.4} 43 C${tx - 4} 48 ${tx - 2} 51 ${tx + 0.6} 51.5
-                 C${tx + 3} 50 ${tx + 3.6} 46 ${tx + 3.4} 43 Z" fill="${ton(pal.dark, 0.12)}"/>
-        <path d="M${tx + 0.6} 51.5 C${tx + 4} 51 ${tx + 5.6} 54 ${tx + 5} 56.5
-                 C${tx + 2} 55.5 ${tx} 53.5 ${tx + 0.6} 51.5 Z" fill="${boynuzAcik}"/>`).join('')}
-    </g>`;
+  /* Yanak dikenleri: cene menteşesinden geriye */
+  const yanak = [[-26, -74, 10], [-24, -66, 9], [-28, -60, 7]].map(([x, y, h]) => `
+    <path d="M${x} ${y - 4} L${x + h + 3} ${y + 2} L${x} ${y + 4} Z" fill="${boynuzKoyu}"/>
+    <path d="M${x} ${y - 4} L${x + h + 3} ${y + 2} L${x + 3} ${y + 0.5} Z" fill="${boynuzAcik}"/>`).join('');
+
+  const bKalinlik = 7 + g * 3;
+  const bUzunluk = 40 + g * 16;
+
+  /* Ac ejderhada goz kapaklari yariya iniyor */
+  const gozKapak = mood === 'sad'
+    ? `<path d="M-54 -84 C-48 -89 -38 -88 -35 -82 L-54 -80 Z" fill="${ton(pal.body, -0.18)}"/>`
+    : '';
 
   return `
     <svg viewBox="0 0 200 200" aria-hidden="true">
       <defs>
-        <!-- Govde: ustten isik, altta golge.
-             Aurora renginde tek ton yerine renk bantlari geciyor - mythic
-             kademenin fiyatini gozle gorulur kilan sey bu. -->
-        <linearGradient id="gv${uid}g" x1="0.15" y1="0" x2="0.85" y2="1">
+        <linearGradient id="gvg${uid}" x1="0.1" y1="0" x2="0.7" y2="1">
           ${pal.aurora
             ? pal.aurora.map((renk, i) =>
                 `<stop offset="${(i / (pal.aurora.length - 1)).toFixed(2)}" stop-color="${renk}"/>`).join('')
@@ -1045,89 +703,158 @@ export function dragonSvg(level, look, mood = 'happy') {
                <stop offset="0.45" stop-color="${pal.body}"/>
                <stop offset="1" stop-color="${koyu}"/>`}
         </linearGradient>
-        <!-- Kanat zari: dipte koyu, uca dogru biraz aciliyor -->
-        <linearGradient id="kn${uid}" x1="0" y1="0" x2="1" y2="0.4">
-          <stop offset="0" stop-color="${cokKoyu}"/>
-          <stop offset="0.55" stop-color="${pal.dark}"/>
-          <stop offset="1" stop-color="${kanatAcik}"/>
-        </linearGradient>
-        <!-- Karin: yumusak, ortasi aydinlik -->
-        <linearGradient id="kr${uid}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="${ton(pal.belly, -0.12)}"/>
-          <stop offset="0.4" stop-color="${ton(pal.belly, 0.25)}"/>
-          <stop offset="1" stop-color="${ton(pal.belly, -0.2)}"/>
-        </linearGradient>
-        <!-- Boynuz ve pencelerdeki keratin -->
-        <linearGradient id="bn${uid}" x1="0" y1="1" x2="0.3" y2="0">
+        <linearGradient id="bn${uid}" x1="0" y1="1" x2="0.35" y2="0">
           <stop offset="0" stop-color="${boynuzKoyu}"/>
-          <stop offset="0.6" stop-color="${pal.horn}"/>
+          <stop offset="0.55" stop-color="${pal.horn}"/>
           <stop offset="1" stop-color="${boynuzAcik}"/>
         </linearGradient>
-        <clipPath id="gv${uid}"><path d="${GOVDE}"/></clipPath>
+        <linearGradient id="kr${uid}" x1="0.2" y1="0" x2="0.8" y2="1">
+          <stop offset="0" stop-color="${ton(pal.belly, 0.22)}"/>
+          <stop offset="1" stop-color="${ton(pal.belly, -0.28)}"/>
+        </linearGradient>
+        <linearGradient id="kn${uid}y" x1="0" y1="0" x2="0.8" y2="0.5">
+          <stop offset="0" stop-color="${cokKoyu}"/>
+          <stop offset="0.6" stop-color="${pal.dark}"/>
+          <stop offset="1" stop-color="${ton(pal.dark, 0.32)}"/>
+        </linearGradient>
+        <linearGradient id="kn${uid}u" x1="0" y1="0" x2="0.8" y2="0.5">
+          <stop offset="0" stop-color="${ton(pal.dark, -0.35)}"/>
+          <stop offset="1" stop-color="${ton(pal.dark, -0.1)}"/>
+        </linearGradient>
+        <radialGradient id="gz${uid}">
+          <stop offset="0" stop-color="${ton(pal.horn, 0.5)}"/>
+          <stop offset="1" stop-color="${ton(pal.horn, 0.5)}" stop-opacity="0"/>
+        </radialGradient>
+        <clipPath id="gv${uid}"><path d="${GOVDE_YOL}"/></clipPath>
+        <clipPath id="bt${uid}"><path d="${BUT_YOL}"/></clipPath>
+        <clipPath id="kf${uid}"><path d="${KAFA_YOL}"/></clipPath>
       </defs>
 
-      <g transform="translate(100 116) scale(${s.toFixed(3)})">
+      <g transform="translate(104 ${ty.toFixed(1)}) scale(${s.toFixed(3)})">
 
-        <!-- KANATLAR: govdenin arkasinda -->
-        <g transform="scale(${wing.toFixed(3)} 1)">
-          <g transform="scale(-1 1)">${kanat}</g>
-          ${kanat}
+        <ellipse cx="6" cy="50" rx="58" ry="8" fill="#000" opacity=".28"/>
+
+        <!-- UZAK KANAT -->
+        <g transform="translate(4 4) scale(${kanatOlcek.toFixed(2)} 1)">
+          ${kanatSvg(pal.wings, pal, uid, true)}
         </g>
 
-        ${kuyrukSvg(pal.tail, pal, uid, { cokKoyu, boynuzAcik, boynuzKoyu })}
+        ${kuyrukSvg(pal.tail, pal, uid, t)}
+
+        <!-- YAKIN KANAT -->
+        <g transform="scale(${kanatOlcek.toFixed(2)} 1)">${kanatSvg(pal.wings, pal, uid, false)}</g>
+
+        <!-- UZAK on bacak -->
+        <g opacity=".75">
+          <path d="${BACAK_YOL}" fill="${cokKoyu}" transform="translate(16 -2) scale(0.85 0.9)"/>
+          ${pati(-6, 30, 0.72, cokKoyu, ton(pal.horn, -0.25))}
+        </g>
 
         ${dikenler}
 
-        <!-- BACAKLAR (govdenin arkasindan cikar) -->
-        ${ayak(-19, -1)}${ayak(19, 1)}
-
         <!-- GOVDE -->
-        <path d="${GOVDE}" fill="url(#gv${uid}g)"/>
-
-        <!-- Yan golgeler: govde yassi bir leke gibi durmasin -->
-        <path d="M-36 -4 C-38 -22 -22 -34 0 -34 C-16 -26 -25 -12 -24 6
-                 C-23 20 -18 30 -12 34 C-28 31 -38 14 -36 -4 Z"
-              fill="${cokKoyu}" opacity=".2"/>
-        <path d="M38 -4 C40 16 26 33 0 35 C16 29 26 18 27 4
-                 C28 -12 22 -26 12 -33 C28 -30 37 -18 38 -4 Z"
-              fill="${cokKoyu}" opacity=".26"/>
-
-        <!-- KARIN PLAKALARI
-             Tek bir soluk yumurta yerine ust uste binen bantlar: her bandin
-             alti golgeli, boylece karin duz bir leke degil kabartma duruyor.
-             Daha dar tutuldu, yoksa butun govdeyi yutuyordu. -->
+        <path d="${GOVDE_YOL}" fill="url(#gvg${uid})"/>
         <g clip-path="url(#gv${uid})">
-          <path d="M-14 -8 C-5 -17 6 -17 14 -7 C20 11 13 30 0 32
-                   C-13 30 -19 11 -14 -8 Z" fill="url(#kr${uid})"/>
-          ${[-4, 4, 12, 20, 27].map((y, i) => {
-            const w = 14 - i * 1.1;
+          <path d="M7 -33 C25 -32 39 -24 45 -12 C36 -22 22 -28 6 -29 Z" fill="${cokKoyu}" opacity=".4"/>
+          <!-- GOGUS PLAKALARI: gogsun on egrisini takip eden bantlar -->
+          <path d="M-31 -20 C-36 -6 -35 14 -30 28 C-26 37 -16 42 -4 43
+                   C-11 33 -15 18 -15 2 C-15 -11 -21 -17 -28 -22 Z" fill="url(#kr${uid})"/>
+          ${[-16, -8, 0, 8, 16, 24, 32, 38].map((y, i) => {
+            const x0 = -33 + Math.abs(i - 3.5) * 0.7, x1 = -14 + i * 1.4;
             return `
-              <path d="M${-w} ${y} Q0 ${y + 6 + i} ${w} ${y}"
-                    fill="none" stroke="${ton(pal.belly, -0.34)}"
-                    stroke-width="1.8" opacity=".5" stroke-linecap="round"/>
-              <path d="M${-w + 1} ${y - 1.4} Q0 ${y + 4 + i} ${w - 1} ${y - 1.4}"
-                    fill="none" stroke="${ton(pal.belly, 0.45)}"
-                    stroke-width="1" opacity=".45" stroke-linecap="round"/>`;
+              <path d="M${x0} ${y} C${(x0 + x1) / 2} ${y + 4.5} ${x1 - 4} ${y + 5} ${x1} ${y + 3}"
+                    fill="none" stroke="${ton(pal.belly, -0.42)}" stroke-width="1.7" opacity=".55"/>
+              <path d="M${x0 + 1.4} ${y - 1.6} C${(x0 + x1) / 2} ${y + 2} ${x1 - 5} ${y + 2.6} ${x1 - 2} ${y + 1}"
+                    fill="none" stroke="${ton(pal.belly, 0.5)}" stroke-width="1" opacity=".45"/>`;
           }).join('')}
+          <path d="M-10 -34 C10 -36 32 -30 46 -18 C32 -26 10 -30 -10 -29 Z"
+                fill="${cokKoyu}" opacity=".35"/>
+          ${pullar(-34, -34, 9, 6, 11, 14, ton(pal.body, -0.45), 0.3)}
+          <path d="M-14 -33 C6 -35 30 -29 45 -14" fill="none"
+                stroke="${ton(pal.body, 0.6)}" stroke-width="2.4" opacity=".45"/>
         </g>
 
-        <!-- Renge ozel desen -->
         ${desen(pal, uid)}
 
-        <!-- Rim light: sag ust kenarda ince isik -->
-        <g clip-path="url(#gv${uid})">
-          <path d="M6 -34 C26 -32 39 -20 40 -2" fill="none"
-                stroke="${ton(pal.body, 0.55)}" stroke-width="2.6" opacity=".5"/>
+        <!-- ARKA BUT: ayri kutle, govdenin uzerine biniyor -->
+        <path d="${BUT_YOL}" fill="${ton(pal.body, 0.06)}"/>
+        <g clip-path="url(#bt${uid})">
+          <ellipse cx="34" cy="8" rx="20" ry="20" fill="${ton(pal.body, 0.18)}" opacity=".55"/>
+          <path d="M22 -28 C44 -25 58 -5 55 15 C50 -2 40 -16 22 -22 Z" fill="${acik}" opacity=".3"/>
+          <path d="M20 45 C38 46 52 34 55 15 C50 32 38 42 20 41 Z" fill="${cokKoyu}" opacity=".35"/>
+          ${pullar(0, -26, 9, 6, 8, 13, ton(pal.body, -0.45), 0.26)}
+          <path d="M24 -24 C31 -10 33 6 29 24" fill="none"
+                stroke="${cokKoyu}" stroke-width="1.8" opacity=".4"/>
+        </g>
+        ${pati(30, 34, 0.8, ton(pal.body, 0.02), ton(pal.horn, 0.25))}
+
+        <!-- YAKIN on bacak -->
+        <path d="${BACAK_YOL}" fill="${ton(pal.body, -0.14)}"/>
+        <path d="M-30 -16 C-37 -2 -37 16 -33 30 C-32 34 -29 36 -26 37
+                 C-28 22 -28 4 -24 -14 Z" fill="${acik}" opacity=".22"/>
+        ${pati(-26, 32, 0.95, ton(pal.body, -0.04), ton(pal.horn, 0.3))}
+
+        <!-- BOYUN -->
+        <path d="${BOYUN_YOL}" fill="url(#gvg${uid})"/>
+        <path d="M-25 -64 C-21 -49 -11 -39 3 -33 L-2 -29 C-16 -36 -27 -47 -31 -62 Z"
+              fill="${cokKoyu}" opacity=".4"/>
+        ${[0, 1, 2, 3, 4].map((i) => {
+          const p = i / 4, x = -39 + p * 20, y = -53 + p * 22;
+          return `<path d="M${x} ${y} C${x + 5} ${y + 5} ${x + 11} ${y + 7} ${x + 15} ${y + 6}"
+            fill="none" stroke="${ton(pal.belly, -0.3)}" stroke-width="2" opacity=".5"/>`;
+        }).join('')}
+
+        ${yanak}
+
+        <!-- BOYNUZLAR -->
+        <path d="${boynuzYol(-30, -100, bUzunluk + 12, bKalinlik + 1.5, 26)}" fill="url(#bn${uid})"/>
+        <path d="M-30 -100 C-14 -108 4 -114 22 -119 C6 -112 -10 -104 -24 -95 Z"
+              fill="${boynuzAcik}" opacity=".45"/>
+        <path d="${boynuzYol(-22, -90, bUzunluk, bKalinlik, 16)}" fill="url(#bn${uid})" opacity=".9"/>
+
+        <!-- KAFA -->
+        <path d="${KAFA_YOL}" fill="url(#gvg${uid})"/>
+        <g clip-path="url(#kf${uid})">
+          <path d="M-88 -66 C-82 -76 -68 -84 -54 -90 C-44 -94 -36 -100 -30 -107
+                   L-24 -96 C-38 -88 -60 -78 -74 -70 Z" fill="${acik}" opacity=".32"/>
+          <path d="M-88 -64 C-74 -57 -50 -54 -30 -60 L-28 -52 C-52 -48 -76 -54 -90 -60 Z"
+                fill="${cokKoyu}" opacity=".5"/>
+          <path d="M-30 -104 C-20 -101 -15 -93 -17 -82 C-24 -78 -31 -79 -35 -84 Z"
+                fill="${ton(pal.body, -0.16)}" opacity=".65"/>
+          ${pullar(-88, -104, 7.5, 5, 11, 10, ton(pal.body, -0.45), 0.26)}
+          <path d="M-86 -63 C-72 -58 -52 -56 -34 -60" fill="none"
+                stroke="${ton(pal.body, 0.35)}" stroke-width="1.6" opacity=".35"/>
         </g>
 
-        <!-- BOYUN: govde ile bas arasinda kalir, ayri bir yaka gibi
-             gorunmesin diye ustune acik renk konmuyor -->
-        <path d="M-15 -24 C-17 -38 -14 -48 -11 -52 L11 -52 C14 -48 17 -38 15 -24 Z"
-              fill="${koyu}"/>
-        <path d="M11 -52 C14 -48 17 -38 15 -24 L8 -24 C10 -38 9 -46 6 -52 Z"
-              fill="${cokKoyu}" opacity=".35"/>
+        <!-- kas cikintisi -->
+        <path d="M-58 -88 C-49 -95 -37 -97 -28 -93 C-37 -89 -49 -85 -57 -83 Z"
+              fill="${ton(pal.body, -0.32)}"/>
 
-        ${basParcalari(pal, look, mood, horn, uid)}
+        <!-- GOZ -->
+        <ellipse cx="-44.5" cy="-80" rx="13" ry="9" fill="url(#gz${uid})" opacity=".55"/>
+        <path d="M-54 -82 C-48 -88 -38 -87 -35 -80 C-39 -75 -50 -76 -54 -82 Z" fill="#150e22"/>
+        <path d="M-52.6 -81.4 C-47.6 -86 -39.6 -85 -36.6 -80.2 C-40 -76.4 -48.6 -77 -52.6 -81.4 Z"
+              fill="${ton(pal.horn, 0.45)}"/>
+        <path d="M-45 -84 C-42.8 -84 -41.6 -82 -41.6 -80.2 C-41.6 -78.4 -42.8 -77.2 -45 -77.2
+                 C-46.8 -78.4 -47 -82.8 -45 -84 Z" fill="#150e22"/>
+        <circle cx="-41.2" cy="-82" r="1.7" fill="#fff" opacity=".95"/>
+        ${gozKapak}
+
+        <!-- burun deligi, agiz, disler -->
+        <path d="M-80 -71 C-77 -72.4 -74.4 -71 -75 -68.6 C-77.4 -68 -80 -69 -80 -71 Z"
+              fill="${cokKoyu}"/>
+        <path d="M-87 -64 C-74 -59 -52 -57 -32 -61" fill="none"
+              stroke="${cokKoyu}" stroke-width="2" opacity=".8" stroke-linecap="round"/>
+        <path d="M-68 -58.4 L-64.6 -58.8 L-66 -53 Z" fill="#fff" opacity=".92"/>
+        <path d="M-58 -57.4 L-55.4 -57.8 L-56.6 -53.4 Z" fill="#fff" opacity=".8"/>
+
+        <!-- YUZ ISARETI: gozden SONRA, uzerine binebilsin diye -->
+        ${faceSvg(look.face)}
+
+        <!-- TAC: kafatasinin tepesine oturuyor, 3/4 egimine gore donduruluyor -->
+        <g transform="translate(${KAFA.tac[0]} ${KAFA.tac[1]}) rotate(${KAFA.tacAci})">
+          ${headSvg(look.head, 0)}
+        </g>
       </g>
     </svg>`;
 }
