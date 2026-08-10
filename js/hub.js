@@ -1,12 +1,12 @@
 /* Hub (ana menu) ekraninin mantigi.
 Yeni oyun eklemek istedigimizde sadece asagidaki gameList() fonksiyonuna satir ekliyoruz. */
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v21';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v22';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu,
-} from './store.js?v21';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v21';
+} from './store.js?v22';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v22';
 
 /* Botun Telegram adresi. Kendi botunun adini yazarsan tarayicida acan
    kullanicilar uyariya dokununca dogrudan bota gider. Bos birakilirsa

@@ -17,8 +17,8 @@
    Olcekler seviye 99'da bile 200x200 kadraja sigacak sekilde secildi:
    en genis nokta kanat ucu (x = ±120), yani 120 * wing * s <= ~96. */
 
-import { palet, HEADS, FACES } from './data.js?v21';
-import { CONFIG, growthRatio } from './config.js?v21';
+import { palet, HEADS, FACES } from './data.js?v22';
+import { CONFIG, growthRatio } from './config.js?v22';
 
 /* Ayni sayfada birden fazla ejderha olabilir; degrade ve maske id'leri
    catismasin diye sayac. */
@@ -989,8 +989,10 @@ function gorselEjderha(level, mood) {
   const uid = ++uidSayaci;
   const g = growthRatio(level);
 
-  /* Gorunen genislik 200'luk kadrajda: yavruda 118, seviye 99'da 168 */
-  const hedefGen = 118 + g * 50;
+  /* Gorunen genislik 200'luk kadrajda: yavruda 88, seviye 99'da 128.
+     Ilk deger (118-168) adaya gore fazla iriydi - ejderha karonun uzerinde
+     durmak yerine adayi yutuyordu. */
+  const hedefGen = 88 + g * 40;
   const olcek = hedefGen * GORSEL.kare / (GORSEL.x1 - GORSEL.x0);
 
   /* Ejderhanin ayaklari alt kenara yakin dursun, ortalanmis olsun */
