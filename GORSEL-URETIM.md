@@ -30,41 +30,76 @@ zaten böyle çalışıyor, sadece çizim yerine görsel koyacağız.
 
 ---
 
-## Aşama 1 — Referanstan tutarlı bir set üret (bootstrap)
+## Aşama 1 — Sıfırdan tutarlı bir set üret
 
-Elinde tek bir referans görsel var; model eğitmek için 15-20 görsel gerekiyor.
-Bu yüzden önce referansı kullanarak **aynı ejderhanın farklı açılarını**
-ürettirip kendi eğitim setini oluşturuyoruz.
+Referans görsel kullanmıyoruz; ejderhayı promptun kendisi tarif ediyor.
+Model eğitmek için 15-20 görsel gerektiği icin önce bu promptla bir havuz
+üretip en tutarlılarını seçiyoruz.
 
 1. **Images** → **Generate**
-2. Az önce seçtiğin modeli seç
-3. **Image Reference** (veya "IP Adapter") düğmesine bas → **referans
-   ejderha görselini yükle**
-4. Etki gücünü (**strength / influence**) **0.6 - 0.7** yap
-   — 1.0 yaparsan aynı görseli kopyalar, 0.3 yaparsan benzemez
-5. Aşağıdaki promptu yapıştır ve **20 görsel** üret:
+2. Aşama 0'da seçtiğin modeli seç
+3. **Boyut:** 1024 × 1024
+4. Aşağıdaki promptu yapıştır ve **25-30 görsel** üret
+
+### Ana prompt
 
 ```
-chibi baby dragon character, cute but fierce, seated pose, three-quarter
-view facing left, large head, short thick neck, long tapered snout, two
-large horns swept back, spiky frill along neck and spine, plated chest
-scales, membrane wings, long curled tail with spikes, glowing violet eyes,
-deep purple scales with magenta rim lighting, stylized 3D mobile game asset,
-glossy clean shading, centered composition, plain neutral background,
-full body visible
+adorable baby dragon character, chibi proportions with an oversized head
+and small sturdy body, cute but fierce expression, seated on the ground in
+a three-quarter view facing left, one foreleg planted forward
+
+anatomy: long tapered reptilian snout with small nostrils, strong jawline
+with two small fangs showing, heavy brow ridge over large glowing eyes with
+vertical slit pupils, two thick horns sweeping back over the skull, a row
+of sharp spines running from the back of the head down the neck and spine
+to the tail, short thick neck, plated overlapping belly scales on the chest,
+clawed paws, long tail curling around the body
+
+wings: bat-like membrane wings with visible finger bones, half spread,
+glowing translucent membrane
+
+colors: deep violet and dark purple scales, magenta and pink rim lighting
+along the edges, luminous lilac eyes, soft cyan glow accents
+
+style: polished stylized 3D game render, high-end mobile game hero asset,
+smooth glossy surfaces, strong volumetric shading, crisp silhouette,
+vibrant saturated palette, cinematic rim light, Blizzard and Riot Games
+inspired character art
+
+composition: full body fully visible, centered in frame, plain flat neutral
+grey background, even studio lighting, no ground shadow
 ```
 
-**Negative prompt** (varsa "Negative" kutusuna):
+### Negative prompt
 
 ```
-text, watermark, logo, blurry, extra limbs, extra heads, realistic photo,
-cluttered background, multiple characters, cropped, cut off
+text, watermark, logo, signature, blurry, low quality, extra limbs, extra
+heads, two dragons, realistic photo, photorealistic, cluttered background,
+scenery, landscape, cropped, cut off, out of frame, human, armor, rider,
+flat 2d drawing, sketch, lineart
 ```
 
-6. Çıkanlardan **en tutarlı 15-20 tanesini** seç (aynı ejderha gibi
-   duranlar). Farklı görünenleri **alma** — eğitimi bozarlar.
+### Ayarlar
 
----
+| Ayar | Değer | Neden |
+|---|---|---|
+| Boyut | 1024 × 1024 | Kare şart — parçalar üst üste binecek |
+| Guidance / CFG | 6 - 8 | Yüksek olursa yanıyor, düşükse prompttan sapıyor |
+| Steps | 30 - 40 | Daha fazlası boşuna bekletiyor |
+| Seed | boş bırak | Çeşitlilik gerekiyor, sonra en iyileri seçeceksin |
+
+### Seçim
+
+Çıkan 25-30 görselden **aynı ejderha gibi duran 15-20 tanesini** seç.
+
+Şunlara dikkat et:
+- Boynuz sayısı ve şekli aynı mı
+- Renk tonu aynı mı (biri mavi biri kırmızıysa alma)
+- Oturma pozu ve yön aynı mı
+- Gövde oranı aynı mı (biri uzun biri tıknazsa alma)
+
+**Farklı görünenleri alma** — eğitim setindeki her tutarsız görsel modeli
+biraz daha bozar. 15 tutarlı görsel, 30 karışık görselden iyidir.
 
 ## Aşama 2 — Kendi modelini eğit
 
