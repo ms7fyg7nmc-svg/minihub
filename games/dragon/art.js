@@ -17,8 +17,8 @@
    Olcekler seviye 99'da bile 200x200 kadraja sigacak sekilde secildi:
    en genis nokta kanat ucu (x = ±120), yani 120 * wing * s <= ~96. */
 
-import { palet, HEADS, FACES } from './data.js?v20';
-import { CONFIG, growthRatio } from './config.js?v20';
+import { palet, HEADS, FACES } from './data.js?v21';
+import { CONFIG, growthRatio } from './config.js?v21';
 
 /* Ayni sayfada birden fazla ejderha olabilir; degrade ve maske id'leri
    catismasin diye sayac. */
@@ -962,9 +962,64 @@ export function dragonHeadSvg(look, mood = 'happy') {
 /* --- EJDERHA ---
    look : { color, skin, head, face }
    mood : 'happy' | 'sad' */
+
+/* ==========================================================================
+   GORSEL TABANLI EJDERHA
+
+   Ejderha artik elle yazilmis SVG egrileriyle degil, uretilmis bir
+   gorselle ciziliyor (games/dragon/assets/). Elle cizim referanstaki
+   kaliteye hicbir denemede yaklasamadi; goruntuyu model uretiyor, kod
+   sadece yerlestiriyor.
+
+   DISA ACILAN SOZLESME AYNI: dragonSvg(level, look, mood) yine 200x200
+   bir SVG donduruyor. Boylece adadaki konumlandirma, seviyeye gore
+   buyume ve market onizlemesi hic degismeden calismaya devam ediyor.
+
+   OLCU: gorselde ejderha 1024'luk karenin x 188-831, y 139-891 araliginda
+   duruyor (kenarlarda bos pay var). Asagidaki sayilar bu olculerden
+   turetildi - ejderhanin GORUNEN kismi kadraja oturuyor, seffaf bosluk
+   degil. Gorsel degisirse bu dort sayi guncellenmeli. */
+const GORSEL = {
+  yol: 'assets/dragon-base.png',
+  kare: 1024,
+  x0: 188, y0: 139, x1: 831, y1: 891,
+};
+
+function gorselEjderha(level, mood) {
+  const uid = ++uidSayaci;
+  const g = growthRatio(level);
+
+  /* Gorunen genislik 200'luk kadrajda: yavruda 118, seviye 99'da 168 */
+  const hedefGen = 118 + g * 50;
+  const olcek = hedefGen * GORSEL.kare / (GORSEL.x1 - GORSEL.x0);
+
+  /* Ejderhanin ayaklari alt kenara yakin dursun, ortalanmis olsun */
+  const ix = 100 - hedefGen / 2 - (GORSEL.x0 / GORSEL.kare) * olcek;
+  const iy = 192 - (GORSEL.y1 / GORSEL.kare) * olcek;
+
+  /* Ac/uzgun ejderha biraz soluk - eskiden goz kapaklari dusuyordu,
+     gorselde ayni sey yapilamadigi icin doygunluk azaltiliyor */
+  const suzgec = mood === 'sad'
+    ? `<filter id="ruh${uid}"><feColorMatrix type="saturate" values="0.45"/></filter>`
+    : '';
+
+  return `
+    <svg viewBox="0 0 200 200" aria-hidden="true">
+      ${suzgec ? `<defs>${suzgec}</defs>` : ''}
+      <image href="${GORSEL.yol}" x="${ix.toFixed(1)}" y="${iy.toFixed(1)}"
+             width="${olcek.toFixed(1)}" height="${olcek.toFixed(1)}"
+             ${suzgec ? `filter="url(#ruh${uid})"` : ''}
+             preserveAspectRatio="xMidYMid meet"/>
+    </svg>`;
+}
+
 export function dragonSvg(level, look, mood = 'happy') {
   const pal = palet(look);
   if (level <= CONFIG.EGG_UNTIL) return yumurtaSvg(level, pal);
+
+  /* Gorsel tabanli cizim. Kozmetik katmanlari henuz baglanmadi - simdilik
+     yalnizca ana govde gosteriliyor (bkz. GORSEL). */
+  return gorselEjderha(level, mood);
 
   const uid = ++uidSayaci;
   const g = growthRatio(level);
