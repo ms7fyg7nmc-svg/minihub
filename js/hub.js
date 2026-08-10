@@ -1,12 +1,12 @@
 /* Hub (ana menu) ekraninin mantigi.
 Yeni oyun eklemek istedigimizde sadece asagidaki gameList() fonksiyonuna satir ekliyoruz. */
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v11';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulKilitli,
-} from './store.js';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js';
+} from './store.js?v11';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v11';
 
 /* Botun Telegram adresi. Kendi botunun adini yazarsan tarayicida acan
    kullanicilar uyariya dokununca dogrudan bota gider. Bos birakilirsa
@@ -528,9 +528,10 @@ async function renderDailyCard() {
       if (streak && !streak.canClaim) kalanlar.push(streak.nextInMs || 0);
       if (spin && !spin.canSpin) kalanlar.push(spin.nextInMs || 0);
       const enYakin = kalanlar.length ? Math.min(...kalanlar) : 0;
-      ipucu.className = 'daily-card-hint geri-sayim';
-      ipucu.textContent = kalanMetin(enYakin);
-      ipucu.dataset.bitis = String(Date.now() + enYakin);
+      /* Ciplak bir sayi yerine ne oldugunu soyleyen bir satir */
+      ipucu.className = 'daily-card-hint';
+      ipucu.innerHTML = `<span class="etiket">${t('hub.daily.nextIn')}</span>` +
+                        `<span class="sure geri-sayim" data-bitis="${Date.now() + enYakin}">${kalanMetin(enYakin)}</span>`;
    }
    sayaclariBaslat();
 }

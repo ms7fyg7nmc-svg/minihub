@@ -2,7 +2,7 @@
 Telegram icinde acildiginda: tema renkleri, kullanici bilgisi, titresim.
 Normal tarayicida acildiginda: her sey yine calisir (test edebilmen icin). */
 
-import { t } from './i18n.js';
+import { t } from './i18n.js?v11';
 
 export const tg = window.Telegram?.WebApp ?? null;
 

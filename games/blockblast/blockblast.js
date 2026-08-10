@@ -4,9 +4,9 @@
    Dolan satir ve sutunlar patlar. Eldeki hicbir parca hicbir yere sigmiyorsa
    oyun biter. Sure yok, kaybetme baskisi yok. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v11';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v11';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v11';
 
 const GAME_ID = 'blockblast';
 const SIZE = 8;

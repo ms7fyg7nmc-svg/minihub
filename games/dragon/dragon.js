@@ -9,17 +9,17 @@
    Burada hicbir fiyat, hicbir XP degeri ve hicbir bakiye aritmetigi yok -
    ileride dengeleme yaparken bu dosyayi acmak gerekmemeli. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v11';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v11';
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js';
-import { bakiyeOku, harca } from './economy.js';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v11';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v11';
+import { bakiyeOku, harca } from './economy.js?v11';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js';
-import { dragonSvg, headSvg, faceSvg, HEAD_BOX } from './art.js';
-import { ITEM_TEXTS } from './i18n-items.js';
-import { createIsland } from './island.js';
+         adaSahipMi, adaEkle } from './model.js?v11';
+import { dragonSvg, headSvg, faceSvg, HEAD_BOX } from './art.js?v11';
+import { ITEM_TEXTS } from './i18n-items.js?v11';
+import { createIsland } from './island.js?v11';
 
 const GAME_ID = 'dragon';
 

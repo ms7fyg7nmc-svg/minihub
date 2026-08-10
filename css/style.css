@@ -386,7 +386,10 @@ body.hub::before {
   gap: 14px;
   width: 100%;
   margin: 0 0 18px;
-  padding: 12px 14px;
+  /* Oyun kartlariyla ayni dolgu ve yukseklik - daha az olunca listenin
+     yaninda bodur ve sonradan eklenmis gibi duruyordu. */
+  padding: 14px;
+  min-height: 82px;
   border: 1px solid rgba(245, 185, 66, 0.22);
   border-radius: var(--radius);
   background:
@@ -409,14 +412,14 @@ body.hub::before {
   align-items: center;
   gap: 1px;
   flex: none;
-  min-width: 56px;
-  padding: 6px 8px;
-  border-radius: 12px;
+  min-width: 66px;
+  padding: 9px 10px;
+  border-radius: 14px;
   background: rgba(245, 185, 66, 0.12);
   border: 1px solid rgba(245, 185, 66, 0.25);
 }
 .card-energy {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 800;
   color: var(--gold);
   font-variant-numeric: tabular-nums;
@@ -438,8 +441,15 @@ body.hub::before {
 }
 
 .daily-card-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
-.daily-card-info strong { font-size: 15px; letter-spacing: -0.2px; }
-.daily-card-hint { font-size: 11.5px; color: var(--muted); }
+.daily-card-info strong { font-size: 16px; letter-spacing: -0.2px; }
+.daily-card-hint { font-size: 12px; color: var(--muted); }
+.daily-card-hint .etiket { opacity: .75; }
+.daily-card-hint .sure {
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  margin-left: 4px;
+}
 
 /* "HAZIR!" - kartin en dikkat ceken parcasi olmali, insan tiklasin diye */
 .daily-card-hint.is-ready {

@@ -8,9 +8,9 @@
    sonra geri alinabilir hamlelerle karistir. Boylece her bolumun cozumu
    kesin vardir (karistirma hamlelerini tersten oynamak yeter). */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js';
-import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v11';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v11';
+import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js?v11';
 
 const GAME_ID = 'watersort';
 const POINTS_PER_LEVEL = 25; /* tamamlanan her bolum = 25 hub puani */

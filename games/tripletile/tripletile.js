@@ -9,9 +9,9 @@
    calisiriz - her adimda o an oynanabilir durumdaki uc tasi secip ayni
    cesidi veririz. Boylece her bolumun cozumu kesin vardir. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v11';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v11';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v11';
 
 const GAME_ID = 'tripletile';
 const POINTS_DIVISOR = 10;  /* her 10 oyun skoru = 1 hub puani */

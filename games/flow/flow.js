@@ -11,9 +11,9 @@
    etmek zorunda degil - hangi yoldan giderse gitsin, ciftler baglanip
    izgara dolarsa bolum biter. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v11';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v11';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v11';
 
 const GAME_ID = 'flow';
 const POINTS_PER_LEVEL = 20; /* tamamlanan her bolum = 20 hub puani */
