@@ -17,7 +17,7 @@ import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './da
 import { bakiyeOku, harca } from './economy.js';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
          adaSahipMi, adaEkle } from './model.js';
-import { dragonSvg, headSvg, faceSvg, HEAD_BOX, FACE_BOX } from './art.js';
+import { dragonSvg, headSvg, faceSvg, HEAD_BOX } from './art.js';
 import { ITEM_TEXTS } from './i18n-items.js';
 import { createIsland } from './island.js';
 
@@ -515,7 +515,7 @@ function onizleme(slot, id, item) {
     /* Yuz parcalari ejderha kafasinin koordinatlarinda cizildigi icin
        kutucukta o bolgeye bakan bir cerceve kullaniliyor */
     return `<span class="swatch" style="background:rgba(255,255,255,.06)">
-      <svg viewBox="${FACE_BOX}">${faceSvg(id)}</svg></span>`;
+      <svg viewBox="-34 -80 68 40">${faceSvg(id)}</svg></span>`;
   }
 
   if (slot === 'wings' || slot === 'tail') {
