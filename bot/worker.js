@@ -44,7 +44,7 @@ const ENERGY_PER_EARN = 1;        /* her Coin kazanma istegi 1 enerji harcar */
 const EMPTY_ENERGY_CARPAN = 0.25; /* enerji bittiyse kazanc bu orana duser (kesilmez) */
 
 /* 7 gunluk dongu, 7. gun buyuk odul. Dongu sonunda 1. gune donuluyor. */
-const STREAK_REWARDS = [20, 30, 40, 60, 80, 100, 200];
+const STREAK_REWARDS = [100, 150, 200, 300, 400, 500, 1000];
 const STREAK_MIN_GAP_MS = 20 * 3600 * 1000;   /* bundan once tekrar alinamaz */
 const STREAK_RESET_GAP_MS = 48 * 3600 * 1000; /* bundan sonra seri sifirlanir */
 
@@ -53,14 +53,14 @@ const SPIN_MIN_GAP_MS = 20 * 3600 * 1000;
 /* Agirlik toplami 1000 - tahmini kazanc ~1 oyun turu kadar, cok nadir buyuk
    odul ve cok nadir "enerji dolumu" dilimi var. */
 const SPIN_PRIZES = [
-  { tur: 'coin',   miktar: 10,          agirlik: 260 },
-  { tur: 'coin',   miktar: 20,          agirlik: 250 },
-  { tur: 'coin',   miktar: 30,          agirlik: 200 },
-  { tur: 'coin',   miktar: 50,          agirlik: 150 },
-  { tur: 'coin',   miktar: 75,          agirlik: 80  },
-  { tur: 'coin',   miktar: 100,         agirlik: 45  },
+  { tur: 'coin',   miktar: 50,          agirlik: 260 },
+  { tur: 'coin',   miktar: 100,         agirlik: 250 },
+  { tur: 'coin',   miktar: 150,         agirlik: 200 },
+  { tur: 'coin',   miktar: 250,         agirlik: 150 },
+  { tur: 'coin',   miktar: 375,         agirlik: 80  },
+  { tur: 'coin',   miktar: 500,         agirlik: 45  },
   { tur: 'enerji', miktar: MAX_ENERGY,  agirlik: 10  },
-  { tur: 'coin',   miktar: 150,         agirlik: 5   },
+  { tur: 'coin',   miktar: 750,         agirlik: 5   },
 ];
 
 /* Karsilama mesajinin ustundeki banner gorseli. Ayni repo'da barinir,
