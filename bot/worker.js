@@ -731,14 +731,22 @@ async function handleSpin(env, playerId) {
    handleSync) - kimse baskasinin adiyla listeye giremez. */
 const LIDER_LIMIT = 50;
 
+/* Siralamaya GIRMEYEN hesaplar. Oyunun sahibi kendi tablosunda birinci
+   durmasin diye: bakiyesi test/yonetim islemleriyle sismis durumda,
+   listede olmasi gercek oyuncularin yarisini anlamsiz kiliyor. */
+const LIDER_HARIC = new Set(['8100679296']);
+
 async function handleLeaderboard(env, playerId) {
   const kazanc = `p.points + COALESCE((SELECT -SUM(s.delta) FROM spend_log s
                     WHERE s.player_id = p.id AND s.delta < 0), 0)`;
 
+  const haric = [...LIDER_HARIC];
+  const haricSql = haric.length ? `WHERE p.id NOT IN (${haric.map(() => '?').join(',')})` : '';
+
   const rows = await env.DB.prepare(
     `SELECT p.id, p.name, ${kazanc} AS kazanilan
-     FROM players p ORDER BY kazanilan DESC, p.created_at ASC LIMIT ?`,
-  ).bind(LIDER_LIMIT).all();
+     FROM players p ${haricSql} ORDER BY kazanilan DESC, p.created_at ASC LIMIT ?`,
+  ).bind(...haric, LIDER_LIMIT).all();
 
   const liste = rows.results.map((r, i) => ({
     sira: i + 1,
@@ -749,6 +757,9 @@ async function handleLeaderboard(env, playerId) {
 
   /* Oyuncu ilk 50'de degilse kendi sirasini ayrica bildir - insan once
      kendini arar, listede yoksa nerede oldugunu bilmek ister. */
+  /* Haric tutulan hesap kendi sirasini da gormuyor - hub karti gizleniyor */
+  if (LIDER_HARIC.has(playerId)) return { liste, kendi: null, toplam: liste.length };
+
   let kendi = liste.find((x) => x.ben) || null;
   if (!kendi) {
     const benim = await env.DB.prepare(
@@ -756,8 +767,9 @@ async function handleLeaderboard(env, playerId) {
     ).bind(playerId).first();
     if (benim) {
       const ust = await env.DB.prepare(
-        `SELECT COUNT(*) AS n FROM players p WHERE ${kazanc} > ?`,
-      ).bind(benim.kazanilan).first();
+        `SELECT COUNT(*) AS n FROM players p
+         WHERE ${kazanc} > ?${haric.length ? ` AND p.id NOT IN (${haric.map(() => '?').join(',')})` : ''}`,
+      ).bind(benim.kazanilan, ...haric).first();
       kendi = { sira: (ust?.n || 0) + 1, ad: '', kazanilan: benim.kazanilan, ben: true };
     }
   }

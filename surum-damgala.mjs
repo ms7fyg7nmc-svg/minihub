@@ -40,11 +40,16 @@ function dosyalariTara(dizin, uzantilar, sonuc = []) {
 
 let degisen = 0;
 
-/* 1) HTML: <script src="js/hub.js?v11"> - sadece YEREL adresler.
-      Telegram'in kendi betigine (https://...) dokunulmuyor. */
+/* 1) HTML: <script src="js/hub.js?v11"> VE <link href="css/style.css?v11">
+      Sadece YEREL adresler; Telegram'in kendi betigine dokunulmuyor.
+
+      CSS'i de damgalamak sart: bir surumde yalnizca JS damgalanmisti ve
+      tarayici yeni JS'i alip ESKI CSS'i kullandigi icin madalyalar gibi
+      yalnizca stille gelen degisiklikler ekranda hic gorunmedi. */
 for (const yol of dosyalariTara('.', ['.html'])) {
   const eski = readFileSync(yol, 'utf8');
-  const yeni = eski.replace(/(src="(?!https?:)[^"]*?\.js)(\?v\d+)?"/g, `$1?v${surum}"`);
+  let yeni = eski.replace(/(src="(?!https?:)[^"]*?\.js)(\?v\d+)?"/g, `$1?v${surum}"`);
+  yeni = yeni.replace(/(href="(?!https?:)[^"]*?\.css)(\?v\d+)?"/g, `$1?v${surum}"`);
   if (yeni !== eski) { writeFileSync(yol, yeni); degisen++; }
 }
 
