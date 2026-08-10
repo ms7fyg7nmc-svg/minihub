@@ -417,18 +417,20 @@ function buildWheel(prizes) {
       const isEnergy = prize.tur === 'enerji';
       const text = isEnergy ? '⚡' : prize.miktar;
 
-      /* Etiketler carkin donusune KARSI donduruluyor (bkz. .wheel text
-         kurali): cark hangi acida olursa olsun butun sayilar dimdik
-         duruyor. Sadece dilimle birlikte dondurulseydi cark durdugunda
-         cogu sayi yan yatmis olurdu. */
+      /* Sayilar dilimin DIS YAYINA PARALEL duruyor (teget yonu).
+         polar()'da aci tepeden saat yonunde olctugu icin teget yonu tam
+         olarak rotate(mid); alt yaridaki dilimlerde yazi bas asagi
+         dusecegi icin onlar 180 derece daha ceviriliyor. */
+      const yazAci = (mid > 90 && mid < 270) ? mid + 180 : mid;
       html += `
       <path d="M${cx},${cy} L${start.x.toFixed(2)},${start.y.toFixed(2)}
                A${r},${r} 0 0,1 ${end.x.toFixed(2)},${end.y.toFixed(2)} Z"
             fill="${color}" stroke="rgba(0,0,0,.28)" stroke-width="1.5"/>
-      <text x="${label.x.toFixed(2)}" y="${label.y.toFixed(2)}" text-anchor="middle"
-            dominant-baseline="middle" fill="#fff" font-weight="800"
-            font-size="${isEnergy ? 17 : 14}"
-            style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))">${text}</text>`;
+      <g transform="translate(${label.x.toFixed(2)} ${label.y.toFixed(2)}) rotate(${yazAci.toFixed(1)})">
+        <text text-anchor="middle" dominant-baseline="middle" fill="#fff" font-weight="800"
+              font-size="${isEnergy ? 17 : 14}"
+              style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))">${text}</text>
+      </g>`;
    });
    svg.innerHTML = html;
 }
@@ -450,7 +452,6 @@ function spinToIndex(index, segmentCount) {
    let delta = targetMod - current;
    if (delta <= 0) delta += 360;
    wheelRotation += delta + 5 * 360; /* +5 tam tur, gorsel etki icin */
-   svg.style.setProperty('--don', `${wheelRotation}deg`);
    svg.style.transform = `rotate(${wheelRotation}deg)`;
 }
 

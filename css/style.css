@@ -530,13 +530,33 @@ body.hub::before {
 .daily-section h3 {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin: 0 0 12px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.8px;
+}
+
+/* Baslik metninin iki yaninda ince cizgi - bolumleri gorsel olarak ayirir */
+.daily-section h3::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255,255,255,.14), transparent);
+}
+
+/* Cark basligi ortada: iki yanina da cizgi geliyor */
+.daily-section.is-orta h3 { justify-content: center; }
+.daily-section.is-orta h3::before {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(270deg, rgba(255,255,255,.14), transparent);
+}
+.daily-section.is-orta h3::after {
+  background: linear-gradient(90deg, rgba(255,255,255,.14), transparent);
 }
 
 .daily-btn {
@@ -596,44 +616,44 @@ body.hub::before {
 
 
 /* Gunluk seri seridi */
+/* Gunler tek bir cerceve icinde, aralarinda ince ayirici - dagilmis
+   kutucuklar yerine tablo gibi butunluklu duruyor. */
 .streak-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
   margin-bottom: 12px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.035);
 }
 
 .streak-pill {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 8px 2px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 3px;
+  padding: 10px 2px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
 }
+.streak-pill:first-child { border-left: none; }
 
 .streak-pill .day { font-size: 9.5px; color: var(--muted); font-weight: 700; }
 .streak-pill .amt { font-size: 11.5px; font-weight: 800; }
 
-.streak-pill.is-done {
-  background: rgba(78, 203, 139, 0.14);
-  border-color: rgba(78, 203, 139, 0.3);
-}
+.streak-pill.is-done { background: rgba(78, 203, 139, 0.14); }
 .streak-pill.is-done .amt { color: #4ecb8b; }
 .streak-pill.is-done .day::after { content: ' ✓'; }
 
 .streak-pill.is-current {
-  background: linear-gradient(160deg, rgba(245, 185, 66, 0.28), rgba(245, 185, 66, 0.08));
-  border-color: rgba(245, 185, 66, 0.55);
-  box-shadow: 0 0 12px rgba(245, 185, 66, 0.28);
+  background: linear-gradient(160deg, rgba(245, 185, 66, 0.30), rgba(245, 185, 66, 0.10));
+  box-shadow: inset 0 0 0 1px rgba(245, 185, 66, 0.55);
   animation: streak-glow 1.8s ease-in-out infinite;
 }
 .streak-pill.is-current .amt { color: var(--gold); }
 
 @keyframes streak-glow {
-  50% { box-shadow: 0 0 18px rgba(245, 185, 66, 0.5); }
+  50% { box-shadow: inset 0 0 0 1px rgba(245, 185, 66, 0.9), 0 0 14px rgba(245, 185, 66, 0.35); }
 }
 
 .streak-pill.is-future { opacity: 0.5; }
@@ -664,16 +684,6 @@ body.hub::before {
   display: block;
   border-radius: 50%;
   box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.22);
-  transition: transform 4.2s cubic-bezier(0.12, 0.68, 0.15, 1);
-}
-
-/* Cark donerken sayilar dik kalsin: her etiket carkin acisinin TERSI kadar
-   donduruluyor. Ikisi de ayni sure ve egriyle gectigi icin donus boyunca
-   senkron kaliyorlar. */
-.wheel text {
-  transform: rotate(calc(-1 * var(--don, 0deg)));
-  transform-box: fill-box;
-  transform-origin: center;
   transition: transform 4.2s cubic-bezier(0.12, 0.68, 0.15, 1);
 }
 
