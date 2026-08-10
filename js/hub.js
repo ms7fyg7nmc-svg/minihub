@@ -1,12 +1,12 @@
 /* Hub (ana menu) ekraninin mantigi.
 Yeni oyun eklemek istedigimizde sadece asagidaki gameList() fonksiyonuna satir ekliyoruz. */
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v16';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v17';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu,
-} from './store.js?v16';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v16';
+} from './store.js?v17';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v17';
 
 /* Botun Telegram adresi. Kendi botunun adini yazarsan tarayicida acan
    kullanicilar uyariya dokununca dogrudan bota gider. Bos birakilirsa
@@ -762,7 +762,8 @@ async function acLiderPanel() {
 
    for (const s of veri.liste) {
       const satir = document.createElement('div');
-      satir.className = 'lider-satir' + (s.ben ? ' benim' : '') + (s.sira <= 3 ? ' tepe' : '');
+      satir.className = 'lider-satir' + (s.ben ? ' benim' : '') +
+         (s.sira <= 3 ? ` tepe tepe-${s.sira}` : '');
 
       const sira = document.createElement('span');
       sira.className = 'lider-no';
