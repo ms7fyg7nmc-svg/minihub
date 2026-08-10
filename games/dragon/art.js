@@ -17,8 +17,8 @@
    Olcekler seviye 99'da bile 200x200 kadraja sigacak sekilde secildi:
    en genis nokta kanat ucu (x = ±120), yani 120 * wing * s <= ~96. */
 
-import { palet, HEADS, FACES } from './data.js?v24';
-import { CONFIG, growthRatio } from './config.js?v24';
+import { palet, HEADS, FACES } from './data.js?v25';
+import { CONFIG, growthRatio } from './config.js?v25';
 
 /* Ayni sayfada birden fazla ejderha olabilir; degrade ve maske id'leri
    catismasin diye sayac. */
@@ -1010,6 +1010,21 @@ const KATMAN = {
   },
 };
 
+/* Kozmetigin gorseli var mi? Yoksa ayni kategorinin varsayilanina duser.
+
+   NEDEN: gorseller tek tek uretiliyor, hepsi ayni anda hazir olmuyor.
+   Eslesme bulunamayinca hicbir sey cizmemek, uzerinde Semavi Kanat olan
+   bir oyuncuya ejderhayi KANATSIZ gosteriyordu - eksik gorsel, var olan
+   bir kanadi da yok ediyordu. Artik en azindan varsayilan gorunuyor. */
+function katmanSec(kategori, id) {
+  const grup = KATMAN[kategori];
+  if (!grup) return null;
+  return grup[id] || grup[VARSAYILAN[kategori]] || null;
+}
+
+/* Gorseli henuz uretilmemis oge bu kademeye duser */
+const VARSAYILAN = { wings: 'leather', tail: 'basic' };
+
 /* Bir katmani govde kutusuna gore yerlestirip <image> etiketi uretir.
    gx,gy,gw = govdenin GORUNEN kutusu (200'luk kadrajda). */
 function katmanCiz(k, gx, gy, gw) {
@@ -1050,7 +1065,7 @@ function gorselEjderha(level, mood, look) {
 
   /* Govdenin gorunen kutusu - katmanlar buna gore yerlesiyor */
   const gy = iy + (GORSEL.y0 / GORSEL.kare) * olcek;
-  const kanat = KATMAN.wings[look?.wings];
+  const kanat = katmanSec('wings', look?.wings);
 
   return `
     <svg viewBox="0 0 200 200" aria-hidden="true">
