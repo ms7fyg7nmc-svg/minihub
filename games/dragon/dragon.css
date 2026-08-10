@@ -204,21 +204,28 @@
   50% { opacity: 0.34; transform: translate(-50%, -50%) scale(1.09); }
 }
 
-/* Halka ejderhanin ayaklarinin cevresinde donen bir buyu cemberi.
-   Daha genis/asagidayken kutunun disina tasip atlama ipi gibi duruyordu. */
+/* Halka ejderhanin ayaklarinin cevresinde duran, dönen bir büyü çemberi.
+   Once tum SVG'yi rotate(360deg) ile donduruyordu: yassi bir elips 2D'de
+   dondurulunce 90/270 derecede ince bir cizgiye cokup govdenin onunden
+   "kilic gibi" gecip gidiyordu. Halka artik hic donmuyor - sadece kesik
+   cizgi deseni akiyor (stroke-dashoffset), boylece hep yassi bir cember
+   gibi duruyor ama yine de "buyu donuyor" hissi veriyor. */
 .fx .halo-ring {
   position: absolute;
   left: 50%;
   top: 79%;
   width: 76%;
   transform: translate(-50%, -50%);
-  animation: hale-don 7s linear infinite;
   filter: drop-shadow(0 0 5px var(--aura, #c079f2));
 }
 
-@keyframes hale-don {
-  to { transform: translate(-50%, -50%) rotate(360deg); }
-}
+.fx .halo-ring .ring-outer { animation: hale-akis-dis 2.6s linear infinite; }
+.fx .halo-ring .ring-inner { animation: hale-akis-ic 2.1s linear infinite reverse; }
+
+/* dasharray "10 7" toplami 17 - -68 (4x17) ile atlamasiz dongu */
+@keyframes hale-akis-dis { to { stroke-dashoffset: -68; } }
+/* dasharray "4 9" toplami 13 - -52 (4x13) ile atlamasiz dongu */
+@keyframes hale-akis-ic { to { stroke-dashoffset: -52; } }
 
 /* Ucusan yazilar (+1 XP, Seviye 12!) */
 .floaters { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
@@ -318,13 +325,13 @@ body.shop-open .isle-layer { display: none; }
 body.shop-open .dragon-card { display: none; }
 
 /* Konumlandirmayi JS degil CSS devralir: tam ortada ve buyuk.
-   %78: en yuksek tac (Semavi) ustten, penceler alttan tasmasin. SVG'nin
-   overflow'u gorunur oldugu icin cizim cercevenin disina cikabiliyor;
-   olcuyle bulundu: 82'de altta 11, 78'de 4 piksel tasiyordu. */
+   SVG'nin overflow'u gorunur oldugu icin cizim cercevenin disina cikabiliyor.
+   En yuksek tac (Semavi/celestial) hala ustten tasiyordu (top:52%,
+   width:75%'te bile) - ejderha biraz daha kucultulup asagi indirildi. */
 body.shop-open .dragon-slot {
   left: 50% !important;
-  top: 52% !important;
-  width: 75% !important;
+  top: 60% !important;
+  width: 64% !important;
   transform: translate(-50%, -50%);
 }
 

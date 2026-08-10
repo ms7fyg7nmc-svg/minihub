@@ -821,9 +821,9 @@ function efektCiz(auraId) {
     fxEl.style.setProperty('--aura', fx.color);
     fxEl.innerHTML = `
       <svg class="halo-ring" viewBox="0 0 100 100">
-        <ellipse cx="50" cy="50" rx="46" ry="15" fill="none" stroke="${fx.color}"
+        <ellipse class="ring-outer" cx="50" cy="50" rx="46" ry="15" fill="none" stroke="${fx.color}"
                  stroke-width="2.5" stroke-dasharray="10 7" opacity=".85"/>
-        <ellipse cx="50" cy="50" rx="38" ry="12" fill="none" stroke="${fx.color}"
+        <ellipse class="ring-inner" cx="50" cy="50" rx="38" ry="12" fill="none" stroke="${fx.color}"
                  stroke-width="1.2" stroke-dasharray="4 9" opacity=".5"/>
       </svg>`;
     parcacikSac({ ...EFEKT_AYAR.star, adet: 9 }, fx);
