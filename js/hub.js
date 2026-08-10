@@ -493,6 +493,13 @@ function wireDailyPanel() {
       const sonuc = await refillEnergy();
       watchAdBtn.disabled = false;
       if (!sonuc) return;
+      if (!sonuc.ok) {
+         /* Gunluk dolum hakki bitti - sunucu reddetti */
+         haptic.error();
+         showDailyToast(t('hub.daily.refillLimit'));
+         await renderEnergySection();
+         return;
+      }
       haptic.success();
       showDailyToast(t('hub.daily.wonEnergy'));
       await renderEnergySection();

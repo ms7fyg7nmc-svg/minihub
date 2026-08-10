@@ -1,0 +1,182 @@
+/* SUNUCU GUVENLIK TESTLERI
+
+   NASIL CALISTIRILIR (terminal gerektirir - kullanici icin degil, kodu
+   degistiren gelistirici/asistan icin):
+
+     node --experimental-sqlite bot/test-guvenlik.mjs
+
+   worker.js'te kazanc/harcama/limit mantigina dokunan her degisiklikten
+   SONRA calistirilmali: buradaki testler "hile yapilamiyor" garantisini
+   kayit altina aliyor, sessizce bozulmasin diye.
+
+   Gercek bot/worker.js'i, gercek SQL calistiran bir D1-benzeri adapterla
+   (node:sqlite) test eder. Bu dosya SALDIRGAN gibi davranir: gecerli bir
+   initData imzasi uretip (yani "gercek bir oyuncu" olup) sunucuya kotu
+   niyetli istekler atar ve sinirlarin tuttugunu dogrular. */
+import { DatabaseSync } from 'node:sqlite';
+import { readFileSync } from 'node:fs';
+import { createHmac } from 'node:crypto';
+
+/* Depo tasinsa da calissin diye yollar bu dosyanin konumundan turetiliyor */
+const BURASI = new URL('.', import.meta.url);
+const SCHEMA = readFileSync(new URL('schema.sql', BURASI), 'utf8');
+const worker = await import(new URL('worker.js', BURASI).href);
+
+function makeDb() {
+  const sqlite = new DatabaseSync(':memory:');
+  const temiz = SCHEMA.split('\n').filter((l) => !l.trim().startsWith('--')).join('\n');
+  for (const stmt of temiz.split(';').map((s) => s.trim()).filter(Boolean)) sqlite.exec(stmt + ';');
+  return {
+    _sqlite: sqlite,
+    prepare(sql) {
+      return {
+        _sql: sql, _args: [],
+        bind(...a) { this._args = a; return this; },
+        run() { return { meta: { changes: sqlite.prepare(this._sql).run(...this._args).changes } }; },
+        first() { return sqlite.prepare(this._sql).get(...this._args) ?? null; },
+        all() { return { results: sqlite.prepare(this._sql).all(...this._args) }; },
+      };
+    },
+    async batch(stmts) { const o = []; for (const s of stmts) o.push(s.run()); return o; },
+  };
+}
+
+const BOT_TOKEN = 'test-bot-token';
+function signedInitData(userId) {
+  const params = new URLSearchParams();
+  params.set('user', JSON.stringify({ id: userId, first_name: 'Test' }));
+  params.set('auth_date', String(Math.floor(Date.now() / 1000)));
+  const dcs = [...params.entries()].sort(([a], [b]) => (a < b ? -1 : 1)).map(([k, v]) => `${k}=${v}`).join('\n');
+  const secret = createHmac('sha256', 'WebAppData').update(BOT_TOKEN).digest();
+  params.set('hash', createHmac('sha256', secret).update(dcs).digest('hex'));
+  return params.toString();
+}
+
+let passed = 0, failed = 0;
+function check(name, cond, detay = '') {
+  if (cond) { passed++; console.log(`OK   ${name}`); }
+  else { failed++; console.log(`FAIL ${name} ${detay}`); }
+}
+
+async function api(env, path, body) {
+  const res = await worker.default.fetch(
+    new Request(`https://x/api/${path}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    }), env);
+  return res.json();
+}
+
+const DB = makeDb();
+const env = { DB, BOT_TOKEN };
+const initData = signedInitData(111);
+
+/* ================= 1. TEMEL DAVRANIS BOZULMADI MI ================= */
+let r = await api(env, 'sync', { initData, points: 0, state: {} });
+check('sync: energy 8', r.energy === 8);
+check('sync: streak var', !!r.streak);
+check('sync: spin var', !!r.spin);
+
+/* ================= 2. SALDIRI: DEV MIKTAR ISTEMEK ================= */
+r = await api(env, 'points/earn', { initData, opId: 'atk-1', amount: 999999999 });
+check('dev miktar istek basi tavana kirpildi (10.000)', r.credited === 10000, `-> ${r.credited}`);
+check('dev miktar sonrasi bakiye 10.000', r.total === 10000, `-> ${r.total}`);
+
+/* ================= 3. SALDIRI: GUNLUK TAVANI ASMAK ================= */
+/* Tekrar tekrar 10.000 iste - toplamda 30.000'de durmali */
+for (let i = 2; i <= 8; i++) {
+  r = await api(env, 'points/earn', { initData, opId: `atk-${i}`, amount: 999999999 });
+}
+check('gunluk tavan tuttu: bakiye 30.000de kaldi', r.total === 30000, `-> ${r.total}`);
+check('tavan dolunca sonraki kazanc 0', r.credited === 0, `-> ${r.credited}`);
+
+/* ================= 4. SALDIRI: BOZUK SAYILAR ================= */
+const DB2 = makeDb(); const env2 = { DB: DB2, BOT_TOKEN }; const id2 = signedInitData(222);
+await api(env2, 'sync', { initData: id2, points: 0, state: {} });
+/* JSON.stringify(Infinity) "null" urettigi icin Infinity'yi normal yoldan
+   yollamak mumkun degil. Gercek saldirgan HAM JSON metni yollar: 1e400
+   gecerli JSON'dur ve JSON.parse onu Infinity'ye cevirir. Asagisi tam
+   olarak bunu yapiyor - guvenliSayi'daki Number.isFinite kontrolunu
+   sinayan senaryo bu. */
+async function hamApi(env, path, hamGovde) {
+  const res = await worker.default.fetch(new Request(`https://x/api/${path}`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: hamGovde,
+  }), env);
+  return res.json();
+}
+r = await hamApi(env2, 'points/earn', `{"initData":${JSON.stringify(id2)},"opId":"inf","amount":1e400}`);
+check('ham JSON 1e400 (=Infinity) 0 sayildi, sunucu cokmedi', r.ok === true && r.credited === 0, `-> ${JSON.stringify(r)}`);
+r = await hamApi(env2, 'points/earn', `{"initData":${JSON.stringify(id2)},"opId":"buyuk","amount":1e308}`);
+check('devasa ama sonlu sayi tavana kirpildi', r.credited === 10000, `-> ${r.credited}`);
+r = await api(env2, 'points/earn', { initData: id2, opId: 'nan', amount: 'abc' });
+check('metin miktar 0 sayildi', r.credited === 0, `-> ${r.credited}`);
+r = await api(env2, 'points/earn', { initData: id2, opId: 'neg', amount: -5000 });
+check('negatif kazanc 0 sayildi (bakiye dusurulemedi)', r.credited === 0, `-> ${r.credited}`);
+
+/* ================= 5. SALDIRI: SAHTE BASLANGIC BAKIYESI ================= */
+const DB3 = makeDb(); const env3 = { DB: DB3, BOT_TOKEN }; const id3 = signedInitData(333);
+r = await api(env3, 'sync', { initData: id3, points: 999999999, state: {} });
+check('sahte baslangic bakiyesi 5.000e kirpildi', r.points === 5000, `-> ${r.points}`);
+
+/* ================= 6. SALDIRI: UYDURMA OYUN KIMLIGI ================= */
+r = await api(env3, 'best', { initData: id3, game: 'uydurma-oyun', score: 100 });
+check('bilinmeyen oyun icin rekor reddedildi', r.error === 'bilinmeyen oyun', `-> ${JSON.stringify(r)}`);
+r = await api(env3, 'state', { initData: id3, game: '../../etc', state: { x: 1 }, expectedVersion: 0 });
+check('bilinmeyen oyun icin durum reddedildi', r.error === 'bilinmeyen oyun', `-> ${JSON.stringify(r)}`);
+const satirSayisi = DB3.prepare('SELECT COUNT(*) AS n FROM player_data WHERE player_id = ?').bind('333').first();
+check('reddedilen istekler veritabanina satir yazmadi', satirSayisi.n === 0, `-> ${satirSayisi.n}`);
+r = await api(env3, 'best', { initData: id3, game: '2048', score: 5000 });
+check('gecerli oyun icin rekor hala calisiyor', r.best === 5000, `-> ${JSON.stringify(r)}`);
+
+/* ================= 7. SALDIRI: DEV DURUM YAZMAK ================= */
+const kocaman = { cop: 'x'.repeat(200000) };
+r = await api(env3, 'state', { initData: id3, game: 'dragon', state: kocaman, expectedVersion: 0 });
+check('32 KB ustu durum yazilmadi', r.state === null, `-> ${JSON.stringify(r).slice(0, 80)}`);
+r = await api(env3, 'state', { initData: id3, game: 'dragon', state: { level: 5 }, expectedVersion: 0 });
+check('normal boyutlu durum hala yaziliyor', r.state?.level === 5, `-> ${JSON.stringify(r)}`);
+
+/* ================= 8. SALDIRI: SONSUZ ENERJI DOLUMU ================= */
+const DB4 = makeDb(); const env4 = { DB: DB4, BOT_TOKEN }; const id4 = signedInitData(444);
+await api(env4, 'sync', { initData: id4, points: 0, state: {} });
+let basarili = 0;
+for (let i = 0; i < 20; i++) {
+  const rr = await api(env4, 'energy/refill', { initData: id4 });
+  if (rr.ok) basarili++;
+}
+check('enerji dolumu gunde 12 ile sinirli', basarili === 12, `-> ${basarili}`);
+r = await api(env4, 'energy/refill', { initData: id4 });
+check('limit dolunca duzgun sebep donuyor', r.ok === false && r.reason === 'gunluk-limit', `-> ${JSON.stringify(r)}`);
+
+/* ================= 9. SALDIRI: SAHTE IMZA ================= */
+const sahte = new URLSearchParams({ user: JSON.stringify({ id: 555 }), auth_date: String(Math.floor(Date.now() / 1000)), hash: 'a'.repeat(64) }).toString();
+const sahteRes = await worker.default.fetch(new Request('https://x/api/points/earn', {
+  method: 'POST', headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ initData: sahte, opId: 'x', amount: 1000 }),
+}), env4);
+check('sahte imza 401 ile reddedildi', sahteRes.status === 401, `-> ${sahteRes.status}`);
+
+/* ================= 10. ONCEKI DAVRANIS KORUNDU MU ================= */
+const DB5 = makeDb(); const env5 = { DB: DB5, BOT_TOKEN }; const id5 = signedInitData(666);
+await api(env5, 'sync', { initData: id5, points: 0, state: {} });
+/* enerji dolu: 8 tur tam odul */
+let toplamKazanc = 0;
+for (let i = 0; i < 8; i++) {
+  const rr = await api(env5, 'points/earn', { initData: id5, opId: `n-${i}`, amount: 100 });
+  toplamKazanc += rr.credited;
+}
+check('meshru oyun: 8 tur tam odul aldi (800)', toplamKazanc === 800, `-> ${toplamKazanc}`);
+r = await api(env5, 'points/earn', { initData: id5, opId: 'n-bos', amount: 100 });
+check('enerji bitince odul %25e dustu (25)', r.credited === 25, `-> ${r.credited}`);
+const oncekiBakiye = r.total;
+r = await api(env5, 'points/earn', { initData: id5, opId: 'n-bos', amount: 100 });
+check('ayni opId tekrar uygulanmadi', r.total === oncekiBakiye && r.credited === 0, `-> ${JSON.stringify(r)}`);
+r = await api(env5, 'streak/claim', { initData: id5 });
+check('gunluk seri hala calisiyor (gun 1, 100 jeton)', r.ok && r.streak === 1 && r.reward === 100, `-> ${JSON.stringify(r)}`);
+r = await api(env5, 'spin', { initData: id5 });
+check('gunluk cark hala calisiyor', r.ok === true, `-> ${JSON.stringify(r)}`);
+r = await api(env5, 'points/spend', { initData: id5, opId: 'harca-1', amount: 50 });
+check('harcama hala calisiyor', r.ok === true, `-> ${JSON.stringify(r)}`);
+r = await api(env5, 'points/spend', { initData: id5, opId: 'harca-2', amount: 99999999 });
+check('bakiyeden fazla harcanamiyor', r.ok === false, `-> ${JSON.stringify(r)}`);
+
+console.log(`\n${passed} basarili, ${failed} basarisiz`);
+process.exit(failed > 0 ? 1 : 0);

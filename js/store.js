@@ -389,8 +389,11 @@ export async function refillEnergy() {
   if (!v) return null;
   const sonuc = await sunucuGonder('/api/energy/refill', {});
   if (!sonuc) return null;
-  v.energy = sonuc.energy;
-  return { energy: v.energy, max: v.maxEnergy };
+  /* Sunucu gunluk dolum limitini uyguluyor (bkz. worker.js
+     MAX_REFILL_PER_DAY). Limit dolduysa enerji degismiyor - o zaman da
+     sunucunun bildirdigi guncel enerjiyi kabul ediyoruz. */
+  if (typeof sonuc.energy === 'number') v.energy = sonuc.energy;
+  return { ok: sonuc.ok === true, energy: v.energy, max: v.maxEnergy, reason: sonuc.reason };
 }
 
 export async function getStreak() {

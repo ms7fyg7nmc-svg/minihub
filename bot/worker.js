@@ -63,6 +63,82 @@ const SPIN_PRIZES = [
   { tur: 'coin',   miktar: 750,         agirlik: 5   },
 ];
 
+/* Gunde en fazla kac kez enerji doldurulabilir. Reklam dogrulamasi
+   eklenene kadar bu uc nokta kosulsuz doldurdugu icin (bkz.
+   handleEnergyRefill) tek gercek sinir bu sayi. */
+const MAX_REFILL_PER_DAY = 12;
+
+/* ==========================================================================
+   HILE KORUMASI - KAZANC SINIRLARI
+
+   NEDEN GEREKLI: mini oyunlarin skorunu istemci hesapliyor ve sunucuya
+   "su kadar kazandim" diye bildiriyor. Sunucu oyunu yeniden oynatmadigi
+   icin bu bildirimin dogrulugunu KANITLAYAMAZ - degistirilmis bir istemci
+   (ya da tarayici konsolundan atilan tek bir istek) istedigi sayiyi
+   yollayabilir. Oyunu sunucuda yeniden oynatmak bambaska bir is; buradaki
+   savunma bunun yerine kazanc HIZINI sinirliyor:
+
+     - istek basi tavan: tek bir istekle absurt bir miktar alinamaz
+     - 24 saatlik toplam tavan: asil sinir bu. Hile yapan da en fazla
+       cok calisan bir oyuncu kadar kazanabilir, "aninda sinirsiz" olmuyor.
+
+   Sayilar meshru oyunun BOLCA uzerinde secildi: gercek bir oyuncu bu
+   sinirlara carpmamali. Carparsa kazanci reddedilmiyor, sadece tavana
+   KIRPILIYOR - yani hata gormuyor, oyunu bozulmuyor. */
+const MAX_EARN_PER_REQUEST = 10000;  /* tek oyun turu (2048'de 100.000 skor) */
+const DAILY_EARN_CAP = 30000;        /* son 24 saatte toplam kazanc */
+
+/* Tek seferde harcanabilecek ust sinir - en pahali kozmetik 45.000 jeton
+   (bkz. games/dragon/data.js), uzerine pay birakildi. Amaci hile degil,
+   bozuk/tasmis bir sayinin bakiyeyi mahvetmesini onlemek. */
+const MAX_SPEND_PER_REQUEST = 100000;
+
+/* Sadece bu oyunlar icin rekor/durum satiri acilabilir. Onceden 'game'
+   herhangi bir dize olabiliyordu, yani tek bir oyuncu sonsuz sayida satir
+   olusturup veritabanini sisirebilirdi. Menude olmayan ama dosyalari
+   duran oyunlar (minesweeper, pet) da listede - dogrudan adresle
+   acilabildikleri icin. */
+const GECERLI_OYUNLAR = new Set([
+  '2048', 'blockblast', 'watersort', 'match3', 'tripletile',
+  'flow', 'snake', 'minesweeper', 'dragon', 'pet',
+]);
+
+/* Kayitli oyun durumunun (JSON metni) en buyuk boyutu. Ejderha durumu -
+   en dolu haliyle bile - 3 KB civari; 32 KB fazlasiyla yeterli. */
+const MAX_STATE_BYTES = 32 * 1024;
+
+/* Rekor skorlar ekonomiyi etkilemiyor (jetona cevrilmiyorlar) ama yine de
+   absurt degerler kaydedilmesin. */
+const MAX_BEST_SCORE = 10000000;
+
+/* Ilk senkronda istemcinin beyan edebilecegi en yuksek yerel bakiye.
+   Bkz. handleSync - sunucu oncesi ilerlemeyi kurtarmak icin var, sinirsiz
+   olsa yeni her hesap bedava jetonla baslardi. */
+const MAX_SEED_POINTS = 5000;
+
+/* player_data'ya yalnizca bu bicimdeki anahtarlar yazilabilir:
+   "best_<oyun>" veya "state_<oyun>", oyun da beyaz listede olmali.
+   Onceden istemci istedigi anahtari uydurabildigi icin tek bir oyuncu
+   sinirsiz satir acabiliyordu. */
+function gecerliVeriAnahtari(key) {
+  if (typeof key !== 'string') return false;
+  const ayrac = key.indexOf('_');
+  if (ayrac < 0) return false;
+  const tur = key.slice(0, ayrac);
+  const oyun = key.slice(ayrac + 1);
+  return (tur === 'best' || tur === 'state') && GECERLI_OYUNLAR.has(oyun);
+}
+
+/* Istemciden gelen sayiyi guvenli hale getirir: sayi degilse, NaN'sa veya
+   Infinity'yse 0 olur; her zaman 0..max araliginda bir tam sayi doner.
+   (Math.round(Infinity) hala Infinity oldugu icin bu kontrol sart -
+   dogrudan SQL'e giderse veritabani hatasi verir.) */
+function guvenliSayi(deger, max) {
+  const n = Math.round(Number(deger));
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(n, max);
+}
+
 /* Karsilama mesajinin ustundeki banner gorseli. Ayni repo'da barinir,
    degistirmek istersen bot/assets/banner.png dosyasinin uzerine yaz ve
    GitHub'a yolla - adres ayni kalir. */
@@ -371,21 +447,34 @@ function carkCek() {
    bu islem kayipsiz ve tekrar uygulanmasi zararsizdir. */
 async function handleSync(env, playerId, body) {
   const now = Date.now();
-  const seedPoints = Math.max(0, Math.round(Number(body.points) || 0));
+  /* Ilk senkronda istemcinin "yerelde su kadar jetonum vardi" beyani
+     kabul ediliyor - sunucu oncesi ilerleme baska turlu kurtarilamiyor.
+     Ama bu beyan sinirsiz olamaz: aksi halde yeni acilan her hesap
+     istedigi bakiyeyle baslayabilirdi (sahte Telegram hesabi + degistirilmis
+     istemci = bedava jeton). Tavan, sunucu oncesi makul bir yerel
+     ilerlemeyi kurtaracak kadar yuksek, istismari anlamsiz kilacak kadar
+     dusuk secildi. */
+  const seedPoints = guvenliSayi(body.points, MAX_SEED_POINTS);
   const isNew = await ensurePlayer(env, playerId, seedPoints);
 
   const gelenState = (body.state && typeof body.state === 'object') ? body.state : {};
 
   if (isNew) {
-    const stmts = Object.entries(gelenState).map(([key, value]) => env.DB.prepare(
-      'INSERT INTO player_data (player_id, key, value, updated_at) VALUES (?, ?, ?, ?)',
-    ).bind(playerId, key, JSON.stringify(value), now));
+    const stmts = [];
+    for (const [key, value] of Object.entries(gelenState)) {
+      if (!gecerliVeriAnahtari(key)) continue;
+      const json = JSON.stringify(value);
+      if (json.length > MAX_STATE_BYTES) continue;
+      stmts.push(env.DB.prepare(
+        'INSERT INTO player_data (player_id, key, value, updated_at) VALUES (?, ?, ?, ?)',
+      ).bind(playerId, key, json, now));
+    }
     if (stmts.length) await env.DB.batch(stmts);
   } else {
     const stmts = [];
     for (const [key, value] of Object.entries(gelenState)) {
-      if (!key.startsWith('best_')) continue;
-      const skor = Number(value) || 0;
+      if (!key.startsWith('best_') || !gecerliVeriAnahtari(key)) continue;
+      const skor = guvenliSayi(value, MAX_BEST_SCORE);
       stmts.push(env.DB.prepare(
         `INSERT INTO player_data (player_id, key, value, updated_at)
          VALUES (?, ?, ?, ?)
@@ -481,13 +570,32 @@ async function applyEarn(env, playerId, opId, requestedAmount) {
   const prior = await env.DB.prepare(
     'SELECT balance_after FROM spend_log WHERE player_id = ? AND op_id = ?',
   ).bind(playerId, key).first();
-  if (prior) return { ok: true, total: prior.balance_after };
+  if (prior) {
+    /* Bu opId zaten islenmis: islemi TEKRAR uygulamiyoruz ama bakiyeyi
+       o anki degil GUNCEL haliyle donuyoruz - arada baska islemler olmus
+       olabilir ve istemci bu sayiyi ekrana yaziyor. */
+    const guncel = await env.DB.prepare('SELECT points, energy FROM players WHERE id = ?').bind(playerId).first();
+    return { ok: true, total: guncel ? guncel.points : prior.balance_after, energy: guncel ? guncel.energy : 0, credited: 0 };
+  }
+
+  /* Son 24 saatte kazanilan toplam. Gunluk tavana ne kadar yer kaldigini
+     buradan buluyoruz - ayri bir sayac sutunu tutmak yerine spend_log'un
+     kendisinden hesaplaniyor, boylece "gun donunce sifirlama" gibi bir
+     durum yok, kayan 24 saatlik pencere kendiliginden dogru. */
+  const pencere = await env.DB.prepare(
+    'SELECT COALESCE(SUM(delta), 0) AS toplam FROM spend_log WHERE player_id = ? AND delta > 0 AND created_at > ?',
+  ).bind(playerId, now - 24 * 3600 * 1000).first();
+  const kalanHak = Math.max(0, DAILY_EARN_CAP - (pencere ? pencere.toplam : 0));
 
   for (let deneme = 0; deneme < 3; deneme++) {
     const row = await env.DB.prepare('SELECT energy FROM players WHERE id = ?').bind(playerId).first();
     const enerji = row ? row.energy : 0;
     const doluMu = enerji > 0;
-    const verilecek = doluMu ? requestedAmount : Math.round(requestedAmount * EMPTY_ENERGY_CARPAN);
+    const hamMiktar = doluMu ? requestedAmount : Math.round(requestedAmount * EMPTY_ENERGY_CARPAN);
+    /* Gunluk tavani asan kisim reddedilmiyor, KIRPILIYOR: meshru bir
+       oyuncu (cok nadir de olsa) tavana carparsa hata gormesin, oyunu
+       kesintiye ugramasin. */
+    const verilecek = Math.min(hamMiktar, kalanHak);
     const yeniEnerji = doluMu ? Math.max(0, enerji - ENERGY_PER_EARN) : 0;
 
     const res = await env.DB.prepare(
@@ -507,8 +615,9 @@ async function applyEarn(env, playerId, opId, requestedAmount) {
   }
 
   /* 3 denemede de yaris kaybedildi (cok nadir) - enerjisiz varsayip en
-     azindan azaltilmis odulu vermeyi garanti et, kazanci hic kaybetme. */
-  const azaltilmis = Math.round(requestedAmount * EMPTY_ENERGY_CARPAN);
+     azindan azaltilmis odulu vermeyi garanti et, kazanci hic kaybetme.
+     Gunluk tavan burada da gecerli, yoksa bu yol bir kacak olurdu. */
+  const azaltilmis = Math.min(Math.round(requestedAmount * EMPTY_ENERGY_CARPAN), kalanHak);
   const yedek = await applyDelta(env, playerId, key, azaltilmis);
   return { ...yedek, energy: 0, credited: azaltilmis };
 }
@@ -576,9 +685,33 @@ async function handleSpin(env, playerId) {
    oyunculara) acik birakilmamali - su an demo/test icin. */
 async function handleEnergyRefill(env, playerId) {
   const now = Date.now();
-  await env.DB.prepare('UPDATE players SET energy = ?, updated_at = ? WHERE id = ?')
-    .bind(MAX_ENERGY, now, playerId).run();
-  return { ok: true, energy: MAX_ENERGY };
+  const gun = Math.floor(now / 86400000);
+
+  const row = await env.DB.prepare(
+    'SELECT energy, refill_day, refill_count FROM players WHERE id = ?',
+  ).bind(playerId).first();
+  if (!row) return { ok: false, reason: 'oyuncu yok' };
+
+  /* Gun degistiyse sayac sifirdan baslar */
+  const bugunku = row.refill_day === gun ? row.refill_count : 0;
+  if (bugunku >= MAX_REFILL_PER_DAY) {
+    return { ok: false, reason: 'gunluk-limit', energy: row.energy, kalanHak: 0 };
+  }
+
+  /* WHERE ... refill_count kontrolu: ayni anda iki istek gelirse ikisi de
+     ayni sayaci gorup ikisi de dolduramasin (bkz. applyEarn'deki ayni
+     desen). Kaybeden istek 0 satir gunceller ve limit dolmus gibi doner. */
+  const res = await env.DB.prepare(
+    `UPDATE players SET energy = ?, refill_day = ?, refill_count = ?, updated_at = ?
+     WHERE id = ? AND refill_day IS ? AND refill_count IS ?`,
+  ).bind(MAX_ENERGY, gun, bugunku + 1, now, playerId, row.refill_day, row.refill_count).run();
+
+  if (res.meta.changes === 0) {
+    const guncel = await env.DB.prepare('SELECT energy FROM players WHERE id = ?').bind(playerId).first();
+    return { ok: false, reason: 'yeniden dene', energy: guncel ? guncel.energy : 0 };
+  }
+
+  return { ok: true, energy: MAX_ENERGY, kalanHak: MAX_REFILL_PER_DAY - (bugunku + 1) };
 }
 
 /* Bir oyunun rekorunu gunceller - sadece gelen skor mevcut rekordan
@@ -586,9 +719,9 @@ async function handleEnergyRefill(env, playerId) {
    istek ayni anda gelince biri digerinin guncellemesini kaybetmesin. */
 async function handleBest(env, playerId, body) {
   const game = String(body.game || '').trim();
-  if (!game) return { error: 'game gerekli' };
+  if (!GECERLI_OYUNLAR.has(game)) return { error: 'bilinmeyen oyun' };
   const key = `best_${game}`;
-  const score = Math.max(0, Math.round(Number(body.score) || 0));
+  const score = guvenliSayi(body.score, MAX_BEST_SCORE);
   const now = Date.now();
 
   const res = await env.DB.prepare(
@@ -629,11 +762,22 @@ async function handleBest(env, playerId, body) {
    yoksa INSERT ilk surumu (1) vererek kosulsuz uygulanir. */
 async function handleState(env, playerId, body) {
   const game = String(body.game || '').trim();
-  if (!game) return { error: 'game gerekli' };
+  if (!GECERLI_OYUNLAR.has(game)) return { error: 'bilinmeyen oyun' };
   const key = `state_${game}`;
   const now = Date.now();
   const expected = Number(body.expectedVersion) || 0;
   const valueJson = JSON.stringify(body.state ?? null);
+
+  /* Bir oyuncu buraya megabaytlarca veri yazip veritabanini (ve faturayi)
+     sisiremesin. Meshru en buyuk durum (dolu bir ejderha dolabi) 3 KB
+     civari oldugu icin bu sinir hicbir gercek kaydi engellemiyor. */
+  if (valueJson.length > MAX_STATE_BYTES) {
+    const mevcut = await env.DB.prepare('SELECT value, version FROM player_data WHERE player_id = ? AND key = ?')
+      .bind(playerId, key).first();
+    return mevcut
+      ? { state: JSON.parse(mevcut.value), version: mevcut.version }
+      : { state: null, version: 0 };
+  }
 
   await env.DB.prepare(
     `INSERT INTO player_data (player_id, key, value, version, updated_at)
@@ -685,9 +829,9 @@ async function handleApi(request, env, url) {
 
     switch (url.pathname) {
       case '/api/points/spend':
-        return json(await applyDelta(env, playerId, body.opId, -Math.abs(Math.round(Number(body.amount) || 0))));
+        return json(await applyDelta(env, playerId, body.opId, -guvenliSayi(body.amount, MAX_SPEND_PER_REQUEST)));
       case '/api/points/earn':
-        return json(await applyEarn(env, playerId, body.opId, Math.abs(Math.round(Number(body.amount) || 0))));
+        return json(await applyEarn(env, playerId, body.opId, guvenliSayi(body.amount, MAX_EARN_PER_REQUEST)));
       case '/api/best':
         return json(await handleBest(env, playerId, body));
       case '/api/state':
