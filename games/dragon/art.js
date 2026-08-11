@@ -17,8 +17,8 @@
    Olcekler seviye 99'da bile 200x200 kadraja sigacak sekilde secildi:
    en genis nokta kanat ucu (x = ±120), yani 120 * wing * s <= ~96. */
 
-import { palet, HEADS, FACES } from './data.js?v30';
-import { CONFIG, growthRatio } from './config.js?v30';
+import { palet, HEADS, FACES } from './data.js?v31';
+import { CONFIG, growthRatio } from './config.js?v31';
 
 /* Ayni sayfada birden fazla ejderha olabilir; degrade ve maske id'leri
    catismasin diye sayac. */
@@ -1049,42 +1049,46 @@ const KATMAN = {
     leather: {
       yol: 'assets/wing-leather.png',
       kare: 1024, x0: 223, y0: 191, x1: 863, y1: 837,
-      kok: { x: 272, y: 700 }, uzanim: 0.53,
+      kok: { x: 267, y: 715 }, uzanim: 0.53,
     },
     flame: {
       yol: 'assets/wing-flame.png',
       kare: 1024, x0: 148, y0: 93, x1: 933, y1: 916,
-      kok: { x: 195, y: 715 }, uzanim: 0.54,
+      kok: { x: 201, y: 747 }, uzanim: 0.54,
     },
     crystal: {
       yol: 'assets/wing-crystal.png',
       kare: 1024, x0: 210, y0: 135, x1: 909, y1: 864,
-      kok: { x: 252, y: 670 }, uzanim: 0.545,
+      kok: { x: 260, y: 779 }, uzanim: 0.545,
     },
     demon: {
       yol: 'assets/wing-demon.png',
       kare: 1024, x0: 176, y0: 110, x1: 907, y1: 914,
-      kok: { x: 205, y: 845 }, uzanim: 0.55,
+      kok: { x: 229, y: 852 }, uzanim: 0.55,
     },
     phoenix: {
       yol: 'assets/wing-phoenix.png',
       kare: 1024, x0: 202, y0: 59, x1: 931, y1: 879,
-      kok: { x: 248, y: 590 }, uzanim: 0.555,
+      kok: { x: 253, y: 723 }, uzanim: 0.555,
     },
     lightning: {
       yol: 'assets/wing-lightning.png',
       kare: 1024, x0: 122, y0: 163, x1: 977, y1: 810,
-      kok: { x: 152, y: 700 }, uzanim: 0.56,
+      /* uzanim digerlerinden yuksek: bu gorselin cercevesinin sag ~%8'i
+         kivilcim/hale, yani KATI kanat cercevenin sadece %83.5'ine
+         kadar gidiyor (otekilerde ~%93). Ayni uzanim degeri verilince
+         katı kanat gorunur sekilde kucuk kaliyordu. */
+      kok: { x: 186, y: 699 }, uzanim: 0.63,
     },
     king: {
       yol: 'assets/wing-king.png',
       kare: 1024, x0: 147, y0: 148, x1: 923, y1: 907,
-      kok: { x: 200, y: 733 }, uzanim: 0.565,
+      kok: { x: 207, y: 761 }, uzanim: 0.565,
     },
     celestial: {
       yol: 'assets/wing-celestial.png',
       kare: 1024, x0: 183, y0: 167, x1: 873, y1: 883,
-      kok: { x: 213, y: 797 }, uzanim: 0.57,
+      kok: { x: 234, y: 805 }, uzanim: 0.57,
     },
   },
 
@@ -1095,42 +1099,42 @@ const KATMAN = {
     basic: {
       yol: 'assets/tail-basic.png',
       kare: 1024, x0: 182, y0: 202, x1: 906, y1: 862,
-      kok: { x: 244, y: 256 }, uzanim: 0.36,
+      kok: { x: 232, y: 325 }, uzanim: 0.36,
     },
     spiked: {
       yol: 'assets/tail-spiked.png',
       kare: 1024, x0: 150, y0: 170, x1: 862, y1: 842,
-      kok: { x: 195, y: 203 }, uzanim: 0.365,
+      kok: { x: 198, y: 245 }, uzanim: 0.365,
     },
     flame: {
       yol: 'assets/tail-flame.png',
-      kare: 1024, x0: 162, y0: 240, x1: 914, y1: 798,
-      kok: { x: 239, y: 299 }, uzanim: 0.37,
+      kare: 1024, x0: 88, y0: 158, x1: 1008, y1: 772,
+      kok: { x: 154, y: 303 }, uzanim: 0.43,
     },
     crystal: {
       yol: 'assets/tail-crystal.png',
       kare: 1024, x0: 150, y0: 166, x1: 866, y1: 862,
-      kok: { x: 224, y: 244 }, uzanim: 0.375,
+      kok: { x: 199, y: 304 }, uzanim: 0.375,
     },
     demon: {
       yol: 'assets/tail-demon.png',
-      kare: 1024, x0: 112, y0: 176, x1: 944, y1: 876,
-      kok: { x: 167, y: 256 }, uzanim: 0.38,
+      kare: 1024, x0: 70, y0: 184, x1: 988, y1: 808,
+      kok: { x: 135, y: 296 }, uzanim: 0.44,
     },
     lightning: {
       yol: 'assets/tail-lightning.png',
       kare: 1024, x0: 148, y0: 144, x1: 908, y1: 864,
-      kok: { x: 225, y: 220 }, uzanim: 0.385,
+      kok: { x: 203, y: 277 }, uzanim: 0.385,
     },
     king: {
       yol: 'assets/tail-king.png',
       kare: 1024, x0: 164, y0: 140, x1: 892, y1: 850,
-      kok: { x: 221, y: 193 }, uzanim: 0.39,
+      kok: { x: 213, y: 210 }, uzanim: 0.39,
     },
     celestial: {
       yol: 'assets/tail-celestial.png',
       kare: 1024, x0: 156, y0: 146, x1: 912, y1: 840,
-      kok: { x: 255, y: 213 }, uzanim: 0.40,
+      kok: { x: 211, y: 344 }, uzanim: 0.40,
     },
   },
 };

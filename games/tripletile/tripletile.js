@@ -9,9 +9,9 @@
    calisiriz - her adimda o an oynanabilir durumdaki uc tasi secip ayni
    cesidi veririz. Boylece her bolumun cozumu kesin vardir. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v30';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v30';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v30';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v31';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v31';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v31';
 
 const GAME_ID = 'tripletile';
 /* EKONOMI DENGESI
