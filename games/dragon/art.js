@@ -17,8 +17,8 @@
    Olcekler seviye 99'da bile 200x200 kadraja sigacak sekilde secildi:
    en genis nokta kanat ucu (x = ±120), yani 120 * wing * s <= ~96. */
 
-import { palet, HEADS, FACES } from './data.js?v25';
-import { CONFIG, growthRatio } from './config.js?v25';
+import { palet, HEADS, FACES } from './data.js?v26';
+import { CONFIG, growthRatio } from './config.js?v26';
 
 /* Ayni sayfada birden fazla ejderha olabilir; degrade ve maske id'leri
    catismasin diye sayac. */
@@ -983,6 +983,9 @@ const GORSEL = {
   yol: 'assets/dragon-base.png',
   kare: 1024,
   x0: 188, y0: 139, x1: 831, y1: 891,
+  /* Kanadin govdeye girdigi nokta (ayni 1024'luk piksel duzleminde):
+     boyun dikenlerinin hemen arkasi, sirt cizgisinin ustu. */
+  omuz: { x: 632, y: 508 },
 };
 
 /* KATMANLAR
@@ -992,20 +995,28 @@ const GORSEL = {
    data.js WINGS/TAILS). Govdeye basili olsalardi oyuncu Anka Kanadi
    aldiginda eski kanat altindan gorunurdu.
 
-   Her katman icin: dosya, gorunen kutusu (kirpma icin) ve govdeye gore
-   nereye oturacagi. Konum degerleri 200'luk kadrajdaki GOVDE kutusuna
-   oranli - boylece ejderha seviyeyle buyudukce katman da onunla buyuyor.
+   Her katman icin: dosya, gorunen kutusu ve kendi KOK noktasi - yani
+   gorselin hangi pikseli ejderhanin omzuna denk gelmeli.
 
-   ayna: gorsel ters yonde uretildiyse yatay cevirir. Yeniden urettirmek
-   yerine burada cevirmek bedava. */
+   NEDEN KOK NOKTASI: once katmani govde kutusuna oranli kaymalarla
+   (dx/dy) yerlestiriyordum. Her kanat gorseli kendi karesinde farkli bir
+   yerde durdugu icin ayni kayma degerleri her kanatta baska bir sonuc
+   veriyordu - kanat ejderhadan kopuk, havada duruyordu. Kok noktasi
+   sabitlenince yerlestirme gorselin cercevesinden bagimsiz hale geliyor:
+   yeni bir kanat eklerken tek olcmem gereken sey, o gorselde kanadin
+   omuza giren noktasi.
+
+   ayna: gorsel ters yonde uretildiyse yatay cevirir. Ejderha SOLA
+   baktigi icin kanat kokten saga/yukari acilmali; ters uretilmis bir
+   gorseli yeniden urettirmek yerine burada cevirmek bedava. */
 const KATMAN = {
   wings: {
     leather: {
       yol: 'assets/wing-leather.png',
       kare: 1024, x0: 221, y0: 189, x1: 865, y1: 840,
-      ayna: true,
-      /* Govde genisliginin kati olarak boy, ve govde kutusuna gore kayma */
-      olcek: 0.78, dx: 0.30, dy: -0.30,
+      kok: { x: 272, y: 700 },
+      /* Kanadin genisligi, govde genisliginin kati */
+      olcek: 0.62,
     },
   },
 };
@@ -1025,18 +1036,19 @@ function katmanSec(kategori, id) {
 /* Gorseli henuz uretilmemis oge bu kademeye duser */
 const VARSAYILAN = { wings: 'leather', tail: 'basic' };
 
-/* Bir katmani govde kutusuna gore yerlestirip <image> etiketi uretir.
-   gx,gy,gw = govdenin GORUNEN kutusu (200'luk kadrajda). */
-function katmanCiz(k, gx, gy, gw) {
-  const gen = (k.x1 - k.x0), yuk = (k.y1 - k.y0);
-  const hedefGen = gw * k.olcek;
-  const olcek = hedefGen * k.kare / gen;
-  const x = gx + gw * k.dx - (k.x0 / k.kare) * olcek;
-  const y = gy + gw * k.dy - (k.y0 / k.kare) * olcek;
+/* Bir katmani govdenin baglanti noktasina cakarak <image> etiketi uretir.
+   ax,ay = baglanti noktasinin 200'luk kadrajdaki yeri
+   gw    = govdenin gorunen genisligi (olceklemenin dayanagi). */
+function katmanCiz(k, ax, ay, gw) {
+  /* Gorselin 1024'luk karesi kadrajda kac birim kaplayacak */
+  const olcek = gw * k.olcek * k.kare / (k.x1 - k.x0);
 
-  /* Aynalama, gorselin kendi merkezi etrafinda */
-  const merkez = x + (k.x0 / k.kare) * olcek + hedefGen / 2;
-  const cevir = k.ayna ? ` transform="translate(${(merkez * 2).toFixed(1)} 0) scale(-1 1)"` : '';
+  /* Kok noktasi baglanti noktasina otursun */
+  const x = ax - (k.kok.x / k.kare) * olcek;
+  const y = ay - (k.kok.y / k.kare) * olcek;
+
+  /* Aynalama kok noktasi etrafinda: cevrildiginde kanat yerinden oynamasin */
+  const cevir = k.ayna ? ` transform="translate(${(ax * 2).toFixed(1)} 0) scale(-1 1)"` : '';
 
   return `<image href="${k.yol}" x="${x.toFixed(1)}" y="${y.toFixed(1)}"
                  width="${olcek.toFixed(1)}" height="${olcek.toFixed(1)}"
@@ -1063,15 +1075,18 @@ function gorselEjderha(level, mood, look) {
     ? `<filter id="ruh${uid}"><feColorMatrix type="saturate" values="0.45"/></filter>`
     : '';
 
-  /* Govdenin gorunen kutusu - katmanlar buna gore yerlesiyor */
-  const gy = iy + (GORSEL.y0 / GORSEL.kare) * olcek;
+  /* Omuz noktasi kadraja tasiniyor - katmanlar buraya cakiliyor.
+     Katmanlar govdeden ONCE ciziliyor: kokleri govdenin altinda kalsin,
+     ejderhaya yapistirilmis gibi degil, arkasindan cikiyormus gibi dursun. */
+  const ax = ix + (GORSEL.omuz.x / GORSEL.kare) * olcek;
+  const ay = iy + (GORSEL.omuz.y / GORSEL.kare) * olcek;
   const kanat = katmanSec('wings', look?.wings);
 
   return `
     <svg viewBox="0 0 200 200" aria-hidden="true">
       ${suzgec ? `<defs>${suzgec}</defs>` : ''}
       <g ${suzgec ? `filter="url(#ruh${uid})"` : ''}>
-        ${kanat ? katmanCiz(kanat, 100 - hedefGen / 2, gy, hedefGen) : ''}
+        ${kanat ? katmanCiz(kanat, ax, ay, hedefGen) : ''}
         <image href="${GORSEL.yol}" x="${ix.toFixed(1)}" y="${iy.toFixed(1)}"
                width="${olcek.toFixed(1)}" height="${olcek.toFixed(1)}"
                preserveAspectRatio="xMidYMid meet"/>

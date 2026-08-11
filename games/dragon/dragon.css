@@ -414,12 +414,17 @@ body.shop-open.island-preview .dragon-slot {
 .swatch.zoom { width: 46px; height: 42px; background: rgba(255, 255, 255, 0.05); }
 .swatch.zoom svg { position: absolute; display: block; }
 
-/* Sol kanat: x 10..95, y 38..128 penceresi */
-.swatch.zoom.wings svg { width: 108px; height: 108px; left: -5px; top: -21px; }
+/* Kanat: x 128..198, y 50..114 penceresi.
+   Eski cizimde kanat govdenin SOLUNDA aciliyordu ve pencere oraya
+   bakiyordu; gorsel tabanli ejderhada omuzdan saga aciliyor, o yuzden
+   pencere karsi tarafa alindi - kutucuklar kanat yerine kafayi
+   gosteriyordu. */
+.swatch.zoom.wings svg { width: 131px; height: 131px; left: -84px; top: -33px; }
 
-/* Kuyruk: x 110..186, y 96..172 penceresi
-   (kuyruk govdenin sagindan cikip asagi kivriliyor) */
-.swatch.zoom.tail svg { width: 121px; height: 121px; left: -67px; top: -58px; }
+/* Kuyruk: x 118..172, y 128..178 penceresi - govdenin sag alt kutlesi.
+   Kuyruk gorseli henuz uretilmedi; pencere simdilik kuyrugun cikacagi
+   bolgeye bakiyor. */
+.swatch.zoom.tail svg { width: 170px; height: 170px; left: -100px; top: -109px; }
 
 .swatch {
   position: relative;
