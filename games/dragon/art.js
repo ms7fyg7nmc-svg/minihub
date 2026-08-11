@@ -17,8 +17,8 @@
    Olcekler seviye 99'da bile 200x200 kadraja sigacak sekilde secildi:
    en genis nokta kanat ucu (x = ±120), yani 120 * wing * s <= ~96. */
 
-import { palet, HEADS, FACES } from './data.js?v27';
-import { CONFIG, growthRatio } from './config.js?v27';
+import { palet, HEADS, FACES } from './data.js?v28';
+import { CONFIG, growthRatio } from './config.js?v28';
 
 /* Ayni sayfada birden fazla ejderha olabilir; degrade ve maske id'leri
    catismasin diye sayac. */
@@ -986,7 +986,20 @@ const GORSEL = {
   /* Kanadin govdeye girdigi nokta (ayni 1024'luk piksel duzleminde):
      boyun dikenlerinin hemen arkasi, sirt cizgisinin ustu. */
   omuz: { x: 632, y: 508 },
+
+  /* Kuyrugun ciktigi nokta: arka kalcanin ICINDE secildi, kenarinda degil.
+     Kenarda kalinca kuyrugun kalin dip parcasi govdenin disinda kaliyor ve
+     yapistirilmis gibi duruyordu; iceride kalinca govde onu ortuyor. */
+  kalca: { x: 762, y: 648 },
 };
+
+/* Ejderhanin 200'luk kadrajdaki yatay merkezi.
+
+   Tam ortada (100) degil: kanat ve kuyruk ikisi de SAGA aciliyor, cunku
+   ejderha sola bakiyor. Ortalanmis bir govdede en genis kanat kadrajin sag
+   kenarindan tasiyordu. Govde biraz sola alininca siluetin tamami - govde
+   + kanat + kuyruk - ortalanmis oluyor. */
+const MERKEZ = 92;
 
 /* KATMANLAR
 
@@ -1066,6 +1079,52 @@ const KATMAN = {
       kok: { x: 213, y: 797 }, uzanim: 0.57,
     },
   },
+
+  /* Kuyruklar: kalin dip UST SOLDA, uc sag alta kivriliyor. Kok noktasi
+     dibin ust-sol ucundan agirlik merkezine dogru biraz iceride secildi -
+     tam ucta kalinca dip govdenin disina tasiyordu. */
+  tail: {
+    basic: {
+      yol: 'assets/tail-basic.png',
+      kare: 1024, x0: 182, y0: 202, x1: 906, y1: 862,
+      kok: { x: 244, y: 256 }, uzanim: 0.36,
+    },
+    spiked: {
+      yol: 'assets/tail-spiked.png',
+      kare: 1024, x0: 150, y0: 170, x1: 862, y1: 842,
+      kok: { x: 195, y: 203 }, uzanim: 0.365,
+    },
+    flame: {
+      yol: 'assets/tail-flame.png',
+      kare: 1024, x0: 162, y0: 240, x1: 914, y1: 798,
+      kok: { x: 239, y: 299 }, uzanim: 0.37,
+    },
+    crystal: {
+      yol: 'assets/tail-crystal.png',
+      kare: 1024, x0: 150, y0: 166, x1: 866, y1: 862,
+      kok: { x: 224, y: 244 }, uzanim: 0.375,
+    },
+    demon: {
+      yol: 'assets/tail-demon.png',
+      kare: 1024, x0: 112, y0: 176, x1: 944, y1: 876,
+      kok: { x: 167, y: 256 }, uzanim: 0.38,
+    },
+    lightning: {
+      yol: 'assets/tail-lightning.png',
+      kare: 1024, x0: 148, y0: 144, x1: 908, y1: 864,
+      kok: { x: 225, y: 220 }, uzanim: 0.385,
+    },
+    king: {
+      yol: 'assets/tail-king.png',
+      kare: 1024, x0: 164, y0: 140, x1: 892, y1: 850,
+      kok: { x: 221, y: 193 }, uzanim: 0.39,
+    },
+    celestial: {
+      yol: 'assets/tail-celestial.png',
+      kare: 1024, x0: 156, y0: 146, x1: 912, y1: 840,
+      kok: { x: 255, y: 213 }, uzanim: 0.40,
+    },
+  },
 };
 
 /* Kozmetigin gorseli var mi? Yoksa ayni kategorinin varsayilanina duser.
@@ -1118,8 +1177,8 @@ function gorselEjderha(level, mood, look) {
   const hedefGen = 88 + g * 40;
   const olcek = hedefGen * GORSEL.kare / (GORSEL.x1 - GORSEL.x0);
 
-  /* Ejderhanin ayaklari alt kenara yakin dursun, ortalanmis olsun */
-  const ix = 100 - hedefGen / 2 - (GORSEL.x0 / GORSEL.kare) * olcek;
+  /* Ejderhanin ayaklari alt kenara yakin dursun (bkz. MERKEZ) */
+  const ix = MERKEZ - hedefGen / 2 - (GORSEL.x0 / GORSEL.kare) * olcek;
   const iy = 192 - (GORSEL.y1 / GORSEL.kare) * olcek;
 
   /* Ac/uzgun ejderha biraz soluk - eskiden goz kapaklari dusuyordu,
@@ -1131,15 +1190,21 @@ function gorselEjderha(level, mood, look) {
   /* Omuz noktasi kadraja tasiniyor - katmanlar buraya cakiliyor.
      Katmanlar govdeden ONCE ciziliyor: kokleri govdenin altinda kalsin,
      ejderhaya yapistirilmis gibi degil, arkasindan cikiyormus gibi dursun. */
-  const ax = ix + (GORSEL.omuz.x / GORSEL.kare) * olcek;
-  const ay = iy + (GORSEL.omuz.y / GORSEL.kare) * olcek;
+  const nokta = (p) => [
+    ix + (p.x / GORSEL.kare) * olcek,
+    iy + (p.y / GORSEL.kare) * olcek,
+  ];
+  const [omuzX, omuzY] = nokta(GORSEL.omuz);
+  const [kalcaX, kalcaY] = nokta(GORSEL.kalca);
   const kanat = katmanSec('wings', look?.wings);
+  const kuyruk = katmanSec('tail', look?.tail);
 
   return `
     <svg viewBox="0 0 200 200" aria-hidden="true">
       ${suzgec ? `<defs>${suzgec}</defs>` : ''}
       <g ${suzgec ? `filter="url(#ruh${uid})"` : ''}>
-        ${kanat ? katmanCiz(kanat, ax, ay, hedefGen) : ''}
+        ${kuyruk ? katmanCiz(kuyruk, kalcaX, kalcaY, hedefGen) : ''}
+        ${kanat ? katmanCiz(kanat, omuzX, omuzY, hedefGen) : ''}
         <image href="${GORSEL.yol}" x="${ix.toFixed(1)}" y="${iy.toFixed(1)}"
                width="${olcek.toFixed(1)}" height="${olcek.toFixed(1)}"
                preserveAspectRatio="xMidYMid meet"/>

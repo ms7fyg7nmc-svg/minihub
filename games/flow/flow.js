@@ -11,9 +11,9 @@
    etmek zorunda degil - hangi yoldan giderse gitsin, ciftler baglanip
    izgara dolarsa bolum biter. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v27';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v27';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v27';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v28';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v28';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v28';
 
 const GAME_ID = 'flow';
 /* EKONOMI DENGESI
