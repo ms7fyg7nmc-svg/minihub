@@ -17,8 +17,8 @@
    Olcekler seviye 99'da bile 200x200 kadraja sigacak sekilde secildi:
    en genis nokta kanat ucu (x = ±120), yani 120 * wing * s <= ~96. */
 
-import { palet, HEADS, FACES } from './data.js?v32';
-import { CONFIG, growthRatio } from './config.js?v32';
+import { palet, HEADS, FACES } from './data.js?v33';
+import { CONFIG, growthRatio } from './config.js?v33';
 
 /* Ayni sayfada birden fazla ejderha olabilir; degrade ve maske id'leri
    catismasin diye sayac. */
@@ -1005,6 +1005,38 @@ const GORSEL = {
    + kanat + kuyruk - ortalanmis oluyor. */
 const MERKEZ = 92;
 
+/* ---------- RENK KOZMETIGI ----------
+
+   Ejderha tek bir gorselden ciziliyor ve o gorsel KOR KIZILI. Sekiz rengin
+   her biri icin ayri govde urettirmek, ustune her rengin kendi kanat ve
+   kuyruklarini da urettirmek demekti (8 x 17 = 136 gorsel). Bunun yerine
+   ton dondurme suzgeci kullaniliyor: tek gorsel, sekiz renk, sifir uretim.
+
+   NEDEN TUTUYOR: ton dondurme parlaklik iliskilerini bozmuyor. Karin
+   govdeden acik oldugu icin ceviriden sonra da acik kaliyor; hacim ve
+   golgeler oldugu gibi duruyor.
+
+   SUZGEC HANGI PARCALARA UYGULANIR: govde, ve yalnizca GOVDE RENGINDE
+   olan kozmetikler (deri kanat, klasik/dikenli kuyruk). Element esyalari
+   - kristal, alev, yildirim, kral, semavi - kendi renklerini koruyor.
+   Hepsini cevirmeyi denedim: 1.000 jetonluk Kristal Kanat BEJ, Semavi
+   Kanat YESIL, Yildirim Kuyruk SARI oluyordu. Oyuncu buz kanadi aliyorsa
+   ejderhasi ne renk olursa olsun buz kanadi gormeli.
+
+   Degerler ejderhanin kendi tonundan (3 derece, kirmizi) data.js'teki
+   hedef renge olan farktan turetildi; doygunluk ve parlaklik da hedefin
+   HSL degerlerine oranlanarak bulundu. */
+const RENK_SUZGEC = {
+  ember:     null,                                  /* asil gorsel */
+  ocean:     { ton: 197, doy: 1.04, isik: 0.94 },
+  emerald:   { ton: 144, doy: 0.73, isik: 0.83 },
+  royal:     { ton: 256, doy: 1.20, isik: 1.09 },
+  obsidian:  { ton: 256, doy: 0.21, isik: 0.40 },
+  frost:     { ton: 193, doy: 1.01, isik: 1.33 },
+  celestial: { ton: 39,  doy: 1.22, isik: 1.03 },
+  aurora:    { ton: 169, doy: 0.74, isik: 1.09 },
+};
+
 /* Govde merkezinin kadrajdaki yatay orani (0..1).
 
    Ejderhayi ada karosunun uzerine oturtan kod bunu kullanmak ZORUNDA:
@@ -1053,7 +1085,7 @@ const KATMAN = {
     leather: {
       yol: 'assets/wing-leather.png',
       kare: 1024, x0: 223, y0: 191, x1: 863, y1: 837,
-      kok: { x: 267, y: 715 }, uzanim: 0.53,
+      kok: { x: 267, y: 715 }, uzanim: 0.53, govdeRengi: true,
     },
     flame: {
       yol: 'assets/wing-flame.png',
@@ -1103,12 +1135,12 @@ const KATMAN = {
     basic: {
       yol: 'assets/tail-basic.png',
       kare: 1024, x0: 182, y0: 202, x1: 906, y1: 862,
-      kok: { x: 232, y: 325 }, uzanim: 0.36,
+      kok: { x: 232, y: 325 }, uzanim: 0.36, govdeRengi: true,
     },
     spiked: {
       yol: 'assets/tail-spiked.png',
       kare: 1024, x0: 150, y0: 170, x1: 862, y1: 842,
-      kok: { x: 198, y: 245 }, uzanim: 0.365,
+      kok: { x: 198, y: 245 }, uzanim: 0.365, govdeRengi: true,
     },
     flame: {
       yol: 'assets/tail-flame.png',
@@ -1227,7 +1259,7 @@ const VARSAYILAN = { wings: 'leather', tail: 'basic' };
               "uzanimi" yok, kafanin uzerinde durur. Uzanimla olceklemeye
               calisirsak, kokun cerceve icindeki yerine gore her tac
               baska bir boyda cikar. */
-function katmanCiz(k, ax, ay, gw) {
+function katmanCiz(k, ax, ay, gw, renkId) {
   const gorunenGen = k.en !== undefined
     ? gw * k.en
     /* Kokten sag kenara kadar olan kisim, gorunen genisligin ne kadari */
@@ -1243,9 +1275,15 @@ function katmanCiz(k, ax, ay, gw) {
   /* Aynalama kok noktasi etrafinda: cevrildiginde kanat yerinden oynamasin */
   const cevir = k.ayna ? ` transform="translate(${(ax * 2).toFixed(1)} 0) scale(-1 1)"` : '';
 
+  /* Renk suzgeci GRUBA degil tek tek gorsele veriliyor. Gruba verilseydi
+     ya hepsi cevrilirdi ya hicbiri; oysa ayni ejderhada govde rengindeki
+     kanat cevrilmeli, element kuyrugu cevrilmemeli - ve ikisi arasindaki
+     CIZIM SIRASI (kuyruk, kanat, govde, tac) korunmali. */
+  const suz = (k.govdeRengi && renkId) ? ` filter="url(#${renkId})"` : '';
+
   return `<image href="${k.yol}" x="${x.toFixed(1)}" y="${y.toFixed(1)}"
                  width="${olcek.toFixed(1)}" height="${olcek.toFixed(1)}"
-                 preserveAspectRatio="xMidYMid meet"${cevir}/>`;
+                 preserveAspectRatio="xMidYMid meet"${cevir}${suz}/>`;
 }
 
 function gorselEjderha(level, mood, look) {
@@ -1268,6 +1306,21 @@ function gorselEjderha(level, mood, look) {
     ? `<filter id="ruh${uid}"><feColorMatrix type="saturate" values="0.45"/></filter>`
     : '';
 
+  /* Secili rengin suzgeci. ember'da yok - o zaten gorselin kendi rengi,
+     bos bir suzgecten gecirmenin anlami olmaz. */
+  const r = RENK_SUZGEC[look?.color];
+  const renkId = r ? `rk${uid}` : null;
+  const renkTanim = r ? `
+      <filter id="${renkId}" color-interpolation-filters="sRGB">
+        <feColorMatrix type="hueRotate" values="${r.ton}"/>
+        <feColorMatrix type="saturate" values="${r.doy}"/>
+        <feComponentTransfer>
+          <feFuncR type="linear" slope="${r.isik}"/>
+          <feFuncG type="linear" slope="${r.isik}"/>
+          <feFuncB type="linear" slope="${r.isik}"/>
+        </feComponentTransfer>
+      </filter>` : '';
+
   /* Baglanti noktalari kadraja tasiniyor - katmanlar buraya cakiliyor. */
   const nokta = (p) => [
     ix + (p.x / GORSEL.kare) * olcek,
@@ -1288,14 +1341,15 @@ function gorselEjderha(level, mood, look) {
                         cizilirse kafanin arkasinda kalip kaybolur. */
   return `
     <svg viewBox="0 0 200 200" aria-hidden="true">
-      ${suzgec ? `<defs>${suzgec}</defs>` : ''}
+      ${(suzgec || renkTanim) ? `<defs>${suzgec}${renkTanim}</defs>` : ''}
       <g ${suzgec ? `filter="url(#ruh${uid})"` : ''}>
-        ${kuyruk ? katmanCiz(kuyruk, kalcaX, kalcaY, hedefGen) : ''}
-        ${kanat ? katmanCiz(kanat, omuzX, omuzY, hedefGen) : ''}
+        ${kuyruk ? katmanCiz(kuyruk, kalcaX, kalcaY, hedefGen, renkId) : ''}
+        ${kanat ? katmanCiz(kanat, omuzX, omuzY, hedefGen, renkId) : ''}
         <image href="${GORSEL.yol}" x="${ix.toFixed(1)}" y="${iy.toFixed(1)}"
                width="${olcek.toFixed(1)}" height="${olcek.toFixed(1)}"
-               preserveAspectRatio="xMidYMid meet"/>
-        ${tac ? katmanCiz(tac, tepeX, tepeY, hedefGen) : ''}
+               preserveAspectRatio="xMidYMid meet"
+               ${renkId ? `filter="url(#${renkId})"` : ''}/>
+        ${tac ? katmanCiz(tac, tepeX, tepeY, hedefGen, renkId) : ''}
       </g>
     </svg>`;
 }
