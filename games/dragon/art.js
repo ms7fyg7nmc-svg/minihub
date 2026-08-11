@@ -17,8 +17,8 @@
    Olcekler seviye 99'da bile 200x200 kadraja sigacak sekilde secildi:
    en genis nokta kanat ucu (x = ±120), yani 120 * wing * s <= ~96. */
 
-import { palet, HEADS, FACES } from './data.js?v31';
-import { CONFIG, growthRatio } from './config.js?v31';
+import { palet, HEADS, FACES } from './data.js?v32';
+import { CONFIG, growthRatio } from './config.js?v32';
 
 /* Ayni sayfada birden fazla ejderha olabilir; degrade ve maske id'leri
    catismasin diye sayac. */
@@ -991,6 +991,10 @@ const GORSEL = {
      Kenarda kalinca kuyrugun kalin dip parcasi govdenin disinda kaliyor ve
      yapistirilmis gibi duruyordu; iceride kalinca govde onu ortuyor. */
   kalca: { x: 762, y: 648 },
+
+  /* Tacin oturdugu nokta: kafatasinin tepesi, boynuzlarin arasi.
+     Tac bu noktaya ALT ORTASINDAN degiyor (bkz. katmanCiz 'en'). */
+  tepe: { x: 372, y: 262 },
 };
 
 /* Ejderhanin 200'luk kadrajdaki yatay merkezi.
@@ -1137,6 +1141,60 @@ const KATMAN = {
       kok: { x: 211, y: 344 }, uzanim: 0.40,
     },
   },
+
+  /* Taclar: kanat ve kuyrugun tersine ENE gore olcekleniyor ve gorunen
+     kutunun ALT ORTASINDAN kafaya oturuyor (bkz. katmanCiz).
+
+     GORUS ACISI: hepsi goz hizasindan, hafif ustten cizdirildi. Ilk
+     denemede "hafif ucte-bir aci" dedim ve model tepeden bakan, ici
+     gorunen yatik halkalar uretti - kafaya konunca tacin ARKA kenari
+     basin onunden geciyordu. Goz hizasinda bant sig bir kavis olarak
+     kaliyor ve bu sorun ortadan kalkiyor.
+
+     en: nadirlik yukseldikce hafifce buyuyor ama kafayi asmiyor -
+     kafatasi govde genisliginin ~%39'u, taclar onun altinda kaliyor. */
+  head: {
+    tiny: {
+      yol: 'assets/crown-tiny.png',
+      kare: 1024, x0: 200, y0: 384, x1: 824, y1: 660,
+      kok: { x: 512, y: 660 }, en: 0.30,
+    },
+    bronze: {
+      yol: 'assets/crown-bronze.png',
+      kare: 1024, x0: 302, y0: 326, x1: 732, y1: 690,
+      kok: { x: 517, y: 690 }, en: 0.30,
+    },
+    silver: {
+      yol: 'assets/crown-silver.png',
+      kare: 1024, x0: 172, y0: 316, x1: 848, y1: 736,
+      kok: { x: 510, y: 736 }, en: 0.32,
+    },
+    golden: {
+      yol: 'assets/crown-golden.png',
+      kare: 1024, x0: 200, y0: 260, x1: 828, y1: 730,
+      kok: { x: 514, y: 730 }, en: 0.33,
+    },
+    flame: {
+      yol: 'assets/crown-flame.png',
+      kare: 1024, x0: 172, y0: 308, x1: 886, y1: 782,
+      kok: { x: 529, y: 782 }, en: 0.34,
+    },
+    ice: {
+      yol: 'assets/crown-ice.png',
+      kare: 1024, x0: 238, y0: 298, x1: 796, y1: 682,
+      kok: { x: 517, y: 682 }, en: 0.34,
+    },
+    king: {
+      yol: 'assets/crown-king.png',
+      kare: 1024, x0: 118, y0: 126, x1: 922, y1: 834,
+      kok: { x: 520, y: 834 }, en: 0.38,
+    },
+    celestial: {
+      yol: 'assets/crown-celestial.png',
+      kare: 1024, x0: 256, y0: 312, x1: 780, y1: 700,
+      kok: { x: 518, y: 690 }, en: 0.36,
+    },
+  },
 };
 
 /* Kozmetigin gorseli var mi? Yoksa ayni kategorinin varsayilanina duser.
@@ -1156,15 +1214,26 @@ const VARSAYILAN = { wings: 'leather', tail: 'basic' };
 
 /* Bir katmani govdenin baglanti noktasina cakarak <image> etiketi uretir.
    ax,ay = baglanti noktasinin 200'luk kadrajdaki yeri
-   gw    = govdenin gorunen genisligi (olceklemenin dayanagi). */
-function katmanCiz(k, ax, ay, gw) {
-  /* Kokten sag kenara kadar olan kisim, gorunen genisligin ne kadari */
-  const sagOran = (k.x1 - k.kok.x) / (k.x1 - k.x0);
+   gw    = govdenin gorunen genisligi (olceklemenin dayanagi).
 
-  /* Gorselin 1024'luk karesi kadrajda kac birim kaplayacak.
-     Once "omuzdan saga gw*uzanim kadar uzansin" denkleminden gorunen
-     genislik cikariliyor, sonra tam kareye buyutuluyor. */
-  const gorunenGen = gw * k.uzanim / sagOran;
+   IKI OLCEKLEME BICIMI VAR - katmanin hangi alani tasidigiyla secilir:
+
+     uzanim : kanat ve kuyruk. "Baglanti noktasindan SAGA su kadar uzan."
+              Bu ikisinde onemli olan ne kadar disari acildiklari; koke
+              gore sagda kalan kisim govde genisliginin sabit bir kati
+              olunca hepsi ayni yere kadar aciliyor.
+
+     en     : tac. Onemli olan ENI - kafaya oturmasi lazim. Tacin bir
+              "uzanimi" yok, kafanin uzerinde durur. Uzanimla olceklemeye
+              calisirsak, kokun cerceve icindeki yerine gore her tac
+              baska bir boyda cikar. */
+function katmanCiz(k, ax, ay, gw) {
+  const gorunenGen = k.en !== undefined
+    ? gw * k.en
+    /* Kokten sag kenara kadar olan kisim, gorunen genisligin ne kadari */
+    : gw * k.uzanim / ((k.x1 - k.kok.x) / (k.x1 - k.x0));
+
+  /* Gorselin 1024'luk karesi kadrajda kac birim kaplayacak */
   const olcek = gorunenGen * k.kare / (k.x1 - k.x0);
 
   /* Kok noktasi baglanti noktasina otursun */
@@ -1199,18 +1268,24 @@ function gorselEjderha(level, mood, look) {
     ? `<filter id="ruh${uid}"><feColorMatrix type="saturate" values="0.45"/></filter>`
     : '';
 
-  /* Omuz noktasi kadraja tasiniyor - katmanlar buraya cakiliyor.
-     Katmanlar govdeden ONCE ciziliyor: kokleri govdenin altinda kalsin,
-     ejderhaya yapistirilmis gibi degil, arkasindan cikiyormus gibi dursun. */
+  /* Baglanti noktalari kadraja tasiniyor - katmanlar buraya cakiliyor. */
   const nokta = (p) => [
     ix + (p.x / GORSEL.kare) * olcek,
     iy + (p.y / GORSEL.kare) * olcek,
   ];
   const [omuzX, omuzY] = nokta(GORSEL.omuz);
   const [kalcaX, kalcaY] = nokta(GORSEL.kalca);
+  const [tepeX, tepeY] = nokta(GORSEL.tepe);
   const kanat = katmanSec('wings', look?.wings);
   const kuyruk = katmanSec('tail', look?.tail);
+  const tac = katmanSec('head', look?.head);
 
+  /* CIZIM SIRASI ONEMLI:
+       kuyruk, kanat -> govdeden ONCE. Kokleri govdenin altinda kalsin,
+                        yapistirilmis gibi degil arkasindan cikiyormus
+                        gibi dursunlar.
+       tac           -> govdeden SONRA. Kafanin ustune oturuyor; arkaya
+                        cizilirse kafanin arkasinda kalip kaybolur. */
   return `
     <svg viewBox="0 0 200 200" aria-hidden="true">
       ${suzgec ? `<defs>${suzgec}</defs>` : ''}
@@ -1220,6 +1295,7 @@ function gorselEjderha(level, mood, look) {
         <image href="${GORSEL.yol}" x="${ix.toFixed(1)}" y="${iy.toFixed(1)}"
                width="${olcek.toFixed(1)}" height="${olcek.toFixed(1)}"
                preserveAspectRatio="xMidYMid meet"/>
+        ${tac ? katmanCiz(tac, tepeX, tepeY, hedefGen) : ''}
       </g>
     </svg>`;
 }

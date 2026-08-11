@@ -428,6 +428,10 @@ body.shop-open.island-preview .dragon-slot {
    kivrilan bolge. */
 .swatch.zoom.tail svg { width: 153px; height: 153px; left: -106px; top: -106px; }
 
+/* Tac: x 38..92, y 28..76 penceresi - kafatasinin tepesi. Biraz genis
+   tutuldu ki tacin tek basina degil KAFANIN USTUNDE oldugu anlasilsin. */
+.swatch.zoom.head svg { width: 170px; height: 170px; left: -32px; top: -24px; }
+
 .swatch {
   position: relative;
   width: 40px;

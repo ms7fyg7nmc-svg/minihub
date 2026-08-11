@@ -29,7 +29,7 @@
    goruntu olarak saklaniyor. Her karede sadece su/lav parlamalari ve
    partikuller yeniden ciziliyor. Sekme arka plana alininca dongu duruyor. */
 
-import { ada as adaTemasi } from './data.js?v31';
+import { ada as adaTemasi } from './data.js?v32';
 
 const TILE_W = 46;   /* izometrik karo genisligi */
 const TILE_H = 23;   /* karo yuksekligi (2:1 izometrik) */

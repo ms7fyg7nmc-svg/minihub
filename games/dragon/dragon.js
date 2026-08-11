@@ -9,17 +9,19 @@
    Burada hicbir fiyat, hicbir XP degeri ve hicbir bakiye aritmetigi yok -
    ileride dengeleme yaparken bu dosyayi acmak gerekmemeli. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v31';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v31';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v32';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v32';
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v31';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v31';
-import { bakiyeOku, harca } from './economy.js?v31';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v32';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v32';
+import { bakiyeOku, harca } from './economy.js?v32';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v31';
-import { dragonSvg, headSvg, faceSvg, HEAD_BOX, GOVDE_MERKEZ_ORANI } from './art.js?v31';
-import { ITEM_TEXTS } from './i18n-items.js?v31';
-import { createIsland } from './island.js?v31';
+         adaSahipMi, adaEkle } from './model.js?v32';
+/* headSvg ve HEAD_BOX artik cagrilmiyor: taclar uretilmis gorsel oldu,
+   dukkan kutucugu de ejderhayi cizip kafaya yakinlasiyor. */
+import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI } from './art.js?v32';
+import { ITEM_TEXTS } from './i18n-items.js?v32';
+import { createIsland } from './island.js?v32';
 
 const GAME_ID = 'dragon';
 
@@ -509,8 +511,12 @@ function onizleme(slot, id, item) {
 
   if (slot === 'head') {
     if (!item.kind) return bos;
-    return `<span class="swatch" style="background:rgba(255,255,255,.06)">
-      <svg viewBox="${HEAD_BOX[item.kind] || '-24 -40 48 44'}">${headSvg(id, 0)}</svg></span>`;
+    /* Kanat/kuyrukla ayni yontem: ejderha cizilip kafaya yakinlasiliyor.
+       Onceden burada elle yazilmis SVG tac ciziliyordu - taclar artik
+       uretilmis gorsel oldugu icin dukkanda BASKA bir tac gorunuyordu.
+       Aldiginla gordugunun ayni olmasi gerekiyor. */
+    const look = { ...VARSAYILAN_ONIZLEME, head: id };
+    return `<span class="swatch zoom head">${dragonSvg(99, look, 'happy')}</span>`;
   }
 
   if (slot === 'face') {

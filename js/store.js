@@ -26,7 +26,7 @@
    yansidi). Simdi bu cihazdaki kayit yetkili, bulut sadece yedek.
 */
 
-import { isTelegramUser, getInitData } from './tg.js?v31';
+import { isTelegramUser, getInitData } from './tg.js?v32';
 
 /* Worker'in gercek adresiyle degistir: Cloudflare Worker sayfasinin en
    ustunde yazan adres - KURULUM-BOT.md'nin C adiminda not ettigin adresin
