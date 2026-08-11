@@ -7,8 +7,8 @@
    Anahtarlar oyunun icinde kisa yazilir ("score"), asil sozlukte ise oyun adiyla
    birlikte aranir ("match3.score"). */
 
-import { initLang, t as coreT, getLang } from './i18n.js?v26';
-export { locale } from './i18n.js?v26';
+import { initLang, t as coreT, getLang } from './i18n.js?v27';
+export { locale } from './i18n.js?v27';
 
 let gameId = '';
 let fallbackTexts = {};

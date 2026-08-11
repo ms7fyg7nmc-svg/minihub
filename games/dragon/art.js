@@ -17,8 +17,8 @@
    Olcekler seviye 99'da bile 200x200 kadraja sigacak sekilde secildi:
    en genis nokta kanat ucu (x = ±120), yani 120 * wing * s <= ~96. */
 
-import { palet, HEADS, FACES } from './data.js?v26';
-import { CONFIG, growthRatio } from './config.js?v26';
+import { palet, HEADS, FACES } from './data.js?v27';
+import { CONFIG, growthRatio } from './config.js?v27';
 
 /* Ayni sayfada birden fazla ejderha olabilir; degrade ve maske id'leri
    catismasin diye sayac. */
@@ -1006,17 +1006,64 @@ const GORSEL = {
    yeni bir kanat eklerken tek olcmem gereken sey, o gorselde kanadin
    omuza giren noktasi.
 
+   uzanim: katmanin omuzdan SAGA ne kadar uzandigi, govde genisliginin
+   kati olarak. Boyu dogrudan yazmak yerine uzanimi yazmanin sebebi:
+   uretilen gorsellerin cercevesi cok farkli (kimi alev/isik haleleriyle
+   birlikte 855 piksel genis, kimi 640) - ayni "boy" degeri birinde
+   kadraja sigan, digerinde 200'luk kareden tasan bir kanat veriyordu.
+   Uzanim sabit tutulunca hepsi ayni yere kadar aciliyor. Nadirlik
+   kademesi yukseldikce hafifce artiyor.
+
    ayna: gorsel ters yonde uretildiyse yatay cevirir. Ejderha SOLA
    baktigi icin kanat kokten saga/yukari acilmali; ters uretilmis bir
-   gorseli yeniden urettirmek yerine burada cevirmek bedava. */
+   gorseli yeniden urettirmek yerine burada cevirmek bedava.
+
+   kare: olculerin ALINDIGI kare, dosyanin piksel boyutu DEGIL. Gorseller
+   1024'te uretilip 512'ye kucultuldu (8 kanat 1024'te 7 MB tutuyordu -
+   dukkan hepsini ayni anda cizdigi icin telefonda hepsi birden
+   iniyordu). Kod yalnizca oran kullandigi icin dosyayi kucultmek
+   olculeri bozmuyor; bu yuzden sayilar 1024 tabaninda birakildi. */
 const KATMAN = {
   wings: {
     leather: {
       yol: 'assets/wing-leather.png',
-      kare: 1024, x0: 221, y0: 189, x1: 865, y1: 840,
-      kok: { x: 272, y: 700 },
-      /* Kanadin genisligi, govde genisliginin kati */
-      olcek: 0.62,
+      kare: 1024, x0: 223, y0: 191, x1: 863, y1: 837,
+      kok: { x: 272, y: 700 }, uzanim: 0.53,
+    },
+    flame: {
+      yol: 'assets/wing-flame.png',
+      kare: 1024, x0: 148, y0: 93, x1: 933, y1: 916,
+      kok: { x: 195, y: 715 }, uzanim: 0.54,
+    },
+    crystal: {
+      yol: 'assets/wing-crystal.png',
+      kare: 1024, x0: 210, y0: 135, x1: 909, y1: 864,
+      kok: { x: 252, y: 670 }, uzanim: 0.545,
+    },
+    demon: {
+      yol: 'assets/wing-demon.png',
+      kare: 1024, x0: 176, y0: 110, x1: 907, y1: 914,
+      kok: { x: 205, y: 845 }, uzanim: 0.55,
+    },
+    phoenix: {
+      yol: 'assets/wing-phoenix.png',
+      kare: 1024, x0: 202, y0: 59, x1: 931, y1: 879,
+      kok: { x: 248, y: 590 }, uzanim: 0.555,
+    },
+    lightning: {
+      yol: 'assets/wing-lightning.png',
+      kare: 1024, x0: 122, y0: 163, x1: 977, y1: 810,
+      kok: { x: 152, y: 700 }, uzanim: 0.56,
+    },
+    king: {
+      yol: 'assets/wing-king.png',
+      kare: 1024, x0: 147, y0: 148, x1: 923, y1: 907,
+      kok: { x: 200, y: 733 }, uzanim: 0.565,
+    },
+    celestial: {
+      yol: 'assets/wing-celestial.png',
+      kare: 1024, x0: 183, y0: 167, x1: 873, y1: 883,
+      kok: { x: 213, y: 797 }, uzanim: 0.57,
     },
   },
 };
@@ -1040,8 +1087,14 @@ const VARSAYILAN = { wings: 'leather', tail: 'basic' };
    ax,ay = baglanti noktasinin 200'luk kadrajdaki yeri
    gw    = govdenin gorunen genisligi (olceklemenin dayanagi). */
 function katmanCiz(k, ax, ay, gw) {
-  /* Gorselin 1024'luk karesi kadrajda kac birim kaplayacak */
-  const olcek = gw * k.olcek * k.kare / (k.x1 - k.x0);
+  /* Kokten sag kenara kadar olan kisim, gorunen genisligin ne kadari */
+  const sagOran = (k.x1 - k.kok.x) / (k.x1 - k.x0);
+
+  /* Gorselin 1024'luk karesi kadrajda kac birim kaplayacak.
+     Once "omuzdan saga gw*uzanim kadar uzansin" denkleminden gorunen
+     genislik cikariliyor, sonra tam kareye buyutuluyor. */
+  const gorunenGen = gw * k.uzanim / sagOran;
+  const olcek = gorunenGen * k.kare / (k.x1 - k.x0);
 
   /* Kok noktasi baglanti noktasina otursun */
   const x = ax - (k.kok.x / k.kare) * olcek;
