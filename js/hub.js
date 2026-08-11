@@ -1,12 +1,12 @@
 /* Hub (ana menu) ekraninin mantigi.
 Yeni oyun eklemek istedigimizde sadece asagidaki gameList() fonksiyonuna satir ekliyoruz. */
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v28';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v30';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu,
-} from './store.js?v28';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v28';
+} from './store.js?v30';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v30';
 
 /* Botun Telegram adresi. Kendi botunun adini yazarsan tarayicida acan
    kullanicilar uyariya dokununca dogrudan bota gider. Bos birakilirsa
@@ -668,7 +668,11 @@ async function renderStreakSection() {
       btn.disabled = false;
       btn.classList.remove('is-locked');
    } else {
-      btn.innerHTML = `${t('hub.daily.comeTomorrow')} <span class="geri-sayim" data-bitis="${Date.now() + (streak.nextInMs || 0)}"></span>`;
+      /* Ilk metin hemen yaziliyor. Bos birakilip saniyelik tikleyiciye
+         birakildiginda, sure sifirsa (ya da tikleyici o an calismiyorsa)
+         "Yarin tekrar gel" yaninda hic bir sey gorunmuyordu. */
+      const kalan = streak.nextInMs || 0;
+      btn.innerHTML = `${t('hub.daily.comeTomorrow')} <span class="geri-sayim" data-bitis="${Date.now() + kalan}">${kalanMetin(kalan)}</span>`;
       btn.disabled = true;
       btn.classList.remove('is-locked');
    }

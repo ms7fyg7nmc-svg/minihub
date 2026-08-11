@@ -17,6 +17,19 @@
   --gold: #f5b942;
   --radius: 18px;
 
+  /* YAZI icin altin/pembe.
+     --gold koyu zemine gore secilmis acik bir amber; Telegram'in gunduz
+     temasinda kart neredeyse beyaz oluyor ve altin yazi okunmuyordu
+     ("HAZIR!", 24/24, rekor rozetleri). Asagidakiler metin rengini
+     --tg-text-color'a dogru karistiriyor: koyu temada beyaza dogru
+     (daha parlak), acik temada siyaha dogru (daha koyu) gidiyor - yani
+     zemin ne olursa olsun kontrast artiyor.
+     DIKKAT: bunlar yalnizca YAZI icin. Dolgu/kenarlik/degradelerde ham
+     --gold kalmali, yoksa altin kendi rengini kaybediyor. */
+  --gold-yazi: color-mix(in srgb, var(--gold), var(--tg-text-color, #fff) 38%);
+  --gold-yazi-parlak: color-mix(in srgb, #ffe28a, var(--tg-text-color, #fff) 48%);
+  --pembe-yazi: color-mix(in srgb, var(--c-pink), var(--tg-text-color, #fff) 26%);
+
   /* Hub'in renk paleti: arka plan lekeleri, baslik gecisi, kart seritleri */
   --c-blue: #5b8cff;
   --c-violet: #c079f2;
@@ -125,7 +138,7 @@ body.hub::before {
   font-variant-numeric: tabular-nums;
 }
 
-.coin { color: var(--gold); filter: drop-shadow(0 0 6px rgba(245, 185, 66, 0.55)); }
+.coin { color: var(--gold-yazi); filter: drop-shadow(0 0 6px rgba(245, 185, 66, 0.55)); }
 
 .points-side { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
 
@@ -335,7 +348,7 @@ body.hub::before {
 }
 
 .badge.record {
-  color: var(--gold);
+  color: var(--gold-yazi);
   background: rgba(245, 185, 66, 0.14);
   border: 1px solid rgba(245, 185, 66, 0.28);
 }
@@ -421,7 +434,7 @@ body.hub::before {
 .card-energy {
   font-size: 17px;
   font-weight: 800;
-  color: var(--gold);
+  color: var(--gold-yazi);
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
 }
@@ -433,7 +446,9 @@ body.hub::before {
   width: 6px;
   height: 12px;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.14);
+  /* Bos hane. Beyaz tabanliyken gunduz temasinda beyaz kartin uzerinde
+     kayboluyor ve enerji cubugunun uzunlugu anlasilmiyordu. */
+  background: var(--cizgi);
 }
 .energy-pip.is-full {
   background: linear-gradient(180deg, #ffe28a, var(--gold));
@@ -456,7 +471,7 @@ body.hub::before {
   font-size: 13px;
   font-weight: 900;
   letter-spacing: 0.6px;
-  background: linear-gradient(95deg, #ffe28a, var(--gold) 40%, var(--c-pink));
+  background: linear-gradient(95deg, var(--gold-yazi-parlak), var(--gold-yazi) 40%, var(--pembe-yazi));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -627,7 +642,7 @@ body.hub::before {
 .energy-label {
   font-size: 12.5px;
   font-weight: 700;
-  color: var(--gold);
+  color: var(--gold-yazi);
   font-variant-numeric: tabular-nums;
   margin-left: auto; /* cubuk sagdan sola azaldigi icin etiket de sagda */
 }
@@ -671,7 +686,7 @@ body.hub::before {
   box-shadow: inset 0 0 0 1px rgba(245, 185, 66, 0.55);
   animation: streak-glow 1.8s ease-in-out infinite;
 }
-.streak-pill.is-current .amt { color: var(--gold); }
+.streak-pill.is-current .amt { color: var(--gold-yazi); }
 
 @keyframes streak-glow {
   50% { box-shadow: inset 0 0 0 1px rgba(245, 185, 66, 0.9), 0 0 14px rgba(245, 185, 66, 0.35); }
@@ -904,7 +919,7 @@ body.hub::before {
 .lider-puan {
   flex: none;
   font-weight: 700;
-  color: var(--gold);
+  color: var(--gold-yazi);
   font-variant-numeric: tabular-nums;
 }
 

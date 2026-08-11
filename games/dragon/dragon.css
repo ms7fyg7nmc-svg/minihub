@@ -68,7 +68,10 @@
   /* JS ada uzerindeki karonun ekran konumunu buraya yaziyor */
   left: var(--dx, 50%);
   top: var(--dy, 55%);
-  transform: translate(-50%, -78%);
+  /* --cx: govde merkezinin kadraj icindeki yatay orani (art.js belirliyor).
+     Sabit -50% oldugunda, govde kadrajda ortadan kaydirilinca ejderha ada
+     uzerinde de kayiyor ve onundeki karonun agaclarinin arkasinda kaliyor. */
+  transform: translate(calc(-1 * var(--cx, 50%)), -78%);
   pointer-events: none;
 }
 
@@ -438,7 +441,7 @@ body.shop-open.island-preview .dragon-slot {
 .swatch svg { position: relative; width: 30px; height: 30px; display: block; }
 
 .shop-name { font-size: 10.5px; line-height: 1.2; text-align: center; }
-.shop-price { font-size: 10.5px; font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; }
+.shop-price { font-size: 10.5px; font-weight: 800; color: var(--gold-yazi); font-variant-numeric: tabular-nums; }
 .shop-price.owned { color: var(--muted); font-weight: 600; }
 .shop-need { font-size: 10px; color: var(--muted); }
 

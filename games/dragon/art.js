@@ -17,8 +17,8 @@
    Olcekler seviye 99'da bile 200x200 kadraja sigacak sekilde secildi:
    en genis nokta kanat ucu (x = ±120), yani 120 * wing * s <= ~96. */
 
-import { palet, HEADS, FACES } from './data.js?v28';
-import { CONFIG, growthRatio } from './config.js?v28';
+import { palet, HEADS, FACES } from './data.js?v30';
+import { CONFIG, growthRatio } from './config.js?v30';
 
 /* Ayni sayfada birden fazla ejderha olabilir; degrade ve maske id'leri
    catismasin diye sayac. */
@@ -1000,6 +1000,14 @@ const GORSEL = {
    kenarindan tasiyordu. Govde biraz sola alininca siluetin tamami - govde
    + kanat + kuyruk - ortalanmis oluyor. */
 const MERKEZ = 92;
+
+/* Govde merkezinin kadrajdaki yatay orani (0..1).
+
+   Ejderhayi ada karosunun uzerine oturtan kod bunu kullanmak ZORUNDA:
+   yerlesim "govde kadrajin tam ortasinda" varsayarsa, MERKEZ degistigi
+   anda ejderha ekranda da kayiyor ve onundeki karonun agaclari uzerine
+   biniyor. Tek sayidan turetiliyor ki ikisi birbirinden ayrilmasin. */
+export const GOVDE_MERKEZ_ORANI = MERKEZ / 200;
 
 /* KATMANLAR
 

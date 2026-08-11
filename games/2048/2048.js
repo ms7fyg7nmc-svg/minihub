@@ -4,9 +4,9 @@ Tahta 16 kutudan olusur (4x4). Her kutuda ya bir tas vardir ya da bostur.
 Bir yone kaydirinca tum taslar o yone gider, ayni sayilar birlesir,
 sonra bos bir kutuya yeni bir tas dogar. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v28';
-import { submitScore, getBest, addPoints, saveState, loadState, clearState } from '../../js/store.js?v28';
-import { initLang, t, locale, applyTranslations } from '../../js/i18n.js?v28';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v30';
+import { submitScore, getBest, addPoints, saveState, loadState, clearState } from '../../js/store.js?v30';
+import { initLang, t, locale, applyTranslations } from '../../js/i18n.js?v30';
 
 const SIZE = 4;
 const GAME_ID = '2048';

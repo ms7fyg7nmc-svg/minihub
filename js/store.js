@@ -26,7 +26,7 @@
    yansidi). Simdi bu cihazdaki kayit yetkili, bulut sadece yedek.
 */
 
-import { isTelegramUser, getInitData } from './tg.js?v28';
+import { isTelegramUser, getInitData } from './tg.js?v30';
 
 /* Worker'in gercek adresiyle degistir: Cloudflare Worker sayfasinin en
    ustunde yazan adres - KURULUM-BOT.md'nin C adiminda not ettigin adresin
@@ -447,7 +447,10 @@ export async function claimStreak() {
   if (!sonuc) return { ok: false, reason: 'ag' };
   if (sonuc.ok) {
     v.points = sonuc.total;
-    v.streak = { ...v.streak, count: sonuc.streak, canClaim: false };
+    /* Alim sonrasi durumu SUNUCU bildiriyor - bekleme suresi orada
+       tanimli. Istemci burada kendi "artik alamazsin" halini uydurdugunda
+       nextInMs 0'da kaliyor ve geri sayim bos gorunuyordu. */
+    v.streak = sonuc.durum || { ...v.streak, count: sonuc.streak, canClaim: false };
   }
   return sonuc;
 }
@@ -473,7 +476,9 @@ export async function spinWheel() {
   if (sonuc.ok) {
     v.points = sonuc.total;
     v.energy = sonuc.energy;
-    if (v.spin) v.spin.canSpin = false;
+    /* prizes yayilarak korunuyor: sunucunun durumu yalnizca canSpin ve
+       nextInMs iceriyor, dilim listesi senkrondan geliyor. */
+    if (v.spin) v.spin = { ...v.spin, ...(sonuc.durum || { canSpin: false }) };
   }
   return sonuc;
 }

@@ -688,7 +688,19 @@ async function handleStreakClaim(env, playerId) {
     if (res.meta.changes === 0) continue;
 
     const player = await env.DB.prepare('SELECT points FROM players WHERE id = ?').bind(playerId).first();
-    return { ok: true, streak: durum.nextDay, reward: durum.nextReward, total: player.points };
+    /* Alim SONRASI durum da doner: istemci onbellegindeki seriyi bununla
+       degistiriyor. Onceden sadece "artik alamazsin" bilgisi gidiyordu,
+       nextInMs eski degerinde (0) kaliyordu - cunku odul alinabilir
+       oldugu icin zaten 0'di - ve "Yarin tekrar gel" yazisinin yanindaki
+       geri sayim bos cikiyordu. Bekleme suresi sunucunun sabiti; istemci
+       kendi hesaplamasin diye buradan gonderiliyor. */
+    return {
+      ok: true,
+      streak: durum.nextDay,
+      reward: durum.nextReward,
+      total: player.points,
+      durum: streakDurumu({ streak_count: durum.nextDay, last_claim_at: now }, now),
+    };
   }
   return { ok: false, reason: 'yeniden dene' };
 }
@@ -716,7 +728,16 @@ async function handleSpin(env, playerId) {
     if (res.meta.changes === 0) continue;
 
     const player = await env.DB.prepare('SELECT points, energy FROM players WHERE id = ?').bind(playerId).first();
-    return { ok: true, index, prize: odul, total: player.points, energy: player.energy };
+    /* Cevirme SONRASI durum - bkz. handleStreakClaim'deki ayni aciklama.
+       Bu gitmeyince carkin ortasindaki geri sayim "0s" kaliyordu. */
+    return {
+      ok: true,
+      index,
+      prize: odul,
+      total: player.points,
+      energy: player.energy,
+      durum: spinDurumu({ last_spin_at: now }, now),
+    };
   }
   return { ok: false, reason: 'yeniden dene' };
 }

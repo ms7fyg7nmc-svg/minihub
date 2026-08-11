@@ -9,17 +9,17 @@
    Burada hicbir fiyat, hicbir XP degeri ve hicbir bakiye aritmetigi yok -
    ileride dengeleme yaparken bu dosyayi acmak gerekmemeli. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v28';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v28';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v30';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v30';
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v28';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v28';
-import { bakiyeOku, harca } from './economy.js?v28';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v30';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v30';
+import { bakiyeOku, harca } from './economy.js?v30';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v28';
-import { dragonSvg, headSvg, faceSvg, HEAD_BOX } from './art.js?v28';
-import { ITEM_TEXTS } from './i18n-items.js?v28';
-import { createIsland } from './island.js?v28';
+         adaSahipMi, adaEkle } from './model.js?v30';
+import { dragonSvg, headSvg, faceSvg, HEAD_BOX, GOVDE_MERKEZ_ORANI } from './art.js?v30';
+import { ITEM_TEXTS } from './i18n-items.js?v30';
+import { createIsland } from './island.js?v30';
 
 const GAME_ID = 'dragon';
 
@@ -235,6 +235,9 @@ function adaYerlestir() {
   slotEl.style.setProperty('--dy', `${(p.y / kutu.height) * 100}%`);
   /* Genislik de degisken uzerinden: market modunda CSS onu devraliyor */
   slotEl.style.setProperty('--w', `${Math.max(30, 38 * p.olcek)}%`);
+  /* Govde kadrajin ortasinda degil (kanat ve kuyruga saga yer acmak icin);
+     yerlesim bunu telafi etmezse ejderha karonun soluna kayiyor. */
+  slotEl.style.setProperty('--cx', `${(GOVDE_MERKEZ_ORANI * 100).toFixed(2)}%`);
 }
 
 /* ---------- Doyum / keyif ---------- */
