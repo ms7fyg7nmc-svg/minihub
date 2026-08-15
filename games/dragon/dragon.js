@@ -9,19 +9,43 @@
    Burada hicbir fiyat, hicbir XP degeri ve hicbir bakiye aritmetigi yok -
    ileride dengeleme yaparken bu dosyayi acmak gerekmemeli. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v43';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v43';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v44';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v44';
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v43';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v43';
-import { bakiyeOku, harca } from './economy.js?v43';
+/* Ejderha Adasi henuz saglamlasmadi - herkese acilmadan once sadece
+   sahibi test edebilsin diye kilitli. Sunucu tarafinda hicbir sey
+   degismedi (ekonomi zaten kimlik dogrulamali); bu sadece istemcide
+   sayfanin acilip acilmayacagini belirliyor. Yayina hazir olunca bu
+   blogu kaldirmak yeterli. */
+const OWNER_ID = '8100679296';
+if (getUser().id !== OWNER_ID) {
+  document.body.innerHTML = `
+    <div style="min-height:100dvh; display:flex; flex-direction:column;
+                align-items:center; justify-content:center; gap:14px;
+                padding:32px; text-align:center; background:var(--bg, #0a0b10);
+                color:var(--text, #fff); font:inherit;">
+      <div style="font-size:40px;">🛠️</div>
+      <h1 style="margin:0; font-size:22px;">Dragon Island is under maintenance</h1>
+      <p style="margin:0; max-width:32ch; color:var(--muted, #9aa0b4); font-size:14px; line-height:1.5;">
+        We're polishing this island. It'll be back soon — check the other games in the meantime.
+      </p>
+      <a href="../../index.html" style="margin-top:10px; padding:13px 28px; border-radius:14px;
+         background:var(--accent, #5b8cff); color:var(--accent-text, #fff); font-weight:600;
+         text-decoration:none;">Back to Hub</a>
+    </div>`;
+  throw new Error('dragon-island-maintenance');
+}
+
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v44';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v44';
+import { bakiyeOku, harca } from './economy.js?v44';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v43';
+         adaSahipMi, adaEkle } from './model.js?v44';
 /* headSvg ve HEAD_BOX artik cagrilmiyor: taclar uretilmis gorsel oldu,
    dukkan kutucugu de ejderhayi cizip kafaya yakinlasiyor. */
-import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI } from './art.js?v43';
-import { ITEM_TEXTS } from './i18n-items.js?v43';
-import { createIsland } from './island.js?v43';
+import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI } from './art.js?v44';
+import { ITEM_TEXTS } from './i18n-items.js?v44';
+import { createIsland } from './island.js?v44';
 
 const GAME_ID = 'dragon';
 

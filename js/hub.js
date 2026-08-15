@@ -1,12 +1,12 @@
 /* Hub (ana menu) ekraninin mantigi.
 Yeni oyun eklemek istedigimizde sadece asagidaki gameList() fonksiyonuna satir ekliyoruz. */
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v43';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v44';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
-} from './store.js?v43';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v43';
+} from './store.js?v44';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v44';
 
 /* Botun Telegram adresi. Kendi botunun adini yazarsan tarayicida acan
    kullanicilar uyariya dokununca dogrudan bota gider. Bos birakilirsa
@@ -123,6 +123,12 @@ const ICONS = {
    </svg>`,
 };
 
+/* Ejderha Adasi henuz saglamlasmadi - sahibi disinda herkese "bakimda"
+   gosteriliyor (bkz. games/dragon/dragon.js - sayfanin kendisi de ayni
+   kimlikle kilitleniyor, boylece dogrudan linkle girmek de islemiyor). */
+const OWNER_ID = '8100679296';
+const isOwner = getUser().id === OWNER_ID;
+
 function gameList() {
    return [
       {
@@ -135,7 +141,8 @@ function gameList() {
          accent: '#a978e8',
          /* Rekor yok: bu oyun skor tutmuyor, kazanilan jetonu harciyor */
          noBest: true,
-         ready: true,
+         ready: isOwner,
+         maintenance: !isOwner,
       },
       /* Ejderham (games/pet/) Dragon Island ile ayni isi yapiyordu, ikisi ayni
          jetonu harcadigi icin menude birlikte durmalari anlamsizdi. Dosyalar
@@ -379,7 +386,7 @@ gameList().forEach((game, index) => {
          window.location.href = game.url;
       });
    } else {
-      badge.textContent = t('hub.soon');
+      badge.textContent = game.maintenance ? t('hub.maintenance') : t('hub.soon');
    }
 
    container.appendChild(card);
