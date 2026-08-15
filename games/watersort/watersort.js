@@ -8,10 +8,10 @@
    sonra geri alinabilir hamlelerle karistir. Boylece her bolumun cozumu
    kesin vardir (karistirma hamlelerini tersten oynamak yeter). */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v38';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v38';
-import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js?v38';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v38';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v39';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v39';
+import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js?v39';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v39';
 
 const GAME_ID = 'watersort';
 /* EKONOMI DENGESI

@@ -18,9 +18,9 @@
    gelirin buyuk kismi kozmetikten geliyor ve insanlari harcamaya iten sey
    guc degil kendini ifade etme - burada da odul guc degil, gorunum. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v38';
-import { getPoints, spendPoints, saveState, loadState } from '../../js/store.js?v38';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v38';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v39';
+import { getPoints, spendPoints, saveState, loadState } from '../../js/store.js?v39';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v39';
 
 const GAME_ID = 'pet';
 

@@ -5,10 +5,10 @@
    ustundekiler asagi duser, yukaridan yenileri gelir. Zincirleme patlamalar
    daha cok puan verir. Tur 60 saniye surer. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v38';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v38';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v38';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v38';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v39';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v39';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v39';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v39';
 
 const GAME_ID = 'match3';
 const SIZE = 8;

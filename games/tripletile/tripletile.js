@@ -9,10 +9,10 @@
    calisiriz - her adimda o an oynanabilir durumdaki uc tasi secip ayni
    cesidi veririz. Boylece her bolumun cozumu kesin vardir. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v38';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v38';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v38';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v38';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v39';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v39';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v39';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v39';
 
 const GAME_ID = 'tripletile';
 /* EKONOMI DENGESI
@@ -31,6 +31,14 @@ const POINTS_DIVISOR = 6;   /* ~6 dk, ~2.100 skor -> ~350 jeton */
 const SLOTS = 7;            /* raftaki goz sayisi */
 const TRIPLE_SCORE = 30;    /* bir uclu kac puan */
 const LEVEL_BONUS = 100;    /* tahtayi bitirince bolum basina bonus */
+/* Bolum basina bonus LEVEL_BONUS * seviye idi - sinirsiz buyudugu icin
+   (zorluk seviye 4'te tavan yapmasina ragmen) uzun oturumlarda skor
+   karesel artiyordu, tek oyunda 10.000+ skora kadar cikilabiliyordu.
+   Bonus artik BONUS_CAP_LEVEL'den sonra sabitleniyor, skorun kendisi de
+   SCORE_CAP'te tavan yapiyor - boylece ne kadar uzun oynanirsa oynansin
+   tek oyundan kazanilabilecek $MH sinirli kaliyor. */
+const BONUS_CAP_LEVEL = 12;
+const SCORE_CAP = 3600;     /* ~600 $MH tavani (SCORE_CAP / POINTS_DIVISOR) */
 
 registerTexts(GAME_ID, {
   title: 'Üçlü Eşleştir',
@@ -159,13 +167,17 @@ function startNewGame() {
 
 /* ---------- Bolum uretimi ---------- */
 
-/* Bolum ilerledikce tas ve cesit sayisi artar */
+/* Bolum ilerledikce tas ve cesit sayisi artar.
+   Eskiden tas sayisi 4. seviyede, cesit sayisi 13. seviyede tavan yapiyordu -
+   sonrasinda oyun hep AYNI zorlukta kaliyordu. Artis hizini yavaslatip
+   tavana daha gec varilmasi, "seviyeler yeterince zorlasmiyor" sikayetini
+   daha fazla seviye boyunca cozuyor (tas: seviye 7, cesit: seviye 19). */
 function tileCountFor(levelNo) {
-  return Math.min(18 + (levelNo - 1) * 6, 36); /* 3'un kati kalmali */
+  return Math.min(18 + Math.floor((levelNo - 1) / 2) * 6, 36); /* 3'un kati kalmali */
 }
 
 function kindCountFor(levelNo) {
-  return Math.min(4 + Math.floor((levelNo - 1) / 2), KINDS.length);
+  return Math.min(4 + Math.floor((levelNo - 1) / 3), KINDS.length);
 }
 
 function buildLevel() {
@@ -330,7 +342,7 @@ async function resolve() {
     haptic.success();
     await wait(240);
     slots = slots.filter((_, i) => !trio.includes(i));
-    score += TRIPLE_SCORE;
+    score = Math.min(score + TRIPLE_SCORE, SCORE_CAP);
     /* Patlayan taslar artik geri alinamaz */
     picked = [];
   }
@@ -374,8 +386,8 @@ function undo() {
 
 async function nextLevel() {
   busy = true;
-  const bonus = LEVEL_BONUS * level;
-  score += bonus;
+  const bonus = LEVEL_BONUS * Math.min(level, BONUS_CAP_LEVEL);
+  score = Math.min(score + bonus, SCORE_CAP);
   level++;
   updateHud();
   haptic.success();

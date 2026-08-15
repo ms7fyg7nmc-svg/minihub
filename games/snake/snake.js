@@ -12,10 +12,10 @@
 
    Hub'daki tek gercek zamanli oyun; kural anlatmayi gerektirmiyor. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v38';
-import { submitScore, addPoints, getBest, clearState, settleAbandonedRun } from '../../js/store.js?v38';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v38';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v38';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v39';
+import { submitScore, addPoints, getBest, clearState, settleAbandonedRun } from '../../js/store.js?v39';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v39';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v39';
 
 const GAME_ID = 'snake';
 const INTRO_SEEN_KEY = 'mh_snake_seen'; /* giris ekrani bir kez gosterilir */
