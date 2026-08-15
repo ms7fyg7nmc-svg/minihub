@@ -28,6 +28,7 @@
 /* Oyunun adresi ve botun kullanici adi. Degistirirsen buradan degistir. */
 const MINI_APP_URL = 'https://ms7fyg7nmc-svg.github.io/minihub/';
 const BOT_USERNAME = 'minihubgames_bot';
+const CHANNEL_URL = 'https://t.me/minihubgames';
 
 /* /api/* isteklerine izin verilen TEK kaynak. Genel '*' degil, cunku bunlar
    kimlik dogrulamali YAZMA istekleri - baska bir siteden bu adrese istek
@@ -150,78 +151,86 @@ const BANNER_URL = 'https://ms7fyg7nmc-svg.github.io/minihub/bot/assets/banner.j
 const TEXTS = {
   en: {
     welcome:
-      '👋 <b>Welcome to Mini HUB Pocket Games</b>\n\n' +
+      '<b>Welcome to MINI HUB GAMES</b>\n\n' +
       'A pocket full of mini games — puzzles, blocks, candy and more.\n\n' +
       'Spend what you earn raising your own dragon on a floating island.\n\n' +
-      'Every game you finish earns hub points. Nothing to download.\n\n' +
+      'Every game you finish earns hub points, the early form of $MH — ' +
+      'part of a growing crypto ecosystem. Nothing to download.\n\n' +
       'Tap <b>Play</b> below to start.',
     help:
-      '🎮 <b>How it works</b>\n\n' +
+      '<b>How it works</b>\n\n' +
       'Open the hub, pick a game, play. Your score is saved automatically ' +
       'and turns into hub points.\n\n' +
       'Your points and records follow your Telegram account, so they stay ' +
       'with you even if you change phone.\n\n' +
       'Tap <b>Play</b> to jump in.',
-    nudge: 'Tap <b>Play</b> to open the games 👇',
-    play: '🎮 Play',
-    invite: '👤 Invite a friend',
+    nudge: 'Tap <b>Play</b> to open the games',
+    play: 'Play',
+    invite: 'Invite a friend',
+    channel: 'Join our channel',
     shareText: 'A pocket full of mini games — come beat my score!',
   },
   tr: {
     welcome:
-      "👋 <b>Mini HUB Pocket Games'e hoş geldin</b>\n\n" +
+      "<b>MINI HUB GAMES'e hoş geldin</b>\n\n" +
       'Cebinde bir sürü mini oyun — bulmaca, blok, şeker ve dahası.\n\n' +
       'Kazandığın jetonlarla uçan adadaki kendi ejderhanı büyüt.\n\n' +
-      'Bitirdiğin her oyun sana hub puanı kazandırır. İndirme yok.\n\n' +
+      'Bitirdiğin her oyun sana hub puanı kazandırır - büyüyen bir kripto ' +
+      'ekosisteminin ilk hali olan $MH’ın öncüsü. İndirme yok.\n\n' +
       'Başlamak için aşağıdaki <b>Oyna</b> düğmesine bas.',
     help:
-      '🎮 <b>Nasıl çalışıyor</b>\n\n' +
+      '<b>Nasıl çalışıyor</b>\n\n' +
       'Hub’ı aç, bir oyun seç, oyna. Skorun kendiliğinden kaydedilir ve ' +
       'hub puanına dönüşür.\n\n' +
       'Puanların ve rekorların Telegram hesabına bağlı, telefon değiştirsen ' +
       'bile seninle gelir.\n\n' +
       'Başlamak için <b>Oyna</b>’ya bas.',
-    nudge: 'Oyunları açmak için <b>Oyna</b>’ya bas 👇',
-    play: '🎮 Oyna',
-    invite: '👤 Arkadaşını davet et',
+    nudge: 'Oyunları açmak için <b>Oyna</b>’ya bas',
+    play: 'Oyna',
+    invite: 'Arkadaşını davet et',
+    channel: 'Kanalımıza katıl',
     shareText: "Cebinde bir sürü mini oyun — gel skorumu geç bakalım!",
   },
   es: {
     welcome:
-      '👋 <b>Bienvenido a Mini HUB Pocket Games</b>\n\n' +
+      '<b>Bienvenido a MINI HUB GAMES</b>\n\n' +
       'Un bolsillo lleno de minijuegos: puzles, bloques, caramelos y más.\n\n' +
       'Gasta lo que ganes criando tu dragón en una isla flotante.\n\n' +
-      'Cada partida que terminas te da puntos de hub. Sin descargas.\n\n' +
+      'Cada partida que terminas te da puntos de hub, la forma inicial de ' +
+      '$MH — parte de un ecosistema cripto en crecimiento. Sin descargas.\n\n' +
       'Pulsa <b>Jugar</b> para empezar.',
     help:
-      '🎮 <b>Cómo funciona</b>\n\n' +
+      '<b>Cómo funciona</b>\n\n' +
       'Abre el hub, elige un juego y juega. Tu puntuación se guarda sola y ' +
       'se convierte en puntos de hub.\n\n' +
       'Tus puntos y récords van con tu cuenta de Telegram, así que se quedan ' +
       'contigo aunque cambies de teléfono.\n\n' +
       'Pulsa <b>Jugar</b> para entrar.',
-    nudge: 'Pulsa <b>Jugar</b> para abrir los juegos 👇',
-    play: '🎮 Jugar',
-    invite: '👤 Invitar a un amigo',
+    nudge: 'Pulsa <b>Jugar</b> para abrir los juegos',
+    play: 'Jugar',
+    invite: 'Invitar a un amigo',
+    channel: 'Únete a nuestro canal',
     shareText: 'Un bolsillo lleno de minijuegos: ¡ven a superar mi puntuación!',
   },
   ru: {
     welcome:
-      '👋 <b>Добро пожаловать в Mini HUB Pocket Games</b>\n\n' +
+      '<b>Добро пожаловать в MINI HUB GAMES</b>\n\n' +
       'Целый карман мини-игр: головоломки, блоки, конфеты и не только.\n\n' +
       'Трать заработанное на своего дракона с летающего острова.\n\n' +
-      'За каждую игру начисляются очки хаба. Без загрузок.\n\n' +
+      'За каждую игру начисляются очки хаба - ранняя форма $MH, части ' +
+      'растущей крипто-экосистемы. Без загрузок.\n\n' +
       'Нажми <b>Играть</b>, чтобы начать.',
     help:
-      '🎮 <b>Как это работает</b>\n\n' +
+      '<b>Как это работает</b>\n\n' +
       'Открой хаб, выбери игру и играй. Счёт сохраняется сам и превращается ' +
       'в очки хаба.\n\n' +
       'Очки и рекорды привязаны к твоему аккаунту Telegram, поэтому останутся ' +
       'с тобой даже при смене телефона.\n\n' +
       'Нажми <b>Играть</b>, чтобы начать.',
-    nudge: 'Нажми <b>Играть</b>, чтобы открыть игры 👇',
-    play: '🎮 Играть',
-    invite: '👤 Пригласить друга',
+    nudge: 'Нажми <b>Играть</b>, чтобы открыть игры',
+    play: 'Играть',
+    invite: 'Пригласить друга',
+    channel: 'Подписаться на канал',
     shareText: 'Целый карман мини-игр — попробуй побить мой счёт!',
   },
 };
@@ -241,6 +250,7 @@ function keyboard(t) {
     inline_keyboard: [
       [{ text: t.play, web_app: { url: MINI_APP_URL } }],
       [{ text: t.invite, url: shareUrl }],
+      [{ text: t.channel, url: CHANNEL_URL }],
     ],
   };
 }
