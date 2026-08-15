@@ -8,9 +8,10 @@
    sonra geri alinabilir hamlelerle karistir. Boylece her bolumun cozumu
    kesin vardir (karistirma hamlelerini tersten oynamak yeter). */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v36';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v36';
-import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js?v36';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v38';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v38';
+import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js?v38';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v38';
 
 const GAME_ID = 'watersort';
 /* EKONOMI DENGESI
@@ -86,6 +87,9 @@ undoBtn.addEventListener('click', () => {
   haptic.tap();
   undo();
 });
+
+document.querySelector('.head-right').insertAdjacentHTML('afterbegin', soundToggleHtml());
+mountSoundToggle(document.getElementById('sound-toggle'));
 
 bootstrap();
 
@@ -255,6 +259,7 @@ function pour(from, to) {
   history.push({ from, to, count });
   moves++;
   lastPour = { to, count };
+  SFX.pour();
   return true;
 }
 

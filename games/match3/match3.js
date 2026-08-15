@@ -5,9 +5,10 @@
    ustundekiler asagi duser, yukaridan yenileri gelir. Zincirleme patlamalar
    daha cok puan verir. Tur 60 saniye surer. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v36';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v36';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v36';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v38';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v38';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v38';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v38';
 
 const GAME_ID = 'match3';
 const SIZE = 8;
@@ -95,6 +96,9 @@ document.getElementById('new-game').addEventListener('click', async () => {
   if (!over) await settleAbandonedRun(score, POINTS_DIVISOR);
   startNewGame();
 });
+
+document.querySelector('.head-right').insertAdjacentHTML('afterbegin', soundToggleHtml());
+mountSoundToggle(document.getElementById('sound-toggle'));
 
 layout();
 buildCells();
@@ -288,6 +292,7 @@ async function resolveCascades() {
     score += gain;
     updateHud();
     haptic.success();
+    SFX.match();
 
     for (const index of matches) {
       const tile = board[index];
@@ -386,6 +391,7 @@ async function endGame() {
   stopTimer();
   clearState(GAME_ID);
   haptic.error();
+  SFX.gameOver();
 
   const result = await submitScore(GAME_ID, score);
   best = result.best;

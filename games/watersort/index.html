@@ -12,9 +12,9 @@
       if (sessionStorage.getItem('mh_hub_open') !== '1') location.replace('../../index.html');
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="../../css/style.css?v36">
-  <link rel="stylesheet" href="../../css/game.css?v36">
-  <link rel="stylesheet" href="watersort.css?v36">
+  <link rel="stylesheet" href="../../css/style.css?v38">
+  <link rel="stylesheet" href="../../css/game.css?v38">
+  <link rel="stylesheet" href="watersort.css?v38">
 </head>
 <body class="game" data-i18n-title="title">
   <div class="app game-app">
@@ -24,7 +24,8 @@
         <h1 class="game-title" data-i18n="title">Su Sıralama</h1>
         <p class="game-sub" data-i18n="subtitle">Her tüpü tek renge indir</p>
       </div>
-      <div class="scores">
+      <div class="head-right">
+        <div class="scores">
         <div class="score-box">
           <span data-i18n="level">BÖLÜM</span>
           <strong id="level">1</strong>
@@ -34,6 +35,7 @@
           <strong id="best">1</strong>
         </div>
       </div>
+</div>
     </header>
 
     <!-- Ekranin ortasinda duran oyun alani -->
@@ -62,6 +64,6 @@
 
   </div>
 
-  <script type="module" src="watersort.js?v36"></script>
+  <script type="module" src="watersort.js?v38"></script>
 </body>
 </html>

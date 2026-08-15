@@ -11,9 +11,10 @@
    etmek zorunda degil - hangi yoldan giderse gitsin, ciftler baglanip
    izgara dolarsa bolum biter. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v36';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v36';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v36';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v38';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v38';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v38';
+import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v38';
 
 const GAME_ID = 'flow';
 /* EKONOMI DENGESI
@@ -92,6 +93,9 @@ undoBtn.addEventListener('click', () => {
   undoLast();
 });
 document.addEventListener('langchange', () => applyStaticTexts());
+
+document.querySelector('.head-right').insertAdjacentHTML('afterbegin', soundToggleHtml());
+mountSoundToggle(document.getElementById('sound-toggle'));
 
 bootstrap();
 

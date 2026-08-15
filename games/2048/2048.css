@@ -54,7 +54,28 @@
 
 .game-sub { margin: 4px 0 0; font-size: 12.5px; color: var(--muted); }
 
+.head-right { display: flex; align-items: center; gap: 8px; flex: none; }
+
 .scores { display: flex; gap: 6px; flex: none; }
+
+.sound-toggle {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--cizgi, rgba(255, 255, 255, 0.14));
+  background: var(--bg-soft);
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+}
+.sound-toggle svg { width: 18px; height: 18px; }
+.sound-toggle .icon-off { display: none; }
+.sound-toggle.is-muted .icon-on { display: none; }
+.sound-toggle.is-muted .icon-off { display: block; }
+.sound-toggle.is-muted { color: var(--muted); opacity: .7; }
 
 .score-box {
   min-width: 60px;

@@ -12,8 +12,8 @@
       if (sessionStorage.getItem('mh_hub_open') !== '1') location.replace('../../index.html');
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="../../css/style.css?v36">
-  <link rel="stylesheet" href="2048.css?v36">
+  <link rel="stylesheet" href="../../css/style.css?v38">
+  <link rel="stylesheet" href="2048.css?v38">
 </head>
 <body class="game">
   <div class="app game-app">
@@ -23,7 +23,8 @@
         <h1 class="game-title" data-i18n="game.2048.title">2048</h1>
         <p class="game-sub" data-i18n="g2048.subtitle">Merge matching numbers</p>
       </div>
-      <div class="scores">
+      <div class="head-right">
+        <div class="scores">
         <div class="score-box">
           <span data-i18n="g2048.score">SCORE</span>
           <strong id="score">0</strong>
@@ -33,6 +34,7 @@
           <strong id="best">0</strong>
         </div>
       </div>
+</div>
     </header>
 
     <!-- Ekranin ortasinda duran oyun alani -->
@@ -63,6 +65,6 @@
 
   </div>
 
-  <script type="module" src="2048.js?v36"></script>
+  <script type="module" src="2048.js?v38"></script>
 </body>
 </html>

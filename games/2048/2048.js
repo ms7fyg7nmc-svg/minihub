@@ -4,9 +4,10 @@ Tahta 16 kutudan olusur (4x4). Her kutuda ya bir tas vardir ya da bostur.
 Bir yone kaydirinca tum taslar o yone gider, ayni sayilar birlesir,
 sonra bos bir kutuya yeni bir tas dogar. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v36';
-import { submitScore, getBest, addPoints, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v36';
-import { initLang, t, locale, applyTranslations } from '../../js/i18n.js?v36';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v38';
+import { submitScore, getBest, addPoints, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v38';
+import { initLang, t, locale, applyTranslations } from '../../js/i18n.js?v38';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v38';
 
 const SIZE = 4;
 const GAME_ID = '2048';
@@ -70,6 +71,9 @@ document.getElementById('new-game').addEventListener('click', async () => {
    if (!over) await settleAbandonedRun(score, POINTS_DIVISOR);
    startNewGame();
 });
+
+document.querySelector('.head-right').insertAdjacentHTML('afterbegin', soundToggleHtml());
+mountSoundToggle(document.getElementById('sound-toggle'));
 
 layout();
 window.addEventListener('resize', () => {
@@ -211,6 +215,7 @@ for (const r of rows) {
       gained += merged.value;
       if (merged.value === 2048 && !won) won = true;
       moved = true;
+      SFX.merge();
    } else if (farthest.r !== r || farthest.c !== c) {
       /* Sadece kayma */
       put(r, c, null);
@@ -282,6 +287,7 @@ async function endGame() {
    over = true;
    clearState(GAME_ID);
    haptic.error();
+   SFX.gameOver();
 
 const result = await submitScore(GAME_ID, score);
    best = result.best;

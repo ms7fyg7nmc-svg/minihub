@@ -53,7 +53,36 @@
 
 .game-sub { margin: 4px 0 0; font-size: 12.5px; color: var(--muted); }
 
+/* .scores'un disindaki sarmalayici: ses dugmesi + skor kutulari birlikte
+   saga yaslanir. game-head'in kendi space-between'ini bozmadan tek bir
+   ekstra dugme eklemenin en az mudahaleli yolu buydu - dugmeyi dogrudan
+   .scores'a eklemek her oyunda skor kutusu sayisi farkli oldugu icin
+   satir kayabiliyordu. */
+.head-right { display: flex; align-items: center; gap: 8px; flex: none; }
+
 .scores { display: flex; gap: 6px; flex: none; }
+
+/* Sag-ust ses ac/kapa dugmesi - tum oyunlarda ayni gorunum.
+   Durum tek bir localStorage anahtarinda tutuluyor (bkz. js/audio.js),
+   yani bir oyunda kapatinca digerinde de kapali aciliyor. */
+.sound-toggle {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--cizgi, rgba(255, 255, 255, 0.14));
+  background: var(--bg-soft);
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+}
+.sound-toggle svg { width: 18px; height: 18px; }
+.sound-toggle .icon-off { display: none; }
+.sound-toggle.is-muted .icon-on { display: none; }
+.sound-toggle.is-muted .icon-off { display: block; }
+.sound-toggle.is-muted { color: var(--muted); opacity: .7; }
 
 .score-box {
   min-width: 60px;

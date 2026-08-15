@@ -12,9 +12,10 @@
 
    Hub'daki tek gercek zamanli oyun; kural anlatmayi gerektirmiyor. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v36';
-import { submitScore, addPoints, getBest, clearState, settleAbandonedRun } from '../../js/store.js?v36';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v36';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v38';
+import { submitScore, addPoints, getBest, clearState, settleAbandonedRun } from '../../js/store.js?v38';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v38';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v38';
 
 const GAME_ID = 'snake';
 const INTRO_SEEN_KEY = 'mh_snake_seen'; /* giris ekrani bir kez gosterilir */
@@ -130,6 +131,9 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) stopTimer();
   else if (running && !over) scheduleTick();
 });
+
+document.querySelector('.head-right').insertAdjacentHTML('afterbegin', soundToggleHtml());
+mountSoundToggle(document.getElementById('sound-toggle'));
 
 buildBoard();
 bootstrap();
@@ -391,11 +395,13 @@ function tick() {
     updateHud();
 
     if (eatenThisLevel >= FOODS_PER_LEVEL) {
+      SFX.goldenPickup();
       haptic.success();
       altinPatlama(hedef);
       render();
       return levelUp();
     }
+    SFX.pickup();
     haptic.tap();
     placeFood();
   } else {
@@ -433,6 +439,7 @@ async function crash(index) {
   running = false;
   stopTimer();
   haptic.error();
+  SFX.gameOver();
 
   render();
   if (cellEls[index]) cellEls[index].classList.add('crash');

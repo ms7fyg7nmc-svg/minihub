@@ -12,9 +12,9 @@
       if (sessionStorage.getItem('mh_hub_open') !== '1') location.replace('../../index.html');
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="../../css/style.css?v36">
-  <link rel="stylesheet" href="../../css/game.css?v36">
-  <link rel="stylesheet" href="snake.css?v36">
+  <link rel="stylesheet" href="../../css/style.css?v38">
+  <link rel="stylesheet" href="../../css/game.css?v38">
+  <link rel="stylesheet" href="snake.css?v38">
 </head>
 <body class="game" data-i18n-title="title">
   <div class="app game-app">
@@ -24,7 +24,8 @@
         <h1 class="game-title" data-i18n="title">Snake</h1>
         <p class="game-sub" data-i18n="subtitle">Eat, grow, don't crash</p>
       </div>
-      <div class="scores">
+      <div class="head-right">
+        <div class="scores">
         <div class="score-box">
           <span data-i18n="score">SCORE</span>
           <strong id="score">0</strong>
@@ -38,6 +39,7 @@
           <strong id="best">0</strong>
         </div>
       </div>
+</div>
     </header>
 
     <!-- Ekranin ortasinda duran oyun alani -->
@@ -74,6 +76,6 @@
 
   </div>
 
-  <script type="module" src="snake.js?v36"></script>
+  <script type="module" src="snake.js?v38"></script>
 </body>
 </html>

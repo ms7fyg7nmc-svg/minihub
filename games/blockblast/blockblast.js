@@ -4,9 +4,10 @@
    Dolan satir ve sutunlar patlar. Eldeki hicbir parca hicbir yere sigmiyorsa
    oyun biter. Sure yok, kaybetme baskisi yok. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v36';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v36';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v36';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v38';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v38';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v38';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v38';
 
 const GAME_ID = 'blockblast';
 const SIZE = 8;
@@ -92,6 +93,9 @@ document.getElementById('new-game').addEventListener('click', async () => {
   if (!over) await settleAbandonedRun(score, POINTS_DIVISOR);
   startNewGame();
 });
+
+document.querySelector('.head-right').insertAdjacentHTML('afterbegin', soundToggleHtml());
+mountSoundToggle(document.getElementById('sound-toggle'));
 
 buildBoard();
 bootstrap();
@@ -201,6 +205,7 @@ function place(piece, row, col, slotIndex) {
   score += piece.cells.length;
   tray[slotIndex] = null;
   haptic.tap();
+  SFX.place();
 
   const cleared = findFullLines();
   let bonus = 0;
@@ -209,6 +214,7 @@ function place(piece, row, col, slotIndex) {
     bonus = cleared.lines * 100 * cleared.lines; /* 1 sıra=100, 2=400, 3=900 */
     score += bonus;
     haptic.success();
+    SFX.pop();
   }
 
   if (tray.every((p) => !p)) refillTray();
@@ -263,6 +269,7 @@ async function endGame() {
   over = true;
   clearState(GAME_ID);
   haptic.error();
+  SFX.gameOver();
 
   const result = await submitScore(GAME_ID, score);
   best = result.best;

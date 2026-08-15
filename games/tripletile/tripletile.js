@@ -9,9 +9,10 @@
    calisiriz - her adimda o an oynanabilir durumdaki uc tasi secip ayni
    cesidi veririz. Boylece her bolumun cozumu kesin vardir. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v36';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v36';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v36';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v38';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v38';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v38';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v38';
 
 const GAME_ID = 'tripletile';
 /* EKONOMI DENGESI
@@ -119,6 +120,9 @@ undoBtn.addEventListener('click', () => {
 
 window.addEventListener('resize', layout);
 document.addEventListener('langchange', () => applyStaticTexts());
+
+document.querySelector('.head-right').insertAdjacentHTML('afterbegin', soundToggleHtml());
+mountSoundToggle(document.getElementById('sound-toggle'));
 
 bootstrap();
 
@@ -386,6 +390,7 @@ async function endGame() {
   over = true;
   clearState(GAME_ID);
   haptic.error();
+  SFX.gameOver();
 
   const result = await submitScore(GAME_ID, score);
   best = result.best;
