@@ -14,9 +14,9 @@
    Ilk dokunus da her zaman guvenlidir: mayinlar ilk dokunustan SONRA,
    dokundugun hucrenin ve komsularinin disina yerlestirilir. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v33';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v33';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v33';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v34';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v34';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v34';
 
 const GAME_ID = 'minesweeper';
 /* EKONOMI DENGESI
@@ -90,8 +90,11 @@ document.getElementById('back-link').addEventListener('click', (e) => {
   e.preventDefault();
   goHome();
 });
-document.getElementById('new-game').addEventListener('click', () => {
+document.getElementById('new-game').addEventListener('click', async () => {
   haptic.tap();
+  /* Tahtayi yeniden dagitmak -1 enerjiye mal olur - yoksa kotu bir
+     acilisi bedava reroll edip mayin riskinden kacmak mumkun olurdu. */
+  await spendRestartEnergy();
   buildLevel(level);
 });
 document.getElementById('how-to').addEventListener('click', () => {

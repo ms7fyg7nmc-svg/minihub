@@ -666,6 +666,45 @@ async function applyEarn(env, playerId, opId, requestedAmount) {
   return { ...yedek, energy: 0, credited: azaltilmis };
 }
 
+/* Bir mini oyun yarim birakilip Restart'a basildiginda cagrilir.
+   Oyuncunun o ana kadarki skoru zaten puana cevrilip applyEarn ile
+   krediliyorsa (o cagri kendi ENERGY_PER_EARN'unu zaten dusuyor) buraya
+   hic gelinmiyor - bu uc nokta yalnizca "hic puan olusmadan restart"
+   durumu icin: Restart'in bedava bir "yeniden dagit/reroll" haline
+   gelmemesi icin sabit 1 enerji dusuyor. Puan eklemiyor, sadece enerji. */
+async function handleEnergySpend(env, playerId, opId) {
+  const key = opId || crypto.randomUUID();
+  const now = Date.now();
+
+  const prior = await env.DB.prepare(
+    'SELECT balance_after FROM spend_log WHERE player_id = ? AND op_id = ?',
+  ).bind(playerId, key).first();
+  if (prior) {
+    const guncel = await env.DB.prepare('SELECT points, energy FROM players WHERE id = ?').bind(playerId).first();
+    return { ok: true, total: guncel ? guncel.points : prior.balance_after, energy: guncel ? guncel.energy : 0 };
+  }
+
+  for (let deneme = 0; deneme < 3; deneme++) {
+    const row = await env.DB.prepare('SELECT energy, energy_at, points FROM players WHERE id = ?').bind(playerId).first();
+    if (!row) return { ok: false, reason: 'oyuncu yok' };
+
+    const tz = enerjiTazele(row, now);
+    const yeniEnerji = Math.max(0, tz.energy - 1);
+    const res = await env.DB.prepare(
+      'UPDATE players SET energy = ?, energy_at = ?, updated_at = ? WHERE id = ? AND energy = ?',
+    ).bind(yeniEnerji, tz.energyAt, now, playerId, row.energy).run();
+
+    if (res.meta.changes === 0) continue; /* araya baska istek girdi, tekrar dene */
+
+    await env.DB.prepare(
+      'INSERT INTO spend_log (player_id, op_id, delta, balance_after, created_at) VALUES (?, ?, 0, ?, ?)',
+    ).bind(playerId, key, row.points, now).run();
+
+    return { ok: true, total: row.points, energy: yeniEnerji };
+  }
+  return { ok: false, reason: 'yeniden dene' };
+}
+
 /* Gunluk seri odulunu talep eder - streakDurumu'nun hesapladigi gunu ve
    odulu, "hala o an okudugum last_claim_at mi" korumasiyla (WHERE
    last_claim_at = ?) atomik olarak uygular. */
@@ -1050,6 +1089,8 @@ async function handleApi(request, env, url) {
         return json(await applyDelta(env, playerId, body.opId, -guvenliSayi(body.amount, MAX_SPEND_PER_REQUEST)));
       case '/api/points/earn':
         return json(await applyEarn(env, playerId, body.opId, guvenliSayi(body.amount, MAX_EARN_PER_REQUEST)));
+      case '/api/energy/spend':
+        return json(await handleEnergySpend(env, playerId, body.opId));
       case '/api/best':
         return json(await handleBest(env, playerId, body));
       case '/api/state':

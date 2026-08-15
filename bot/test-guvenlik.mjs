@@ -235,5 +235,28 @@ for (const [slot, disaAd] of Object.entries(gruplar)) {
 }
 check('sunucu fiyat tablosu data.js ile ayni', ayrisan.length === 0, `-> ayrisan: ${ayrisan.join(', ')}`);
 
+/* ================= 13. RESTART: PUANI SIFIRLAMADAN ENERJI DUSMEK =================
+   Restart Game bir oyunu yarim birakip skoru silmemeli (settleAbandonedRun
+   -> addPoints), hicbir skor yoksa da bedava bir reroll olmamali
+   (spendRestartEnergy -> /api/energy/spend). */
+const DB8 = makeDb(); const env8 = { DB: DB8, BOT_TOKEN }; const id8 = signedInitData(999);
+await api(env8, 'sync', { initData: id8, points: 0, state: {} });
+
+r = await api(env8, 'points/earn', { initData: id8, opId: 'restart-earn-1', amount: 120 });
+check('restart: skor puana cevrilip krediliyor', r.total === 120, `-> ${r.total}`);
+check('restart: puan eklemek kendi enerjisini dusuyor (24 -> 23)', r.energy === 23, `-> ${r.energy}`);
+
+r = await api(env8, 'energy/spend', { initData: id8, opId: 'restart-empty-1' });
+check('restart: skor yokken de -1 enerji uygulaniyor', r.ok === true && r.energy === 22, `-> ${JSON.stringify(r)}`);
+check('restart: enerji dusrken puan bakiyesi degismiyor', r.total === 120, `-> ${r.total}`);
+
+r = await api(env8, 'energy/spend', { initData: id8, opId: 'restart-empty-1' });
+check('restart: ayni opId tekrar enerji dusurmuyor (idempotent)', r.energy === 22, `-> ${r.energy}`);
+
+/* Enerji 0'a inince negatife dusmemeli */
+for (let i = 0; i < 30; i++) await api(env8, 'energy/spend', { initData: id8, opId: `restart-drain-${i}` });
+r = await api(env8, 'energy/spend', { initData: id8, opId: 'restart-drain-son' });
+check('restart: enerji 0da tikaniyor, negatife dusmuyor', r.energy === 0, `-> ${r.energy}`);
+
 console.log(`\n${passed} basarili, ${failed} basarisiz`);
 process.exit(failed > 0 ? 1 : 0);

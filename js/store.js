@@ -26,7 +26,7 @@
    yansidi). Simdi bu cihazdaki kayit yetkili, bulut sadece yedek.
 */
 
-import { isTelegramUser, getInitData } from './tg.js?v33';
+import { isTelegramUser, getInitData } from './tg.js?v34';
 
 /* Worker'in gercek adresiyle degistir: Cloudflare Worker sayfasinin en
    ustunde yazan adres - KURULUM-BOT.md'nin C adiminda not ettigin adresin
@@ -365,6 +365,34 @@ export async function getPoints() {
   const v = await senkron;
   if (v) return v.points;
   return getPointsYerel();
+}
+
+/* Restart'a basip mevcut turu terk edince cagrilir. Skoru zaten puana
+   cevirebiliyorsak (earned > 0) o zaten kendi enerjisini dusuyor - buraya
+   yalnizca "hic puan olusmadan restart" durumunda dusuluyor, boylece
+   Restart hicbir zaman bedava bir yeniden dagitma haline gelmiyor.
+   Misafir/yerel modda enerji hic takip edilmiyor, sessizce no-op. */
+export async function spendRestartEnergy() {
+  const v = await senkron;
+  if (!v) return { ok: false };
+  const sonuc = await sunucuGonder('/api/energy/spend', { opId: uuid() });
+  if (!sonuc) return { ok: false };
+  if (sonuc.ok) v.energy = sonuc.energy;
+  return sonuc;
+}
+
+/* Yarim kalan bir turu Restart ile terk ederken cagrilir: o ana kadarki
+   skoru mumkunse puana cevirip krediler (addPoints kendi enerji maliyetini
+   zaten uyguluyor), puan cikmiyorsa yine de -1 enerji uygular - restart'in
+   kendisi ucretsiz bir "yeniden dagit" olmasin diye. */
+export async function settleAbandonedRun(score, divisor) {
+  const earned = Math.floor((Number(score) || 0) / divisor);
+  if (earned > 0) {
+    await addPoints(earned);
+    return { earned };
+  }
+  await spendRestartEnergy();
+  return { earned: 0 };
 }
 
 export async function addPoints(amount) {

@@ -12,9 +12,9 @@
 
    Hub'daki tek gercek zamanli oyun; kural anlatmayi gerektirmiyor. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v33';
-import { submitScore, addPoints, getBest, clearState } from '../../js/store.js?v33';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v33';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v34';
+import { submitScore, addPoints, getBest, clearState, settleAbandonedRun } from '../../js/store.js?v34';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v34';
 
 const GAME_ID = 'snake';
 const INTRO_SEEN_KEY = 'mh_snake_seen'; /* giris ekrani bir kez gosterilir */
@@ -112,8 +112,11 @@ document.getElementById('back-link').addEventListener('click', (e) => {
   e.preventDefault();
   goHome();
 });
-document.getElementById('new-game').addEventListener('click', () => {
+document.getElementById('new-game').addEventListener('click', async () => {
   haptic.tap();
+  /* Aktif bir tur (baslamis, henuz carpmamis) terk ediliyorsa skoru
+     korumadan sifirlamayalim - bkz. settleAbandonedRun. */
+  if (running && !over) await settleAbandonedRun(score, POINTS_DIVISOR);
   resetGame();
 });
 document.getElementById('start-btn').addEventListener('click', () => {

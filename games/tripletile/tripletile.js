@@ -9,9 +9,9 @@
    calisiriz - her adimda o an oynanabilir durumdaki uc tasi secip ayni
    cesidi veririz. Boylece her bolumun cozumu kesin vardir. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v33';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v33';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v33';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v34';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v34';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v34';
 
 const GAME_ID = 'tripletile';
 /* EKONOMI DENGESI
@@ -105,8 +105,11 @@ document.getElementById('back-link').addEventListener('click', (e) => {
   e.preventDefault();
   goHome();
 });
-document.getElementById('new-game').addEventListener('click', () => {
+document.getElementById('new-game').addEventListener('click', async () => {
   haptic.tap();
+  /* Raf hala aktifse terk edilen skoru korumadan sifirlamayalim -
+     bkz. settleAbandonedRun. */
+  if (!over) await settleAbandonedRun(score, POINTS_DIVISOR);
   startNewGame();
 });
 undoBtn.addEventListener('click', () => {
