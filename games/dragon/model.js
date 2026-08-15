@@ -1,31 +1,10 @@
-/* Dragon Island - VERI MODELI
 
-   TEK EJDERHA VAR AMA MODEL COKLU:
-
-   V1'de oyuncunun bir ejderhasi var. Yine de kayit "tek ejderha" seklinde
-   degil, bir LISTE olarak tutuluyor:
-
-     oyuncu.dragons[]  +  oyuncu.activeId
-
-   Boylece V2'de koleksiyon, yumurta ve ureme geldiginde kayit bicimini
-   degistirip herkesin ilerlemesini goce sokmak gerekmeyecek; listeye ikinci
-   ejderhayi eklemek yetecek.
-
-   DOLAP OYUNCUNUN, EJDERHANIN DEGIL:
-
-   Satin alinan kozmetikler oyuncuda (owned) tutuluyor, ejderhada degil.
-   Ileride ikinci ejderha geldiginde ayni taci ona da takabilsin diye. */
-
-import { loadState, saveState } from '../../js/store.js?v44';
-import { SLOTS, VARSAYILAN_GORUNUM } from './data.js?v44';
+import { loadState, saveState } from '../../js/store.js?v45';
+import { SLOTS, VARSAYILAN_GORUNUM } from './data.js?v45';
 
 const OYUN_ID = 'dragon';
 const SURUM = 2;
 
-/* Bos bir oyuncu kaydi.
-
-   ADA OYUNCUYA AIT, EJDERHAYA DEGIL: V2'de ikinci ejderha geldiginde ayni
-   adada yasayacaklar, o yuzden kayitta ust seviyede duruyor. */
 function yeniOyuncu() {
   return {
     v: SURUM,
@@ -33,7 +12,6 @@ function yeniOyuncu() {
     activeId: 'd1',
     island: 'grassland',
     ownedIslands: ['grassland'],
-    /* Dolap: her slot icin sahip olunan parcalar */
     owned: Object.fromEntries(SLOTS.map((s) => [s.key, [VARSAYILAN_GORUNUM[s.key]]])),
   };
 }
@@ -42,8 +20,8 @@ export function yeniEjderha(id) {
   const simdi = Date.now();
   return {
     id,
-    name: null,          /* bos ise tur adi gosterilir */
-    species: 'ember',    /* V2: tur/element sistemi buradan buyuyecek */
+    name: null,
+    species: 'ember',
     element: 'fire',
     level: 1,
     xp: 0,
@@ -56,15 +34,6 @@ export function yeniEjderha(id) {
   };
 }
 
-/* --- ESKI KIMLIKLERIN KARSILIGI ---
-
-   Katalog 8'erli kategorilere genisletilirken item kimlikleri degisti.
-   Oyuncularin satin aldiklari kaybolmasin diye eski kimlikler yenilerine
-   esleniyor. Tablo hem Ejderham (state_pet) hem de Dragon Island'in ilk
-   surumundeki (v1) kayitlari kapsiyor.
-
-   Karsiligi olmayan bir parca (ornegin artik bulunmayan monokl) en yakin
-   yeni parcaya veriliyor - oyuncudan bir sey geri alinmiyor. */
 const ESKI_ID = {
   color: {
     violet: 'royal', crimson: 'ember', emerald: 'emerald', ice: 'frost',
@@ -88,8 +57,6 @@ const ESKI_ID = {
   },
 };
 
-/* Eski surumde desen renge yapisikti (ornegin 'ice' hep pullu gelirdi).
-   Goc sirasinda o desen ayri bir parca olarak dolaba ekleniyor. */
 const PET_DESEN = {
   ice: 'tribal', gold: 'tribal', shadow: 'tribal',
   inferno: 'flame', runic: 'runes', dragonlord: 'armor',
@@ -102,7 +69,6 @@ function listeyiCevir(slot, liste, varsayilan) {
   return [...new Set([varsayilan, ...yeni])];
 }
 
-/* Ejderham (state_pet) kaydindan gecis */
 function petTasi(eski) {
   const o = yeniOyuncu();
   const d = o.dragons[0];
@@ -129,7 +95,6 @@ function petTasi(eski) {
   return o;
 }
 
-/* Dragon Island v1 kaydindaki kimlikleri yeni kataloga cevirir */
 function v1Tasi(kayit) {
   for (const d of kayit.dragons) {
     d.look = d.look || {};
@@ -147,19 +112,15 @@ function v1Tasi(kayit) {
   return kayit;
 }
 
-/* --- Yukleme / kaydetme --- */
-
 export async function oyuncuyuYukle() {
   const kayit = await loadState(OYUN_ID);
   if (kayit && Array.isArray(kayit.dragons) && kayit.dragons.length) {
-    /* v1 kaydi eski item kimliklerini tutuyor; once onlari cevir */
     const guncel = (Number(kayit.v) || 1) >= 2 ? kayit : v1Tasi(duzelt(kayit));
     const son = duzelt(guncel);
     saveState(OYUN_ID, son);
     return son;
   }
 
-  /* Dragon Island kaydi yoksa eski Ejderham ilerlemesine bak */
   const eski = await loadState('pet');
   if (eski && Number(eski.level) > 0) {
     const tasinan = petTasi(eski);
@@ -177,8 +138,6 @@ export function oyuncuyuKaydet(oyuncu) {
   saveState(OYUN_ID, oyuncu);
 }
 
-/* Eksik alanlari tamamlar: eski bir kayit yeni bir slotu veya adayi
-   tanimayabilir. Kayit bicimi buyudukce tek dokunulacak yer burasi. */
 function duzelt(o) {
   o.v = SURUM;
   o.owned = o.owned || {};
@@ -196,8 +155,6 @@ function duzelt(o) {
   if (!o.dragons.some((d) => d.id === o.activeId)) o.activeId = o.dragons[0].id;
   return o;
 }
-
-/* --- Ada --- */
 
 export function adaSahipMi(oyuncu, id) {
   return (oyuncu.ownedIslands || []).includes(id);

@@ -1,50 +1,24 @@
-/* Yilan (Snake)
 
-   Parmagini kaydirarak yon veriyorsun. Yem yiyip uzuyorsun; belli sayida
-   yem yiyince BOLUM atliyorsun. Yeni bolumde haritaya engeller geliyor ve
-   yilan yeniden kisaliyor.
-
-   Neden boyle: ilk surumde yilan her yemde hem uzuyor hem hizlaniyordu,
-   bir sure sonra kontrol edilemez hale geliyordu. Simdi hiz SADECE bolume
-   bagli (bolum icinde sabit) ve her bolum basinda yilan tekrar 3 halkaya
-   donuyor. Zorluk uzunluktan degil, haritaya eklenen engellerden geliyor -
-   boylece oyun zorlasirken kontrol elde kaliyor.
-
-   Hub'daki tek gercek zamanli oyun; kural anlatmayi gerektirmiyor. */
-
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v44';
-import { submitScore, addPoints, getBest, clearState, settleAbandonedRun } from '../../js/store.js?v44';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v44';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v44';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v45';
+import { submitScore, addPoints, getBest, clearState, settleAbandonedRun } from '../../js/store.js?v45';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v45';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v45';
 
 const GAME_ID = 'snake';
-const INTRO_SEEN_KEY = 'mh_snake_seen'; /* giris ekrani bir kez gosterilir */
+const INTRO_SEEN_KEY = 'mh_snake_seen';
 
-const SIZE = 15;               /* izgara SIZE x SIZE */
+const SIZE = 15;
 const START_LENGTH = 3;
-const FOOD_SCORE = 10;         /* bir yem kac puan */
-const LEVEL_BONUS = 50;        /* bolum atlayinca ek puan */
-/* EKONOMI DENGESI
+const FOOD_SCORE = 10;
+const LEVEL_BONUS = 50;
+const POINTS_DIVISOR = 5;
+const FOODS_PER_LEVEL = 5;
 
-   Butun oyunlar dakikada yaklasik AYNI jetonu vermeli - yoksa oyuncu en
-   verimli oyunu bulup sadece onu oynuyor, digerleri olu yatiriyor.
+const START_SPEED = 320;
+const SPEED_PER_LEVEL = 12;
+const MIN_SPEED = 170;
 
-   Olculen durum (kod uzerinden modellendi): en dusuk 8 jeton/dk (Mayin
-   Tarlasi), en yuksek 136 jeton/dk (2048) - arada 17 KAT fark vardi.
-   Asagidaki sabit, hedef olan ~60 jeton/dk'ya gore secildi.
-
-   Model her oyunun kendi puanlama mekanigi + makul bir oturum suresi
-   varsayimina dayaniyor; gercek oyuncu verisi geldiginde bu sayilar
-   yeniden ayarlanmali. */
-const POINTS_DIVISOR = 5;      /* ~2 dk, ~600 skor -> ~120 jeton */
-const FOODS_PER_LEVEL = 5;     /* bu kadar yem yiyince bolum atlar */
-
-/* Hiz sadece bolume gore degisir, bolum icinde sabittir */
-const START_SPEED = 320;       /* 1. bolumdeki adim araligi (ms) */
-const SPEED_PER_LEVEL = 12;    /* her bolumde bu kadar hizlanir */
-const MIN_SPEED = 170;         /* asla bundan hizli olmaz */
-
-const OBSTACLES_PER_LEVEL = 3; /* her bolumde eklenen engel sayisi */
+const OBSTACLES_PER_LEVEL = 3;
 const MAX_OBSTACLES = 24;
 
 registerTexts(GAME_ID, {
@@ -80,10 +54,10 @@ const overlayText = document.getElementById('overlay-text');
 const overlayBtn = document.getElementById('overlay-btn');
 
 let cellEls = [];
-let snake = [];            /* [bas, ..., kuyruk] hucre indeksleri */
-let walls = new Set();     /* engellerin hucre indeksleri */
-let dir = 1;               /* su anki yon (hucre farki) */
-let nextDir = 1;           /* siradaki yon - tik basinda uygulanir */
+let snake = [];
+let walls = new Set();
+let dir = 1;
+let nextDir = 1;
 let food = -1;
 let score = 0;
 let best = 0;
@@ -94,15 +68,9 @@ let timer = null;
 let running = false;
 let over = false;
 
-/* Bolum atlarken kisa bir duraklama var. O sirada gelen bir kaydirma
-   oyunu ESKI harita uzerinde yeniden baslatiyor ve yilan yeni bolume
-   gecmeden engele carpiyordu. Bu bayrak o araligi kilitliyor. */
 let gecis = false;
 
-/* Bolumun SON yemi altin renkli: bitise ne kadar kaldigi gorunsun */
 let altinYem = false;
-
-/* ---------- Baslangic ---------- */
 
 initTelegram();
 applyStaticTexts();
@@ -115,8 +83,6 @@ document.getElementById('back-link').addEventListener('click', (e) => {
 });
 document.getElementById('new-game').addEventListener('click', async () => {
   haptic.tap();
-  /* Aktif bir tur (baslamis, henuz carpmamis) terk ediliyorsa skoru
-     korumadan sifirlamayalim - bkz. settleAbandonedRun. */
   if (running && !over) await settleAbandonedRun(score, POINTS_DIVISOR);
   resetGame();
 });
@@ -126,7 +92,6 @@ document.getElementById('start-btn').addEventListener('click', () => {
 });
 document.addEventListener('langchange', () => applyStaticTexts());
 
-/* Uygulama arka plana giderse yilan yoluna devam edip olmesin */
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) stopTimer();
   else if (running && !over) scheduleTick();
@@ -141,15 +106,13 @@ bootstrap();
 async function bootstrap() {
   best = await getBest(GAME_ID);
   bestEl.textContent = format(best);
-  clearState(GAME_ID); /* gercek zamanli oyun: yarim kalan tur saklanmiyor */
+  clearState(GAME_ID);
   resetGame();
 }
 
 function goHome() {
   window.location.href = '../../index.html';
 }
-
-/* ---------- Tur / bolum kurulumu ---------- */
 
 function resetGame() {
   stopTimer();
@@ -162,17 +125,9 @@ function resetGame() {
   hideOverlay();
   updateHud();
 
-  /* Nasil oynanacagini sadece ilk kez anlatiyoruz. Sonraki turlarda
-     "Yeniden"e basan zaten ne yaptigini biliyor.
-
-     Ilk turdan sonra oyunu KENDILIGINDEN baslatmiyoruz: yilan ilk dokunusa
-     kadar yerinde bekliyor. Otomatik baslatinca sayfa acilir acilmaz saga
-     dogru yuruyup birkac saniyede duvara carpiyordu - oyuncu daha ekrana
-     bakmadan tur bitmis oluyordu. */
   startEl.hidden = introSeen();
 }
 
-/* Bolumu kurar: yilani ortaya koyar, engelleri dagitir, yemi yerlestirir */
 function buildLevel() {
   eatenThisLevel = 0;
   speed = Math.max(MIN_SPEED, START_SPEED - (level - 1) * SPEED_PER_LEVEL);
@@ -189,20 +144,6 @@ function buildLevel() {
   render();
 }
 
-/* ---------- ENGELLER: SIMETRIK VE TASARLANMIS ----------
-
-   Onceki surumde engeller rastgele serpistiriliyordu; harita her seferinde
-   dagilmis ve kazara duruyordu. Simdi her bolumun BELIRLI bir deseni var:
-   sol-ust ceyrege birkac hucre koyuyoruz, sonra iki eksende de aynaliyoruz.
-   Sonuc dort katli simetrik, kasitli gorunen bir harita.
-
-   Desen bolume gore SABIT seciliyor - ayni bolum her zaman ayni haritayi
-   veriyor, yani oyuncu ogrenebiliyor. Desenler tukendikce sikliklari artiyor.
-
-   Baslangic satirina (ortadaki satir) hicbir desen dokunmuyor: taban
-   hucrelerinin satiri her zaman ortanin ustunde, aynalari da altinda kaliyor. */
-
-/* Sol-ust ceyrekteki hucreleri her iki eksende aynalar */
 function dortAyna(noktalar) {
   const s = new Set();
   for (const [r, c] of noktalar) {
@@ -214,44 +155,37 @@ function dortAyna(noktalar) {
   return s;
 }
 
-/* Her desen sol-ust ceyrekte taban hucreleri uretir. n = siklik (0..3) */
 const DESENLER = [
-  /* Dort kosede L blok */
   (n) => {
     const d = [];
     const uz = 2 + Math.min(2, n);
     for (let k = 0; k < uz; k++) { d.push([2, 2 + k]); d.push([2 + k, 2]); }
     return d;
   },
-  /* Dikey sutunlar */
   (n) => {
     const d = [];
     const uz = 3 + Math.min(2, n);
     for (let k = 0; k < uz; k++) d.push([2 + k, 4]);
     return d;
   },
-  /* Yatay cubuklar */
   (n) => {
     const d = [];
     const uz = 3 + Math.min(3, n);
     for (let k = 0; k < uz; k++) d.push([4, 1 + k]);
     return d;
   },
-  /* Elmas kenari (capraz) */
   (n) => {
     const d = [];
     const uz = 3 + Math.min(2, n);
     for (let k = 0; k < uz; k++) d.push([5 - k, 1 + k]);
     return d;
   },
-  /* Nokta izgarasi */
   (n) => {
     const d = [[2, 2], [2, 5], [5, 2]];
     if (n >= 1) d.push([5, 5]);
     if (n >= 2) d.push([3, 3], [4, 4]);
     return d;
   },
-  /* Kapili duvar: dikey duvar, ortasinda gecis bosluk */
   (n) => {
     const d = [];
     for (let r = 0; r <= 2 + Math.min(2, n); r++) d.push([r, 3]);
@@ -265,13 +199,10 @@ function buildWalls() {
   const sira = level - 2;
   const siklik = Math.floor(sira / DESENLER.length);
 
-  /* Once bu bolumun deseni, olmazsa oncekiler: her zaman simetrik bir
-     harita cikmasi garanti olsun */
   for (let kaydir = 0; kaydir < DESENLER.length; kaydir++) {
     const desen = DESENLER[(sira + kaydir) % DESENLER.length];
     const engeller = dortAyna(desen(siklik));
 
-    /* Yilanin uzerinde ya da baslangic satirinda olmamali */
     let cakisma = false;
     for (const i of engeller) {
       if (snake.includes(i) || rowOf(i) === Math.floor(SIZE / 2)) { cakisma = true; break; }
@@ -281,11 +212,9 @@ function buildWalls() {
     if (hepsiBagli(engeller)) return engeller;
   }
 
-  /* Hicbiri uymadiysa engelsiz devam: zor bir bolum, imkansiz bolumden iyidir */
   return new Set();
 }
 
-/* Engeller disindaki tum hucreler tek parca mi (yilan her yere ulasabiliyor mu) */
 function hepsiBagli(engeller) {
   const toplam = SIZE * SIZE - engeller.size;
   let bas = -1;
@@ -320,7 +249,7 @@ function introSeen() {
   try {
     return localStorage.getItem(INTRO_SEEN_KEY) === '1';
   } catch {
-    return true; /* depolama kapaliysa her turda gostermeyelim */
+    return true;
   }
 }
 
@@ -330,13 +259,10 @@ function startRun() {
   try {
     localStorage.setItem(INTRO_SEEN_KEY, '1');
   } catch {
-    /* depolama kapali olabilir, sorun degil */
   }
   running = true;
   scheduleTick();
 }
-
-/* ---------- Izgara yardimcilari ---------- */
 
 const rowOf = (i) => Math.floor(i / SIZE);
 const colOf = (i) => i % SIZE;
@@ -347,11 +273,8 @@ function placeFood() {
     if (!snake.includes(i) && !walls.has(i)) bos.push(i);
   }
   food = bos.length ? bos[Math.floor(Math.random() * bos.length)] : -1;
-  /* Bu yem bolumu bitirecek olan mi? */
   altinYem = eatenThisLevel === FOODS_PER_LEVEL - 1;
 }
-
-/* ---------- Oyun dongusu ---------- */
 
 function scheduleTick() {
   stopTimer();
@@ -370,7 +293,6 @@ function tick() {
   const head = snake[0];
   const hedef = head + dir;
 
-  /* Duvardan cikis: satir/sutun degisimi beklenenden farkliysa carpmistir */
   const yatay = dir === 1 || dir === -1;
   if (
     hedef < 0 || hedef >= SIZE * SIZE ||
@@ -382,8 +304,6 @@ function tick() {
 
   if (walls.has(hedef)) return crash(hedef);
 
-  /* Kendine carpma. Kuyruk bu adimda ilerleyecegi icin son halka serbest -
-     ama yem yediysek kuyruk yerinde kalir, o zaman son halka da dolu sayilir. */
   const yemVar = hedef === food;
   const govde = yemVar ? snake : snake.slice(0, -1);
   if (govde.includes(hedef)) return crash(hedef);
@@ -412,11 +332,10 @@ function tick() {
   scheduleTick();
 }
 
-/* Bolum atlama: kisa bir duraklamayla yeni harita kuruluyor */
 async function levelUp() {
   stopTimer();
   running = false;
-  gecis = true;   /* bu arada gelen kaydirma oyunu yeniden baslatmasin */
+  gecis = true;
 
   level++;
   score += LEVEL_BONUS;
@@ -458,8 +377,6 @@ async function crash(index) {
   showOverlay(t('gameOver'), lines.join(' · '), t('playAgain'), resetGame);
 }
 
-/* ---------- Ekrana cizme ---------- */
-
 function buildBoard() {
   boardEl.style.setProperty('--cols', SIZE);
   boardEl.textContent = '';
@@ -472,7 +389,6 @@ function buildBoard() {
   }
 }
 
-/* Yonden CSS sinifina: gozler bu yone gore yerlesiyor */
 const YON_SINIFI = (d) => (
   d === 1 ? 'dir-right' : d === -1 ? 'dir-left' : d === SIZE ? 'dir-down' : 'dir-up'
 );
@@ -481,8 +397,6 @@ function render() {
   for (const el of cellEls) el.className = 'cell';
   for (const w of walls) cellEls[w].classList.add('wall');
 
-  /* Bas / govde / kuyruk ayri cizilir: govde halkalari bir acik bir koyu
-     olunca pul dokusu cikiyor, kuyruk incelip yilan boru gibi durmuyor. */
   snake.forEach((i, k) => {
     const el = cellEls[i];
     if (k === 0) {
@@ -500,7 +414,6 @@ function render() {
   }
 }
 
-/* Bolumu bitiren altin yem yenince cikan kucuk halka patlamasi */
 function altinPatlama(index) {
   const hucre = cellEls[index];
   if (!hucre) return;
@@ -534,9 +447,6 @@ function updateHud() {
 const format = (n) => Number(n).toLocaleString(locale());
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-/* ---------- Kontroller ---------- */
-
-/* Ters yone donmek yilani aninda kendine carptirir, engelliyoruz */
 function setDir(d) {
   if (d === -dir) return;
   nextDir = d;
@@ -547,7 +457,6 @@ const KEYS = {
   w: -SIZE, s: SIZE, a: -1, d: 1,
 };
 
-/* Ilk hareket turu baslatir - yilan o ana kadar yerinde bekler */
 function ensureRunning() {
   if (!running && !over && !gecis) startRun();
 }
@@ -563,11 +472,6 @@ window.addEventListener('keydown', (e) => {
 let touchStart = null;
 const SWIPE_MIN = 18;
 
-/* Kaydirma yuzeyi tahtanin KENDISI degil, ortadaki tum bolum.
-
-   Tahta ile alttaki butonlar arasindaki bosluga denk gelen parmak hareketleri
-   eskiden hic algilanmiyordu; oyuncu donmeye calisirken komut kayboluyordu.
-   Artik bu bosluk da yuzeye dahil. */
 const swipeEl = document.querySelector('.game-mid');
 
 swipeEl.addEventListener('pointerdown', (e) => {
@@ -586,14 +490,11 @@ swipeEl.addEventListener('pointermove', (e) => {
   if (Math.abs(dx) > Math.abs(dy)) setDir(dx > 0 ? 1 : -1);
   else setDir(dy > 0 ? SIZE : -SIZE);
 
-  /* Parmak basili kalirken art arda donebilsin diye baslangici tasi */
   touchStart = { x: e.clientX, y: e.clientY };
 });
 
 swipeEl.addEventListener('pointerup', () => { touchStart = null; });
 swipeEl.addEventListener('pointercancel', () => { touchStart = null; });
-
-/* ---------- Bitis ekrani ---------- */
 
 function showOverlay(title, text, buttonLabel, action) {
   overlayTitle.textContent = title;

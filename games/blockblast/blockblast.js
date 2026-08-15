@@ -1,31 +1,13 @@
-/* Blok Bulmaca (Block Blast)
 
-   8x8 bos tahta. Altta 3 parca durur. Parcayi tutup tahtaya birakirsin.
-   Dolan satir ve sutunlar patlar. Eldeki hicbir parca hicbir yere sigmiyorsa
-   oyun biter. Sure yok, kaybetme baskisi yok. */
-
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v44';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v44';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v44';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v44';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v45';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v45';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v45';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v45';
 
 const GAME_ID = 'blockblast';
 const SIZE = 8;
-/* EKONOMI DENGESI
+const POINTS_DIVISOR = 9;
 
-   Butun oyunlar dakikada yaklasik AYNI jetonu vermeli - yoksa oyuncu en
-   verimli oyunu bulup sadece onu oynuyor, digerleri olu yatiriyor.
-
-   Olculen durum (kod uzerinden modellendi): en dusuk 8 jeton/dk (Mayin
-   Tarlasi), en yuksek 136 jeton/dk (2048) - arada 17 KAT fark vardi.
-   Asagidaki sabit, hedef olan ~60 jeton/dk'ya gore secildi.
-
-   Model her oyunun kendi puanlama mekanigi + makul bir oturum suresi
-   varsayimina dayaniyor; gercek oyuncu verisi geldiginde bu sayilar
-   yeniden ayarlanmali. */
-const POINTS_DIVISOR = 9;  /* ~4 dk oyun, ~2.240 skor -> ~250 jeton */
-
-/* Tum metinler burada. Dil sistemi baglanirsa bunlar yedek olarak kalir. */
 registerTexts(GAME_ID, {
   title: 'Blok Bulmaca',
   subtitle: 'Satırları ve sütunları doldur',
@@ -41,7 +23,6 @@ registerTexts(GAME_ID, {
   earnedPoints: '+{points} $MH kazandın.',
 });
 
-/* Parca sekilleri. X = dolu kare, nokta = bos. */
 const SHAPE_DEFS = [
   ['X'],
   ['XX'], ['X', 'X'],
@@ -68,14 +49,12 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayText = document.getElementById('overlay-text');
 const overlayBtn = document.getElementById('overlay-btn');
 
-let grid = [];    /* 64 eleman: null veya renk kodu */
-let tray = [];    /* 3 eleman: parca nesnesi veya null */
+let grid = [];
+let tray = [];
 let score = 0;
 let best = 0;
 let over = false;
-let squares = []; /* tahtadaki 64 div */
-
-/* ---------- Baslangic ---------- */
+let squares = [];
 
 initTelegram();
 applyStaticTexts();
@@ -88,8 +67,6 @@ document.getElementById('back-link').addEventListener('click', (e) => {
 });
 document.getElementById('new-game').addEventListener('click', async () => {
   haptic.tap();
-  /* Tahta hala aktifse (dogal oyun sonu henuz gelmediyse) terk edilen
-     skoru korumadan sifirlamayalim - bkz. settleAbandonedRun. */
   if (!over) await settleAbandonedRun(score, POINTS_DIVISOR);
   startNewGame();
 });
@@ -139,8 +116,6 @@ function startNewGame() {
   render();
 }
 
-/* ---------- Parcalar ---------- */
-
 let pieceCounter = 0;
 
 function makePiece(shapeIndex, color) {
@@ -171,8 +146,6 @@ function refillTray() {
   tray = [randomPiece(), randomPiece(), randomPiece()];
 }
 
-/* ---------- Tahta mantigi ---------- */
-
 const at = (r, c) => grid[r * SIZE + c];
 const put = (r, c, v) => { grid[r * SIZE + c] = v; };
 
@@ -198,7 +171,6 @@ function anyPieceFits() {
   return tray.some((p) => p && pieceFitsSomewhere(p));
 }
 
-/* Parcayi tahtaya koyar, patlayan satir/sutunlari temizler */
 function place(piece, row, col, slotIndex) {
   for (const [dr, dc] of piece.cells) put(row + dr, col + dc, piece.color);
 
@@ -211,7 +183,7 @@ function place(piece, row, col, slotIndex) {
   let bonus = 0;
 
   if (cleared.cells.length) {
-    bonus = cleared.lines * 100 * cleared.lines; /* 1 sıra=100, 2=400, 3=900 */
+    bonus = cleared.lines * 100 * cleared.lines;
     score += bonus;
     haptic.success();
     SFX.pop();
@@ -284,8 +256,6 @@ async function endGame() {
 
   showOverlay(t('gameOver'), lines.join(' · '), t('playAgain'), startNewGame);
 }
-
-/* ---------- Ekrana cizme ---------- */
 
 function buildBoard() {
   for (let i = 0; i < SIZE * SIZE; i++) {
@@ -371,8 +341,6 @@ function updateScore() {
 
 const format = (n) => Number(n).toLocaleString(locale());
 
-/* ---------- Surukle-birak ---------- */
-
 let drag = null;
 
 function boardMetrics() {
@@ -390,7 +358,6 @@ function startDrag(event, piece, slotIndex, sourceEl) {
 
   const { cell, gap } = boardMetrics();
 
-  /* Parmagin altinda gezecek buyuk kopyayi olustur */
   const ghost = document.createElement('div');
   ghost.className = 'ghost';
   ghost.style.gridTemplateColumns = `repeat(${piece.w}, ${cell}px)`;
@@ -418,17 +385,14 @@ function startDrag(event, piece, slotIndex, sourceEl) {
     slotIndex,
     ghost,
     sourceEl,
-    /* Parca parmagin biraz uzerinde dursun ki elin oyunu kapatmasin */
     offsetX: width / 2,
     offsetY: height / 2 + cell * 1.3,
     target: null,
   };
 
-  /* Parmak parcanin disina cikinca da olaylari almaya devam edelim */
   try {
     sourceEl.setPointerCapture(event.pointerId);
   } catch {
-    /* bazi tarayicilarda desteklenmiyor, sorun degil */
   }
   sourceEl.addEventListener('pointermove', onDragMove);
   sourceEl.addEventListener('pointerup', onDragEnd);
@@ -488,8 +452,6 @@ function onDragEnd(event) {
     place(piece, target.row, target.col, slotIndex);
   }
 }
-
-/* ---------- Bitis ekrani ---------- */
 
 function showOverlay(title, text, buttonLabel, action) {
   overlayTitle.textContent = title;

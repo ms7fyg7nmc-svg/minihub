@@ -1,19 +1,9 @@
-/* Dragon Island - ITEM METINLERI (4 dil)
-
-   Katalogda 60'tan fazla item var ve her birinin adi + aciklamasi dort dilde
-   yaziliyor. Bunlar js/i18n.js'e konsaydi ana sozluk iki katina cikar, HUB
-   her acildiginda bosuna yuklenirdi. Burada durunca sadece Dragon Island
-   acildiginda geliyor.
-
-   Anahtarlar data.js'teki nameKey / descKey alanlariyla birebir ayni. */
 
 export const ITEM_TEXTS = {
   en: {
-    /* Nadirlik */
     rarCommon: 'Common', rarUncommon: 'Uncommon', rarRare: 'Rare',
     rarEpic: 'Epic', rarLegendary: 'Legendary', rarMythic: 'Mythic',
 
-    /* Renk */
     colEmber: 'Ember Red',        colEmberD: 'The classic warm red of a dragon.',
     colOcean: 'Ocean Blue',       colOceanD: 'Clean, bright water blue.',
     colEmerald: 'Emerald Green',  colEmeraldD: 'A gleaming emerald hide.',
@@ -23,7 +13,6 @@ export const ITEM_TEXTS = {
     colCelestial: 'Celestial Gold', colCelestialD: 'Gold that seems to glow from within.',
     colAurora: 'Aurora Dragon',   colAuroraD: 'Colours drift across the hide like northern lights.',
 
-    /* Desen */
     skNone: 'Plain',              skNoneD: 'No markings.',
     skStripes: 'Basic Stripes',   skStripesD: 'Simple horizontal bands.',
     skFlame: 'Flame Marks',       skFlameD: 'Small flames along the back.',
@@ -34,7 +23,6 @@ export const ITEM_TEXTS = {
     skCosmic: 'Cosmic Pattern',   skCosmicD: 'Stars and galaxy dust across the hide.',
     skCelestial: 'Celestial Rune',skCelestialD: 'Glowing magical runes and sigils.',
 
-    /* Kanat */
     wgLeather: 'Leather Wings',   wgLeatherD: 'Classic compact dragon wings.',
     wgFlame: 'Flame Wings',       wgFlameD: 'Fire licks the trailing edge.',
     wgCrystal: 'Crystal Wings',   wgCrystalD: 'Faceted ice crystal wings.',
@@ -44,7 +32,6 @@ export const ITEM_TEXTS = {
     wgKing: 'Dragon King Wings',  wgKingD: 'Armoured and set with jewels.',
     wgCelestial: 'Celestial Wings', wgCelestialD: 'Half light, half crystal. Enormous.',
 
-    /* Kuyruk */
     tlBasic: 'Basic Tail',        tlBasicD: 'A classic dragon tail.',
     tlSpiked: 'Spiked Tail',      tlSpikedD: 'Small spines run the length.',
     tlFlame: 'Flame Tail',        tlFlameD: 'The tip burns.',
@@ -54,7 +41,6 @@ export const ITEM_TEXTS = {
     tlKing: 'Dragon King Tail',   tlKingD: 'Armoured and decorated with a ruby.',
     tlCelestial: 'Celestial Tail',tlCelestialD: 'Long, glowing, part light.',
 
-    /* Tac */
     hdNone: 'None',               hdNoneD: 'Bare head.',
     hdTiny: 'Tiny Horn Crown',    hdTinyD: 'A small plain circlet.',
     hdBronze: 'Bronze Crown',     hdBronzeD: "A little bronze king's crown.",
@@ -65,7 +51,6 @@ export const ITEM_TEXTS = {
     hdKing: 'Dragon King Crown',  hdKingD: 'Large, winged, set with gems.',
     hdCelestial: 'Celestial Crown', hdCelestialD: 'Gold, crystal and a halo of light.',
 
-    /* Yuz */
     fcNone: 'None',               fcNoneD: 'No markings.',
     fcScar: 'Small Scar',         fcScarD: 'A single battle scar.',
     fcTwin: 'Twin Scars',         fcTwinD: 'Two crossed scars.',
@@ -76,7 +61,6 @@ export const ITEM_TEXTS = {
     fcDemon: 'Demon War Paint',   fcDemonD: 'Aggressive, detailed war paint.',
     fcKing: 'Dragon King Mark',   fcKingD: 'Glowing sigils on brow and eyes.',
 
-    /* Animasyon */
     auNone: 'None',               auNoneD: 'No effect.',
     auSparkle: 'Soft Sparkles',   auSparkleD: 'Occasional small star motes.',
     auEmber: 'Ember Glow',        auEmberD: 'Small fire embers drift up.',
@@ -87,7 +71,6 @@ export const ITEM_TEXTS = {
     auCosmic: 'Cosmic Aura',      auCosmicD: 'Purple and blue cosmic particles.',
     auCelestial: 'Celestial Aura',auCelestialD: 'Slow rings of light and star motes.',
 
-    /* Ada */
     islGrass: 'Grassland Island', islGrassD: 'Green grass, small trees and a quiet pond.',
     islFire: 'Fire Island',       islFireD: 'Dark ground, lava pools and volcanic rock.',
     islIce: 'Ice Island',         islIceD: 'Snow, frozen rock and ice crystals.',

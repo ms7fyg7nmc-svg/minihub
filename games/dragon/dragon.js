@@ -1,22 +1,7 @@
-/* Dragon Island
 
-   Oyuncunun hub'daki kalici ejderhasi. Diger oyunlarda kazanilan jetonlar
-   burada harcaniyor: besleme, seviye ve gorunum.
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v45';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v45';
 
-   BU DOSYA SADECE BAGLANTI KATMANI.
-   Ekonomi economy.js'te, veri modeli model.js'te, sayilar config.js'te,
-   kozmetik katalogu data.js'te, cizim art.js ve island.js'te.
-   Burada hicbir fiyat, hicbir XP degeri ve hicbir bakiye aritmetigi yok -
-   ileride dengeleme yaparken bu dosyayi acmak gerekmemeli. */
-
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v44';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v44';
-
-/* Ejderha Adasi henuz saglamlasmadi - herkese acilmadan once sadece
-   sahibi test edebilsin diye kilitli. Sunucu tarafinda hicbir sey
-   degismedi (ekonomi zaten kimlik dogrulamali); bu sadece istemcide
-   sayfanin acilip acilmayacagini belirliyor. Yayina hazir olunca bu
-   blogu kaldirmak yeterli. */
 const OWNER_ID = '8100679296';
 if (getUser().id !== OWNER_ID) {
   document.body.innerHTML = `
@@ -36,16 +21,14 @@ if (getUser().id !== OWNER_ID) {
   throw new Error('dragon-island-maintenance');
 }
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v44';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v44';
-import { bakiyeOku, harca } from './economy.js?v44';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v45';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v45';
+import { bakiyeOku, harca } from './economy.js?v45';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v44';
-/* headSvg ve HEAD_BOX artik cagrilmiyor: taclar uretilmis gorsel oldu,
-   dukkan kutucugu de ejderhayi cizip kafaya yakinlasiyor. */
-import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI } from './art.js?v44';
-import { ITEM_TEXTS } from './i18n-items.js?v44';
-import { createIsland } from './island.js?v44';
+         adaSahipMi, adaEkle } from './model.js?v45';
+import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI } from './art.js?v45';
+import { ITEM_TEXTS } from './i18n-items.js?v45';
+import { createIsland } from './island.js?v45';
 
 const GAME_ID = 'dragon';
 
@@ -95,11 +78,7 @@ registerTexts(GAME_ID, {
   shopAuras: 'ANİMASYON',
 });
 
-/* Item adlari ve aciklamalari dort dilde ayri dosyada: katalog buyudukce
-   ana sozlugu (ve HUB'in acilisini) sismesin diye. */
 registerItemTexts(ITEM_TEXTS);
-
-/* ---------- DOM ---------- */
 
 const islandEl = document.getElementById('island');
 const backCv = document.getElementById('isle-back');
@@ -139,26 +118,19 @@ const tryCancel = document.getElementById('try-cancel');
 const tryRar = document.getElementById('try-rar');
 const foodEl = document.getElementById('food');
 
-/* ---------- Durum ---------- */
-
 let oyuncu = null;
 let ejderha = null;
 let coins = 0;
 let busy = false;
 let dukkanAcik = false;
 
-/* Sahip olmadigin bir parcaya dokununca burasi dolar: ejderha onu uzerinde
-   gosterir ama hicbir sey satin alinmaz. Alim tryBuy ile onaylanir. */
-let deneme = null;   /* { slot, id, item } */
+let deneme = null;
 
-/* Ejderhanin O AN gorunecegi kusam: kalici secimler + varsa deneme */
 function gorunum() {
   return deneme ? { ...ejderha.look, [deneme.slot]: deneme.id } : ejderha.look;
 }
 
 const ada = createIsland(backCv, frontCv, 'grassland');
-
-/* ---------- Baslangic ---------- */
 
 initTelegram();
 applyStaticTexts();
@@ -179,18 +151,6 @@ islandEl.addEventListener('click', durt);
 tryBuy.addEventListener('click', satinAlOnayla);
 tryCancel.addEventListener('click', denemeyiBirak);
 
-/* Sahnedeki ada HER ZAMAN buradan belirlenir: deneme bir adaysa o, degilse
-   oyuncunun sahip oldugu ada.
-
-   Onceki surumde tema yalnizca "ada denemesi biraktiginda" geri aliniyordu.
-   Oyuncu adayi deneyip BASKA bir kategoriye (ornegin kuyruga) gecince deneme
-   degisiyor ama sahne volkanik kaliyordu - satin alinmamis bir ada ana
-   ekranda gorunuyordu. Artik her deneme degisiminde burasi cagriliyor. */
-/* Markette ne gosterilecegini belirler.
-
-   Normalde ejderha buyuk ve ada gizli - satin alacagin kozmetigi gormek
-   icin. Ama ADA deniyorsan tam tersi gerekiyor: ada gorunmeli, ejderha
-   normal boyutuna donmeli. Yoksa ada denerken ekranda hicbir sey degismiyor. */
 function onizlemeModu() {
   const adaOnizleme = dukkanAcik && deneme?.slot === 'island';
   document.body.classList.toggle('island-preview', adaOnizleme);
@@ -218,7 +178,6 @@ document.addEventListener('langchange', () => {
   ciz();
 });
 
-/* Sekme arka plana gecince ada dongusu dursun (pil) */
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) ada.dur();
   else ada.basla();
@@ -227,7 +186,7 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('resize', adaYerlestir);
 
 basla();
-setInterval(ciz, 60000); /* doyum ve keyif zamanla dustugu icin */
+setInterval(ciz, 60000);
 
 async function basla() {
   oyuncu = await oyuncuyuYukle();
@@ -248,10 +207,8 @@ function kaydet() {
   oyuncuyuKaydet(oyuncu);
 }
 
-/* Ada olculeri degistiginde ejderhayi dogru karonun uzerine oturt */
 function adaYerlestir() {
   if (!ada.boyutlandir()) {
-    /* Sahne henuz olculenmemis (gizli/gec yerlesim) - bir kare sonra dene */
     requestAnimationFrame(adaYerlestir);
     return;
   }
@@ -259,14 +216,9 @@ function adaYerlestir() {
   const kutu = islandEl.getBoundingClientRect();
   slotEl.style.setProperty('--dx', `${(p.x / kutu.width) * 100}%`);
   slotEl.style.setProperty('--dy', `${(p.y / kutu.height) * 100}%`);
-  /* Genislik de degisken uzerinden: market modunda CSS onu devraliyor */
   slotEl.style.setProperty('--w', `${Math.max(30, 38 * p.olcek)}%`);
-  /* Govde kadrajin ortasinda degil (kanat ve kuyruga saga yer acmak icin);
-     yerlesim bunu telafi etmezse ejderha karonun soluna kayiyor. */
   slotEl.style.setProperty('--cx', `${(GOVDE_MERKEZ_ORANI * 100).toFixed(2)}%`);
 }
-
-/* ---------- Doyum / keyif ---------- */
 
 function yuzde(basZaman, saat) {
   const gecen = (Date.now() - basZaman) / 3_600_000;
@@ -276,7 +228,7 @@ function yuzde(basZaman, saat) {
 const doyum = () => yuzde(ejderha.lastFed, CONFIG.FULL_HOURS);
 const keyif = () => Math.max(
   yuzde(ejderha.lastPlayed || 0, CONFIG.HAPPY_HOURS),
-  Math.round(doyum() * 0.5),   /* tok ejderha tamamen mutsuz olmaz */
+  Math.round(doyum() * 0.5),
 );
 
 const ruhHali = () => (doyum() < CONFIG.HUNGRY_BELOW ? 'sad' : 'happy');
@@ -288,8 +240,6 @@ function asamaAdi() {
   const oran = (ejderha.level - CONFIG.EGG_UNTIL) / (CONFIG.MAX_LEVEL - CONFIG.EGG_UNTIL);
   return adlar[Math.min(adlar.length - 1, Math.floor(oran * adlar.length))].trim();
 }
-
-/* ---------- Etkilesimler ---------- */
 
 function durt() {
   if (islandEl.classList.contains('poked')) return;
@@ -307,7 +257,6 @@ async function besle() {
   busy = true;
   feedBtn.disabled = true;
 
-  /* Etiket ayni karede iki kez basilirsa ikinci istegi tek islem yapar */
   const sonuc = await harca(`feed:${ejderha.id}:${ejderha.level}:${ejderha.xp}:${ejderha.lastFed}`, fiyat);
   busy = false;
 
@@ -320,13 +269,8 @@ async function besle() {
   coins = sonuc.bakiye;
   ejderha.lastFed = Date.now();
 
-  /* Yem ejderhaya ucar, ejderha onu yer, ANCAK ONDAN SONRA XP gelir.
-     Odul animasyondan once gelirse besleme "olmus bitmis" gibi hissettiriyor. */
   await yemAnimasyonu();
 
-  /* Son seviyede besleme XP vermez ama ejderha yine ACIKIYOR.
-     Eskiden buton tamamen kapaliydi ve seviye 99'daki bir ejderha bir daha
-     hic doyurulamiyordu - dogru davranis besleyip doyumu doldurmak. */
   if (ejderha.level >= CONFIG.MAX_LEVEL) {
     haptic.success();
     islandEl.classList.add('fed');
@@ -352,7 +296,6 @@ function oyna() {
   xpVer(CONFIG.PLAY_XP, 'playing');
 }
 
-/* XP ekler, gerekiyorsa seviye atlatir ve gorsel geri bildirim verir */
 function xpVer(miktar, sinif) {
   ejderha.xp += miktar;
 
@@ -365,7 +308,6 @@ function xpVer(miktar, sinif) {
   if (ejderha.level >= CONFIG.MAX_LEVEL) ejderha.xp = 0;
 
   if (atladi) {
-    /* Seviye odulleri config.js'ten okunur; tanimli degilse hicbir sey olmaz */
     const odul = rewardForLevel(ejderha.level);
     if (odul?.unlock) {
       for (const [slot, id] of Object.entries(odul.unlock)) dolabaEkle(oyuncu, slot, id);
@@ -378,7 +320,7 @@ function xpVer(miktar, sinif) {
   ucur(atladi ? t('levelUp', { level: bicim(ejderha.level) }) : t('xpGain', { n: miktar }));
 
   kaydet();
-  dukkanCiz();  /* seviye kilidi acilmis olabilir */
+  dukkanCiz();
   ciz();
 }
 
@@ -397,21 +339,15 @@ function uyar(metin) {
   shopMsgEl.hidden = false;
 }
 
-/* --- BESLEME ANIMASYONU ---
-
-   Yem alttan (butonun oldugu yonden) cikip ejderhanin agzina ucar, ejderha
-   yeme hareketi yapar, agzindan birkac kirinti sicrar. Toplam ~0.9 saniye. */
 function yemAnimasyonu() {
   return new Promise((bitti) => {
     const kutu = islandEl.getBoundingClientRect();
     const hedef = slotEl.getBoundingClientRect();
-    /* Ejderhanin agzi: slotun ust-orta bolgesi */
     const agizY = hedef.top - kutu.top + hedef.height * 0.42;
     const yemY = kutu.height * 0.96;
 
     foodEl.hidden = false;
     foodEl.style.setProperty('--ucus', `${Math.round(agizY - yemY)}px`);
-    /* Animasyonu bastan baslat */
     foodEl.style.animation = 'none';
     void foodEl.offsetWidth;
     foodEl.style.animation = '';
@@ -455,12 +391,7 @@ function ucur(metin) {
 
 const bicim = (n) => Number(n).toLocaleString(locale());
 
-/* Fiyat etiketlerinin onundeki $MH coin ikonu. Onceden '◆' karakteriydi;
-   artik Scenario'da uretilmis gercek bir gorsel - metin degil <img>
-   oldugu icin bu deger textContent'e degil innerHTML'e yazilmali. */
 const coinIkon = () => '<img class="coin-ic" src="../../assets/coin.png" alt="">';
-
-/* ---------- Dukkan ---------- */
 
 function dukkanGoster(acik) {
   dukkanAcik = acik;
@@ -470,22 +401,16 @@ function dukkanGoster(acik) {
   document.body.classList.toggle('shop-open', acik);
   onizlemeModu();
 
-  /* Dukkandan cikarken deneme her zaman birakilir: onizleme yalnizca
-     markette yasar, ana ekrana sizmaz. */
   if (!acik) {
     deneme = null;
     dukkanCiz();
   }
   adaSahnesiniTazele();
   haptic.tap();
-  /* Ada kutusu boyut degistirdi */
   requestAnimationFrame(adaYerlestir);
   ciz();
 }
 
-/* Kutucuktaki mini onizleme.
-   Her slot kendi kucuk gorselini uretiyor; ada icin adanin renklerinden
-   kucuk bir izometrik karo cizilir. */
 function onizleme(slot, id, item) {
   const bos = `<span class="swatch" style="background:rgba(255,255,255,.06)">—</span>`;
 
@@ -501,7 +426,6 @@ function onizleme(slot, id, item) {
   }
 
   if (slot === 'color') {
-    /* Aurora'da tek renk yerine bantlar: mythic oldugu kutucukta belli olsun */
     const zemin = item.aurora
       ? `linear-gradient(140deg, ${item.aurora.join(', ')})`
       : `linear-gradient(140deg, ${item.body}, ${item.dark})`;
@@ -540,48 +464,35 @@ function onizleme(slot, id, item) {
 
   if (slot === 'head') {
     if (!item.kind) return bos;
-    /* Kanat/kuyrukla ayni yontem: ejderha cizilip kafaya yakinlasiliyor.
-       Onceden burada elle yazilmis SVG tac ciziliyordu - taclar artik
-       uretilmis gorsel oldugu icin dukkanda BASKA bir tac gorunuyordu.
-       Aldiginla gordugunun ayni olmasi gerekiyor. */
     const look = { ...VARSAYILAN_ONIZLEME, head: id };
     return `<span class="swatch zoom head">${dragonSvg(99, look, 'happy')}</span>`;
   }
 
   if (slot === 'face') {
     if (!item.kind) return bos;
-    /* Yuz parcalari ejderha kafasinin koordinatlarinda cizildigi icin
-       kutucukta o bolgeye bakan bir cerceve kullaniliyor */
     return `<span class="swatch" style="background:rgba(255,255,255,.06)">
       <svg viewBox="-34 -80 68 40">${faceSvg(id)}</svg></span>`;
   }
 
   if (slot === 'wings' || slot === 'tail') {
-    /* Kanat ve kuyruk ancak siluetiyle anlasiliyor: notr renkte kucuk bir
-       ejderha cizilip sadece o parca degistiriliyor, sonra CSS o bolgeye
-       yakinlastiriyor (tum ejderha 46 pikselde okunmuyordu). */
     const look = { ...VARSAYILAN_ONIZLEME, [slot]: id };
     return `<span class="swatch zoom ${slot}">${dragonSvg(99, look, 'happy')}</span>`;
   }
 
-  /* aura */
   if (!item.kind) return bos;
   return `<span class="swatch" style="background:radial-gradient(circle, ${item.color}55, rgba(255,255,255,.05))">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="${item.color}"/>
       <circle cx="12" cy="12" r="2" fill="#fff" opacity=".8"/></svg></span>`;
 }
 
-/* Kanat/kuyruk kutucuklarindaki silueti sade tutmak icin notr bir gorunum */
 const VARSAYILAN_ONIZLEME = {
   color: 'ocean', skin: 'none', wings: 'leather', tail: 'basic',
   head: 'none', face: 'none', aura: 'none',
 };
 
-/* Bir grubu (slot ya da ada) ciz */
 function grupCiz(baslikKey, girdiler) {
   const kutu = document.createElement('div');
   kutu.className = 'shop-group';
-  /* Kaydirma konumunu geri yuklerken hangi kategori oldugunu bilmek icin */
   if (girdiler.length) kutu.dataset.slot = girdiler[0].slot;
 
   const baslik = document.createElement('h3');
@@ -612,8 +523,6 @@ function grupCiz(baslikKey, girdiler) {
     } else if (g.kilit) {
       fiyatEl.textContent = t('needLevel', { level: g.item.needLevel });
     } else {
-      /* Yalnizca sayidan olusan icerik icin innerHTML - kullanici girdisi
-         degil, bicim() her zaman formatlanmis bir sayi doner. */
       fiyatEl.innerHTML = `${coinIkon()} ${bicim(g.item.price)}`;
     }
 
@@ -623,9 +532,6 @@ function grupCiz(baslikKey, girdiler) {
 
   kutu.appendChild(sira);
 
-  /* Deneme cubugu panelin tepesinde degil, DENENEN kategorinin hemen altinda
-     duruyor. Tepede oldugunda kuyruk gibi asagidaki bir kategoriyi denerken
-     fiyat ve "Satin al" ekranin disinda kaliyordu. */
   if (deneme && girdiler.length && girdiler[0].slot === deneme.slot) {
     kutu.appendChild(tryBar);
   }
@@ -636,12 +542,6 @@ function grupCiz(baslikKey, girdiler) {
 function dukkanCiz() {
   if (!oyuncu) return;
 
-  /* KAYDIRMA KONUMLARINI SAKLA
-
-     Bir urune dokununca dukkan bastan cizilyor. Onceden bu, her kategorinin
-     yatay kaydirmasini sifira dondurdugu icin saga kaydirip bir urunu
-     denediginde kategori en basa atiyor ve denedigin urunu goremiyordun.
-     Konumlari once alip cizimden sonra geri koyuyoruz. */
   const kaydirma = new Map();
   for (const grup of shopEl.querySelectorAll('.shop-group[data-slot]')) {
     const sira = grup.querySelector('.shop-row');
@@ -649,8 +549,6 @@ function dukkanCiz() {
   }
   const dikey = panelShop.scrollTop;
 
-  /* Cubuk bir gruba tasinmis olabilir; listeyi temizlemeden once geri al
-     ki DOM'dan tamamen kopmasin. */
   panelShop.appendChild(tryBar);
   shopEl.textContent = '';
 
@@ -664,7 +562,6 @@ function dukkanCiz() {
     })));
   }
 
-  /* Ada da ayni dukkanda: oyuncuya ait, ejderhaya degil */
   grupCiz('shopIslands', Object.entries(ISLANDS).map(([id, item]) => ({
     slot: 'island', id, item,
     sahip: adaSahipMi(oyuncu, id),
@@ -673,7 +570,6 @@ function dukkanCiz() {
     deniyor: deneme?.slot === 'island' && deneme.id === id,
   })));
 
-  /* Saklanan konumlari geri koy */
   for (const grup of shopEl.querySelectorAll('.shop-group[data-slot]')) {
     const konum = kaydirma.get(grup.dataset.slot);
     if (konum) {
@@ -683,14 +579,10 @@ function dukkanCiz() {
   }
   panelShop.scrollTop = dikey;
 
-  /* Denenen urun gorus alaninda kalsin - kaydirma korunsa bile deneme
-     cubugu araya girdiginde kayabiliyor. */
   const denenen = shopEl.querySelector('.shop-item.trying');
   if (denenen) denenen.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 }
 
-/* Dukkanda bir seye dokunmak: sahip oldugunu kusandirir/tasinir, olmadigini
-   DENER. Deneme hicbir jeton harcamaz; alim deneme cubugundan onaylanir. */
 function parcaSec(slot, id, item) {
   if (busy) return;
 
@@ -710,7 +602,6 @@ function parcaSec(slot, id, item) {
     return;
   }
 
-  /* Kilitli olsa bile denenebilir: oyuncu neyin pesinde oldugunu gorsun */
   deneme = { slot, id, item };
   shopMsgEl.hidden = true;
   haptic.tap();
@@ -761,8 +652,6 @@ async function satinAlOnayla() {
   ciz();
 }
 
-/* ---------- Ekrana cizme ---------- */
-
 function ciz() {
   if (!ejderha) return;
 
@@ -791,21 +680,17 @@ function ciz() {
 
   const fiyat = feedCost(ejderha.level);
   feedCostEl.textContent = bicim(fiyat);
-  /* Son seviyede de beslenebilir: XP gelmez ama doyum dolar */
   feedBtn.disabled = busy || coins < fiyat;
   playBtn.disabled = (ejderha.lastPlayed || 0) + CONFIG.PLAY_COOLDOWN_MS > Date.now();
 
   denemeCubuguCiz();
 
   if (!hintEl.classList.contains('warn')) {
-    /* Aclik en son seviyede bile oncelikli: "en yuksek seviye" yazisi
-       oyuncunun ejderhasinin ac oldugunu gormesini engellemesin */
     if (coins < fiyat) hintEl.textContent = t('notEnough');
     else if (d < CONFIG.HUNGRY_BELOW) hintEl.textContent = t('hungryHint');
     else if (enSon) hintEl.textContent = t('maxLevel');
     else hintEl.textContent = t('hint');
   }
-  /* Uyari bir sonraki cizimde temizlenir */
   hintEl.classList.remove('warn');
 }
 
@@ -832,13 +717,6 @@ function denemeCubuguCiz() {
   else if (parasiz) tryNote.textContent = t('tryNoCoins');
   else tryNote.textContent = t(item.descKey);
 }
-
-/* --- Satin alinan animasyonlar ---
-
-   Once hepsi ayni seydi: renkli kucuk kareler yukari suzuluyordu, sadece
-   rengi degisiyordu. Simdi her efektin kendi SEKLI ve kendi hareketi var -
-   kor titriyor, alev dili uzayip kisaliyor, simsek carpiyor, hale donuyor,
-   yildiz parildayip sonuyor. Sekiller SVG, hareket CSS. */
 
 const EFEKT_SEKLI = {
   ember: `<svg viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.4" fill="currentColor"/>
@@ -874,7 +752,6 @@ const EFEKT_SEKLI = {
           </svg>`,
 };
 
-/* Her aura turunun kendi hareketi ve yogunlugu */
 const EFEKT_AYAR = {
   ember:  { sekil: 'ember',  adet: 16, boy: [5, 9],   sure: [2.0, 3.4], gecikme: 2.2, alt: [0, 24] },
   frost:  { sekil: 'frost',  adet: 12, boy: [8, 14],  sure: [2.4, 3.8], gecikme: 2.4, alt: [10, 60] },
@@ -891,7 +768,6 @@ function efektCiz(auraId) {
   fxEl.style.color = fx.color || '';
   if (!fx.kind) return;
 
-  /* Celestial: parcacik + ejderhanin cevresinde donen isik halkasi */
   if (fx.kind === 'celestial') {
     fxEl.classList.add('halo');
     fxEl.style.setProperty('--aura', fx.color);

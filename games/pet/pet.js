@@ -1,32 +1,13 @@
-/* Ejderham
 
-   Hub'daki diger oyunlarda kazandigin jetonlari burada harciyorsun:
-   ejderhani besliyorsun, seviye atlatiyorsun ve gorunumunu degistiriyorsun.
-
-   IKI TASARIM KARARI:
-
-   1) Bu oyun jeton URETMEZ, sadece HARCAR. Uretseydi oyuncular oynamadan
-      jeton biriktirir, ilerideki token ekonomisi daha dogmadan sisirdi.
-
-   2) Ejderhanin gorunumu 99 seviye boyunca SUREKLI degisir. Onceki surumde
-      5 sabit asama vardi ve oyuncu birkac beslemede sonuncusuna ulasip
-      degisimin bittigini goruyordu. Simdi govde, kanat, boynuz ve sirt
-      dikenleri seviyeyle birlikte kademeli buyuyor - her seviye atlayista
-      gozle gorulur bir fark oluyor.
-
-   Kozmetikler (renk, tac, efekt) asil jeton harcama yeri. Buyuk oyunlarda
-   gelirin buyuk kismi kozmetikten geliyor ve insanlari harcamaya iten sey
-   guc degil kendini ifade etme - burada da odul guc degil, gorunum. */
-
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v44';
-import { getPoints, spendPoints, saveState, loadState } from '../../js/store.js?v44';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v44';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v45';
+import { getPoints, spendPoints, saveState, loadState } from '../../js/store.js?v45';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v45';
 
 const GAME_ID = 'pet';
 
 const MAX_LEVEL = 99;
-const FULL_HOURS = 12;   /* doyum kac saatte sifira iner */
-const EGG_UNTIL = 4;     /* bu seviyeye kadar hala yumurta */
+const FULL_HOURS = 12;
+const EGG_UNTIL = 4;
 
 const feedCost = (level) => 8 + Math.floor(level * 1.5);
 const xpNeeded = (level) => 2 + Math.floor(level / 8);
@@ -61,7 +42,6 @@ registerTexts(GAME_ID, {
   tryNoCoins: 'Yeterli $MH’ın yok.',
   tryCancel: 'Vazgeç',
 
-  /* Dukkan urun adlari */
   colViolet: 'Mor',
   colCrimson: 'Kızıl',
   colEmerald: 'Zümrüt',
@@ -85,14 +65,6 @@ registerTexts(GAME_ID, {
   efStars: 'Yıldız',
 });
 
-/* ---------- Kozmetikler ---------- */
-
-/* name yerine nameKey tutuluyor: isimler cizim koduyla degil ceviri dosyasiyla
-   geliyor, boylece dukkan da diger metinler gibi 4 dilde calisiyor. */
-
-/* Renkler ucuzdan pahaliya duz -> desenli gidiyor: ilk renkler sade, ustteki
-   renklerde pul, magma catlagi, kadim run ve zirh plakasi gibi desenler var.
-   pattern alani dragonSvg icinde govdeye kirpilarak ciziliyor. */
 const COLORS = {
   violet:  { price: 0,     nameKey: 'colViolet',  body: '#a978e8', dark: '#7b4fd0', belly: '#e6d6fa', horn: '#f5b942' },
   crimson: { price: 400,   nameKey: 'colCrimson', body: '#e05a52', dark: '#a8342d', belly: '#f7cdc6', horn: '#f5b942' },
@@ -107,8 +79,6 @@ const COLORS = {
              pattern: 'cracks', ink: '#ffe066', needLevel: 40 },
   runic:   { price: 8000,  nameKey: 'colRunic',   body: '#4d6b8f', dark: '#2b3f5c', belly: '#cfe0f0', horn: '#8fe3d8',
              pattern: 'runes',  ink: '#8fe3d8', needLevel: 65 },
-  /* Obsidyen + altin. Koyu bir renk ama sahne zemininden ayirt edilecek kadar
-     acik tutuldu; daha koyusunda kanatlar arka plana karisiyor. */
   dragonlord: { price: 12000, nameKey: 'colLord', body: '#4a4166', dark: '#332c4a', belly: '#b6a8dd', horn: '#f5c74a',
              pattern: 'plates', ink: '#f5c74a', needLevel: 80 },
 };
@@ -131,9 +101,6 @@ const EFFECTS = {
   stars:  { price: 6500, nameKey: 'efStars',  color: '#ffe066', kind: 'rise', needLevel: 60 },
 };
 
-/* ---------- Ejderha cizimi ---------- */
-
-/* Gozler: tok ve mutluysa parlak, acsa yorgun */
 function eyeMarks(mood, pal) {
   if (mood === 'sad') {
     return `
@@ -147,13 +114,6 @@ function eyeMarks(mood, pal) {
     <circle cx="13" cy="-57" r="2.4" fill="#2a2136"/>`;
 }
 
-/* Taclar: ucuzdan pahaliya sade halkadan cok katmanli tac hazinesine gider.
-   Her biri kendi mimarisiyle cizilir - fiyat farki gozle gorulsun diye.
-
-   Hepsi y=0 tabaninda cizilir, sonra headTop'a tasinir. Boylece hem ejderhanin
-   alnina oturtmak hem de dukkan kutucugunda tek basina gostermek kolay olur;
-   CROWN_BOX her tacin kutucukta kullanacagi cerceveyi tutar. */
-
 const CROWN_BOX = {
   silver:  '-18 -28 36 32',
   gold:    '-21 -32 42 36',
@@ -166,7 +126,6 @@ function crownSvg(key, headTop) {
   const c = CROWNS[key];
   if (!c || key === 'none') return '';
 
-  /* Ortak taban seridi */
   const bant = (w, h) => `
     <path d="M${-w} 2 h${w * 2} v${-h} h${-w * 2} z"
           fill="${c.metal}" stroke="${c.edge}" stroke-width="1.4" stroke-linejoin="round"/>
@@ -176,7 +135,6 @@ function crownSvg(key, headTop) {
   let ic;
 
   if (key === 'silver') {
-    /* Ince halka, uc sivri uc */
     ic = `
       ${bant(15, 5)}
       <path d="M-15 -3 L-10 -16 L-5 -8 L0 -20 L5 -8 L10 -16 L15 -3 Z"
@@ -184,7 +142,6 @@ function crownSvg(key, headTop) {
       <circle cx="0" cy="-22" r="2.8" fill="${c.gem}"/>`;
 
   } else if (key === 'gold') {
-    /* Bes uclu, her ucunda inci */
     const uclar = [[-16, -17], [-8, -20], [0, -26], [8, -20], [16, -17]];
     const inci = uclar.map(([x, y]) => `<circle cx="${x}" cy="${y - 3}" r="2.2" fill="${c.gem}"/>`).join('');
     ic = `
@@ -195,7 +152,6 @@ function crownSvg(key, headTop) {
       ${inci}`;
 
   } else if (key === 'ruby') {
-    /* Yuksek tac, tepesinde buyuk tas, yanlarda kucukler */
     ic = `
       ${bant(20, 7)}
       <path d="M-20 -5 L-16 -20 L-10 -11 L0 -30 L10 -11 L16 -20 L20 -5 Z"
@@ -207,7 +163,6 @@ function crownSvg(key, headTop) {
       <circle cx="0" cy="-2" r="2.2" fill="${c.gem}" opacity=".8"/>`;
 
   } else if (key === 'ancient') {
-    /* Yanlarda kanatlar, uclarda runlar, tepede parlayan tas */
     ic = `
       <path d="M-34 -8 q10 -3 16 4 l-3 6 q-8 -6 -13 -2z
                M34 -8 q-10 -3 -16 4 l3 6 q8 -6 13 -2z"
@@ -222,7 +177,6 @@ function crownSvg(key, headTop) {
       <path d="M-8 -2 h16" stroke="${c.gem}" stroke-width="1.4" opacity=".7"/>`;
 
   } else {
-    /* dragon: genis kanatlar, yan boynuzlar, tepesinde ejder gozu */
     ic = `
       <path d="M-38 -12 q13 -6 21 6 l-4 7 q-10 -9 -17 -5z
                M38 -12 q-13 -6 -21 6 l4 7 q10 -9 17 -5z"
@@ -245,7 +199,6 @@ function crownSvg(key, headTop) {
   return `<g transform="translate(0 ${headTop})">${ic}</g>`;
 }
 
-/* Yumurta: seviye yukseldikce catlaklar artar */
 function eggSvg(level, pal) {
   const crack = level >= 2
     ? `<path d="M-6 -14 l7 10 l-9 8 l8 9" fill="none" stroke="${pal.dark}"
@@ -266,8 +219,6 @@ function eggSvg(level, pal) {
     </svg>`;
 }
 
-/* Govde deseni. Ust seviye renklerin farki burada goruluyor.
-   Cizimler govde yoluna kirpilir, boylece kenardan tasmaz. */
 let desenSayaci = 0;
 
 function patternMarks(pal, govdeYolu) {
@@ -277,7 +228,6 @@ function patternMarks(pal, govdeYolu) {
   let icerik = '';
 
   if (pal.pattern === 'scales') {
-    /* Ust uste binen pul siralari */
     for (let sira = 0; sira < 6; sira++) {
       const y = -26 + sira * 11;
       const kaydir = sira % 2 ? 6 : 0;
@@ -287,7 +237,6 @@ function patternMarks(pal, govdeYolu) {
       }
     }
   } else if (pal.pattern === 'cracks') {
-    /* Icten yanan magma catlaklari */
     icerik = `
       <path d="M-24 -26 l6 12 l-5 9 l8 13 l-4 12
                M14 -28 l-4 14 l7 10 l-5 12 l6 10
@@ -299,7 +248,6 @@ function patternMarks(pal, govdeYolu) {
             fill="none" stroke="#fff" stroke-width="0.9" opacity=".5"
             stroke-linecap="round"/>`;
   } else if (pal.pattern === 'runes') {
-    /* Kadim simgeler: govdede parlayan bir halka ve run harfleri */
     icerik = `
       <circle cx="0" cy="-2" r="21" fill="none" stroke="${ink}" stroke-width="1.6" opacity=".55"/>
       <circle cx="0" cy="-2" r="14" fill="none" stroke="${ink}" stroke-width="1" opacity=".35"/>
@@ -311,7 +259,6 @@ function patternMarks(pal, govdeYolu) {
             fill="none" stroke="${ink}" stroke-width="2" opacity=".8"
             stroke-linecap="round" stroke-linejoin="round"/>`;
   } else if (pal.pattern === 'plates') {
-    /* Zirh plakalari ve altin kaplama */
     icerik = `
       <path d="M-40 -18 q40 -12 80 0 M-40 -4 q40 -12 80 0
                M-40 10 q40 -12 80 0 M-40 24 q40 -12 80 0"
@@ -328,32 +275,20 @@ function patternMarks(pal, govdeYolu) {
     <g clip-path="url(#${uid})">${icerik}</g>`;
 }
 
-/* Ejderha. g = 0..1 arasi buyume orani (seviye 5 -> 99).
-   Govde, kanat, boynuz ve diken sayisi bu orana gore buyuyor. */
 function dragonSvg(g, pal, crownKey, mood) {
-  /* Olcekler seviye 99'da bile 200x200'luk kadraja sigacak sekilde secildi:
-     en genis nokta kanat ucu (x = ±118), yani 118 * wing * s <= ~96.
-     Yavru hali yaklasik yarim genislikte basliyor, aradaki fark gorunur. */
-  const s = 0.62 + g * 0.26;     /* genel olcek   0.62 -> 0.88 */
-  const wing = 0.60 + g * 0.32;  /* kanat acikligi 0.60 -> 0.92 */
-  const horn = 0.60 + g * 0.38;  /* boynuz uzunlugu 0.60 -> 0.98 */
+  const s = 0.62 + g * 0.26;
+  const wing = 0.60 + g * 0.32;
+  const horn = 0.60 + g * 0.38;
   const spikeCount = Math.round(4 + g * 8);
 
-  /* Sirt dikenleri.
-     Govdenin ust kenari kabaca su egri: y = -32 + (x/34)^2 * 24.
-     Her dikenin TABANINI kenarin altina, ucunu ustune koyuyoruz; dikenler
-     govdeden ONCE cizildigi icin taban kisimlari govdenin arkasinda kalir ve
-     sirttan cikiyormus gibi gorunur. Havada duran ucgen kalmaz. */
   const sirtY = (x) => -32 + (x / 34) ** 2 * 24;
   let spikes = '';
   const perSide = Math.max(2, Math.round(spikeCount / 2));
   for (let taraf = -1; taraf <= 1; taraf += 2) {
     for (let i = 0; i < perSide; i++) {
-      /* Boyun ve bas ustlerini ortmesin diye orta serit bos birakiliyor:
-         dikenler her iki omuzda ice dogru kisalarak diziliyor. */
       const p = perSide === 1 ? 0 : i / (perSide - 1);
       const x = taraf * (11 + p * 21);
-      const uzun = 1 - p * 0.55;      /* disa dogru daha uzun */
+      const uzun = 1 - p * 0.55;
       const kenar = sirtY(x);
       const uc = kenar - (5 + uzun * 9);
       const w = 3.6 + uzun * 1.6;
@@ -363,10 +298,8 @@ function dragonSvg(g, pal, crownKey, mood) {
     }
   }
 
-  /* Govde yolu hem dolgu hem de desenin kirpma maskesi olarak kullaniliyor */
   const govdeYolu = 'M-34 2 Q-38 -22 -14 -30 Q14 -34 34 -12 Q45 10 28 29 Q2 40 -18 31 Q-32 22 -34 2 Z';
 
-  /* Ayaklar: govdenin alt kenarini ortecek sekilde, pencelerle */
   const ayak = (cx) => `
     <ellipse cx="${cx}" cy="31" rx="12" ry="7.5" fill="${pal.dark}"/>
     <path d="M${cx - 9} 35 l-3 8 l6 -3 z
@@ -455,8 +388,6 @@ function dragonSvg(g, pal, crownKey, mood) {
     </svg>`;
 }
 
-/* ---------- Durum ---------- */
-
 const petStage = document.getElementById('pet-stage');
 const petArt = document.getElementById('pet-art');
 const fxEl = document.getElementById('fx');
@@ -491,17 +422,11 @@ let busy = false;
 let owned = { color: ['violet'], crown: ['none'], effect: ['none'] };
 let eq = { color: 'violet', crown: 'none', effect: 'none' };
 
-/* Sahip olmadigin bir urune dokununca burasi dolar: ejderha o urunu uzerinde
-   gosterir ama hicbir sey satin alinmaz. Alim ancak deneme cubugundaki
-   butonla onaylanir - eskiden tek dokunus parayi aninda goturuyordu. */
-let deneme = null;   /* { group, id, item } */
+let deneme = null;
 
-/* Ejderhanin O AN gorunecegi kusam: kalici secimler + varsa deneme */
 function gorunum() {
   return deneme ? { ...eq, [deneme.group]: deneme.id } : eq;
 }
-
-/* ---------- Baslangic ---------- */
 
 initTelegram();
 applyStaticTexts();
@@ -530,7 +455,7 @@ document.addEventListener('langchange', () => {
 });
 
 bootstrap();
-setInterval(render, 60000); /* doyum zamanla dustugu icin */
+setInterval(render, 60000);
 
 async function bootstrap() {
   const saved = await loadState(GAME_ID);
@@ -562,8 +487,6 @@ function switchTab(which) {
   panelCare.hidden = shop;
   document.body.classList.toggle('shop-open', shop);
 
-  /* Bakim sekmesine donerken deneme birakilir: oyuncu almadigi bir kiyafeti
-     uzerinde gormeye devam etmesin */
   if (!shop && deneme) {
     deneme = null;
     renderShop();
@@ -572,8 +495,6 @@ function switchTab(which) {
   haptic.tap();
 }
 
-/* ---------- Doyum ve buyume ---------- */
-
 function fullness() {
   const gecenSaat = (Date.now() - lastFed) / 3_600_000;
   return Math.max(0, Math.min(100, Math.round((1 - gecenSaat / FULL_HOURS) * 100)));
@@ -581,7 +502,6 @@ function fullness() {
 
 const mood = () => (fullness() < 25 ? 'sad' : 'happy');
 
-/* Seviye 5'ten 99'a kadar 0..1 arasi buyume orani */
 const growth = () => Math.max(0, Math.min(1, (level - EGG_UNTIL - 1) / (MAX_LEVEL - EGG_UNTIL - 1)));
 
 function stageLabel() {
@@ -591,8 +511,6 @@ function stageLabel() {
   const i = Math.min(names.length - 1, Math.floor(growth() * names.length));
   return names[i].trim();
 }
-
-/* ---------- Besleme ---------- */
 
 async function feed() {
   if (busy || level >= MAX_LEVEL) return;
@@ -625,12 +543,10 @@ async function feed() {
 
   persist();
   busy = false;
-  renderShop(); /* seviye kilidi acilmis olabilir */
+  renderShop();
   render();
 }
 
-/* Uyariyi iki panele birden yazar: hangisi acikken tetiklenirse tetiklensin
-   oyuncu mesaji gorur. */
 function uyar(metin) {
   haptic.error();
   hintEl.textContent = metin;
@@ -651,16 +567,12 @@ function poke() {
   setTimeout(() => petStage.classList.remove('poked'), 520);
 }
 
-/* ---------- Dukkan ---------- */
-
 const GROUPS = [
   { key: 'color',  title: 'shopColors',  items: COLORS },
   { key: 'crown',  title: 'shopCrowns',  items: CROWNS },
   { key: 'effect', title: 'shopEffects', items: EFFECTS },
 ];
 
-/* Kucuk onizleme kareleri */
-/* Kutucuktaki mini desen: renk kartinda da ne aldigini gorebilsin */
 function swatchPattern(item) {
   const ink = item.ink || item.dark;
   if (item.pattern === 'scales') {
@@ -695,7 +607,6 @@ function preview(groupKey, id, item) {
   }
   if (groupKey === 'crown') {
     if (id === 'none') return `<span class="swatch" style="background:rgba(255,255,255,.06)">—</span>`;
-    /* Her tacin kendi cercevesi var: hepsi kutucugu ayni oranda doldursun */
     return `<span class="swatch" style="background:rgba(255,255,255,.06)">
       <svg viewBox="${CROWN_BOX[id]}">${crownSvg(id, 0)}</svg>
     </span>`;
@@ -756,8 +667,6 @@ function renderShop() {
   }
 }
 
-/* Dukkanda bir urune dokunmak: sahip oldugunu kusandirir, olmadigini DENER.
-   Deneme hicbir jeton harcamaz; alim tryBuy ile onaylanir. */
 function pickItem(groupKey, id, item) {
   if (busy) return;
 
@@ -772,7 +681,6 @@ function pickItem(groupKey, id, item) {
     return;
   }
 
-  /* Kilitli olsa bile denenebilir: oyuncu neyin pesinde oldugunu gorsun */
   deneme = { group: groupKey, id, item };
   shopMsgEl.hidden = true;
   haptic.tap();
@@ -780,7 +688,6 @@ function pickItem(groupKey, id, item) {
   render();
 }
 
-/* Deneme cubugundaki "Satin al" */
 async function confirmBuy() {
   if (busy || !deneme) return;
   const { group: groupKey, id, item } = deneme;
@@ -806,15 +713,13 @@ async function confirmBuy() {
   owned[groupKey].push(id);
   eq[groupKey] = id;
   haptic.success();
-  shopMsgEl.hidden = true;   /* onceki uyari kalmasin */
+  shopMsgEl.hidden = true;
   showFloater(t('bought', { name: t(item.nameKey) }));
 
   persist();
   renderShop();
   render();
 }
-
-/* ---------- Ekrana cizme ---------- */
 
 function render() {
   const kusam = gorunum();
@@ -852,7 +757,6 @@ function render() {
   else hintEl.textContent = t('hint');
 }
 
-/* Deneme cubugu: ne denendigi, kac jetona geldigi ve alinip alinamayacagi */
 function renderTryBar() {
   if (!deneme) {
     tryBar.hidden = true;
@@ -874,7 +778,6 @@ function renderTryBar() {
   else tryNote.textContent = t('tryHint');
 }
 
-/* Satin alinan animasyonu sahneye kurar */
 function renderEffect() {
   const secili = gorunum().effect;
   const fx = EFFECTS[secili] || EFFECTS.none;
@@ -919,5 +822,4 @@ function showFloater(text) {
 
 const format = (n) => Number(n).toLocaleString(locale());
 
-/* Bkz. dragon.js coinIkon() - ayni gorsel, ayni sebep (metin degil <img>). */
 const coinIkon = () => '<img class="coin-ic" src="../../assets/coin.png" alt="">';

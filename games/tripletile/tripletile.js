@@ -1,44 +1,16 @@
-/* Uclu Eslestir (Triple Tile)
 
-   Tahtada ust uste binmis taslar var. Sadece uzerinde baska tas OLMAYAN
-   taslara dokunabilirsin; dokundugun tas alttaki 7 gozlu rafa gider.
-   Rafta ayni cesitten uc tane birikince patlar ve yer acilir.
-   Raf dolar da uclu olusmazsa oyun biter.
-
-   Bolum uretimi: taslar rastgele dagitilmaz. Bos tahtadan geriye dogru
-   calisiriz - her adimda o an oynanabilir durumdaki uc tasi secip ayni
-   cesidi veririz. Boylece her bolumun cozumu kesin vardir. */
-
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v44';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v44';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v44';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v44';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v45';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v45';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v45';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v45';
 
 const GAME_ID = 'tripletile';
-/* EKONOMI DENGESI
-
-   Butun oyunlar dakikada yaklasik AYNI jetonu vermeli - yoksa oyuncu en
-   verimli oyunu bulup sadece onu oynuyor, digerleri olu yatiriyor.
-
-   Olculen durum (kod uzerinden modellendi): en dusuk 8 jeton/dk (Mayin
-   Tarlasi), en yuksek 136 jeton/dk (2048) - arada 17 KAT fark vardi.
-   Asagidaki sabit, hedef olan ~60 jeton/dk'ya gore secildi.
-
-   Model her oyunun kendi puanlama mekanigi + makul bir oturum suresi
-   varsayimina dayaniyor; gercek oyuncu verisi geldiginde bu sayilar
-   yeniden ayarlanmali. */
-const POINTS_DIVISOR = 6;   /* ~6 dk, ~2.100 skor -> ~350 jeton */
-const SLOTS = 7;            /* raftaki goz sayisi */
-const TRIPLE_SCORE = 30;    /* bir uclu kac puan */
-const LEVEL_BONUS = 100;    /* tahtayi bitirince bolum basina bonus */
-/* Bolum basina bonus LEVEL_BONUS * seviye idi - sinirsiz buyudugu icin
-   (zorluk seviye 4'te tavan yapmasina ragmen) uzun oturumlarda skor
-   karesel artiyordu, tek oyunda 10.000+ skora kadar cikilabiliyordu.
-   Bonus artik BONUS_CAP_LEVEL'den sonra sabitleniyor, skorun kendisi de
-   SCORE_CAP'te tavan yapiyor - boylece ne kadar uzun oynanirsa oynansin
-   tek oyundan kazanilabilecek $MH sinirli kaliyor. */
+const POINTS_DIVISOR = 6;
+const SLOTS = 7;
+const TRIPLE_SCORE = 30;
+const LEVEL_BONUS = 100;
 const BONUS_CAP_LEVEL = 12;
-const SCORE_CAP = 3600;     /* ~600 $MH tavani (SCORE_CAP / POINTS_DIVISOR) */
+const SCORE_CAP = 3600;
 
 registerTexts(GAME_ID, {
   title: 'Üçlü Eşleştir',
@@ -57,8 +29,6 @@ registerTexts(GAME_ID, {
   earnedPoints: '+{points} $MH kazandın.',
 });
 
-/* Tas cesitleri: arka plan rengi + uzerindeki sekil.
-   Birbirine karismasin diye hem renk hem sekil farkli. */
 const KINDS = [
   { color: '#e2544e', icon: '🍎' },
   { color: '#f5b942', icon: '🍋' },
@@ -72,14 +42,12 @@ const KINDS = [
   { color: '#b0763f', icon: '⭐' },
 ];
 
-/* Tahta 10 x 8 "yarim hucre" buyuklugunde. Bir tas 2 x 2 yarim hucre kaplar.
-   Ust katlar yarim hucre kaydirildigi icin alttakilerin uzerine biner. */
 const FIELD_W = 10;
 const FIELD_H = 8;
 const LAYERS = [
-  { z: 0, xs: [0, 2, 4, 6, 8], ys: [0, 2, 4, 6] }, /* 20 yer */
-  { z: 1, xs: [1, 3, 5, 7], ys: [1, 3, 5] },       /* 12 yer */
-  { z: 2, xs: [2, 4, 6], ys: [2, 4] },             /*  6 yer */
+  { z: 0, xs: [0, 2, 4, 6, 8], ys: [0, 2, 4, 6] },
+  { z: 1, xs: [1, 3, 5, 7], ys: [1, 3, 5] },
+  { z: 2, xs: [2, 4, 6], ys: [2, 4] },
 ];
 
 const boardEl = document.getElementById('board');
@@ -93,17 +61,15 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayText = document.getElementById('overlay-text');
 const overlayBtn = document.getElementById('overlay-btn');
 
-let tiles = [];     /* tahtadaki taslar: { id, x, y, z, kind, el, taken } */
-let slots = [];     /* raftaki taslar (cesitine gore sirali) */
-let picked = [];    /* geri alma icin: rafa gonderilen taslarin sirasi */
+let tiles = [];
+let slots = [];
+let picked = [];
 let score = 0;
 let best = 0;
 let level = 1;
-let busy = false;   /* patlama animasyonu sirasinda dokunmayi kapat */
+let busy = false;
 let over = false;
 let nextId = 1;
-
-/* ---------- Baslangic ---------- */
 
 initTelegram();
 applyStaticTexts();
@@ -116,8 +82,6 @@ document.getElementById('back-link').addEventListener('click', (e) => {
 });
 document.getElementById('new-game').addEventListener('click', async () => {
   haptic.tap();
-  /* Raf hala aktifse terk edilen skoru korumadan sifirlamayalim -
-     bkz. settleAbandonedRun. */
   if (!over) await settleAbandonedRun(score, POINTS_DIVISOR);
   startNewGame();
 });
@@ -165,15 +129,8 @@ function startNewGame() {
   buildLevel();
 }
 
-/* ---------- Bolum uretimi ---------- */
-
-/* Bolum ilerledikce tas ve cesit sayisi artar.
-   Eskiden tas sayisi 4. seviyede, cesit sayisi 13. seviyede tavan yapiyordu -
-   sonrasinda oyun hep AYNI zorlukta kaliyordu. Artis hizini yavaslatip
-   tavana daha gec varilmasi, "seviyeler yeterince zorlasmiyor" sikayetini
-   daha fazla seviye boyunca cozuyor (tas: seviye 7, cesit: seviye 19). */
 function tileCountFor(levelNo) {
-  return Math.min(18 + Math.floor((levelNo - 1) / 2) * 6, 36); /* 3'un kati kalmali */
+  return Math.min(18 + Math.floor((levelNo - 1) / 2) * 6, 36);
 }
 
 function kindCountFor(levelNo) {
@@ -193,10 +150,6 @@ function buildLevel() {
   persist();
 }
 
-/* Hangi kata kac tas konacagi.
-   Ust katlar bilerek dar tutuldu: her ust tas alttaki dort yeri kapattigi
-   icin tepeyi kalabalik yaparsak oyuncunun elinde cok az secenek kaliyor.
-   Alt kat genis, tepe ince -> her an 6-8 tas oynanabilir durumda olur. */
 const LAYER_SHAPES = {
   18: [10, 5, 3],
   24: [14, 7, 3],
@@ -208,9 +161,6 @@ function pickPositions(total) {
   const caps = LAYERS.map((l) => l.xs.length * l.ys.length);
   const counts = (LAYER_SHAPES[total] ?? LAYER_SHAPES[18]).map((n, i) => Math.min(n, caps[i]));
 
-  /* Alt kat ortada toplu dursun (duzgun bir yigin gorunsun), ust katlar ise
-     birbirinden uzaga dagilsin. Ust katlari da ortalarsak hepsi ust uste
-     binip alttaki taslarin neredeyse tamamini kilitliyor. */
   const cx = (FIELD_W - 2) / 2;
   const cy = (FIELD_H - 2) / 2;
 
@@ -221,7 +171,6 @@ function pickPositions(total) {
 
     let chosen;
     if (layer.z === 0) {
-      /* Merkeze en yakin yerler (esitlikleri bozmak icin hafif rastgelelik) */
       const away = (p) => (p.x - cx) ** 2 + (p.y - cy) ** 2 + Math.random() * 3;
       chosen = spots.map((p) => ({ p, d: away(p) }))
         .sort((a, b) => a.d - b.d)
@@ -235,7 +184,6 @@ function pickPositions(total) {
   return positions;
 }
 
-/* Verilen yerlerden, birbirine en uzak olacak sekilde n tane secer */
 function spreadOut(spots, n) {
   if (n >= spots.length) return spots.slice();
 
@@ -255,7 +203,6 @@ function spreadOut(spots, n) {
   return chosen;
 }
 
-/* Bir tasin ustu acik mi: daha ust katta onunle cakisan tas var mi */
 function isFree(list, index, alive) {
   const tile = list[index];
   for (const other of alive) {
@@ -267,8 +214,6 @@ function isFree(list, index, alive) {
   return true;
 }
 
-/* Cozulebilir bir bolum uretir: her adimda o an ustu acik olan uc tasa
-   ayni cesidi verip onlari tahtadan kaldiririz. Bu sira oyunun cozumudur. */
 function generate(total, kindCount) {
   for (let attempt = 0; attempt < 60; attempt++) {
     const positions = pickPositions(total);
@@ -287,8 +232,6 @@ function generate(total, kindCount) {
 
     if (!ok) continue;
 
-    /* Cesitleri sirayla dagit: rastgele secseydik bir cesit tahtayi
-       kaplayabilir, oyun hem cirkin hem kolay olurdu. */
     const pool = trios.map((_, i) => i % kindCount);
     shuffle(pool);
     trios.forEach((trio, i) => {
@@ -297,7 +240,6 @@ function generate(total, kindCount) {
     return positions;
   }
 
-  /* Buraya normalde hic gelinmez; gelinirse en kucuk bolumu kur */
   return pickPositions(18).map((p, i) => ({ ...p, kind: i % 3 }));
 }
 
@@ -308,8 +250,6 @@ function shuffle(list) {
   }
 }
 
-/* ---------- Oynanis ---------- */
-
 function freeTiles() {
   const alive = new Set(tiles.map((_, i) => i).filter((i) => !tiles[i].taken));
   return [...alive].filter((i) => isFree(tiles, i, alive));
@@ -319,13 +259,12 @@ function onTileClick(index) {
   if (busy || over) return;
   const tile = tiles[index];
   if (tile.taken) return;
-  if (!freeTiles().includes(index)) return; /* ustu kapali */
+  if (!freeTiles().includes(index)) return;
 
   tile.taken = true;
   tile.el.classList.add('taken');
   picked.push(index);
 
-  /* Ayni cesitler yan yana dursun diye rafi cesite gore siralariz */
   slots.push({ kind: tile.kind });
   slots.sort((a, b) => a.kind - b.kind);
 
@@ -343,11 +282,9 @@ async function resolve() {
     await wait(240);
     slots = slots.filter((_, i) => !trio.includes(i));
     score = Math.min(score + TRIPLE_SCORE, SCORE_CAP);
-    /* Patlayan taslar artik geri alinamaz */
     picked = [];
   }
 
-  /* Cizimden once serbest birak, yoksa "Geri al" kilitli cizilir */
   busy = false;
   renderSlots();
   renderBoard();
@@ -358,7 +295,6 @@ async function resolve() {
   if (slots.length >= SLOTS) return endGame();
 }
 
-/* Rafta ayni cesitten uc tane var mi; varsa indekslerini dondurur */
 function findTriple() {
   for (let i = 0; i + 2 < slots.length; i++) {
     if (slots[i].kind === slots[i + 1].kind && slots[i].kind === slots[i + 2].kind) {
@@ -373,7 +309,6 @@ function undo() {
   const index = picked.pop();
   const tile = tiles[index];
 
-  /* Rafta o cesitten son eklenen bir tasi geri al */
   const slotIndex = slots.findIndex((s) => s.kind === tile.kind);
   if (slotIndex === -1) return;
   slots.splice(slotIndex, 1);
@@ -428,8 +363,6 @@ function persist() {
   });
 }
 
-/* ---------- Ekrana cizme ---------- */
-
 function layout() {
   const half = boardEl.clientWidth / FIELD_W;
   boardEl.style.setProperty('--tile', `${half * 2}px`);
@@ -460,7 +393,6 @@ function renderAll() {
   updateHud();
 }
 
-/* Hangi taslarin oynanabilir oldugunu tazeler */
 function renderBoard() {
   const free = new Set(freeTiles());
   for (const [index, tile] of tiles.entries()) {
@@ -470,7 +402,6 @@ function renderBoard() {
   }
 }
 
-/* clearing: patlama animasyonu oynatilacak goz indeksleri */
 function renderSlots(clearing = []) {
   slotsEl.textContent = '';
 
@@ -502,8 +433,6 @@ function updateHud() {
 
 const format = (n) => Number(n).toLocaleString(locale());
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/* ---------- Bitis ekrani ---------- */
 
 function showOverlay(title, text, buttonLabel, action) {
   overlayTitle.textContent = title;

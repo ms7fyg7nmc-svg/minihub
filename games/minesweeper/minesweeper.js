@@ -1,38 +1,11 @@
-/* Mayin Tarlasi (Minesweeper)
 
-   Hucrelere dokunup aciyorsun; sayilar komsu mayin sayisini soyluyor.
-   Mayin oldugunu dusundugun hucreyi bayrakla isaretle. Butun mayin
-   OLMAYAN hucreleri acinca bolum biter.
-
-   Bu surumun klasikten farki: tahtalar TAHMIN GEREKTIRMEZ. Klasik mayin
-   tarlasinda oyun bazen seni yazi-tura atmaya zorlar - iki hucreden biri
-   mayindir ama hangisi oldugunu anlamanin mantiksal bir yolu yoktur.
-   Burada tahtayi urettikten sonra bir cozucuye veriyoruz: sadece mantikla
-   sonuna kadar cozulemiyorsa tahtayi atip yenisini uretiyoruz. Yani
-   kaybettiysen gercekten bir cikarim hatasi yapmissindir.
-
-   Ilk dokunus da her zaman guvenlidir: mayinlar ilk dokunustan SONRA,
-   dokundugun hucrenin ve komsularinin disina yerlestirilir. */
-
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v44';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v44';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v44';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v44';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v45';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v45';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v45';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v45';
 
 const GAME_ID = 'minesweeper';
-/* EKONOMI DENGESI
-
-   Butun oyunlar dakikada yaklasik AYNI jetonu vermeli - yoksa oyuncu en
-   verimli oyunu bulup sadece onu oynuyor, digerleri olu yatiriyor.
-
-   Olculen durum (kod uzerinden modellendi): en dusuk 8 jeton/dk (Mayin
-   Tarlasi), en yuksek 136 jeton/dk (2048) - arada 17 KAT fark vardi.
-   Asagidaki sabit, hedef olan ~60 jeton/dk'ya gore secildi.
-
-   Model her oyunun kendi puanlama mekanigi + makul bir oturum suresi
-   varsayimina dayaniyor; gercek oyuncu verisi geldiginde bu sayilar
-   yeniden ayarlanmali. */
-const POINTS_PER_LEVEL = 150; /* bolum ~2,5 dk surer */
+const POINTS_PER_LEVEL = 150;
 
 registerTexts(GAME_ID, {
   title: 'Mayın Tarlası',
@@ -71,16 +44,14 @@ const overlayBtn = document.getElementById('overlay-btn');
 
 let size = 6;
 let mineCount = 5;
-let mines = new Set();     /* mayinlarin hucre indeksleri */
-let open = new Set();      /* acilmis hucreler */
-let flags = new Set();     /* bayrakli hucreler */
-let placed = false;        /* mayinlar yerlestirildi mi (ilk dokunustan sonra) */
+let mines = new Set();
+let open = new Set();
+let flags = new Set();
+let placed = false;
 let level = 1;
 let bestLevel = 1;
 let locked = false;
 let cellEls = [];
-
-/* ---------- Baslangic ---------- */
 
 initTelegram();
 applyStaticTexts();
@@ -93,8 +64,6 @@ document.getElementById('back-link').addEventListener('click', (e) => {
 });
 document.getElementById('new-game').addEventListener('click', async () => {
   haptic.tap();
-  /* Tahtayi yeniden dagitmak -1 enerjiye mal olur - yoksa kotu bir
-     acilisi bedava reroll edip mayin riskinden kacmak mumkun olurdu. */
   await spendRestartEnergy();
   buildLevel(level);
 });
@@ -133,12 +102,11 @@ async function bootstrap() {
     buildLevel(1);
   }
 
-  /* Ilk kez oynuyorsa kisa anlatimi goster */
   let gorulmus = false;
   try {
     gorulmus = localStorage.getItem(TUTORIAL_SEEN_KEY) === '1';
   } catch {
-    gorulmus = true; /* depolama kapaliysa her acilista gostermeyelim */
+    gorulmus = true;
   }
   if (!gorulmus) showTutorial();
 }
@@ -152,7 +120,6 @@ function hideTutorial() {
   try {
     localStorage.setItem(TUTORIAL_SEEN_KEY, '1');
   } catch {
-    /* depolama kapali olabilir, sorun degil */
   }
 }
 
@@ -160,11 +127,6 @@ function goHome() {
   window.location.href = '../../index.html';
 }
 
-/* ---------- Zorluk egrisi ---------- */
-
-/* Zorluk hem izgara buyuyerek hem mayin yogunlugu artarak yukselir.
-   Yogunlugun ust siniri bilerek 0.20'de tutuldu: daha yukarisi tahmin
-   gerektirmeyen tahta bulmayi zorlastirir ve uretici yedege dusebilir. */
 function sizeFor(levelNo) {
   return Math.min(6 + Math.floor((levelNo - 1) / 3), 10);
 }
@@ -173,8 +135,6 @@ function minesFor(levelNo, gridSize) {
   const density = Math.min(0.13 + (levelNo - 1) * 0.005, 0.20);
   return Math.max(4, Math.round(gridSize * gridSize * density));
 }
-
-/* ---------- Bolum kurulumu ---------- */
 
 function buildLevel(levelNo) {
   level = levelNo;
@@ -191,8 +151,6 @@ function buildLevel(levelNo) {
   buildBoard();
   renderAll();
 }
-
-/* ---------- Izgara yardimcilari ---------- */
 
 function neighbors(index) {
   const r = Math.floor(index / size);
@@ -213,18 +171,12 @@ function adjacentMines(index, mineSet = mines) {
   return neighbors(index).filter((n) => mineSet.has(n)).length;
 }
 
-/* ---------- Mayin yerlestirme (tahmin gerektirmeyen) ---------- */
-
-/* Ilk dokunulan hucre ve komsulari mayinsiz kalir, boylece ilk dokunus
-   her zaman bir alan acar. Sonra tahtayi cozucuye veriyoruz; mantikla
-   tam cozulemiyorsa yeniden deniyoruz. */
 function placeMines(safeIndex) {
   const total = size * size;
   const forbidden = new Set([safeIndex, ...neighbors(safeIndex)]);
   const candidates = [];
   for (let i = 0; i < total; i++) if (!forbidden.has(i)) candidates.push(i);
 
-  /* Cok kucuk tahtada mayin sayisi sigmayabilir - guvenlik siniri */
   const count = Math.min(mineCount, candidates.length);
 
   let fallback = null;
@@ -239,16 +191,9 @@ function placeMines(safeIndex) {
     if (solvableWithoutGuessing(candidate, safeIndex)) return candidate;
   }
 
-  /* 400 denemede tahmin gerektirmeyen tahta bulunamadiysa (cok nadir)
-     elimizdekiyle devam ederiz - oyun yine oynanabilir. */
   return fallback;
 }
 
-/* Tahtayi sadece mantik kurallariyla cozmeye calisir.
-   Kural 1: bir sayinin bayraklari tamamsa, kalan komsulari guvenlidir.
-   Kural 2: bir sayinin eksigi kadar kapali komsusu varsa, hepsi mayindir.
-   Kural 3 (alt kume): A'nin kapali komsulari B'ninkinin icindeyse, aradaki
-   fark kadar mayin farkindan cikarim yapilir - "1-2 deseni" boyle cozulur. */
 function solvableWithoutGuessing(mineSet, startIndex) {
   const total = size * size;
   const seen = new Set();
@@ -271,7 +216,6 @@ function solvableWithoutGuessing(mineSet, startIndex) {
   while (progress) {
     progress = false;
 
-    /* Kural 1 ve 2 */
     for (const index of [...seen]) {
       const hidden = hiddenAround(index);
       if (!hidden.length) continue;
@@ -287,7 +231,6 @@ function solvableWithoutGuessing(mineSet, startIndex) {
     }
     if (progress) continue;
 
-    /* Kural 3: alt kume karsilastirmasi (sadece yakin hucreler arasinda) */
     const active = [...seen].filter((i) => hiddenAround(i).length > 0);
     for (const a of active) {
       const ha = hiddenAround(a);
@@ -300,7 +243,7 @@ function solvableWithoutGuessing(mineSet, startIndex) {
         if (Math.abs(ra - rb) > 2 || Math.abs(ca - cb) > 2) continue;
 
         const hb = hiddenAround(b);
-        if (!ha.every((x) => hb.includes(x))) continue; /* ha, hb'nin alt kumesi mi */
+        if (!ha.every((x) => hb.includes(x))) continue;
 
         const diff = hb.filter((x) => !ha.includes(x));
         if (!diff.length) continue;
@@ -321,16 +264,12 @@ function solvableWithoutGuessing(mineSet, startIndex) {
   return seen.size === total - mineSet.size;
 }
 
-/* ---------- Oynanis ---------- */
-
 function onCellTap(index) {
   if (locked) return;
-  if (!tutorialEl.hidden) return; /* anlatim ekrani acikken tahta pasif */
+  if (!tutorialEl.hidden) return;
 
-  /* Bayrakli hucre = kesin mayin. Kazara dokunup kaybetmeyi engelliyoruz. */
   if (flags.has(index)) return;
 
-  /* Ilk dokunus: mayinlari simdi yerlestiriyoruz ki bu hucre guvenli olsun */
   if (!placed) {
     mines = placeMines(index);
     placed = true;
@@ -353,13 +292,6 @@ function revealFrom(index) {
   if (adjacentMines(index) === 0) neighbors(index).forEach(revealFrom);
 }
 
-/* Kesin oldugu ispatlanabilen mayinlari oyuncu adina isaretler.
-
-   Kural: bir sayinin kapali komsu sayisi, o sayidan (zaten isaretlenmisler
-   dusuldukten sonra) geriye kalana esitse, o komsularin HEPSI mayindir.
-   Bayrak koymak oyuncunun isi olmaktan cikiyor - ki kafa karistiran
-   "Kaz/Bayrak" kipini bu sayede tamamen kaldirabildik. Oyuncuya kalan is
-   guvenli kareleri bulmak, yani oyunun asil dusunme kismi. */
 function autoFlag() {
   let progress = true;
   while (progress) {
@@ -383,7 +315,6 @@ async function loseGame(index) {
   SFX.gameOver();
   clearState(GAME_ID);
 
-  /* Butun mayinlari goster, basilani ayrica vurgula */
   renderAll();
   for (const m of mines) cellEls[m].classList.add('mine');
   cellEls[index].classList.add('boom');
@@ -420,8 +351,6 @@ function persist() {
     flags: [...flags],
   });
 }
-
-/* ---------- Ekrana cizme ---------- */
 
 function buildBoard() {
   boardEl.style.setProperty('--cols', size);
@@ -465,8 +394,6 @@ function renderAll() {
 }
 
 const format = (n) => Number(n).toLocaleString(locale());
-
-/* ---------- Bitis ekrani ---------- */
 
 function showOverlay(title, text, buttonLabel, action) {
   overlayTitle.textContent = title;

@@ -1,16 +1,3 @@
-/* Merkezi ses efekti sistemi.
-
-   NEDEN DOSYA YOK: kisa UI efektleri icin ses dosyasi indirip depoya
-   eklemek yerine Web Audio API ile SENTEZLENIYOR. Boylece:
-     - lisans/kaynak sorunu yok, hicbir dosya indirilmiyor
-     - depo agirlasmiyor (her efekt birkac satir kod, sifir bayt asset)
-     - her efekt ayni netlikte, telefon hoparloru icin ayarlanmis kisa
-       bir suzgecten geciyor - "rahatsiz edici" olmasin diye hepsi
-       0.4 saniyenin altinda ve dusuk kazancta
-
-   SESSIZE ALMA TUM OYUNLARDA ORTAK: tek bir localStorage anahtari
-   okunuyor. Bir oyunda kapatinca digerinde de kapali kaliyor - oyuncu
-   ayni ayari her sayfada tekrar aramak zorunda kalmiyor. */
 
 const MUTE_KEY = 'mh_sound_muted';
 
@@ -21,8 +8,6 @@ function getCtx() {
     if (!AC) return null;
     ctx = new AC();
   }
-  /* Tarayicilar sesi ancak bir kullanici etkilesiminden sonra baslatiyor;
-     ilk dokunusta askida (suspended) kalmis olabilir. */
   if (ctx.state === 'suspended') ctx.resume().catch(() => {});
   return ctx;
 }
@@ -39,11 +24,8 @@ export function setMuted(v) {
   try {
     localStorage.setItem(MUTE_KEY, v ? '1' : '0');
   } catch {
-    /* gizli sekmede localStorage kapali olabilir, sorun degil */
   }
 }
-
-/* ---------- Sentez yardimcilari ---------- */
 
 function tone(c, freq, dur, type, gain, delay = 0) {
   const t0 = c.currentTime + delay;
@@ -74,8 +56,6 @@ function sweep(c, f0, f1, dur, type, gain, delay = 0) {
   osc.stop(t0 + dur + 0.02);
 }
 
-/* Kisa, filtrelenmis beyaz gurultu - "pat/fis" tarzi efektler icin
-   (patlama, su dokulmesi). Tek bir osilator degil, gercek gurultu. */
 function noiseBurst(c, dur, gain, filterFreq, delay = 0) {
   const t0 = c.currentTime + delay;
   const n = Math.max(1, Math.floor(c.sampleRate * dur));
@@ -94,9 +74,6 @@ function noiseBurst(c, dur, gain, filterFreq, delay = 0) {
   src.start(t0);
 }
 
-/* Sessizdeyken ya da AudioContext hic kurulamiyorsa (cok eski tarayici)
-   cagiran taraf hicbir kontrol yapmadan cagirabilsin diye burada
-   korunuyor - her SFX fonksiyonu bunu tekrar yazmasin. */
 function guard(fn) {
   return (...args) => {
     if (isMuted()) return;
@@ -105,69 +82,51 @@ function guard(fn) {
     try {
       fn(c, ...args);
     } catch {
-      /* ses calinamadiysa oyunun akisini bozmasin */
     }
   };
 }
 
-/* ---------- Efektler ----------
-   Hepsi 0.4 saniyenin altinda, dusuk kazancta - art arda duyulunca
-   yormasin diye. */
 export const SFX = {
-  /* Tum oyunlarda ORTAK oyun-sonu efekti: kisa, hazin, arcade tarzi
-     inen bir ton - kutlama degil, "tur bitti" bildirimi. */
   gameOver: guard((c) => {
     sweep(c, 420, 150, 0.28, 'triangle', 0.15);
     sweep(c, 300, 90, 0.30, 'triangle', 0.10, 0.05);
   }),
 
-  /* Snake: normal yem */
   pickup: guard((c) => {
     tone(c, 660, 0.07, 'square', 0.11);
     tone(c, 880, 0.07, 'square', 0.09, 0.045);
   }),
 
-  /* Snake: bolumun altin (son) yemi - daha ozel/odul hissi versin */
   goldenPickup: guard((c) => {
     tone(c, 660, 0.08, 'triangle', 0.13);
     tone(c, 880, 0.08, 'triangle', 0.13, 0.06);
     tone(c, 1180, 0.14, 'triangle', 0.12, 0.12);
   }),
 
-  /* Block Puzzle: parca yerlestirildi */
   place: guard((c) => {
     tone(c, 210, 0.05, 'square', 0.09);
   }),
 
-  /* Block Puzzle: satir/sutun patladi */
   pop: guard((c) => {
     noiseBurst(c, 0.11, 0.16, 2600);
     sweep(c, 260, 120, 0.14, 'sawtooth', 0.10, 0.015);
   }),
 
-  /* Water Sort: gecerli bir dokum hamlesi */
   pour: guard((c) => {
     noiseBurst(c, 0.16, 0.09, 1100);
   }),
 
-  /* Match Candy: eslesme olustu */
   match: guard((c) => {
     tone(c, 760, 0.06, 'sine', 0.11);
     tone(c, 1020, 0.08, 'sine', 0.10, 0.05);
   }),
 
-  /* 2048: iki tas birlesti */
   merge: guard((c) => {
     tone(c, 500, 0.08, 'triangle', 0.12);
     tone(c, 700, 0.08, 'triangle', 0.10, 0.04);
   }),
 };
 
-/* ---------- Sag-ust ses dugmesi ----------
-
-   Her oyun sayfasi kendi #sound-toggle dugmesini (iki SVG ikonu,
-   .icon-on / .icon-off) mount ediyor. Buton HTML'i tekrar tekrar
-   yazilmasin diye burada tek yerden uretiliyor. */
 export function soundToggleHtml() {
   return `
     <button class="sound-toggle" id="sound-toggle" type="button" aria-label="Sound" aria-pressed="false">
@@ -183,8 +142,6 @@ export function soundToggleHtml() {
     </button>`;
 }
 
-/* Dugmeye baglanir: mevcut durumu uygular, tiklaninca hem localStorage'i
-   hem gorunumu gunceller. Oyun sayfasi kendi init akisinda cagirir. */
 export function mountSoundToggle(btn) {
   if (!btn) return;
   const sync = () => {

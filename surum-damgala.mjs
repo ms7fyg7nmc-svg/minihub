@@ -1,21 +1,3 @@
-/* SÜRÜM DAMGALAYICI
-
-   NE ISE YARAR: Telegram'in WebView'i ve tarayicilar JS dosyalarini
-   onbellege aliyor ve yeni surum yayinlandiginda eskisini gostermeye devam
-   ediyor. Adrese "?v12" gibi bir etiket eklenince adres degistigi icin
-   yeniden indirmek zorunda kaliyorlar.
-
-   NEDEN BIR BETIK GEREKTI: index.html'deki <script src> etiketini elle
-   guncellemek YETMIYOR. hub.js kendi icinde "./store.js" ve "./i18n.js"
-   diye baska dosyalari cagiriyor; o adreslerde etiket olmadigi icin
-   tarayici onlarin ESKI kopyasini kullanmaya devam ediyordu. Sonuc:
-   ekranda yeni tasarim ama eski metinler (surum numarasi 0.03 kalmisti,
-   bu betik tam olarak o yuzden yazildi).
-
-   NASIL CALISTIRILIR:
-     node surum-damgala.mjs 12
-   Hem HTML'deki script adreslerini hem de JS dosyalarinin ic import
-   satirlarini ayni etiketle damgalar. */
 
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -26,8 +8,6 @@ if (!surum) {
   process.exit(1);
 }
 
-/* Aranacak yerler: kok + js + her oyun klasoru. node_modules ve gizli
-   klasorler atlanir. */
 function dosyalariTara(dizin, uzantilar, sonuc = []) {
   for (const ad of readdirSync(dizin)) {
     if (ad.startsWith('.') || ad === 'node_modules') continue;
@@ -40,12 +20,6 @@ function dosyalariTara(dizin, uzantilar, sonuc = []) {
 
 let degisen = 0;
 
-/* 1) HTML: <script src="js/hub.js?v11"> VE <link href="css/style.css?v11">
-      Sadece YEREL adresler; Telegram'in kendi betigine dokunulmuyor.
-
-      CSS'i de damgalamak sart: bir surumde yalnizca JS damgalanmisti ve
-      tarayici yeni JS'i alip ESKI CSS'i kullandigi icin madalyalar gibi
-      yalnizca stille gelen degisiklikler ekranda hic gorunmedi. */
 for (const yol of dosyalariTara('.', ['.html'])) {
   const eski = readFileSync(yol, 'utf8');
   let yeni = eski.replace(/(src="(?!https?:)[^"]*?\.js)(\?v\d+)?"/g, `$1?v${surum}"`);
@@ -53,8 +27,6 @@ for (const yol of dosyalariTara('.', ['.html'])) {
   if (yeni !== eski) { writeFileSync(yol, yeni); degisen++; }
 }
 
-/* 2) JS: import ... from './store.js?v11' - goreli yollar.
-      Asil onbellek sorunu buradaydi. */
 for (const yol of dosyalariTara('.', ['.js'])) {
   const eski = readFileSync(yol, 'utf8');
   const yeni = eski.replace(

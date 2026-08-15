@@ -1,29 +1,12 @@
-/* 2048 oyununun mantigi.
 
-Tahta 16 kutudan olusur (4x4). Her kutuda ya bir tas vardir ya da bostur.
-Bir yone kaydirinca tum taslar o yone gider, ayni sayilar birlesir,
-sonra bos bir kutuya yeni bir tas dogar. */
-
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v44';
-import { submitScore, getBest, addPoints, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v44';
-import { initLang, t, locale, applyTranslations } from '../../js/i18n.js?v44';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v44';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v45';
+import { submitScore, getBest, addPoints, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v45';
+import { initLang, t, locale, applyTranslations } from '../../js/i18n.js?v45';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v45';
 
 const SIZE = 4;
 const GAME_ID = '2048';
-/* EKONOMI DENGESI
-
-   Butun oyunlar dakikada yaklasik AYNI jetonu vermeli - yoksa oyuncu en
-   verimli oyunu bulup sadece onu oynuyor, digerleri olu yatiriyor.
-
-   Olculen durum (kod uzerinden modellendi): en dusuk 8 jeton/dk (Mayin
-   Tarlasi), en yuksek 136 jeton/dk (2048) - arada 17 KAT fark vardi.
-   Asagidaki sabit, hedef olan ~60 jeton/dk'ya gore secildi.
-
-   Model her oyunun kendi puanlama mekanigi + makul bir oturum suresi
-   varsayimina dayaniyor; gercek oyuncu verisi geldiginde bu sayilar
-   yeniden ayarlanmali. */
-const POINTS_DIVISOR = 23; /* ~7.500 skorluk 5,5 dk oyun -> ~325 jeton */
+const POINTS_DIVISOR = 23;
 
 const VECTORS = {
    up: { dr: -1, dc: 0 },
@@ -42,17 +25,15 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayText = document.getElementById('overlay-text');
 const overlayBtn = document.getElementById('overlay-btn');
 
-let cells = []; /* 16 elemanli dizi: tas nesnesi veya null */
+let cells = [];
 let score = 0;
 let best = 0;
 let nextId = 1;
-let won = false; /* 2048'e ulasildi mi */
-let wonShown = false; /* kutlama ekrani gosterildi mi (bir kez gosterilir) */
-let over = false; /* oyun bitti mi */
-let gapPx = 0; /* kutular arasi bosluk, layout() hesaplar */
-let cellPx = 0; /* bir kutunun kenar uzunlugu */
-
-/* ---------- Baslangic ---------- */
+let won = false;
+let wonShown = false;
+let over = false;
+let gapPx = 0;
+let cellPx = 0;
 
 await initLang();
 applyTranslations();
@@ -66,8 +47,6 @@ document.getElementById('back-link').addEventListener('click', (e) => {
 });
 document.getElementById('new-game').addEventListener('click', async () => {
    haptic.tap();
-   /* Izgara hala aktifse terk edilen skoru korumadan sifirlamayalim -
-      bkz. settleAbandonedRun. */
    if (!over) await settleAbandonedRun(score, POINTS_DIVISOR);
    startNewGame();
 });
@@ -100,8 +79,6 @@ function goHome() {
    window.location.href = '../../index.html';
 }
 
-/* ---------- Oyun kurulumu ---------- */
-
 function startNewGame() {
    cells = new Array(SIZE * SIZE).fill(null);
    score = 0;
@@ -124,7 +101,7 @@ function restore(saved) {
    });
    score = Number(saved.score) || 0;
    won = !!saved.won;
-   wonShown = won; /* daha once kutlandiysa tekrar gosterme */
+   wonShown = won;
 over = false;
    updateScore();
    render(false);
@@ -138,8 +115,6 @@ function persist() {
       won,
    });
 }
-
-/* ---------- Taslar ---------- */
 
 function makeTile(r, c, value) {
    return { id: nextId++, r, c, value, prevR: r, prevC: c, isNew: false, mergedFrom: null };
@@ -170,17 +145,13 @@ function addRandomTile() {
    put(spot.r, spot.c, tile);
 }
 
-/* ---------- Hamle ---------- */
-
 function move(direction) {
-   /* Oyun bittiyse ya da bir bilgi ekrani acikken hamle kabul etmeyiz */
    if (over || overlayVisible()) return;
 
 const vec = VECTORS[direction];
    let moved = false;
    let gained = 0;
 
-/* Hamleden once herkesin eski yerini not al */
 for (const tile of cells) {
    if (tile) {
       tile.prevR = tile.r;
@@ -190,7 +161,6 @@ for (const tile of cells) {
    }
 }
 
-/* Gidilecek yonun tersinden basla, yoksa taslar birbirini ezer */
 const rows = vec.dr > 0 ? [3, 2, 1, 0] : [0, 1, 2, 3];
    const cols = vec.dc > 0 ? [3, 2, 1, 0] : [0, 1, 2, 3];
 
@@ -203,7 +173,6 @@ for (const r of rows) {
       const neighbour = next ? at(next.r, next.c) : null;
 
    if (neighbour && neighbour.value === tile.value && !neighbour.mergedFrom) {
-      /* Birlesme: iki tastan yeni bir tas dogar */
       const merged = makeTile(next.r, next.c, tile.value * 2);
       merged.mergedFrom = [tile, neighbour];
       put(next.r, next.c, merged);
@@ -217,7 +186,6 @@ for (const r of rows) {
       moved = true;
       SFX.merge();
    } else if (farthest.r !== r || farthest.c !== c) {
-      /* Sadece kayma */
       put(r, c, null);
       put(farthest.r, farthest.c, tile);
       tile.r = farthest.r;
@@ -245,7 +213,6 @@ if (won && !wonShown) {
 }
 }
 
-/* Bir tasin gidebilecegi en uzak bos kutuyu ve onun arkasindaki kutuyu bulur */
 function findTarget(r, c, vec) {
    let cr = r;
    let cc = c;
@@ -303,9 +270,6 @@ const lines = [t('g2048.yourScore', { score: score.toLocaleString(locale()) })];
 showOverlay(t('g2048.gameOver'), lines.join(' · '), t('g2048.playAgain'), startNewGame);
 }
 
-/* ---------- Ekrana cizme ---------- */
-
-/* Kutu boyutlarini tahtanin genisligine gore hesaplar */
 function layout() {
    const width = boardEl.clientWidth;
    gapPx = Math.round(width * 0.028);
@@ -336,11 +300,9 @@ function setPosition(el, r, c) {
    el.style.transform = value;
 }
 
-/* animate = true ise taslar eski yerlerinden yenisine kayarak gider */
 function render(animate) {
    tilesEl.textContent = '';
 
-/* Once bos kutulari da yeniden konumlandir (ekran boyutu degismis olabilir) */
 [...cellsEl.children].forEach((el, i) => setPosition(el, Math.floor(i / SIZE), i % SIZE));
 
 const pending = [];
@@ -349,7 +311,6 @@ for (const tile of cells) {
    if (!tile) continue;
 
    if (tile.mergedFrom && animate) {
-      /* Birlesen iki tas once hedefe kayar, uzerine yeni tas "pat" diye biner */
    for (const source of tile.mergedFrom) {
       pending.push(drawTile(source, { r: source.prevR, c: source.prevC }, tile));
    }
@@ -361,7 +322,6 @@ for (const tile of cells) {
    }
 }
 
-/* Bir kare bekleyip hedef konuma gec: tarayici aradaki yolu kendisi canlandirir */
 const moving = pending.filter((p) => p.el.dataset.moves === '1');
    if (moving.length) {
       requestAnimationFrame(() => {
@@ -372,7 +332,6 @@ const moving = pending.filter((p) => p.el.dataset.moves === '1');
    }
 }
 
-/* from: baslangic kutusu, target: varilacak kutu (ikisi ayniysa animasyon olmaz) */
 function drawTile(tile, from, target, cls = '') {
    const el = document.createElement('div');
    el.className = `tile${cls ? ' ' + cls : ''}`;
@@ -395,8 +354,6 @@ function updateScore() {
    }
 }
 
-/* ---------- Bitis ekrani ---------- */
-
 function overlayVisible() {
    return !overlayEl.hidden;
 }
@@ -416,8 +373,6 @@ function hideOverlay() {
    overlayEl.hidden = true;
 }
 
-/* ---------- Kontroller ---------- */
-
 const KEYS = {
    ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
    w: 'up', s: 'down', a: 'left', d: 'right',
@@ -430,9 +385,8 @@ window.addEventListener('keydown', (e) => {
    move(dir);
 });
 
-/* Parmakla kaydirma */
 let touchStart = null;
-const SWIPE_MIN = 24; /* bu kadar pikselden kisa hareketler kazara dokunus sayilir */
+const SWIPE_MIN = 24;
 
 boardEl.addEventListener('touchstart', (e) => {
    if (e.touches.length !== 1) return;
@@ -440,7 +394,7 @@ boardEl.addEventListener('touchstart', (e) => {
 }, { passive: true });
 
 boardEl.addEventListener('touchmove', (e) => {
-   if (touchStart) e.preventDefault(); /* sayfanin kaymasini engelle */
+   if (touchStart) e.preventDefault();
 }, { passive: false });
 
 boardEl.addEventListener('touchend', (e) => {
@@ -450,7 +404,6 @@ boardEl.addEventListener('touchend', (e) => {
    touchStart = null;
 }, { passive: true });
 
-/* Bilgisayarda fareyle surukleme (test icin) */
 let mouseStart = null;
 boardEl.addEventListener('mousedown', (e) => { mouseStart = { x: e.clientX, y: e.clientY }; });
 window.addEventListener('mouseup', (e) => {

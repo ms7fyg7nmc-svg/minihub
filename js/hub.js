@@ -1,30 +1,14 @@
-/* Hub (ana menu) ekraninin mantigi.
-Yeni oyun eklemek istedigimizde sadece asagidaki gameList() fonksiyonuna satir ekliyoruz. */
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v44';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v45';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
-} from './store.js?v44';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v44';
+} from './store.js?v45';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v45';
 
-/* Botun Telegram adresi. Kendi botunun adini yazarsan tarayicida acan
-   kullanicilar uyariya dokununca dogrudan bota gider. Bos birakilirsa
-   uyari yine gorunur, sadece tiklanabilir olmaz.
-   Ornek: 'https://t.me/oyunhub_bot' */
 const BOT_LINK = '';
 
-/* Kart ikonlari.
-
-   Emoji yerine kendi cizdigimiz SVG'ler kullaniyoruz: emoji her telefonda
-   farkli gorunuyor (Apple, Android ve masaustu ayni sekli bambaska ciziyor)
-   ve renk paletimizle uyusmuyordu. Bu ikonlar oyunun mekanigini gosteriyor -
-   2048'de tas izgarasi, Blok Bulmaca'da bir parca, Su Siralama'da tupler.
-
-   Hepsi ayni dilde: 24x24 kutu, beyaz sekiller, arkadaki renk gecisi
-   uzerinde farkli saydamliklarla derinlik. */
 const ICONS = {
-   /* Tas izgarasi; bir tas parlak, otekiler soluk (birlesme hissi) */
    '2048': `<svg viewBox="0 0 24 24" aria-hidden="true">
       <rect x="2.5" y="2.5" width="8.5" height="8.5" rx="2.4" fill="#fff" opacity=".5"/>
       <rect x="13" y="2.5" width="8.5" height="8.5" rx="2.4" fill="#fff" opacity=".32"/>
@@ -32,15 +16,12 @@ const ICONS = {
       <rect x="13" y="13" width="8.5" height="8.5" rx="2.4" fill="#fff"/>
    </svg>`,
 
-   /* L seklinde bir blok parcasi */
    blockblast: `<svg viewBox="0 0 24 24" aria-hidden="true">
       <rect x="2.5" y="2.5" width="8.5" height="8.5" rx="2.4" fill="#fff" opacity=".92"/>
       <rect x="2.5" y="13" width="8.5" height="8.5" rx="2.4" fill="#fff" opacity=".92"/>
       <rect x="13" y="13" width="8.5" height="8.5" rx="2.4" fill="#fff" opacity=".92"/>
    </svg>`,
 
-   /* Iki tup, farkli seviyelerde sivi. Tup govdesi biraz belirgin tutuldu,
-      yoksa kucukken sadece iki beyaz leke gibi duruyor. */
    watersort: `<svg viewBox="0 0 24 24" aria-hidden="true">
       <rect x="3.5" y="2.5" width="7" height="19" rx="3.5" fill="#fff" opacity=".38"/>
       <rect x="3.5" y="9.5" width="7" height="12" rx="3.5" fill="#fff"/>
@@ -48,24 +29,18 @@ const ICONS = {
       <rect x="13.5" y="15" width="7" height="6.5" rx="3.25" fill="#fff"/>
    </svg>`,
 
-   /* Yan yana eslesmis uc seker. Once ustte/altta soluk komsular da vardi
-      ama 30 pikselde hepsi birbirine girip dagilmis bir nokta obegi gibi
-      goruyordu - sadece siranin kendisi kaldi. */
    match3: `<svg viewBox="0 0 24 24" aria-hidden="true">
       <circle cx="4.6" cy="12" r="3.5" fill="#fff"/>
       <circle cx="12" cy="12" r="3.5" fill="#fff"/>
       <circle cx="19.4" cy="12" r="3.5" fill="#fff"/>
    </svg>`,
 
-   /* Ust uste binmis uc tas (capraz basamak). Kutunun tam ortasinda
-      dursun diye 3..21 / 4..19 araligina yerlestirildi. */
    tripletile: `<svg viewBox="0 0 24 24" aria-hidden="true">
       <rect x="3" y="10" width="9" height="9" rx="2.5" fill="#fff" opacity=".45"/>
       <rect x="7.5" y="7" width="9" height="9" rx="2.5" fill="#fff" opacity=".7"/>
       <rect x="12" y="4" width="9" height="9" rx="2.5" fill="#fff"/>
    </svg>`,
 
-   /* Iki nokta ve aralarindaki yol */
    flow: `<svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M6 6.5v5a3.5 3.5 0 0 0 3.5 3.5H18" fill="none" stroke="#fff"
             stroke-width="2.6" stroke-linecap="round" opacity=".8"/>
@@ -73,8 +48,6 @@ const ICONS = {
       <circle cx="18" cy="15" r="3.2" fill="#fff"/>
    </svg>`,
 
-   /* Ejderha: acik kanatlar, kose hatli bas ve geriye supurulmus boynuzlar.
-      Oyundaki cizimin kucuk hali - kartla oyun ekrani birbirini tutsun. */
    pet: `<svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M9 10 1.2 4.4Q-0.6 10 2 14.6L4 12.2 5.4 14.8 7.2 12.2 8.6 14.6z"
             fill="#fff" opacity=".6"/>
@@ -89,9 +62,6 @@ const ICONS = {
       <path d="M14.4 8.2 13 8.8l1.4.6z" fill="#3a2a4d"/>
    </svg>`,
 
-   /* Dragon Island: yuzen ada ve uzerinde ejderha.
-      40 pikselde okunmasi gerektigi icin az sayida buyuk parcadan olusuyor -
-      once daha detayli bir surum vardi ama kucukken lekeye donusuyordu. */
    dragon: `<svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M12 14 2.6 9.6 12 5.2l9.4 4.4z" fill="#fff" opacity=".45"/>
       <path d="M2.6 9.6 12 14v2.4L2.6 12z" fill="#fff" opacity=".25"/>
@@ -104,14 +74,12 @@ const ICONS = {
       <path d="M14.4 5.4 14.8 2.2l-2 2.4z" fill="#fff"/>
    </svg>`,
 
-   /* Kivrilan bir yilan govdesi ve onundeki yem */
    snake: `<svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M4 17h6a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h5" fill="none" stroke="#fff"
             stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
       <circle cx="19" cy="3.5" r="2.6" fill="#fff" opacity=".55"/>
    </svg>`,
 
-   /* Izgaranin ortasinda bir mayin */
    minesweeper: `<svg viewBox="0 0 24 24" aria-hidden="true">
       <rect x="2.5" y="2.5" width="19" height="19" rx="3" fill="none" stroke="#fff"
             stroke-width="1.5" opacity=".4"/>
@@ -123,9 +91,6 @@ const ICONS = {
    </svg>`,
 };
 
-/* Ejderha Adasi henuz saglamlasmadi - sahibi disinda herkese "bakimda"
-   gosteriliyor (bkz. games/dragon/dragon.js - sayfanin kendisi de ayni
-   kimlikle kilitleniyor, boylece dogrudan linkle girmek de islemiyor). */
 const OWNER_ID = '8100679296';
 const isOwner = getUser().id === OWNER_ID;
 
@@ -139,29 +104,10 @@ function gameList() {
          url: 'games/dragon/index.html',
          gradient: 'linear-gradient(140deg, #b083ec, #7b4fd0)',
          accent: '#a978e8',
-         /* Rekor yok: bu oyun skor tutmuyor, kazanilan jetonu harciyor */
          noBest: true,
          ready: isOwner,
          maintenance: !isOwner,
       },
-      /* Ejderham (games/pet/) Dragon Island ile ayni isi yapiyordu, ikisi ayni
-         jetonu harcadigi icin menude birlikte durmalari anlamsizdi. Dosyalar
-         diskte duruyor; seviye ve satin alinanlar Dragon Island'a otomatik
-         tasiniyor (model.js icindeki goc). Geri istenirse asagidaki kaydi
-         yorumdan cikarmak yeterli:
-
-      {
-         id: 'pet',
-         title: t('game.pet.title'),
-         desc: t('game.pet.desc'),
-         icon: ICONS.pet,
-         url: 'games/pet/index.html',
-         gradient: 'linear-gradient(140deg, #b083ec, #7b4fd0)',
-         accent: '#a978e8',
-         noBest: true,
-         ready: true,
-      },
-      */
       {
          id: '2048',
          title: t('game.2048.title'),
@@ -190,7 +136,6 @@ function gameList() {
          url: 'games/watersort/index.html',
          gradient: 'linear-gradient(140deg, #4ecb8b, #2fa9a0)',
          accent: '#4ecb8b',
-         /* Burada rekor bir skor degil, ulasilan bolum numarasi */
          bestKey: 'hub.level',
          ready: true,
       },
@@ -222,7 +167,6 @@ function gameList() {
          url: 'games/flow/index.html',
          gradient: 'linear-gradient(140deg, #3fc7d4, #2f8fa8)',
          accent: '#3fc7d4',
-         /* Burada rekor bir skor degil, ulasilan bolum numarasi */
          bestKey: 'hub.level',
          ready: true,
       },
@@ -236,29 +180,6 @@ function gameList() {
          accent: '#4ecb8b',
          ready: true,
       },
-      /* Mayin Tarlasi menuden cikarildi.
-
-         Sebep oyunun bozuk olmasi degil - calisiyor ve tahtalari tahmin
-         gerektirmiyor. Sorun hub'a uymamasi: kurallarini onceden bilmeyi
-         gerektiriyor, oysa buradaki oyunlar "ac ve oyna" olmali. Sadelestirip
-         anlatim da ekledik ama sahibi de test eden arkadaslari da anlamadi;
-         bu noktada sorun anlatim degil, oyunun kendisi.
-
-         Dosyalar duruyor (games/minesweeper/). Geri istenirse asagidaki
-         kaydi yorumdan cikarmak yeterli:
-
-         {
-            id: 'minesweeper',
-            title: t('game.minesweeper.title'),
-            desc: t('game.minesweeper.desc'),
-            icon: ICONS.minesweeper,
-            url: 'games/minesweeper/index.html',
-            gradient: 'linear-gradient(140deg, #e2685e, #a83a33)',
-            accent: '#e2685e',
-            bestKey: 'hub.level',
-            ready: true,
-         },
-      */
    ];
 }
 
@@ -287,7 +208,6 @@ document.addEventListener('langchange', () => {
    renderLiderCard();
 });
 
-/* Sayfa Telegram disinda acildiysa puanlarin kaybolabilecegini hatirlatir */
 function renderTelegramNotice() {
    const notice = document.getElementById('tg-notice');
    if (!notice || isTelegramUser()) return;
@@ -298,20 +218,16 @@ function renderTelegramNotice() {
       notice.target = '_blank';
       notice.rel = 'noopener';
    } else {
-      notice.classList.add('is-static'); /* gidilecek adres yok, ok isareti gizlensin */
+      notice.classList.add('is-static');
    }
 }
 
-/* "Kurulumu bitirdim ama degisiklik gormuyorum" sorusunun cevabi: Telegram
-   icindeyken jeton/ilerlemenin sunucuya mi baglandigini yoksa (D1/Worker/
-   API_BASE eksik oldugu icin) hala cihazda mi kaldigini gosterir. Misafir
-   modunda hicbir sey gostermez - o zaten buyuk uyariyla anlatiliyor. */
 async function renderSyncBadge() {
    const badge = document.getElementById('sync-badge');
    if (!badge) return;
 
    const durum = await sunucuDurumu();
-   if (durum === 'misafir') return; /* hidden kalir */
+   if (durum === 'misafir') return;
 
    badge.hidden = false;
    badge.classList.toggle('is-sunucu', durum === 'sunucu');
@@ -348,7 +264,7 @@ gameList().forEach((game, index) => {
    const card = document.createElement('button');
    card.className = 'game-card';
    card.disabled = !game.ready;
-   card.style.setProperty('--i', index); /* kartlar sirayla belirsin */
+   card.style.setProperty('--i', index);
 
    card.innerHTML = `
    <div class="game-icon${game.ready ? '' : ' soon'}">${game.icon}</div>
@@ -361,18 +277,15 @@ gameList().forEach((game, index) => {
    card.querySelector('h3').textContent = game.title;
    card.querySelector('p').textContent = game.desc;
 
-   /* Yeni oyunlarin kart ikonuna renk gecisi ver */
    if (game.gradient) {
       card.querySelector('.game-icon').style.background = game.gradient;
    }
 
-   /* Kartin sol kenarindaki ince renk seridi */
    if (game.accent) card.style.setProperty('--card-accent', game.accent);
 
    const badge = card.querySelector('.badge');
    if (game.ready) {
       badge.textContent = t('hub.play');
-      /* noBest: skor tutmayan oyunlar (ornek: Ordegim) rozette rekor gostermez */
       if (!game.noBest) {
          getBest(game.id).then((best) => {
             if (best > 0) {
@@ -393,16 +306,10 @@ gameList().forEach((game, index) => {
 });
 }
 
-/* --- Gunluk Oduller: enerji + gunluk seri + gunluk cark ---
-
-   Ucu de sadece Telegram/sunucu modunda anlamli (bkz. store.js) - hepsi
-   sunucu tarafinda dogrulaniyor, misafirde null doner ve kart hic
-   gosterilmez. Cark dilimlerinin renkleri worker.js'teki SPIN_PRIZES
-   dizisiyle AYNI SIRADA olmali (10, 20, 30, 50, 75, 100, enerji, 150). */
 const WHEEL_COLORS = ['#5b8cff', '#4ecb8b', '#f2884b', '#c079f2', '#e2679c', '#3fc7d4', '#8be9ff', '#ffd166'];
 
-let dailyPrizes = null;   /* /api/sync'ten gelen cark dilim listesi, bir kez cekilir */
-let wheelRotation = 0;    /* birikimli aci - cark her zaman ileri doner, geriye siçramaz */
+let dailyPrizes = null;
+let wheelRotation = 0;
 let panelOpen = false;
 
 function polar(cx, cy, r, angleDeg) {
@@ -417,11 +324,6 @@ function buildWheel(prizes) {
    if (!svg || !prizes?.length) return;
    const n = prizes.length;
    const segAngle = 360 / n;
-   /* Sayilar eskiden 0.62 yaricapta, dilimin egimini takip edecek sekilde
-      donduruluyordu - hem merkeze fazla yakin duruyordu hem de alt yaridaki
-      donus duzeltmesi bazi acilarda yazinin ters/egik gorunmesine yol
-      aciyordu. Artik hepsi DUZ (donusuz) ve rime daha yakin: hem her zaman
-      okunakli hem de dilimin ici bos durmuyor. */
    const cx = 100, cy = 100, r = 94, labelR = r * 0.76;
 
    let html = '';
@@ -446,30 +348,19 @@ function buildWheel(prizes) {
    svg.innerHTML = html;
 }
 
-/* Carkin index'i pointer'in (ustte, 0 derece) tam altina getirecek sekilde
-   dondurulmesi. Segment ortasina degil, icinde kucuk rastgele bir kaymayla
-   duruyor - hep tam ortada durmasi robotik gorunuyordu. Aci her cagrida
-   sadece ARTIYOR (asla geriye siçramiyor), yoksa cark bir onceki sonuctan
-   bu sonuca "geri sarma" gibi goruyor. */
 function spinToIndex(index, segmentCount) {
    const svg = document.getElementById('wheel');
    if (!svg) return;
    const segAngle = 360 / segmentCount;
    const mid = index * segAngle + segAngle / 2;
-   /* Rastgele kayma YOK: dilim tam ibrenin altinda duruyor, boylece
-      etiketin kendi donusu yaziyi tam yatay birakiyor. */
    const targetMod = (((360 - mid) % 360) + 360) % 360;
    const current = ((wheelRotation % 360) + 360) % 360;
    let delta = targetMod - current;
    if (delta <= 0) delta += 360;
-   wheelRotation += delta + 5 * 360; /* +5 tam tur, gorsel etki icin */
+   wheelRotation += delta + 5 * 360;
    svg.style.transform = `rotate(${wheelRotation}deg)`;
 }
 
-/* "5h 42m" gibi kisa geri sayim metni.
-   Kisaltmalar SABIT DEGIL, secili dilden geliyor - onceden Turkce 's/d/sn'
-   sabit yazilmisti ve oyunu Ingilizce oynayan da saat/dakika kisaltmasini
-   Turkce goruyordu. */
 function kalanMetin(ms) {
    const sn = Math.max(0, Math.ceil(ms / 1000));
    const saat = Math.floor(sn / 3600), dk = Math.floor((sn % 3600) / 60);
@@ -478,15 +369,10 @@ function kalanMetin(ms) {
    return `${sn % 60}${t('hub.time.s')}`;
 }
 
-/* Panel acikken saniyede bir geri sayimlari tazeler. Tek zamanlayici
-   kullaniliyor; panel kapaninca durduruluyor ki arka planda calismasin. */
 let sayacTimer = null;
 function sayaclariBaslat() {
    clearInterval(sayacTimer);
    sayacTimer = setInterval(() => {
-      /* Panel kapaliyken de calisiyor: ana sayfadaki kartin geri sayimi
-         da ayni mekanizmayi kullaniyor. Geri sayilacak bir sey kalmazsa
-         zamanlayici kendini durduruyor. */
       const hedefler = document.querySelectorAll('[data-bitis]');
       if (!hedefler.length) { clearInterval(sayacTimer); sayacTimer = null; return; }
       hedefler.forEach(async (el) => {
@@ -494,10 +380,6 @@ function sayaclariBaslat() {
          el.textContent = kalan > 0 ? kalanMetin(kalan) : '';
          if (kalan <= 0) {
             delete el.dataset.bitis;
-            /* getStreak/getSpin ilk senkrondan kalan bayat bir anlik goruntu
-               donduruyor - sifira inince TAZE durumu sunucudan cekmezsek
-               "1 saat kaldi" ayni bayat sureyle sonsuza kadar yeniden
-               baslar, hicbir zaman alinabilir hale gelmez. */
             await refreshDaily();
             renderStreakSection();
             renderSpinSection();
@@ -518,30 +400,19 @@ async function renderDailyCard() {
    if (!card) return;
 
    const [energy, streak, spin] = await Promise.all([getEnergy(), getStreak(), getSpin()]);
-   /* misafirde energy null donuyor; sunucu GUNCELLENMEDEN once (eski
-      worker.js hala calisiyorsa) energy/maxEnergy alanlari yanitta hic
-      olmayabilir - o zaman ikisi de 0 gelir, "0/0 enerji" gibi bozuk
-      gorunmesin diye kart hic gosterilmiyor. Worker guncellenince
-      maxEnergy>0 gelmeye baslar, kart otomatik gorunur olur. */
    if (!energy || !energy.max) { card.hidden = true; return; }
 
    const durum = await odulDurumu();
-   /* Telegram icinde olup sunucuya ulasamiyorsak oyuncunun gercek seri ve
-      cark durumunu bilmiyoruz - "HAZIR!" demek yaniltici olur. */
    if (durum === 'yerel') { card.hidden = true; return; }
    const kilitli = durum === 'misafir';
 
    card.hidden = false;
    document.getElementById('daily-card-energy').textContent = `${energy.energy}/${energy.max}`;
 
-   /* Misafirde de "HAZIR!" gosteriliyor - amac odulu gosterip Telegram'dan
-      girmeye tesvik etmek. */
    const hazir = kilitli || streak?.canClaim || spin?.canSpin;
    const ipucu = document.getElementById('daily-card-hint');
    document.getElementById('daily-card-dot').hidden = !hazir;
 
-   /* Hazirsa oyunlarin USTUNDE, beklemedeyse ALTINDA duruyor: alinacak
-      bir sey yokken ekranin tepesini isgal etmesi rahatsiz ediyordu. */
    const oyunlar = document.getElementById('games');
    const basliklar = document.querySelectorAll('.section-title');
 
@@ -552,12 +423,10 @@ async function renderDailyCard() {
       delete ipucu.dataset.bitis;
    } else {
       if (oyunlar) oyunlar.after(card);
-      /* Ikisi de beklemedeyse EN ERKEN bitecek olanin geri sayimi */
       const kalanlar = [];
       if (streak && !streak.canClaim) kalanlar.push(streak.nextInMs || 0);
       if (spin && !spin.canSpin) kalanlar.push(spin.nextInMs || 0);
       const enYakin = kalanlar.length ? Math.min(...kalanlar) : 0;
-      /* Ciplak bir sayi yerine ne oldugunu soyleyen bir satir */
       ipucu.className = 'daily-card-hint';
       ipucu.innerHTML = `<span class="etiket">${t('hub.daily.nextIn')}</span>` +
                         `<span class="sure geri-sayim" data-bitis="${Date.now() + enYakin}">${kalanMetin(enYakin)}</span>`;
@@ -577,7 +446,6 @@ function wireDailyPanel() {
    closeBtn?.addEventListener('click', closeDailyModal);
    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeDailyModal(); });
 
-
    streakBtn?.addEventListener('click', async () => {
       streakBtn.disabled = true;
       const sonuc = await claimStreak();
@@ -588,11 +456,6 @@ function wireDailyPanel() {
       }
       await renderStreakSection();
       await renderDailyCard();
-      /* Basariliysa renderStreakSection() dugmeyi zaten "yarin gel"
-         durumuna (disabled) getirdi. Burada KOSULSUZ tekrar aciyorduk -
-         dugme aslinda alinamaz haldeyken bir sure tiklanabilir/parliyor
-         gibi goruniyordu. Sadece basarisizsa (ag hatasi vb.) tekrar
-         denenebilsin diye aciyoruz. */
       if (!sonuc?.ok) streakBtn.disabled = false;
    });
 
@@ -646,7 +509,6 @@ async function renderEnergySection() {
       etiket.textContent = t('hub.daily.energyFull');
       delete etiket.dataset.bitis;
    } else {
-      /* Bir sonraki enerjiye kalan sure - enerji artik zamanla doluyor */
       etiket.textContent = `${energy.energy}/${energy.max}`;
       const ipucu = document.getElementById('energy-next');
       if (ipucu && energy.nextMs > 0) ipucu.dataset.bitis = String(Date.now() + energy.nextMs);
@@ -659,14 +521,8 @@ async function renderStreakSection() {
    const btn = document.getElementById('streak-claim-btn');
    if (!streak || !row || !btn) return;
 
-   /* Merdiven SUNUCUDAN geliyor. Onceden burada sabit yaziliydi ve
-      sunucudaki odul 5 katina cikinca ekranda hala eski sayilar
-      goruyordu - tam olarak bu hata yasandi. */
    const rewards = streak.rewards || [100, 150, 200, 300, 400, 500, 1000];
    const kilitli = (await odulDurumu()) === 'misafir';
-   /* streak.nextDay ve streak.broken sunucudan (streakDurumu) geliyor -
-      burada tekrar hesaplamiyoruz. Seri kirildiyse (broken) 1..count
-      gunleri "alindi" gostermek yanlis olur, yeni dongu 1'den basliyor. */
    const gecerliSayim = streak.broken ? 0 : streak.count;
 
    row.innerHTML = rewards.map((odul, i) => {
@@ -691,9 +547,6 @@ async function renderStreakSection() {
       btn.disabled = false;
       btn.classList.remove('is-locked');
    } else {
-      /* Ilk metin hemen yaziliyor. Bos birakilip saniyelik tikleyiciye
-         birakildiginda, sure sifirsa (ya da tikleyici o an calismiyorsa)
-         "Yarin tekrar gel" yaninda hic bir sey gorunmuyordu. */
       const kalan = streak.nextInMs || 0;
       const zamanHtml = `<span class="geri-sayim" data-bitis="${Date.now() + kalan}">${kalanMetin(kalan)}</span>`;
       btn.innerHTML = t('hub.daily.comeIn', { time: zamanHtml });
@@ -716,8 +569,6 @@ async function renderSpinSection() {
    const kilitli = (await odulDurumu()) === 'misafir';
    btn.disabled = kilitli || !spin.canSpin;
    btn.classList.toggle('is-locked', kilitli);
-   /* Geri sayim carkin TAM ORTASINDA (dugmenin icinde) - altta ayri bir
-      satirda dururken bosta kaliyor ve kotu duruyordu. */
    if (kilitli) {
       btnText.textContent = '—';
       delete btnText.dataset.bitis;
@@ -738,34 +589,21 @@ function showDailyToast(text) {
    if (!toast) return;
    toast.textContent = text;
    toast.hidden = false;
-   /* animasyonu her seferinde bastan oynatmak icin klonla-degistir hilesi */
    const yeni = toast.cloneNode(true);
    toast.parentNode.replaceChild(yeni, toast);
    setTimeout(() => { yeni.hidden = true; }, 2600);
 }
 
-/* ==========================================================================
-   LIDERLIK TABLOSU
-
-   Siralama toplam KAZANCA gore (bkz. worker.js handleLeaderboard) - mevcut
-   bakiyeye gore olsaydi ejderhasina harcayan oyuncu listede geriye duserdi.
-
-   Isimler Telegram'dan dogrulanmis olarak geliyor ama yine de textContent
-   ile basiliyor: baskasinin adinda HTML olsa bile calismasin. */
-
 async function renderLiderCard() {
    const card = document.getElementById('lider-card');
    if (!card) return;
 
-   /* Sadece sunucuya bagliyken anlamli - misafirde siralama yok */
    if ((await odulDurumu()) !== 'sunucu') { card.hidden = true; return; }
 
    const veri = await liderTablosu();
    if (!veri) { card.hidden = true; return; }
 
    card.hidden = false;
-   /* Siralama disi hesap (bkz. worker.js LIDER_HARIC) listeyi goruyor ama
-      kendi sirasi yok - rozette tire duruyor. */
    document.getElementById('lider-sira').textContent =
       veri.kendi ? `#${veri.kendi.sira}` : '—';
    document.getElementById('lider-hint').textContent =
@@ -812,7 +650,6 @@ async function acLiderPanel() {
       liste.appendChild(satir);
    }
 
-   /* Ilk 50'de degilse kendi sirasi altta sabit gosterilir */
    const kendi = document.getElementById('lider-kendi');
    if (veri.kendi && !veri.liste.some((x) => x.ben)) {
       kendi.hidden = false;

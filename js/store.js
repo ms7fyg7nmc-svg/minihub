@@ -1,39 +1,6 @@
-/* Puan ve ilerleme kaydetme sistemi.
 
-   IKI KATMAN VAR: SUNUCU (yetkili) VE YEREL (yedek/dusme yolu)
+import { isTelegramUser, getInitData } from './tg.js?v45';
 
-   Telegram icinde acilmissa, bu dosya jeton bakiyesini ve ilerlemeyi artik
-   SUNUCUDA (Cloudflare Worker + D1) tutuyor - bot/worker.js'teki /api/*
-   uclarini cagirarak. Neden: bakiye sadece bu cihazda tutulursa tarayici
-   konsolundan degistirilebiliyordu (`localStorage.hub_points = '999999'`
-   yazmak yetiyordu). Sunucu, her istegi Telegram'in imzaladigi initData ile
-   dogruladigi icin kullanici kendi bakiyesini soyleyemiyor.
-
-   Asagidaki durumlarda YEREL moda (bu dosyanin eskiden beri yaptigi sey)
-   sessizce dusulur - oyun hicbir zaman kirilmaz:
-     - Telegram disinda aciliyorsa (misafir - zaten "puanlar bu cihazda
-       kalir" uyarisi gosteriliyor, davranis hic degismedi)
-     - Sunucuya hic ulasilamazsa (kurulum tamamlanmamis, ag sorunu) - ilk
-       senkron denemesi basarisiz olunca o oturum boyunca yerel moda gecilir
-
-   Disa acilan fonksiyonlarin ISIMLERI VE IMZALARI DEGISMEDI - bu dosyayi
-   kullanan 12 dosyanin (oyunlar + ejderha) hicbiri degismek zorunda kalmadi.
-
-   YEREL MODUN KENDI GECMISI (hala gecerli - asagidaki kod aynen duruyor):
-   Once okuma her zaman once Telegram CloudStorage'a gidiyordu. Ama bulut
-   yazmasi gecikmeli oldugu icin art arda islemlerde eski deger okunuyor ve
-   harcamalar gercekte dusmuyordu (olculdu: 2.232 jetonun sadece 724'u
-   yansidi). Simdi bu cihazdaki kayit yetkili, bulut sadece yedek.
-*/
-
-import { isTelegramUser, getInitData } from './tg.js?v44';
-
-/* Worker'in gercek adresiyle degistir: Cloudflare Worker sayfasinin en
-   ustunde yazan adres - KURULUM-BOT.md'nin C adiminda not ettigin adresin
-   AYNISI (https://minihub-bot.XXXXX.workers.dev seklinde). Degistirmeden
-   birakirsan sunucuya baglanma denemesi basarisiz olur ve oyun otomatik
-   olarak yerel moda duser - hicbir sey kirilmaz, sadece bakiyeler bu
-   cihazdan cihaza tasinmaz. */
 const API_BASE = 'https://minihub-bot.volkanturedi1.workers.dev';
 
 function uuid() {
@@ -41,19 +8,14 @@ function uuid() {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-/* ==========================================================================
-   YEREL MOD - Telegram disinda ya da sunucuya hic ulasilamazken kullanilir.
-   Bu bolum, sunucu eklenmeden onceki davranisin AYNISI.
-   ========================================================================== */
-
 const tg = window.Telegram?.WebApp ?? null;
 const cloud = tg?.CloudStorage ?? null;
 const cloudReady = !!cloud && !!tg?.version && parseFloat(tg.version) >= 6.9;
 
-const BULUT_BEKLEME = 600; /* ms - art arda yazmalari tek istekte toplar */
+const BULUT_BEKLEME = 600;
 
 const onbellek = new Map();
-const bekleyenYazmalar = new Map(); /* key -> zamanlayici */
+const bekleyenYazmalar = new Map();
 
 function localGet(key) {
   try {
@@ -67,7 +29,6 @@ function localSet(key, value) {
   try {
     localStorage.setItem(key, value);
   } catch {
-    /* gizli sekmede localStorage kapali olabilir, sorun degil */
   }
 }
 
@@ -186,15 +147,8 @@ function clearStateYerel(game) {
   set(`state_${game}`, '');
 }
 
-/* ==========================================================================
-   SUNUCU MODU
-   ========================================================================== */
-
 let sunucuAktif = isTelegramUser();
 
-/* localStorage'da biriken best_ ve state_ degerlerini tarar - ilk senkronda
-   sunucuya tasinacak "gecmis ilerleme" budur. Sadece bir kez, ilk senkron
-   isteginde kullanilir. */
 function yerelAnlikGoruntu() {
   const anlik = {};
   try {
@@ -209,19 +163,14 @@ function yerelAnlikGoruntu() {
         try {
           anlik[k] = JSON.parse(v);
         } catch {
-          /* bozuk kayit, atla */
         }
       }
     }
   } catch {
-    /* localStorage'a erisilemiyor, bos gonder */
   }
   return anlik;
 }
 
-/* Kimlik dogrulamali bir /api/* ucuna POST atar. Basarisiz olursa (ag
-   sorunu, sunucu hatasi, initData yok) null doner - hicbir zaman fırlatmaz,
-   cagiran taraf null'u "sunucuya ulasilamadi" olarak yorumlar. */
 async function sunucuGonder(yol, ekBody) {
   try {
     const initData = getInitData();
@@ -238,15 +187,7 @@ async function sunucuGonder(yol, ekBody) {
   }
 }
 
-/* Modul yuklenir yuklenmez baslar (Telegram icindeyse), boylece ilk okuma
-   cagrisi geldiginde cogunlukla ya bitmis ya da bitmek uzeredir. Asla
-   reddetmez (throw etmez) - basarisizlikta null'a duser ve sunucuAktif'i
-   false yapar, boylece sonraki her cagri dogrudan yerel moda gider. */
 const senkron = sunucuAktif ? (async () => {
-  /* Gecici bir ag hatasi butun oturumu yerel moda kilitlemesin: kisa
-     araliklarla birkac kez denenir. Onceden TEK bir basarisiz istek
-     yetiyordu ve oyuncu Telegram icinde olmasina ragmen oturum boyunca
-     sunucuya hic baglanamiyordu (bakiyesi eski yerel degerde kaliyordu). */
   for (let deneme = 0; deneme < 3; deneme++) {
     try {
       return await senkronDene();
@@ -288,11 +229,6 @@ async function senkronDene() {
   }
 }
 
-/* --- Basarisiz sunucu yazmalarini kuyruklayip yeniden dener ---
-
-   Sadece jeton DISINDAKI yazmalar (rekor, oyun durumu) kuyruklaniyor - jeton
-   harcama/kazanma dogrudan sonucuna gore davraniyor (asagida acikliyor).
-   Kuyruk localStorage'da tutuluyor ki sayfa kapanip acilsa bile kaybolmasin. */
 const KUYRUK_ANAHTARI = 'mh_pending_sync';
 
 function kuyruguOku() {
@@ -343,7 +279,7 @@ async function kuyruguBosalt() {
       }
     }
 
-    if (!sonuc) kalan.push(giris); /* hala basarisiz, kuyrukta kalsin */
+    if (!sonuc) kalan.push(giris);
   }
   kuyruguYaz(kalan);
 }
@@ -354,24 +290,12 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('online', kuyruguBosalt);
 kuyruguBosalt();
 
-/* --- Disa acilan fonksiyonlar ---
-
-   Her biri once senkronun sonucunu bekler: sunucu modundaysa oradan okur/
-   yazar, degilse (misafir veya sunucuya hic ulasilamadiysa) Yerel
-   fonksiyona duser. Cagiran hicbir dosya bu ayrimin farkinda olmak zorunda
-   degil. */
-
 export async function getPoints() {
   const v = await senkron;
   if (v) return v.points;
   return getPointsYerel();
 }
 
-/* Restart'a basip mevcut turu terk edince cagrilir. Skoru zaten puana
-   cevirebiliyorsak (earned > 0) o zaten kendi enerjisini dusuyor - buraya
-   yalnizca "hic puan olusmadan restart" durumunda dusuluyor, boylece
-   Restart hicbir zaman bedava bir yeniden dagitma haline gelmiyor.
-   Misafir/yerel modda enerji hic takip edilmiyor, sessizce no-op. */
 export async function spendRestartEnergy() {
   const v = await senkron;
   if (!v) return { ok: false };
@@ -381,10 +305,6 @@ export async function spendRestartEnergy() {
   return sonuc;
 }
 
-/* Yarim kalan bir turu Restart ile terk ederken cagrilir: o ana kadarki
-   skoru mumkunse puana cevirip krediler (addPoints kendi enerji maliyetini
-   zaten uyguluyor), puan cikmiyorsa yine de -1 enerji uygular - restart'in
-   kendisi ucretsiz bir "yeniden dagit" olmasin diye. */
 export async function settleAbandonedRun(score, divisor) {
   const earned = Math.floor((Number(score) || 0) / divisor);
   if (earned > 0) {
@@ -403,8 +323,6 @@ export async function addPoints(amount) {
   const opId = uuid();
   const sonuc = await sunucuGonder('/api/points/earn', { opId, amount: n });
   if (!sonuc) {
-    /* Ag sorunu: kazanci kuyruga koyup mevcut (degismemis) bakiyeyi
-       donduruyoruz - sunucu onaylamadan bakiyeyi yerelde sisirmiyoruz. */
     kuyrugaEkle({ tur: 'earn', opId, amount: n });
     return v.points;
   }
@@ -413,20 +331,6 @@ export async function addPoints(amount) {
   return v.points;
 }
 
-/* --- Enerji / gunluk seri / gunluk cark ---
-
-   Ucu de sadece Telegram icinde (sunucu modunda) anlamli - hile korumasi
-   sunucuda oldugu icin misafir modunda bunlari taklit etmenin bir anlami
-   yok. Misafirde hepsi null doner, hub.js bunu gorunce ilgili karti hic
-   gostermez (tipki sync-badge'in 'misafir' durumunda gizlenmesi gibi). */
-
-/* Telegram DISINDAKI ziyaretci icin kilitli bir onizleme.
-
-   Amac: gunluk odul ekranini misafire de gostermek - odulu goren kisi
-   Telegram'dan girip almak istiyor. Buradaki degerler yalnizca VITRIN;
-   hicbiri sunucuya yazilmiyor, kilitli oldugu icin de bir anlami yok.
-   Merdiven sunucudan gelmiyorsa (misafir) burasi kullaniliyor; giris
-   yapan oyuncuda her zaman sunucunun bildirdigi rakamlar gecerli. */
 const MISAFIR = {
   energy: 24, maxEnergy: 24, energyNextMs: 0,
   streak: { count: 0, canClaim: false, nextDay: 1, nextReward: 100,
@@ -439,18 +343,6 @@ const MISAFIR = {
   ] },
 };
 
-/* Gunluk odul ekraninin hangi durumda oldugunu soyler:
-
-     'sunucu'  - her sey normal, oduller alinabilir
-     'misafir' - Telegram DISINDA aciliyor: odul vitrin olarak gosterilir
-                 ama alinamaz (amac Telegram'dan girmeye tesvik etmek)
-     'yerel'   - Telegram ICINDE ama sunucuya ulasilamadi. Bu durumda
-                 oyuncunun gercek serisini/carkini BILMIYORUZ; "HAZIR!"
-                 demek yalan olur - bu yuzden ekran hic gosterilmiyor.
-
-   Onceden misafir ile 'yerel' ayni sayiliyordu: senkron bir kez basarisiz
-   olunca Telegram icindeki oyuncuya, geri sayim surerken bile "HAZIR!"
-   yaziliyordu. */
 export async function odulDurumu() {
   if (!isTelegramUser()) return 'misafir';
   return (await senkron) ? 'sunucu' : 'yerel';
@@ -475,15 +367,11 @@ export async function claimStreak() {
   if (!sonuc) return { ok: false, reason: 'ag' };
   if (sonuc.ok) {
     v.points = sonuc.total;
-    /* Alim sonrasi durumu SUNUCU bildiriyor - bekleme suresi orada
-       tanimli. Istemci burada kendi "artik alamazsin" halini uydurdugunda
-       nextInMs 0'da kaliyor ve geri sayim bos gorunuyordu. */
     v.streak = sonuc.durum || { ...v.streak, count: sonuc.streak, canClaim: false };
   }
   return sonuc;
 }
 
-/* Lider tablosu. Misafirde sunucu yok - null doner, hub tabloyu gostermez. */
 export async function liderTablosu() {
   const v = await senkron;
   if (!v) return null;
@@ -496,14 +384,6 @@ export async function getSpin() {
   return v.spin;
 }
 
-/* getStreak/getSpin ilk senkrondan kalan BAYAT bir anlik goruntuyu
-   donduruyor - kendiliginden zamanla azalmiyor. Geri sayim sifira
-   ininceye kadar bu sorun degil (ekranda zaten yerelde sayiliyor), ama
-   sifira indiginde "artik alinabilir mi" sorusunun cevabini sunucudan
-   TAZE almak gerekiyor - yoksa ayni bayat "1 saat kaldi" degeriyle
-   sonsuza kadar yeniden baslatilip hic ilerlemiyor gibi goruniyordu.
-   /api/sync tekrar cagirmak guvenli: sunucu tarafinda "ilk senkron"
-   disindaki her cagri sadece taze durumu okuyup donduruyor. */
 export async function refreshDaily() {
   const v = await senkron;
   if (!v) return;
@@ -526,8 +406,6 @@ export async function spinWheel() {
   if (sonuc.ok) {
     v.points = sonuc.total;
     v.energy = sonuc.energy;
-    /* prizes yayilarak korunuyor: sunucunun durumu yalnizca canSpin ve
-       nextInMs iceriyor, dilim listesi senkrondan geliyor. */
     if (v.spin) v.spin = { ...v.spin, ...(sonuc.durum || { canSpin: false }) };
   }
   return sonuc;
@@ -540,11 +418,6 @@ export async function spendPoints(amount) {
 
   const sonuc = await sunucuGonder('/api/points/spend', { opId: uuid(), amount: n });
   if (!sonuc) {
-    /* Ag sorunu: "yeterli bakiye yok" ile ayni sonuc - hicbir sey
-       harcanmadi, oyuncu jeton kaybetmez, ister tekrar dener. Bunu
-       kuyruklamiyoruz cunku oyuncu "basarisiz" gorup baska bir sey yapmaya
-       devam edebilir; gecikmeli bir harcamanin sessizce uygulanmasi kafa
-       karistirir. */
     return { ok: false, total: v.points };
   }
   v.points = sonuc.total;
@@ -566,9 +439,6 @@ export async function submitScore(game, score) {
   const yeniRekor = score > mevcut;
   const enIyi = yeniRekor ? score : mevcut;
 
-  /* Iyimser: ekrana hemen yansitiyoruz, sunucu cevabi arka planda gelir.
-     Boylece "yeni rekor!" animasyonu bir ag isteği kadar gecikmez -
-     eskisi de zaten yerelde aninda donuyordu, ayni his korunuyor. */
   v.state[key] = enIyi;
 
   sunucuGonder('/api/best', { game, score }).then((sonuc) => {
@@ -591,7 +461,7 @@ export function saveState(game, state) {
 
     const key = `state_${game}`;
     const beklenen = v.meta[key] || 0;
-    v.state[key] = state; /* iyimser: yerel onbellek hemen guncellenir */
+    v.state[key] = state;
 
     sunucuGonder('/api/state', { game, state, expectedVersion: beklenen }).then((sonuc) => {
       if (sonuc) {
@@ -623,15 +493,6 @@ export function clearState(game) {
   });
 }
 
-/* Kurulumu dogrulamak icin: hub bu bilgiyi kucuk bir rozette gosteriyor.
-   Sunucu kurulumu (D1, Worker, API_BASE) tamamlanip tamamlanmadigini
-   DevTools'a girmeden gormek icin var - "kurulum bitti ama degisiklik
-   gormuyorum" sorusunun cevabi bu rozet.
-
-     'misafir' -> Telegram disinda aciliyor, zaten yerelde kaliyor (normal)
-     'sunucu'  -> Telegram icinde VE ilk senkron basarili oldu
-     'yerel'   -> Telegram icinde AMA sunucuya hic ulasilamadi (kurulum
-                  eksik/yanlis olabilir - API_BASE, D1 binding, worker.js) */
 export async function sunucuDurumu() {
   if (!isTelegramUser()) return 'misafir';
   const v = await senkron;

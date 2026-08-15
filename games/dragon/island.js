@@ -1,43 +1,11 @@
-/* Dragon Island - 2.5D IZOMETRIK ADA
 
-   NEDEN CANVAS, NEDEN PHASER DEGIL?
+import { ada as adaTemasi } from './data.js?v45';
 
-   Phaser ~1 MB. Bu projenin tamami 8 bin satir ve tek dis bagimliligi
-   telegram-web-app.js. Telegram Mini App'te hizli acilis her seyden onemli,
-   o yuzden ada duz Canvas 2D ile ciziliyor: izometrik projeksiyon, derinlik
-   siralamasi, golge ve partikul birkac yuz satir tutuyor ve sifir bagimlilik
-   ekliyor.
+const TILE_W = 46;
+const TILE_H = 23;
+const SIDE = 22;
+const KARE_MS = 33;
 
-   TEMA TABANLI
-
-   Ada artik tek bir sabit sahne degil: renkler, susler, gokyuzu ve partikul
-   turu data.js'teki ISLANDS tablosundan VERI olarak geliyor. Yeni bir ada
-   eklemek icin oraya bir satir yazmak yeterli - bu dosya degismez.
-
-   IKI KATMAN, GERCEK DERINLIK
-
-   Ejderha bir DOM SVG'si (CSS animasyonlari ve keskin cizgiler icin).
-   Ada ise iki canvas'a boluyor:
-
-     arka canvas  -> ejderhanin ARKASINDA kalan her sey
-     [ejderha]
-     on canvas    -> ejderhanin ONUNDE duran nesneler
-
-   PERFORMANS
-
-   Ada ve nesneler DEGISMIYOR, o yuzden bir kez "pisirilip" (bake) hazir
-   goruntu olarak saklaniyor. Her karede sadece su/lav parlamalari ve
-   partikuller yeniden ciziliyor. Sekme arka plana alininca dongu duruyor. */
-
-import { ada as adaTemasi } from './data.js?v44';
-
-const TILE_W = 46;   /* izometrik karo genisligi */
-const TILE_H = 23;   /* karo yuksekligi (2:1 izometrik) */
-const SIDE = 22;     /* toprak kalinligi */
-const KARE_MS = 33;  /* ~30 fps: pil dostu, goz icin yeterli */
-
-/* Ada plani. # kara, w su, nokta bosluk.
-   Elle cizildi - rastgele uretim "kazara" duran adalar cikariyordu. */
 const PLAN = [
   '..#####..',
   '.#######.',
@@ -50,7 +18,6 @@ const PLAN = [
   '..#####..',
 ];
 
-/* Yuksek plato: yuva burada durur, ada duz bir tabak gibi gorunmesin diye */
 const PLATO = new Set(['1,6', '1,7', '2,6', '2,7', '2,8', '3,7']);
 
 const boyut = PLAN.length;
@@ -58,7 +25,6 @@ const kara = (r, c) => PLAN[r]?.[c] === '#' || PLAN[r]?.[c] === 'w';
 const suMu = (r, c) => PLAN[r]?.[c] === 'w';
 const yukseklik = (r, c) => (PLATO.has(`${r},${c}`) ? 1 : 0);
 
-/* Izometrik projeksiyon. r = satir (y), c = sutun (x) */
 function ekrana(r, c, h = 0) {
   return {
     x: (c - r) * (TILE_W / 2),
@@ -66,16 +32,11 @@ function ekrana(r, c, h = 0) {
   };
 }
 
-/* Derinlik anahtari: buyuk olan one gelir */
 const derinlik = (r, c) => r + c;
 
-/* Sahnenin izgara merkezine gore dikey sinirlari.
-   Kadrajlama bu ikisinin ortasina gore yapiliyor. */
 const ICERIK_UST = -118;
 const ICERIK_ALT = 190;
 
-/* Sus yerleri. Ilk sira YUVA, digerleri temanin susler listesinden sirayla
-   doluyor. Boylece her ada ayni duzeni farkli nesnelerle kuruyor. */
 const POZISYONLAR = [
   { r: 2, c: 7, olcek: 1.0 },
   { r: 1, c: 3, olcek: 1.0 },
@@ -91,11 +52,8 @@ const POZISYONLAR = [
   { r: 8, c: 4, olcek: 0.9 },
 ];
 
-/* Ejderhanin durdugu karo: nesneler buna gore one/arkaya ayriliyor */
 export const EJDERHA_KARO = { r: 5, c: 5 };
 const EJDERHA_DERINLIK = derinlik(EJDERHA_KARO.r, EJDERHA_KARO.c);
-
-/* --- Cizim yardimcilari --- */
 
 function karoYolu(ctx, x, y) {
   ctx.beginPath();
@@ -113,10 +71,6 @@ function golgeCiz(ctx, x, y, rx) {
   ctx.fill();
 }
 
-/* ---------- SUSLER ----------
-   Her biri kendi karosunun ekran noktasina cizilir. Yeni bir sus eklemek
-   icin buraya bir fonksiyon yazip temanin susler listesinde adini kullanmak
-   yeterli. */
 const SUSLER = {
   agac(ctx, x, y, s) {
     golgeCiz(ctx, x, y + 3, 15 * s);
@@ -161,7 +115,6 @@ const SUSLER = {
     }
   },
 
-  /* --- Ates adasi --- */
   volkanKaya(ctx, x, y, s) {
     golgeCiz(ctx, x, y + 2, 14 * s);
     ctx.fillStyle = '#2b1a19';
@@ -193,7 +146,6 @@ const SUSLER = {
     ctx.beginPath(); ctx.ellipse(x, y - 3, 5, 2.2, 0, 0, Math.PI * 2); ctx.fill();
   },
 
-  /* --- Buz adasi --- */
   karAgac(ctx, x, y, s) {
     golgeCiz(ctx, x, y + 3, 14 * s);
     ctx.fillStyle = '#4a3a30';
@@ -235,7 +187,6 @@ const SUSLER = {
     ctx.globalAlpha = 1;
   },
 
-  /* --- Volkanik ada --- */
   volkan(ctx, x, y, s) {
     golgeCiz(ctx, x, y + 4, 26 * s);
     ctx.fillStyle = '#251716';
@@ -243,14 +194,12 @@ const SUSLER = {
     ctx.moveTo(x - 30 * s, y + 2); ctx.lineTo(x - 11 * s, y - 40 * s);
     ctx.lineTo(x + 11 * s, y - 40 * s); ctx.lineTo(x + 30 * s, y + 2);
     ctx.closePath(); ctx.fill();
-    /* Krater ve icindeki lav */
     ctx.fillStyle = '#3a2422';
     ctx.beginPath(); ctx.ellipse(x, y - 40 * s, 11 * s, 4.5 * s, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#ff6a1f';
     ctx.beginPath(); ctx.ellipse(x, y - 40 * s, 8 * s, 3.2 * s, 0, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = '#ffd76e';
     ctx.beginPath(); ctx.ellipse(x, y - 40 * s, 4 * s, 1.6 * s, 0, 0, Math.PI * 2); ctx.fill();
-    /* Yamactan asagi akan lav */
     ctx.strokeStyle = '#ff7a2d'; ctx.lineWidth = 3 * s; ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(x - 4 * s, y - 38 * s); ctx.lineTo(x - 12 * s, y - 18 * s);
@@ -270,7 +219,6 @@ const SUSLER = {
     ctx.stroke(); ctx.globalAlpha = 1;
   },
 
-  /* --- Celestial ada --- */
   kristal(ctx, x, y, s) {
     golgeCiz(ctx, x, y + 2, 12 * s);
     const sut = (dx, h, w, renk) => {
@@ -315,15 +263,12 @@ const SUSLER = {
     ctx.ellipse(x, y - 27 * s, 12 * s, 4.5 * s, 0, 0, Math.PI * 2); ctx.fill();
   },
 
-  /* --- Ejder Kralligi --- */
   heykel(ctx, x, y, s) {
     golgeCiz(ctx, x, y + 4, 20 * s);
-    /* Kaide */
     ctx.fillStyle = '#4a3f7a';
     ctx.fillRect(x - 15 * s, y - 10 * s, 30 * s, 10 * s);
     ctx.fillStyle = '#5f5498';
     ctx.beginPath(); ctx.ellipse(x, y - 10 * s, 15 * s, 5 * s, 0, 0, Math.PI * 2); ctx.fill();
-    /* Ejderha silueti: govde, boyun, bas, kanat */
     ctx.fillStyle = '#f0d78a';
     ctx.beginPath();
     ctx.moveTo(x - 7 * s, y - 12 * s);
@@ -373,7 +318,6 @@ const SUSLER = {
   },
 };
 
-/* Yuva turleri */
 const YUVALAR = {
   orgu(ctx, x, y) {
     golgeCiz(ctx, x, y + 3, 22);
@@ -432,8 +376,6 @@ const YUVALAR = {
   },
 };
 
-/* --- Ada motoru --- */
-
 export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
   const arka = arkaCanvas.getContext('2d');
   const on = onCanvas.getContext('2d');
@@ -446,7 +388,6 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
   let merkezY = 0;
   let olcek = 1;
 
-  /* Pisirilmis (statik) katmanlar */
   const arkaPismis = document.createElement('canvas');
   const onPismis = document.createElement('canvas');
 
@@ -485,7 +426,6 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
     ctx.fill();
   }
 
-  /* Adanin altindaki kaya kutlesi: yuzen ada hissi buradan geliyor */
   function altKayaCiz(ctx) {
     const alt = ekrana(boyut - 1, boyut - 1);
     const yariGenislik = ((boyut - 1) * TILE_W) / 2;
@@ -514,7 +454,6 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
       ctx.lineTo(alt.x + dx, alt.y + dy + hh); ctx.closePath(); ctx.fill();
     }
 
-    /* Volkanik ada: kayadan asagi akan lav */
     if (tema.lavAkintisi) {
       ctx.strokeStyle = '#ff6a1f'; ctx.lineWidth = 5; ctx.lineCap = 'round';
       ctx.globalAlpha = 0.9;
@@ -527,7 +466,6 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
       ctx.globalAlpha = 1;
     }
 
-    /* Celestial / Kingdom: adanin altinda yuzen kucuk adaciklar */
     if (tema.yuzenAdacik) {
       for (const [dx, dy, w] of [[-78, 40, 22], [72, 66, 18], [-30, 104, 14]]) {
         ctx.fillStyle = tema.zemin.kayaAcik;
@@ -556,7 +494,6 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
 
     olcek = Math.min(1, (genislik - 16) / icerikGenislik);
     merkezX = genislik / 2;
-    /* Dikey kadraj sahnenin gercek sinirlarina gore ortalanir */
     merkezY = yukseklikPx / 2 - ((ICERIK_UST + ICERIK_ALT) / 2) * olcek;
 
     pisir();
@@ -572,7 +509,6 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
     ctx.translate(-orta.x, -orta.y);
   }
 
-  /* Statik sahneyi bir kez cizip sakla */
   function pisir() {
     const a = arkaPismis.getContext('2d');
     const o = onPismis.getContext('2d');
@@ -584,7 +520,6 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
     kamera(a); kamera(o);
     altKayaCiz(a);
 
-    /* Karolar arkadan one: ressam algoritmasi */
     for (let toplam = 0; toplam <= (boyut - 1) * 2; toplam++) {
       for (let r = 0; r < boyut; r++) {
         const c = toplam - r;
@@ -593,12 +528,9 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
       }
     }
 
-    /* Ejderhanin zemin golgesi */
     const eNokta = ekrana(EJDERHA_KARO.r, EJDERHA_KARO.c, yukseklik(EJDERHA_KARO.r, EJDERHA_KARO.c));
     golgeCiz(a, eNokta.x, eNokta.y + 2, 26);
 
-    /* Susler: ilk poziyon yuva, digerleri temanin listesinden.
-       Ejderhanin onunde kalanlar ayri katmana gidiyor. */
     const sirali = POZISYONLAR
       .map((p, i) => ({ ...p, tur: i === 0 ? null : tema.susler[i - 1] }))
       .sort((a1, a2) => derinlik(a1.r, a1.c) - derinlik(a2.r, a2.c));
@@ -626,7 +558,6 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
     }));
   }
 
-  /* Her karede degisen kisim: su/lav parlamasi + partikuller */
   function ciz(zaman) {
     arka.setTransform(1, 0, 0, 1, 0, 0);
     arka.clearRect(0, 0, arkaCanvas.width, arkaCanvas.height);
@@ -634,7 +565,6 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
 
     kamera(arka);
 
-    /* Su/lav karolarinin uzerinde kayan isik seridi */
     for (let r = 0; r < boyut; r++) {
       for (let c = 0; c < boyut; c++) {
         if (!suMu(r, c)) continue;
@@ -650,11 +580,9 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
       }
     }
 
-    /* Partikuller: temaya gore toz / kor / kar / yildiz */
     const tur = tema.partikul?.tur || 'toz';
     const renk = tema.partikul?.renk || '#ffe9a8';
     for (const p of partikuller) {
-      /* Kar asagi duser, digerleri yukari suzulur */
       p.y += tur === 'kar' ? p.hiz : -p.hiz;
       if (tur === 'kar' && p.y > 120) p.y = -60;
       if (tur !== 'kar' && p.y < -130) p.y = 100;
@@ -685,7 +613,6 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
     }
     arka.globalAlpha = 1;
 
-    /* On katman statik */
     on.setTransform(1, 0, 0, 1, 0, 0);
     on.clearRect(0, 0, onCanvas.width, onCanvas.height);
     on.drawImage(onPismis, 0, 0);
@@ -699,7 +626,6 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
     ciz(zaman);
   }
 
-  /* Ejderhanin ekrandaki yeri: DOM katmani buraya konumlanacak */
   function ejderhaNoktasi() {
     const orta = ekrana((boyut - 1) / 2, (boyut - 1) / 2);
     const nokta = ekrana(EJDERHA_KARO.r, EJDERHA_KARO.c, yukseklik(EJDERHA_KARO.r, EJDERHA_KARO.c));
@@ -713,16 +639,11 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
   return {
     boyutlandir,
     ejderhaNoktasi,
-    /* Ada degistirildiginde yeniden pisirilir - canvas'lar ayni kalir,
-       yeniden olusturmak gerekmez (asset reload olmuyor). */
     temaDegistir(yeniId) {
       tema = adaTemasi(yeniId);
       if (genislik) { pisir(); partikullerYarat(); ciz(performance.now()); }
     },
     temaBilgisi: () => tema,
-    /* Tek kareyi hemen cizer. Animasyon dongusu requestAnimationFrame'e
-       bagli, o da sayfa gorunmez oldugunda durur; sabit bir goruntu uretmek
-       isteyen (ornegin bot banner'i) buradan tek kare alabilir. */
     tekKare(zaman = 0) { ciz(zaman); },
     basla() {
       if (calisiyor) return;

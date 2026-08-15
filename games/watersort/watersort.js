@@ -1,36 +1,15 @@
-/* Su Siralama (Water Sort)
 
-   Tuplerde renkli sivi katmanlari var. Bir tupe dokunup sonra baska bir tupe
-   dokununca ustteki sivi oraya akar - ama sadece hedef bos ise ya da ustteki
-   rengi ayni ise. Amac her tupu tek renge indirmek.
-
-   Bolumler otomatik uretilir. Uretim yontemi: once cozulmus halden basla,
-   sonra geri alinabilir hamlelerle karistir. Boylece her bolumun cozumu
-   kesin vardir (karistirma hamlelerini tersten oynamak yeter). */
-
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v44';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v44';
-import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js?v44';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v44';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v45';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v45';
+import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js?v45';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v45';
 
 const GAME_ID = 'watersort';
-/* EKONOMI DENGESI
-
-   Butun oyunlar dakikada yaklasik AYNI jetonu vermeli - yoksa oyuncu en
-   verimli oyunu bulup sadece onu oynuyor, digerleri olu yatiriyor.
-
-   Olculen durum (kod uzerinden modellendi): en dusuk 8 jeton/dk (Mayin
-   Tarlasi), en yuksek 136 jeton/dk (2048) - arada 17 KAT fark vardi.
-   Asagidaki sabit, hedef olan ~60 jeton/dk'ya gore secildi.
-
-   Model her oyunun kendi puanlama mekanigi + makul bir oturum suresi
-   varsayimina dayaniyor; gercek oyuncu verisi geldiginde bu sayilar
-   yeniden ayarlanmali. */
-const POINTS_PER_LEVEL = 90; /* bolum ~1,5 dk surer, taban odul */
-const POINTS_PER_EXTRA_COLOR = 5; /* renk cesidi arttikca ustune eklenen odul */
-const CAPACITY = 4;          /* bir tupe kac katman sigar */
-const EMPTY_TUBES = 2;       /* baslangicta kac bos tup verilir */
-const HARD_EMPTY_LEVEL = 15; /* bu seviyeden sonra bos tup 2'den 1'e duser */
+const POINTS_PER_LEVEL = 90;
+const POINTS_PER_EXTRA_COLOR = 5;
+const CAPACITY = 4;
+const EMPTY_TUBES = 2;
+const HARD_EMPTY_LEVEL = 15;
 
 registerTexts(GAME_ID, {
   title: 'Su Sıralama',
@@ -62,16 +41,14 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayText = document.getElementById('overlay-text');
 const overlayBtn = document.getElementById('overlay-btn');
 
-let tubes = [];     /* her tup bir dizi: [altKatman, ..., ustKatman] */
-let history = [];   /* geri alma icin yapilan hamleler */
+let tubes = [];
+let history = [];
 let level = 1;
 let bestLevel = 1;
 let moves = 0;
 let selected = null;
 let lastPour = null;
-let locked = false; /* bolum bitince tiklamayi kapat */
-
-/* ---------- Baslangic ---------- */
+let locked = false;
 
 initTelegram();
 applyStaticTexts();
@@ -116,27 +93,14 @@ function goHome() {
   window.location.href = '../../index.html';
 }
 
-/* ---------- Bolum uretimi ---------- */
-
-/* Bolum ilerledikce renk sayisi artar (3'ten 12'ye kadar, 19. seviyede tavan).
-   Eskiden 9'da (COLORS o zaman 9 renkti) tavan yapiyordu, sonrasinda oyun hep
-   AYNI zorlukta kaliyordu. 3 renk daha eklendi, tavan artik cok daha gec. */
 function colorCountFor(levelNo) {
   return Math.min(3 + Math.floor((levelNo - 1) / 2), COLORS.length);
 }
 
-/* Renk cesidi tavan yaptiktan sonra da zorluk artmaya devam etsin diye:
-   HARD_EMPTY_LEVEL'den itibaren manevra alani (bos tup sayisi) 2'den 1'e
-   duser. Bolum, karistirma hamlelerinin tam tersi oynanarak her zaman
-   cozulebilir kuruldugu icin bu, cozulemez bolum riski YARATMAZ - sadece
-   oyuncunun manevra alanini daraltir. */
 function emptyTubesFor(levelNo) {
   return levelNo >= HARD_EMPTY_LEVEL ? 1 : EMPTY_TUBES;
 }
 
-/* Daha zor bolumler (daha cok renk) biraz daha fazla odul versin - ama
-   colorCountFor zaten tavanli oldugu icin bu da otomatik olarak tavanli,
-   Triple Tile'da yasanan sinirsiz buyume riski burada yok. */
 function pointsFor(levelNo) {
   return POINTS_PER_LEVEL + (colorCountFor(levelNo) - 3) * POINTS_PER_EXTRA_COLOR;
 }
@@ -151,8 +115,6 @@ function buildLevel(levelNo) {
   const colorCount = colorCountFor(levelNo);
   const emptyTubes = emptyTubesFor(levelNo);
 
-  /* Cozulmus halden basla, karistir, sonra cozulebilirligini dogrula.
-     Cok nadiren cikmaz sokak uretilirse bastan uretiriz. */
   for (let attempt = 0; attempt < 30; attempt++) {
     tubes = [];
     for (let i = 0; i < colorCount; i++) tubes.push(new Array(CAPACITY).fill(i));
@@ -166,12 +128,6 @@ function buildLevel(levelNo) {
   persist();
 }
 
-/* Bolumu "hamleleri tersten oynayarak" karistirir.
-
-   Normal oyunda sivi ancak ayni renk uzerine ya da bos tupe dokulur.
-   Karistirirken bunun TERSINI yapiyoruz: ustteki renk grubunu alip baska bir
-   renkin uzerine koyuyoruz. Boylece renkler karisiyor ve elde ettigimiz her
-   durum, yaptigimiz hamleleri tersten oynayarak kesin cozulebiliyor. */
 function scramble(steps) {
   for (let i = 0; i < steps; i++) {
     const options = [];
@@ -184,8 +140,6 @@ function scramble(steps) {
       let run = 0;
       while (run < source.length && source[source.length - 1 - run] === color) run++;
 
-      /* Kac katman alinabilir: ya hepsi (tup bosalir) ya da ayni renkten
-         en az bir tane altta kalacak kadar. Yoksa hamle geri alinamaz olur. */
       const maxTake = run === source.length ? run : run - 1;
       if (maxTake < 1) continue;
 
@@ -194,7 +148,6 @@ function scramble(steps) {
         const target = tubes[to];
         const room = CAPACITY - target.length;
         if (!room) continue;
-        /* Hedefin ustu ayni renk OLMAMALI - karisim boyle olusuyor */
         if (target.length && target[target.length - 1] === color) continue;
         options.push({ from, to, max: Math.min(maxTake, room) });
       }
@@ -207,10 +160,6 @@ function scramble(steps) {
   }
 }
 
-/* ---------- Cozulebilirlik kontrolu ---------- */
-
-/* Bolumu bilgisayara cozdurur. Cozerse true doner.
-   Cok dallanirsa pes eder (false) ve bolum yeniden uretilir. */
 function isSolvable(start) {
   const key = (state) => state.map((tube) => tube.join(',')).sort().join('|');
   const solved = (state) => state.every((tube) =>
@@ -228,7 +177,6 @@ function isSolvable(start) {
     for (let from = 0; from < state.length; from++) {
       const source = state[from];
       if (!source.length) continue;
-      /* Tek renkten olusan tupu bos tupe tasimak bosuna hamle */
       const uniform = source.every((c) => c === source[0]);
 
       for (let to = 0; to < state.length; to++) {
@@ -250,13 +198,10 @@ function isSolvable(start) {
   return false;
 }
 
-/* ---------- Oyun kurallari ---------- */
-
 function topColor(tube) {
   return tube.length ? tube[tube.length - 1] : null;
 }
 
-/* Verilen durumda from tupunden to tupune kac katman dokulebilir */
 function amount(state, from, to) {
   const source = state[from];
   const target = state[to];
@@ -305,13 +250,11 @@ function persist() {
   saveState(GAME_ID, { level, moves, tubes });
 }
 
-/* ---------- Dokunma ---------- */
-
 function onTubeClick(index) {
   if (locked) return;
 
   if (selected === null) {
-    if (!tubes[index].length) return; /* bos tup secilemez */
+    if (!tubes[index].length) return;
     selected = index;
     haptic.tap();
     render();
@@ -331,7 +274,6 @@ function onTubeClick(index) {
     persist();
     if (isSolved()) finishLevel();
   } else {
-    /* Dokulemiyorsa secimi yeni tupe kaydir (bos degilse) */
     selected = tubes[index].length ? index : null;
     render();
   }
@@ -352,8 +294,6 @@ async function finishLevel() {
   const text = `${t('levelResult', { moves })} ${t('earnedPoints', { points })}`;
   showOverlay(t('levelDone'), text, t('nextLevel'), () => buildLevel(level + 1));
 }
-
-/* ---------- Ekrana cizme ---------- */
 
 function render() {
   stageEl.textContent = '';
@@ -382,8 +322,6 @@ function render() {
 
   lastPour = null;
 }
-
-/* ---------- Bitis ekrani ---------- */
 
 function showOverlay(title, text, buttonLabel, action) {
   overlayTitle.textContent = title;

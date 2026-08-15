@@ -1,37 +1,4 @@
-/* Dragon Island - KOZMETIK KATALOGU
 
-   Butun gorunum parcalari ve adalar burada tanimli. Yeni bir item eklemek
-   icin SADECE bu dosyaya satir yazilir - oyun kodu, dukkan kodu ve cizim
-   kodu degismez.
-
-   FIYAT VE IHTISAM BIRLIKTE ARTAR
-
-   Kademeler oyunlarin gercek kazandirma hizina gore secildi: cogu oyun
-   skor/10 veriyor, Su Siralama 25/bolum, Baglan 20/bolum. Tipik bir seans
-   500-2.000 jeton, hevesli bir oyuncu gunde ~5.000 jeton kazaniyor.
-
-     Kademe 1  bedava       baslangic gorunumu
-     Kademe 2  ~350         ilk oturumda alinir
-     Kademe 3  ~800         birkac oturum
-     Kademe 4  ~1.800       bir hafta sonu
-     Kademe 5  ~4.000       bir hafta
-     Kademe 6  ~9.000       birkac hafta
-     Kademe 7  ~20.000      uzun vadeli hedef
-     Kademe 8  ~45.000      aylarca oynayanin rozeti
-
-   Kategoriler farkli carpanlar kullaniyor: kanat silueti en cok degistiren
-   sey oldugu icin pahali, yuz isareti en incelikli oldugu icin ucuz.
-
-   HER ITEM'IN ALANLARI
-     id        anahtar (kayitta bu tutuluyor)
-     nameKey   ceviri anahtari  (i18n-items.js)
-     descKey   aciklama anahtari
-     price     jeton
-     rarity    common | uncommon | rare | epic | legendary | mythic
-     needLevel varsa seviye kilidi
-     + cizim icin gereken gorsel alanlar */
-
-/* --- Nadirlik --- */
 export const RARITIES = {
   common:    { sira: 0, renk: '#9aa2b5', nameKey: 'rarCommon' },
   uncommon:  { sira: 1, renk: '#4ecb8b', nameKey: 'rarUncommon' },
@@ -41,10 +8,6 @@ export const RARITIES = {
   mythic:    { sira: 5, renk: '#ff6b8a', nameKey: 'rarMythic' },
 };
 
-/* --- Slotlar ---
-   Gorunum sabit alanlardan degil bu listeden uretiliyor. V2'de yeni bir slot
-   (kolye, sirt esyasi) eklemek icin listeye bir satir yeter; dolap, dukkan ve
-   kayit bicimi kendiliginden uyum saglar. */
 export const SLOTS = [
   { key: 'color',  title: 'shopColors' },
   { key: 'skin',   title: 'shopSkins' },
@@ -65,9 +28,6 @@ export const VARSAYILAN_GORUNUM = {
   aura: 'none',
 };
 
-/* ---------- RENK (8) ----------
-   body/dark/belly/horn govdenin ana tonlari. aurora'da ayrica gradient var:
-   cizim onu govdeye cok duraklı bir degrade olarak uyguluyor. */
 export const COLORS = {
   ember:     { price: 0,     rarity: 'common',    nameKey: 'colEmber',   descKey: 'colEmberD',
                body: '#e05a52', dark: '#a8342d', belly: '#f7cdc6', horn: '#f5b942' },
@@ -88,12 +48,10 @@ export const COLORS = {
   aurora:    { price: 45000, rarity: 'mythic',    nameKey: 'colAurora',  descKey: 'colAuroraD',
                body: '#7ad4c8', dark: '#4a5fc0', belly: '#eafdf8', horn: '#ffd9f2', parlak: true,
                isilti: '#b6f5e8',
-               /* Govde boyunca gecen aurora bantlari */
                aurora: ['#63e6c0', '#5ea8f0', '#9b6ef0', '#f07ac0'],
                needLevel: 75 },
 };
 
-/* ---------- DESEN (none + 8) ---------- */
 export const SKINS = {
   none:     { price: 0,     rarity: 'common',    nameKey: 'skNone',    descKey: 'skNoneD' },
   stripes:  { price: 100,   rarity: 'common',    nameKey: 'skStripes', descKey: 'skStripesD', kind: 'stripes' },
@@ -106,9 +64,6 @@ export const SKINS = {
   celestial:{ price: 40000, rarity: 'mythic',    nameKey: 'skCelestial',descKey:'skCelestialD',kind: 'celestial', ink: '#ffe9a8', needLevel: 70 },
 };
 
-/* ---------- KANAT (8) ----------
-   kind cizim varyantini, span kanat acikligi carpanini belirler.
-   Kanat silueti en cok degistiren parca oldugu icin fiyatlar en yuksek. */
 export const WINGS = {
   leather:  { price: 0,     rarity: 'common',    nameKey: 'wgLeather', descKey: 'wgLeatherD',
               kind: 'plain',   span: 0.86, parmak: 4 },
@@ -128,7 +83,6 @@ export const WINGS = {
               kind: 'celestial', span: 1.26, parmak: 5, kenar: '#fff0a8', isilti: true, needLevel: 80 },
 };
 
-/* ---------- KUYRUK (8) ---------- */
 export const TAILS = {
   basic:    { price: 0,     rarity: 'common',    nameKey: 'tlBasic',   descKey: 'tlBasicD',   kind: 'plain' },
   spiked:   { price: 350,   rarity: 'common',    nameKey: 'tlSpiked',  descKey: 'tlSpikedD',  kind: 'spiked' },
@@ -140,7 +94,6 @@ export const TAILS = {
   celestial:{ price: 45000, rarity: 'mythic',    nameKey: 'tlCelestial',descKey:'tlCelestialD',kind: 'celestial', kenar: '#fff0a8', isilti: true, needLevel: 80 },
 };
 
-/* ---------- TAC (none + 8) ---------- */
 export const HEADS = {
   none:    { price: 0,     rarity: 'common',    nameKey: 'hdNone',   descKey: 'hdNoneD' },
   tiny:    { price: 150,   rarity: 'common',    nameKey: 'hdTiny',   descKey: 'hdTinyD',
@@ -162,7 +115,6 @@ export const HEADS = {
              isilti: true, needLevel: 85 },
 };
 
-/* ---------- YUZ (none + 8) ---------- */
 export const FACES = {
   none:     { price: 0,     rarity: 'common',    nameKey: 'fcNone',   descKey: 'fcNoneD' },
   scar:     { price: 80,    rarity: 'common',    nameKey: 'fcScar',   descKey: 'fcScarD',   kind: 'scar',    color: '#ffd9c0' },
@@ -176,7 +128,6 @@ export const FACES = {
               isilti: true, needLevel: 75 },
 };
 
-/* ---------- AURA (none + 8) ---------- */
 export const AURAS = {
   none:     { price: 0,     rarity: 'common',    nameKey: 'auNone',    descKey: 'auNoneD' },
   sparkle:  { price: 120,   rarity: 'common',    nameKey: 'auSparkle', descKey: 'auSparkleD', kind: 'star',   color: '#fff3d0', yogunluk: 0.6 },
@@ -189,13 +140,6 @@ export const AURAS = {
   celestial:{ price: 45000, rarity: 'mythic',    nameKey: 'auCelestial',descKey:'auCelestialD',kind: 'celestial', color: '#ffe9a8', needLevel: 85 },
 };
 
-/* ---------- ADA (6) ----------
-   Ada oyuncuya ait, ejderhaya degil: V2'de ikinci ejderha geldiginde ayni
-   adada yasayacaklar.
-
-   Her tema island.js tarafindan VERI olarak okunuyor - zemin renkleri,
-   hangi susleri kullanacagi, gokyuzu, isik ve partikul turu. Yeni bir ada
-   eklemek icin buraya bir satir yazmak yeterli, cizim kodu degismez. */
 export const ISLANDS = {
   grassland: {
     price: 0, rarity: 'common', nameKey: 'islGrass', descKey: 'islGrassD',
@@ -268,7 +212,6 @@ export const ISLANDS = {
   },
 };
 
-/* Slot anahtarindan katalog tablosuna */
 export const KATALOG = {
   color: COLORS,
   skin: SKINS,
@@ -288,7 +231,6 @@ export function ada(id) {
   return ISLANDS[id] ?? ISLANDS.grassland;
 }
 
-/* Bir gorunumun tam paleti: renk + desenin murekkebi + kanat/kuyruk varyanti */
 export function palet(look) {
   const renk = COLORS[look.color] || COLORS.ember;
   const desen = SKINS[look.skin] || SKINS.none;

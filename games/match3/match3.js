@@ -1,34 +1,16 @@
-/* Seker Eslestir (Match-3)
 
-   8x8 tahtada 6 cesit seker var. Komsu iki sekeri yer degistirirsin.
-   3 veya daha fazla ayni seker yan yana / alt alta gelirse patlar,
-   ustundekiler asagi duser, yukaridan yenileri gelir. Zincirleme patlamalar
-   daha cok puan verir. Tur 60 saniye surer. */
-
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v44';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v44';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v44';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v44';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v45';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v45';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v45';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v45';
 
 const GAME_ID = 'match3';
 const SIZE = 8;
 const ROUND_SECONDS = 60;
-/* EKONOMI DENGESI
-
-   Butun oyunlar dakikada yaklasik AYNI jetonu vermeli - yoksa oyuncu en
-   verimli oyunu bulup sadece onu oynuyor, digerleri olu yatiriyor.
-
-   Olculen durum (kod uzerinden modellendi): en dusuk 8 jeton/dk (Mayin
-   Tarlasi), en yuksek 136 jeton/dk (2048) - arada 17 KAT fark vardi.
-   Asagidaki sabit, hedef olan ~60 jeton/dk'ya gore secildi.
-
-   Model her oyunun kendi puanlama mekanigi + makul bir oturum suresi
-   varsayimina dayaniyor; gercek oyuncu verisi geldiginde bu sayilar
-   yeniden ayarlanmali. */
-const POINTS_DIVISOR = 19; /* 60 sn tur, ~1.350 skor -> ~70 jeton */
+const POINTS_DIVISOR = 19;
 const POINTS_PER_TILE = 10;
-const TIME_BONUS = 1;        /* her eslesme dalgasinda sureye eklenen saniye */
-const TIME_CAP = ROUND_SECONDS + 30; /* sure sonsuza kadar birikmesin diye tavan */
+const TIME_BONUS = 1;
+const TIME_CAP = ROUND_SECONDS + 30;
 
 registerTexts(GAME_ID, {
   title: 'Şeker Eşleştir',
@@ -46,7 +28,6 @@ registerTexts(GAME_ID, {
   earnedPoints: '+{points} $MH kazandın.',
 });
 
-/* Seker cesitleri: arka plan rengi + uzerindeki sekil */
 const KINDS = [
   { color: '#e2544e', icon: '🍒' },
   { color: '#f5b942', icon: '🍋' },
@@ -68,19 +49,17 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayText = document.getElementById('overlay-text');
 const overlayBtn = document.getElementById('overlay-btn');
 
-let board = [];      /* 64 eleman: tas nesnesi */
+let board = [];
 let score = 0;
 let best = 0;
 let timeLeft = ROUND_SECONDS;
 let timer = null;
-let busy = false;    /* patlama animasyonu sirasinda dokunmayi kapat */
+let busy = false;
 let over = false;
-let started = false; /* sure ilk hamlede baslar */
+let started = false;
 let nextId = 1;
 let gapPx = 0;
 let cellPx = 0;
-
-/* ---------- Baslangic ---------- */
 
 initTelegram();
 applyStaticTexts();
@@ -93,8 +72,6 @@ document.getElementById('back-link').addEventListener('click', (e) => {
 });
 document.getElementById('new-game').addEventListener('click', async () => {
   haptic.tap();
-  /* Tur hala aktifse terk edilen skoru korumadan sifirlamayalim -
-     bkz. settleAbandonedRun. */
   if (!over) await settleAbandonedRun(score, POINTS_DIVISOR);
   startNewGame();
 });
@@ -146,8 +123,6 @@ function startNewGame() {
   updateHud();
 }
 
-/* ---------- Tahta kurulumu ---------- */
-
 function makeTile(kind, r, c) {
   return { id: nextId++, kind, r, c, el: null };
 }
@@ -155,9 +130,6 @@ function makeTile(kind, r, c) {
 const at = (r, c) => board[r * SIZE + c];
 const put = (r, c, tile) => { board[r * SIZE + c] = tile; };
 
-/* Baslangicta hazir eslesme olmamali ve en az bir gecerli hamle bulunmali.
-   Deneme sayisi sinirli: sinirsiz bir dongu, sansin ters gittigi bir durumda
-   sayfayi tamamen dondururdu. Pratikte ilk deneme neredeyse hep tutuyor. */
 function fillBoard() {
   for (let attempt = 0; attempt < 60; attempt++) {
     board = new Array(SIZE * SIZE);
@@ -172,18 +144,13 @@ function fillBoard() {
     }
     if (hasValidMove()) return;
   }
-  /* Buraya gelinirse elimizdeki tahtayla devam ederiz; hamle kalmadigini
-     fark eden resolveCascades zaten karistirmayi cagiracak. */
 }
 
-/* (r,c) hucresine bu cesidi koyarsak sola/yukari dogru 3'lu olusur mu */
 function createsMatch(r, c, kind) {
   if (c >= 2 && at(r, c - 1)?.kind === kind && at(r, c - 2)?.kind === kind) return true;
   if (r >= 2 && at(r - 1, c)?.kind === kind && at(r - 2, c)?.kind === kind) return true;
   return false;
 }
-
-/* ---------- Eslesme bulma ---------- */
 
 function findMatches() {
   const hits = new Set();
@@ -217,7 +184,6 @@ function findMatches() {
   return [...hits];
 }
 
-/* Tahtada patlatilabilecek bir hamle var mi */
 function hasValidMove() {
   const swapKinds = (i, j) => {
     const a = board[i].kind;
@@ -245,8 +211,6 @@ function hasValidMove() {
   return false;
 }
 
-/* ---------- Hamle ---------- */
-
 async function trySwap(r1, c1, r2, c2) {
   if (busy || over) return;
   if (r2 < 0 || r2 >= SIZE || c2 < 0 || c2 >= SIZE) return;
@@ -260,7 +224,6 @@ async function trySwap(r1, c1, r2, c2) {
   await wait(170);
 
   if (findMatches().length === 0) {
-    /* Hicbir sey patlamadi: geri al */
     swapTiles(r1, c1, r2, c2);
     renderPositions();
     await wait(170);
@@ -281,7 +244,6 @@ function swapTiles(r1, c1, r2, c2) {
   b.r = r1; b.c = c1;
 }
 
-/* Patlat, dusur, doldur - patlama devam ettigi surece tekrarla */
 async function resolveCascades() {
   let chain = 0;
 
@@ -320,7 +282,6 @@ async function resolveCascades() {
   persist();
 }
 
-/* Bosluklari doldur: ustteki sekerler duser, tepeden yenileri gelir */
 function dropAndRefill() {
   for (let c = 0; c < SIZE; c++) {
     let writeRow = SIZE - 1;
@@ -336,7 +297,6 @@ function dropAndRefill() {
       writeRow--;
     }
 
-    /* Kalan bos hucreler icin yeni seker uret, ekranin ustunden dussun */
     let spawn = -1;
     for (let r = writeRow; r >= 0; r--) {
       const tile = makeTile(Math.floor(Math.random() * KINDS.length), r, c);
@@ -347,7 +307,6 @@ function dropAndRefill() {
 }
 
 async function shuffleBoard() {
-  /* Once eldeki sekerleri yeniden diz - tas sayilari korunur */
   for (let attempt = 0; attempt < 50; attempt++) {
     const kinds = board.map((tile) => tile.kind);
     for (let i = kinds.length - 1; i > 0; i--) {
@@ -364,15 +323,10 @@ async function shuffleBoard() {
     }
   }
 
-  /* Eldeki seker dagilimi uygun bir dizilis vermiyor: tahtayi bastan kur.
-     Onceki surumde bu dongu sinirsizdi - boyle bir durumda sayfa donardi,
-     cunku ayni sabit taslari sonsuza kadar yeniden dizmeye calisirdi. */
   fillBoard();
   renderAll();
   await wait(200);
 }
-
-/* ---------- Sure ---------- */
 
 function startTimer() {
   started = true;
@@ -414,10 +368,6 @@ async function endGame() {
 function persist() {
   if (over || !started) return;
 
-  /* Patlama ve dusme animasyonu sirasinda tahtada gecici bosluklar olur.
-     Sureyi sayan zamanlayici saniyede bir kaydettigi icin tam o ana denk
-     gelebiliyordu: hem bu satir cokuyor hem de yarim bir tahta kaydediliyordu.
-     Tahta dolana kadar (bir sonraki saniye) kaydi atliyoruz. */
   if (board.some((tile) => !tile)) return;
 
   saveState(GAME_ID, {
@@ -426,8 +376,6 @@ function persist() {
     timeLeft,
   });
 }
-
-/* ---------- Ekrana cizme ---------- */
 
 function layout() {
   const width = boardEl.clientWidth;
@@ -465,7 +413,6 @@ function renderAll() {
   for (const tile of board) createTileElement(tile, tile.r, tile.c);
 }
 
-/* startRow: sekerin dogdugu satir (tepeden dusmesi icin eksi olabilir) */
 function createTileElement(tile, startRow, startCol) {
   const el = document.createElement('div');
   el.className = 'tile';
@@ -509,9 +456,6 @@ function updateHud() {
   }
 }
 
-/* +1 saniye kazanildiginda sure kutusunda kisa bir yesil parlama.
-   Sinif zaten uzerindeyse animasyon tekrar oynamaz, o yuzden once kaldirip
-   bir reflow'dan sonra tekrar ekliyoruz (zincirleme eslesmelerde de calissin). */
 function pulseTime() {
   timeBox.classList.remove('bonus');
   void timeBox.offsetWidth;
@@ -520,8 +464,6 @@ function pulseTime() {
 
 const format = (n) => Number(n).toLocaleString(locale());
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-/* ---------- Kontroller ---------- */
 
 const SWIPE_MIN = 12;
 let swipeStart = null;
@@ -567,8 +509,6 @@ function cellFromPoint(x, y) {
   if (r < 0 || r >= SIZE || c < 0 || c >= SIZE) return null;
   return { r, c };
 }
-
-/* ---------- Bitis ekrani ---------- */
 
 function showOverlay(title, text, buttonLabel, action) {
   overlayTitle.textContent = title;
