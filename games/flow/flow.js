@@ -11,10 +11,10 @@
    etmek zorunda degil - hangi yoldan giderse gitsin, ciftler baglanip
    izgara dolarsa bolum biter. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v40';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v40';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v40';
-import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v40';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v41';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v41';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v41';
+import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v41';
 
 const GAME_ID = 'flow';
 /* EKONOMI DENGESI

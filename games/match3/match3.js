@@ -5,10 +5,10 @@
    ustundekiler asagi duser, yukaridan yenileri gelir. Zincirleme patlamalar
    daha cok puan verir. Tur 60 saniye surer. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v40';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v40';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v40';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v40';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v41';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v41';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v41';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v41';
 
 const GAME_ID = 'match3';
 const SIZE = 8;
@@ -27,6 +27,8 @@ const ROUND_SECONDS = 60;
    yeniden ayarlanmali. */
 const POINTS_DIVISOR = 19; /* 60 sn tur, ~1.350 skor -> ~70 jeton */
 const POINTS_PER_TILE = 10;
+const TIME_BONUS = 1;        /* her eslesme dalgasinda sureye eklenen saniye */
+const TIME_CAP = ROUND_SECONDS + 30; /* sure sonsuza kadar birikmesin diye tavan */
 
 registerTexts(GAME_ID, {
   title: 'Şeker Eşleştir',
@@ -290,7 +292,9 @@ async function resolveCascades() {
     chain++;
     const gain = matches.length * POINTS_PER_TILE * chain;
     score += gain;
+    timeLeft = Math.min(timeLeft + TIME_BONUS, TIME_CAP);
     updateHud();
+    pulseTime();
     haptic.success();
     SFX.match();
 
@@ -503,6 +507,15 @@ function updateHud() {
     best = score;
     bestEl.textContent = format(best);
   }
+}
+
+/* +1 saniye kazanildiginda sure kutusunda kisa bir yesil parlama.
+   Sinif zaten uzerindeyse animasyon tekrar oynamaz, o yuzden once kaldirip
+   bir reflow'dan sonra tekrar ekliyoruz (zincirleme eslesmelerde de calissin). */
+function pulseTime() {
+  timeBox.classList.remove('bonus');
+  void timeBox.offsetWidth;
+  timeBox.classList.add('bonus');
 }
 
 const format = (n) => Number(n).toLocaleString(locale());
