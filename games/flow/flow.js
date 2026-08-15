@@ -11,9 +11,9 @@
    etmek zorunda degil - hangi yoldan giderse gitsin, ciftler baglanip
    izgara dolarsa bolum biter. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v35';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v35';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v35';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v36';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v36';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v36';
 
 const GAME_ID = 'flow';
 /* EKONOMI DENGESI
@@ -42,7 +42,7 @@ registerTexts(GAME_ID, {
   levelDone: 'Level complete!',
   nextLevel: 'Next level',
   levelResult: 'Solved in {moves} moves.',
-  earnedPoints: '+{points} hub points earned.',
+  earnedPoints: '+{points} $MH earned.',
 });
 
 /* Renk sirasi tripletile/match3 ile ayni palet - projede tutarlilik icin */

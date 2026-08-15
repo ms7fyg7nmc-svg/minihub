@@ -9,26 +9,26 @@
    Burada hicbir fiyat, hicbir XP degeri ve hicbir bakiye aritmetigi yok -
    ileride dengeleme yaparken bu dosyayi acmak gerekmemeli. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v35';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v35';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v36';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v36';
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v35';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v35';
-import { bakiyeOku, harca } from './economy.js?v35';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v36';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v36';
+import { bakiyeOku, harca } from './economy.js?v36';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v35';
+         adaSahipMi, adaEkle } from './model.js?v36';
 /* headSvg ve HEAD_BOX artik cagrilmiyor: taclar uretilmis gorsel oldu,
    dukkan kutucugu de ejderhayi cizip kafaya yakinlasiyor. */
-import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI } from './art.js?v35';
-import { ITEM_TEXTS } from './i18n-items.js?v35';
-import { createIsland } from './island.js?v35';
+import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI } from './art.js?v36';
+import { ITEM_TEXTS } from './i18n-items.js?v36';
+import { createIsland } from './island.js?v36';
 
 const GAME_ID = 'dragon';
 
 registerTexts(GAME_ID, {
   title: 'Ejderha Adası',
   level: 'SEVİYE',
-  coins: 'JETON',
+  coins: '$MH',
   fullness: 'Doyum',
   happiness: 'Keyif',
   feed: 'Besle',
@@ -37,7 +37,7 @@ registerTexts(GAME_ID, {
   done: 'Bitti',
   backToHub: "Hub'a dön",
   hint: 'Diğer oyunlarda jeton kazan, burada ejderhanı besle.',
-  notEnough: 'Yeterli jetonun yok. Bir oyun oynayıp geri gel.',
+  notEnough: 'Yeterli $MH’ın yok. Bir oyun oynayıp geri gel.',
   hungryHint: 'Ejderhan acıktı, beslenmeyi bekliyor.',
   maxLevel: 'Ejderhan en yüksek seviyeye ulaştı.',
   levelUp: 'Seviye {level}!',
@@ -49,7 +49,7 @@ registerTexts(GAME_ID, {
 
   lockedMsg: "Seviye {level}'de açılıyor.",
   tryHint: 'Ejderhanın üzerinde deniyorsun.',
-  tryNoCoins: 'Yeterli jetonun yok.',
+  tryNoCoins: 'Yeterli $MH’ın yok.',
   tryCancel: 'Vazgeç',
   bought: '{name} alındı!',
   owned: 'Alındı',
@@ -431,6 +431,11 @@ function ucur(metin) {
 
 const bicim = (n) => Number(n).toLocaleString(locale());
 
+/* Fiyat etiketlerinin onundeki $MH coin ikonu. Onceden '◆' karakteriydi;
+   artik Scenario'da uretilmis gercek bir gorsel - metin degil <img>
+   oldugu icin bu deger textContent'e degil innerHTML'e yazilmali. */
+const coinIkon = () => '<img class="coin-ic" src="../../assets/coin.png" alt="">';
+
 /* ---------- Dukkan ---------- */
 
 function dukkanGoster(acik) {
@@ -577,9 +582,16 @@ function grupCiz(baslikKey, girdiler) {
       <span class="${g.sahip ? 'shop-price owned' : (g.kilit ? 'shop-need' : 'shop-price')}"></span>`;
 
     btn.querySelector('.shop-name').textContent = t(g.item.nameKey);
-    btn.querySelector('.shop-price, .shop-need').textContent = g.sahip
-      ? t(g.secili ? 'equipped' : 'owned')
-      : (g.kilit ? t('needLevel', { level: g.item.needLevel }) : `◆ ${bicim(g.item.price)}`);
+    const fiyatEl = btn.querySelector('.shop-price, .shop-need');
+    if (g.sahip) {
+      fiyatEl.textContent = t(g.secili ? 'equipped' : 'owned');
+    } else if (g.kilit) {
+      fiyatEl.textContent = t('needLevel', { level: g.item.needLevel });
+    } else {
+      /* Yalnizca sayidan olusan icerik icin innerHTML - kullanici girdisi
+         degil, bicim() her zaman formatlanmis bir sayi doner. */
+      fiyatEl.innerHTML = `${coinIkon()} ${bicim(g.item.price)}`;
+    }
 
     btn.addEventListener('click', () => parcaSec(g.slot, g.id, g.item));
     sira.appendChild(btn);
@@ -788,7 +800,7 @@ function denemeCubuguCiz() {
   tryBar.style.setProperty('--rar', r.renk);
   tryName.textContent = t(item.nameKey);
   tryRar.textContent = t(r.nameKey);
-  tryBuy.textContent = `◆ ${bicim(item.price)}`;
+  tryBuy.innerHTML = `${coinIkon()} ${bicim(item.price)}`;
   tryBuy.disabled = busy || kilit || parasiz;
 
   tryNote.classList.toggle('warn', !!(kilit || parasiz));

@@ -174,9 +174,9 @@ const TEXTS = {
     welcome:
       "<b>MINI HUB GAMES'e hoş geldin</b>\n\n" +
       'Cebinde bir sürü mini oyun — bulmaca, blok, şeker ve dahası.\n\n' +
-      'Kazandığın jetonlarla uçan adadaki kendi ejderhanı büyüt.\n\n' +
-      'Bitirdiğin her oyun sana hub puanı kazandırır - büyüyen bir kripto ' +
-      'ekosisteminin ilk hali olan $MH’ın öncüsü. İndirme yok.\n\n' +
+      'Kazandığın $MH ile uçan adadaki kendi ejderhanı büyüt.\n\n' +
+      'Bitirdiğin her oyun hub puanı kazandırır. Bu puanlar, büyüyen bir ' +
+      'kripto ekosisteminin parçası olan $MH’ın ilk hali. İndirme yok.\n\n' +
       'Başlamak için aşağıdaki <b>Oyna</b> düğmesine bas.',
     help:
       '<b>Nasıl çalışıyor</b>\n\n' +

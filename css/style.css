@@ -138,7 +138,14 @@ body.hub::before {
   font-variant-numeric: tabular-nums;
 }
 
-.coin { color: var(--gold-yazi); filter: drop-shadow(0 0 6px rgba(245, 185, 66, 0.55)); }
+/* Onceden bir '◆' karakteriydi - suan olceklenmis $MH coin gorseli.
+   width/height olmadan img kendi 1024px cozunurluguyle yerlesip
+   sayfayi tasiyordu. */
+.coin {
+  width: 18px;
+  height: 18px;
+  filter: drop-shadow(0 0 5px rgba(245, 185, 66, 0.55));
+}
 
 .points-side { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
 

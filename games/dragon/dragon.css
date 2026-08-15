@@ -290,7 +290,28 @@
 
 .controls[hidden] { display: none; }
 .btn.feed { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
-.btn.feed b::before { content: '◆'; margin-right: 4px; opacity: 0.8; }
+/* Onceden '◆' karakteriydi - artik Scenario'da uretilmis $MH coin gorseli.
+   content:url() cogu tarayicida boyutu yok sayip gorseli kendi cozunurlugunde
+   basiyor; boyle bir olcekli, gormezden gelinemeyen ikon icin arka plan
+   gorseli olan bos bir kutu daha guvenilir. */
+.btn.feed b::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+  vertical-align: -2px;
+  background: url('../../assets/coin.png') center/contain no-repeat;
+  opacity: 0.9;
+}
+
+/* Fiyat etiketlerinin (dukkan/deneme cubugu) onundeki coin - artik <img> */
+.coin-ic {
+  width: 13px;
+  height: 13px;
+  vertical-align: -1px;
+  margin-right: 1px;
+}
 .btn:disabled { opacity: 0.45; }
 
 /* game.css'teki .btn flex:1 aliyor - kolon yerlesiminde bu onu dikey olarak

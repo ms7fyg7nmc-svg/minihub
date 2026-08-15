@@ -18,9 +18,9 @@
    gelirin buyuk kismi kozmetikten geliyor ve insanlari harcamaya iten sey
    guc degil kendini ifade etme - burada da odul guc degil, gorunum. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v35';
-import { getPoints, spendPoints, saveState, loadState } from '../../js/store.js?v35';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v35';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v36';
+import { getPoints, spendPoints, saveState, loadState } from '../../js/store.js?v36';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v36';
 
 const GAME_ID = 'pet';
 
@@ -34,7 +34,7 @@ const xpNeeded = (level) => 2 + Math.floor(level / 8);
 registerTexts(GAME_ID, {
   title: 'Ejderham',
   level: 'SEVİYE',
-  coins: 'JETON',
+  coins: '$MH',
   fullness: 'Doyum',
   growth: 'Gelişim',
   feed: 'Besle',
@@ -42,7 +42,7 @@ registerTexts(GAME_ID, {
   tabCare: 'Bakım',
   tabShop: 'Dükkân',
   hint: 'Diğer oyunlarda jeton kazan, burada ejderhanı besle.',
-  notEnough: 'Yeterli jetonun yok. Bir oyun oynayıp geri gel.',
+  notEnough: 'Yeterli $MH’ın yok. Bir oyun oynayıp geri gel.',
   hungryHint: 'Ejderhan acıktı, beslenmeyi bekliyor.',
   maxLevel: 'En yüksek seviyeye ulaştın.',
   levelUp: 'Seviye {level}!',
@@ -58,7 +58,7 @@ registerTexts(GAME_ID, {
   stageNames: 'Yavru,Genç,Ejderha,Savaşçı,Kadim,Efsane',
   lockedMsg: "Seviye {level}'de açılıyor.",
   tryHint: 'Ejderhanın üzerinde deniyorsun.',
-  tryNoCoins: 'Yeterli jetonun yok.',
+  tryNoCoins: 'Yeterli $MH’ın yok.',
   tryCancel: 'Vazgeç',
 
   /* Dukkan urun adlari */
@@ -739,9 +739,13 @@ function renderShop() {
       btn.querySelector('.shop-name').textContent = t(item.nameKey);
 
       const etiket = btn.querySelector('.shop-price, .shop-need');
-      etiket.textContent = sahip
-        ? t(secili ? 'equipped' : 'owned')
-        : (kilit ? t('needLevel', { level: item.needLevel }) : `◆ ${format(item.price)}`);
+      if (sahip) {
+        etiket.textContent = t(secili ? 'equipped' : 'owned');
+      } else if (kilit) {
+        etiket.textContent = t('needLevel', { level: item.needLevel });
+      } else {
+        etiket.innerHTML = `${coinIkon()} ${format(item.price)}`;
+      }
 
       btn.addEventListener('click', () => pickItem(group.key, id, item));
       row.appendChild(btn);
@@ -861,7 +865,7 @@ function renderTryBar() {
 
   tryBar.hidden = false;
   tryName.textContent = t(item.nameKey);
-  tryBuy.textContent = `◆ ${format(item.price)}`;
+  tryBuy.innerHTML = `${coinIkon()} ${format(item.price)}`;
   tryBuy.disabled = busy || kilit || parasiz;
 
   tryNote.classList.toggle('warn', !!(kilit || parasiz));
@@ -914,3 +918,6 @@ function showFloater(text) {
 }
 
 const format = (n) => Number(n).toLocaleString(locale());
+
+/* Bkz. dragon.js coinIkon() - ayni gorsel, ayni sebep (metin degil <img>). */
+const coinIkon = () => '<img class="coin-ic" src="../../assets/coin.png" alt="">';

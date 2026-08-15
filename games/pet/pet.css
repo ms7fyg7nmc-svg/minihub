@@ -320,5 +320,23 @@ body.shop-open .pet-stage { max-width: 176px; }
 /* --- Besleme butonu --- */
 
 .btn.feed { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-.btn.feed b::before { content: '◆'; margin-right: 4px; opacity: 0.8; }
+/* Bkz. dragon.css - ayni gerekce (content:url() gorseli olceklemeyi
+   gormezden gelebiliyor, arka plan gorseli daha guvenilir). */
+.btn.feed b::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+  vertical-align: -2px;
+  background: url('../../assets/coin.png') center/contain no-repeat;
+  opacity: 0.9;
+}
+
+.coin-ic {
+  width: 13px;
+  height: 13px;
+  vertical-align: -1px;
+  margin-right: 1px;
+}
 .btn.feed:disabled { opacity: 0.45; }

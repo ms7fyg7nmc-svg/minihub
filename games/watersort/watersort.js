@@ -8,9 +8,9 @@
    sonra geri alinabilir hamlelerle karistir. Boylece her bolumun cozumu
    kesin vardir (karistirma hamlelerini tersten oynamak yeter). */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v35';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v35';
-import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js?v35';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v36';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v36';
+import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js?v36';
 
 const GAME_ID = 'watersort';
 /* EKONOMI DENGESI
@@ -41,7 +41,7 @@ registerTexts(GAME_ID, {
   levelDone: 'Bölüm tamam!',
   nextLevel: 'Sonraki bölüm',
   levelResult: '{moves} hamlede bitirdin.',
-  earnedPoints: '+{points} hub puanı kazandın.',
+  earnedPoints: '+{points} $MH kazandın.',
 });
 
 const COLORS = [

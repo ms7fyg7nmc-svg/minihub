@@ -14,9 +14,9 @@
    Ilk dokunus da her zaman guvenlidir: mayinlar ilk dokunustan SONRA,
    dokundugun hucrenin ve komsularinin disina yerlestirilir. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v35';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v35';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v35';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v36';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v36';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v36';
 
 const GAME_ID = 'minesweeper';
 /* EKONOMI DENGESI
@@ -50,7 +50,7 @@ registerTexts(GAME_ID, {
   levelDone: 'Bölüm temiz!',
   nextLevel: 'Sonraki bölüm',
   levelResult: '{mines} mayının hepsini buldun.',
-  earnedPoints: '+{points} hub puanı kazandın.',
+  earnedPoints: '+{points} $MH kazandın.',
   boom: 'Mayına bastın',
   playAgain: 'Yeniden oyna',
   reached: '{level}. bölüme kadar geldin.',
