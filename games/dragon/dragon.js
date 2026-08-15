@@ -9,19 +9,19 @@
    Burada hicbir fiyat, hicbir XP degeri ve hicbir bakiye aritmetigi yok -
    ileride dengeleme yaparken bu dosyayi acmak gerekmemeli. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v41';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v41';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v42';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v42';
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v41';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v41';
-import { bakiyeOku, harca } from './economy.js?v41';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v42';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v42';
+import { bakiyeOku, harca } from './economy.js?v42';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v41';
+         adaSahipMi, adaEkle } from './model.js?v42';
 /* headSvg ve HEAD_BOX artik cagrilmiyor: taclar uretilmis gorsel oldu,
    dukkan kutucugu de ejderhayi cizip kafaya yakinlasiyor. */
-import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI } from './art.js?v41';
-import { ITEM_TEXTS } from './i18n-items.js?v41';
-import { createIsland } from './island.js?v41';
+import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI } from './art.js?v42';
+import { ITEM_TEXTS } from './i18n-items.js?v42';
+import { createIsland } from './island.js?v42';
 
 const GAME_ID = 'dragon';
 

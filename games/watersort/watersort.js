@@ -8,10 +8,10 @@
    sonra geri alinabilir hamlelerle karistir. Boylece her bolumun cozumu
    kesin vardir (karistirma hamlelerini tersten oynamak yeter). */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v41';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v41';
-import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js?v41';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v41';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v42';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v42';
+import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js?v42';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v42';
 
 const GAME_ID = 'watersort';
 /* EKONOMI DENGESI
@@ -26,9 +26,11 @@ const GAME_ID = 'watersort';
    Model her oyunun kendi puanlama mekanigi + makul bir oturum suresi
    varsayimina dayaniyor; gercek oyuncu verisi geldiginde bu sayilar
    yeniden ayarlanmali. */
-const POINTS_PER_LEVEL = 90; /* bolum ~1,5 dk surer */
+const POINTS_PER_LEVEL = 90; /* bolum ~1,5 dk surer, taban odul */
+const POINTS_PER_EXTRA_COLOR = 5; /* renk cesidi arttikca ustune eklenen odul */
 const CAPACITY = 4;          /* bir tupe kac katman sigar */
-const EMPTY_TUBES = 2;       /* her bolumde kac bos tup verilir */
+const EMPTY_TUBES = 2;       /* baslangicta kac bos tup verilir */
+const HARD_EMPTY_LEVEL = 15; /* bu seviyeden sonra bos tup 2'den 1'e duser */
 
 registerTexts(GAME_ID, {
   title: 'Su Sıralama',
@@ -48,6 +50,7 @@ registerTexts(GAME_ID, {
 const COLORS = [
   '#e2544e', '#5b8cff', '#4ecb8b', '#f5b942', '#c079f2',
   '#3fc7d4', '#f2884b', '#e2679c', '#9aa87a',
+  '#8c5a3c', '#5c7ea3', '#b83280',
 ];
 
 const stageEl = document.getElementById('stage');
@@ -115,9 +118,27 @@ function goHome() {
 
 /* ---------- Bolum uretimi ---------- */
 
-/* Bolum ilerledikce renk sayisi artar (3'ten 9'a kadar) */
+/* Bolum ilerledikce renk sayisi artar (3'ten 12'ye kadar, 19. seviyede tavan).
+   Eskiden 9'da (COLORS o zaman 9 renkti) tavan yapiyordu, sonrasinda oyun hep
+   AYNI zorlukta kaliyordu. 3 renk daha eklendi, tavan artik cok daha gec. */
 function colorCountFor(levelNo) {
   return Math.min(3 + Math.floor((levelNo - 1) / 2), COLORS.length);
+}
+
+/* Renk cesidi tavan yaptiktan sonra da zorluk artmaya devam etsin diye:
+   HARD_EMPTY_LEVEL'den itibaren manevra alani (bos tup sayisi) 2'den 1'e
+   duser. Bolum, karistirma hamlelerinin tam tersi oynanarak her zaman
+   cozulebilir kuruldugu icin bu, cozulemez bolum riski YARATMAZ - sadece
+   oyuncunun manevra alanini daraltir. */
+function emptyTubesFor(levelNo) {
+  return levelNo >= HARD_EMPTY_LEVEL ? 1 : EMPTY_TUBES;
+}
+
+/* Daha zor bolumler (daha cok renk) biraz daha fazla odul versin - ama
+   colorCountFor zaten tavanli oldugu icin bu da otomatik olarak tavanli,
+   Triple Tile'da yasanan sinirsiz buyume riski burada yok. */
+function pointsFor(levelNo) {
+  return POINTS_PER_LEVEL + (colorCountFor(levelNo) - 3) * POINTS_PER_EXTRA_COLOR;
 }
 
 function buildLevel(levelNo) {
@@ -128,13 +149,14 @@ function buildLevel(levelNo) {
   locked = false;
 
   const colorCount = colorCountFor(levelNo);
+  const emptyTubes = emptyTubesFor(levelNo);
 
   /* Cozulmus halden basla, karistir, sonra cozulebilirligini dogrula.
      Cok nadiren cikmaz sokak uretilirse bastan uretiriz. */
   for (let attempt = 0; attempt < 30; attempt++) {
     tubes = [];
     for (let i = 0; i < colorCount; i++) tubes.push(new Array(CAPACITY).fill(i));
-    for (let i = 0; i < EMPTY_TUBES; i++) tubes.push([]);
+    for (let i = 0; i < emptyTubes; i++) tubes.push([]);
     scramble(colorCount * 14);
     if (!isSolved() && isSolvable(tubes)) break;
   }
@@ -324,9 +346,10 @@ async function finishLevel() {
   bestLevel = result.best;
   bestEl.textContent = bestLevel;
 
-  await addPoints(POINTS_PER_LEVEL);
+  const points = pointsFor(level);
+  await addPoints(points);
 
-  const text = `${t('levelResult', { moves })} ${t('earnedPoints', { points: POINTS_PER_LEVEL })}`;
+  const text = `${t('levelResult', { moves })} ${t('earnedPoints', { points })}`;
   showOverlay(t('levelDone'), text, t('nextLevel'), () => buildLevel(level + 1));
 }
 

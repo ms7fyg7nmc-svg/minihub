@@ -14,10 +14,10 @@
    Ilk dokunus da her zaman guvenlidir: mayinlar ilk dokunustan SONRA,
    dokundugun hucrenin ve komsularinin disina yerlestirilir. */
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v41';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v41';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v41';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v41';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v42';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v42';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v42';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v42';
 
 const GAME_ID = 'minesweeper';
 /* EKONOMI DENGESI
