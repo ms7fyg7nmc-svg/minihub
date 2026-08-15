@@ -53,11 +53,22 @@
   background: rgba(255, 255, 255, 0.24);
 }
 
-/* Kuyruk: daha kucuk ve yuvarlak, yilan bir yerde bitiyor gibi dursun */
+/* Kuyruk: daha kucuk ve yuvarlak, yilan bir yerde bitiyor gibi dursun.
+   ONEMLI: .cell'in kendisini scale() ile kucultmek arka planini da
+   kucultuyor, geriye kalan bosluktan tahtanin koyu (neredeyse siyah)
+   zemini gorunuyordu. Bunun yerine .cell BOS hucre rengiyle kaliyor,
+   kucuk yuvarlak sadece bir ::before olarak ustune ciziliyor. */
 .cell.tail {
-  background: #348f61;
+  background: rgba(140, 145, 165, 0.22);
+  border-radius: 3px;
+}
+
+.cell.tail::before {
+  content: '';
+  position: absolute;
+  inset: 14%;
   border-radius: 50%;
-  transform: scale(0.72);
+  background: #348f61;
 }
 
 .cell.head {
