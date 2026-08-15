@@ -26,7 +26,7 @@
    yansidi). Simdi bu cihazdaki kayit yetkili, bulut sadece yedek.
 */
 
-import { isTelegramUser, getInitData } from './tg.js?v42';
+import { isTelegramUser, getInitData } from './tg.js?v43';
 
 /* Worker'in gercek adresiyle degistir: Cloudflare Worker sayfasinin en
    ustunde yazan adres - KURULUM-BOT.md'nin C adiminda not ettigin adresin
@@ -494,6 +494,28 @@ export async function getSpin() {
   const v = await senkron;
   if (!v) return MISAFIR.spin;
   return v.spin;
+}
+
+/* getStreak/getSpin ilk senkrondan kalan BAYAT bir anlik goruntuyu
+   donduruyor - kendiliginden zamanla azalmiyor. Geri sayim sifira
+   ininceye kadar bu sorun degil (ekranda zaten yerelde sayiliyor), ama
+   sifira indiginde "artik alinabilir mi" sorusunun cevabini sunucudan
+   TAZE almak gerekiyor - yoksa ayni bayat "1 saat kaldi" degeriyle
+   sonsuza kadar yeniden baslatilip hic ilerlemiyor gibi goruniyordu.
+   /api/sync tekrar cagirmak guvenli: sunucu tarafinda "ilk senkron"
+   disindaki her cagri sadece taze durumu okuyup donduruyor. */
+export async function refreshDaily() {
+  const v = await senkron;
+  if (!v) return;
+  const veri = await sunucuGonder('/api/sync', {
+    points: Number(localGet('hub_points')) || 0,
+    state: yerelAnlikGoruntu(),
+  });
+  if (!veri) return;
+  v.energy = Number(veri.energy) || 0;
+  v.energyNextMs = Number(veri.energyNextMs) || 0;
+  if (veri.streak && typeof veri.streak === 'object') v.streak = veri.streak;
+  if (veri.spin && typeof veri.spin === 'object') v.spin = veri.spin;
 }
 
 export async function spinWheel() {

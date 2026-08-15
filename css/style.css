@@ -567,6 +567,22 @@ body.hub::before {
   color: var(--muted);
 }
 
+/* Gunluk odul panelindeki giris cumlesi: solda duz gri metin yerine
+   panelin asil davetiyesi gibi one cikan bir baslik - kapatma dugmesiyle
+   carpismasin diye simetrik bosluk birakip ortalaniyor. */
+.daily-intro.is-heading {
+  padding: 0 34px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.1px;
+  background: linear-gradient(95deg, var(--gold-yazi-parlak), var(--gold-yazi) 40%, var(--pembe-yazi));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
 .daily-section { margin: 0 0 22px; }
 .daily-section:last-of-type { margin-bottom: 4px; }
 

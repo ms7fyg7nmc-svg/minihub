@@ -1,12 +1,12 @@
 /* Hub (ana menu) ekraninin mantigi.
 Yeni oyun eklemek istedigimizde sadece asagidaki gameList() fonksiyonuna satir ekliyoruz. */
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v42';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v43';
 import {
    getPoints, getBest, sunucuDurumu,
-   getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu,
-} from './store.js?v42';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v42';
+   getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
+} from './store.js?v43';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v43';
 
 /* Botun Telegram adresi. Kendi botunun adini yazarsan tarayicida acan
    kullanicilar uyariya dokununca dogrudan bota gider. Bos birakilirsa
@@ -403,12 +403,19 @@ function polar(cx, cy, r, angleDeg) {
    return { x: cx + r * Math.sin(a), y: cy - r * Math.cos(a) };
 }
 
+const WHEEL_FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+
 function buildWheel(prizes) {
    const svg = document.getElementById('wheel');
    if (!svg || !prizes?.length) return;
    const n = prizes.length;
    const segAngle = 360 / n;
-   const cx = 100, cy = 100, r = 94, labelR = r * 0.62;
+   /* Sayilar eskiden 0.62 yaricapta, dilimin egimini takip edecek sekilde
+      donduruluyordu - hem merkeze fazla yakin duruyordu hem de alt yaridaki
+      donus duzeltmesi bazi acilarda yazinin ters/egik gorunmesine yol
+      aciyordu. Artik hepsi DUZ (donusuz) ve rime daha yakin: hem her zaman
+      okunakli hem de dilimin ici bos durmuyor. */
+   const cx = 100, cy = 100, r = 94, labelR = r * 0.76;
 
    let html = '';
    prizes.forEach((prize, i) => {
@@ -420,20 +427,14 @@ function buildWheel(prizes) {
       const isEnergy = prize.tur === 'enerji';
       const text = isEnergy ? t('hub.daily.energy').toUpperCase() : prize.miktar;
 
-      /* Sayilar dilimin DIS YAYINA PARALEL duruyor (teget yonu).
-         polar()'da aci tepeden saat yonunde olctugu icin teget yonu tam
-         olarak rotate(mid); alt yaridaki dilimlerde yazi bas asagi
-         dusecegi icin onlar 180 derece daha ceviriliyor. */
-      const yazAci = (mid > 90 && mid < 270) ? mid + 180 : mid;
       html += `
       <path d="M${cx},${cy} L${start.x.toFixed(2)},${start.y.toFixed(2)}
                A${r},${r} 0 0,1 ${end.x.toFixed(2)},${end.y.toFixed(2)} Z"
             fill="${color}" stroke="rgba(0,0,0,.28)" stroke-width="1.5"/>
-      <g transform="translate(${label.x.toFixed(2)} ${label.y.toFixed(2)}) rotate(${yazAci.toFixed(1)})">
-        <text text-anchor="middle" dominant-baseline="middle" fill="#fff" font-weight="800"
-              font-size="${isEnergy ? 10 : 14}"
-              style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))">${text}</text>
-      </g>`;
+      <text x="${label.x.toFixed(2)}" y="${label.y.toFixed(2)}"
+            text-anchor="middle" dominant-baseline="middle" fill="#fff" font-weight="800"
+            font-family="${WHEEL_FONT}" font-size="${isEnergy ? 9 : 15}"
+            style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))">${text}</text>`;
    });
    svg.innerHTML = html;
 }
@@ -481,10 +482,20 @@ function sayaclariBaslat() {
          zamanlayici kendini durduruyor. */
       const hedefler = document.querySelectorAll('[data-bitis]');
       if (!hedefler.length) { clearInterval(sayacTimer); sayacTimer = null; return; }
-      hedefler.forEach((el) => {
+      hedefler.forEach(async (el) => {
          const kalan = Number(el.dataset.bitis) - Date.now();
          el.textContent = kalan > 0 ? kalanMetin(kalan) : '';
-         if (kalan <= 0) { delete el.dataset.bitis; renderStreakSection(); renderSpinSection(); }
+         if (kalan <= 0) {
+            delete el.dataset.bitis;
+            /* getStreak/getSpin ilk senkrondan kalan bayat bir anlik goruntu
+               donduruyor - sifira inince TAZE durumu sunucudan cekmezsek
+               "1 saat kaldi" ayni bayat sureyle sonsuza kadar yeniden
+               baslar, hicbir zaman alinabilir hale gelmez. */
+            await refreshDaily();
+            renderStreakSection();
+            renderSpinSection();
+            renderDailyCard();
+         }
       });
    }, 1000);
 }
@@ -570,7 +581,12 @@ function wireDailyPanel() {
       }
       await renderStreakSection();
       await renderDailyCard();
-      streakBtn.disabled = false;
+      /* Basariliysa renderStreakSection() dugmeyi zaten "yarin gel"
+         durumuna (disabled) getirdi. Burada KOSULSUZ tekrar aciyorduk -
+         dugme aslinda alinamaz haldeyken bir sure tiklanabilir/parliyor
+         gibi goruniyordu. Sadece basarisizsa (ag hatasi vb.) tekrar
+         denenebilsin diye aciyoruz. */
+      if (!sonuc?.ok) streakBtn.disabled = false;
    });
 
    spinBtn?.addEventListener('click', async () => {
@@ -672,7 +688,8 @@ async function renderStreakSection() {
          birakildiginda, sure sifirsa (ya da tikleyici o an calismiyorsa)
          "Yarin tekrar gel" yaninda hic bir sey gorunmuyordu. */
       const kalan = streak.nextInMs || 0;
-      btn.innerHTML = `${t('hub.daily.comeTomorrow')} <span class="geri-sayim" data-bitis="${Date.now() + kalan}">${kalanMetin(kalan)}</span>`;
+      const zamanHtml = `<span class="geri-sayim" data-bitis="${Date.now() + kalan}">${kalanMetin(kalan)}</span>`;
+      btn.innerHTML = t('hub.daily.comeIn', { time: zamanHtml });
       btn.disabled = true;
       btn.classList.remove('is-locked');
    }

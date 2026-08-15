@@ -16,8 +16,8 @@
    Satin alinan kozmetikler oyuncuda (owned) tutuluyor, ejderhada degil.
    Ileride ikinci ejderha geldiginde ayni taci ona da takabilsin diye. */
 
-import { loadState, saveState } from '../../js/store.js?v42';
-import { SLOTS, VARSAYILAN_GORUNUM } from './data.js?v42';
+import { loadState, saveState } from '../../js/store.js?v43';
+import { SLOTS, VARSAYILAN_GORUNUM } from './data.js?v43';
 
 const OYUN_ID = 'dragon';
 const SURUM = 2;
