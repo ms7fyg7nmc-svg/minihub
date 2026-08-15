@@ -1,10 +1,10 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v45';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v46';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
-} from './store.js?v45';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v45';
+} from './store.js?v46';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v46';
 
 const BOT_LINK = '';
 
@@ -340,10 +340,11 @@ function buildWheel(prizes) {
       <path d="M${cx},${cy} L${start.x.toFixed(2)},${start.y.toFixed(2)}
                A${r},${r} 0 0,1 ${end.x.toFixed(2)},${end.y.toFixed(2)} Z"
             fill="${color}" stroke="rgba(0,0,0,.28)" stroke-width="1.5"/>
-      <text x="${label.x.toFixed(2)}" y="${label.y.toFixed(2)}"
-            text-anchor="middle" dominant-baseline="middle" fill="#fff" font-weight="800"
-            font-family="${WHEEL_FONT}" font-size="${isEnergy ? 9 : 15}"
-            style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))">${text}</text>`;
+      <g transform="translate(${label.x.toFixed(2)} ${label.y.toFixed(2)}) rotate(${mid.toFixed(1)})">
+        <text text-anchor="middle" dominant-baseline="middle" fill="#fff" font-weight="800"
+              font-family="${WHEEL_FONT}" font-size="${isEnergy ? 9 : 15}"
+              style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))">${text}</text>
+      </g>`;
    });
    svg.innerHTML = html;
 }
