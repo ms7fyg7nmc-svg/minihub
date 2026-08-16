@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v67';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v68';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti,
-} from './store.js?v67';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v67';
+} from './store.js?v68';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v68';
 
 const BOT_LINK = '';
 const BOT_USERNAME = 'minihubgames_bot';
@@ -19,6 +19,7 @@ const REFERRAL_TIERS = [
    { lv: 5, amt: 750 }, { lv: 15, amt: 1500 }, { lv: 30, amt: 3000 },
    { lv: 50, amt: 5000 }, { lv: 75, amt: 7500 }, { lv: 99, amt: 10000 },
 ];
+const REFERRAL_TOTAL = REFERRAL_SIGNUP_BONUS + REFERRAL_TIERS.reduce((s, x) => s + x.amt, 0);
 
 const ICONS = {
    '2048': `<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -700,7 +701,8 @@ async function renderFriendsCard() {
 
    card.hidden = false;
    document.getElementById('friends-earned').textContent = veri.toplamKazanc.toLocaleString(locale());
-   document.getElementById('friends-hint').textContent = t('hub.friends.count', { n: veri.sayi });
+   document.getElementById('friends-hint').innerHTML =
+      mhHtml(t('hub.friends.upTo', { n: REFERRAL_TOTAL.toLocaleString(locale()) }));
 }
 
 function wireFriendsPanel() {
