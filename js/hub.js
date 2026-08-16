@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v62';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v63';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti,
-} from './store.js?v62';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v62';
+} from './store.js?v63';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v63';
 
 const BOT_LINK = '';
 const BOT_USERNAME = 'minihubgames_bot';
@@ -341,14 +341,19 @@ function buildWheel(prizes) {
       const isEnergy = prize.tur === 'enerji';
       const text = isEnergy ? t('hub.daily.energy').toUpperCase() : prize.miktar;
 
+      const altYazi = isEnergy ? '' : `
+        <text text-anchor="middle" dominant-baseline="middle" y="9" fill="#fff" font-weight="700"
+              font-family="${WHEEL_FONT}" font-size="8" opacity="0.85"
+              style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))">$MH</text>`;
+
       html += `
       <path d="M${cx},${cy} L${start.x.toFixed(2)},${start.y.toFixed(2)}
                A${r},${r} 0 0,1 ${end.x.toFixed(2)},${end.y.toFixed(2)} Z"
             fill="${color}" stroke="rgba(0,0,0,.28)" stroke-width="1.5"/>
       <g transform="translate(${label.x.toFixed(2)} ${label.y.toFixed(2)}) rotate(${mid.toFixed(1)})">
-        <text text-anchor="middle" dominant-baseline="middle" fill="#fff" font-weight="800"
+        <text text-anchor="middle" dominant-baseline="middle" y="${isEnergy ? 0 : -4}" fill="#fff" font-weight="800"
               font-family="${WHEEL_FONT}" font-size="${isEnergy ? 9 : 15}"
-              style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))">${text}</text>
+              style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))">${text}</text>${altYazi}
       </g>`;
    });
    svg.innerHTML = html;

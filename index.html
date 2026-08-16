@@ -9,7 +9,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v62">
+  <link rel="stylesheet" href="css/style.css?v63">
 </head>
 <body class="hub">
   <div class="app">
@@ -122,7 +122,7 @@
       <p class="daily-intro is-heading" data-i18n="hub.daily.intro"></p>
 
       <section class="daily-section daily-energy-section">
-        <h3><span data-i18n="hub.daily.energy">Enerji</span></h3>
+        <h3><span class="energy-bolt" aria-hidden="true">⚡</span><span data-i18n="hub.daily.energy">Enerji</span></h3>
         <div class="energy-pips" id="energy-pips-modal"></div>
         <div class="energy-row">
           <span id="energy-next" class="geri-sayim"></span>
@@ -173,6 +173,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v62"></script>
+  <script type="module" src="js/hub.js?v63"></script>
 </body>
 </html>
