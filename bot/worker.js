@@ -59,7 +59,7 @@ function guvenliSayi(deger, max) {
   return Math.min(n, max);
 }
 
-const BANNER_URL = 'https://ms7fyg7nmc-svg.github.io/minihub/bot/assets/banner.jpg';
+const BANNER_URL = 'https://ms7fyg7nmc-svg.github.io/minihub/bot/assets/banner.jpg?v=2';
 
 const TEXTS = {
   en: {
