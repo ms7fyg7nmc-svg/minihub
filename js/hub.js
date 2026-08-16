@@ -1,14 +1,25 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v61';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v62';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti,
-} from './store.js?v61';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v61';
+} from './store.js?v62';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v62';
 
 const BOT_LINK = '';
 const BOT_USERNAME = 'minihubgames_bot';
+
+/* bot/worker.js'teki REFERRAL_SIGNUP_BONUS ve REFERRAL_LEVEL_MILESTONES ile
+   ayni degerler - yalnizca afis susu icin, gercek odul her zaman sunucudan
+   gelir. Ikisi ayrisirsa test-guvenlik.mjs "referral: banner sunucuyla ayni"
+   testi yakalar. */
+const REFERRAL_SIGNUP_BONUS = 500;
+const REFERRAL_TIERS = [
+   { lv: 5, amt: 750 }, { lv: 15, amt: 1500 }, { lv: 30, amt: 3000 },
+   { lv: 50, amt: 5000 }, { lv: 75, amt: 7500 }, { lv: 99, amt: 10000 },
+];
+const REFERRAL_TOTAL = REFERRAL_SIGNUP_BONUS + REFERRAL_TIERS.reduce((s, x) => s + x.amt, 0);
 
 const ICONS = {
    '2048': `<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -188,6 +199,8 @@ renderLiderCard();
 wireLiderPanel();
 renderFriendsCard();
 wireFriendsPanel();
+renderReferralBanner();
+wireReferralBanner();
 
 document.addEventListener('langchange', () => {
    applyTranslations();
@@ -197,6 +210,7 @@ document.addEventListener('langchange', () => {
    renderDailyCard();
    renderLiderCard();
    renderFriendsCard();
+   renderReferralBanner();
 });
 
 function renderTelegramNotice() {
@@ -723,4 +737,36 @@ async function acFriendsPanel() {
       satir.append(ad, seviye);
       liste.appendChild(satir);
    }
+}
+
+async function renderReferralBanner() {
+   const banner = document.getElementById('referral-banner');
+   if (!banner) return;
+
+   if ((await odulDurumu()) !== 'sunucu') { banner.hidden = true; return; }
+
+   banner.hidden = false;
+   document.getElementById('referral-banner-sub').textContent =
+      t('hub.friends.bannerSub', { n: REFERRAL_TOTAL.toLocaleString(locale()) });
+
+   const ladder = document.getElementById('referral-ladder');
+   ladder.textContent = '';
+
+   const kayitPill = document.createElement('div');
+   kayitPill.className = 'referral-pill is-signup';
+   kayitPill.innerHTML = `<span class="lv">${t('hub.friends.signupLabel')}</span>` +
+      `<span class="amt">+${REFERRAL_SIGNUP_BONUS.toLocaleString(locale())}</span>`;
+   ladder.appendChild(kayitPill);
+
+   REFERRAL_TIERS.forEach((tier, i) => {
+      const pill = document.createElement('div');
+      pill.className = 'referral-pill' + (i === REFERRAL_TIERS.length - 1 ? ' is-top' : '');
+      pill.innerHTML = `<span class="lv">${t('hub.friends.level', { n: tier.lv })}</span>` +
+         `<span class="amt">+${tier.amt.toLocaleString(locale())}</span>`;
+      ladder.appendChild(pill);
+   });
+}
+
+function wireReferralBanner() {
+   document.getElementById('referral-banner')?.addEventListener('click', acFriendsPanel);
 }

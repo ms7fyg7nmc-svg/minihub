@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v61';
-import { submitScore, addPoints, getBest, clearState, settleAbandonedRun } from '../../js/store.js?v61';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v61';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v61';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v62';
+import { submitScore, addPoints, getBest, clearState, settleAbandonedRun } from '../../js/store.js?v62';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v62';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v62';
 
 const GAME_ID = 'snake';
 const INTRO_SEEN_KEY = 'mh_snake_seen';

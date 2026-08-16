@@ -225,6 +225,82 @@ body.hub::before {
 
 /* --- Baslik --- */
 
+.referral-banner {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin: 14px 0 0;
+  padding: 16px 16px 14px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(245, 185, 66, 0.4);
+  background:
+    linear-gradient(150deg, rgba(245, 185, 66, 0.22), rgba(226, 103, 156, 0.14) 55%, rgba(192, 121, 242, 0.14)),
+    var(--bg-soft);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  overflow: hidden;
+  cursor: pointer;
+}
+.referral-banner[hidden] { display: none; }
+.referral-banner:active { transform: scale(0.98); }
+
+.referral-banner-glow {
+  position: absolute;
+  inset: -40% -20% auto auto;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 185, 66, 0.35), transparent 70%);
+  pointer-events: none;
+}
+
+.referral-banner-top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.referral-banner-icon {
+  flex: none;
+  font-size: 26px;
+  filter: drop-shadow(0 0 8px rgba(245, 185, 66, 0.5));
+}
+
+.referral-banner-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.referral-banner-text strong { font-size: 16px; letter-spacing: -0.2px; }
+.referral-banner-text span { font-size: 13px; color: var(--gold-yazi); font-weight: 700; }
+
+.referral-ladder {
+  position: relative;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 1px;
+}
+.referral-ladder::-webkit-scrollbar { display: none; }
+
+.referral-pill {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 54px;
+  padding: 7px 8px;
+  border-radius: 11px;
+  background: var(--yuzey);
+  border: 1px solid var(--cizgi-soft);
+}
+.referral-pill .lv { font-size: 9px; color: var(--muted); font-weight: 700; text-transform: uppercase; }
+.referral-pill .amt { font-size: 11px; font-weight: 800; color: var(--gold-yazi); white-space: nowrap; }
+.referral-pill.is-signup { background: rgba(226, 103, 156, 0.16); border-color: rgba(226, 103, 156, 0.4); }
+.referral-pill.is-signup .amt { color: var(--pembe-yazi); }
+.referral-pill.is-top { background: rgba(245, 185, 66, 0.18); border-color: rgba(245, 185, 66, 0.5); }
+
 .hero { margin: 28px 0 24px; }
 
 .hero h1 {

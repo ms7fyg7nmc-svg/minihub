@@ -9,10 +9,25 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v61">
+  <link rel="stylesheet" href="css/style.css?v62">
 </head>
 <body class="hub">
   <div class="app">
+
+    <!-- Arkadas davet tanitim afisi: en tepede, dikkat cekmesi icin.
+         hub.js gorunurlugunu ayarlar (sadece sunucu modunda gosterilir,
+         Telegram disinda davet linki calismaz). -->
+    <button class="referral-banner" id="referral-banner" hidden>
+      <div class="referral-banner-glow"></div>
+      <div class="referral-banner-top">
+        <span class="referral-banner-icon">🎁</span>
+        <div class="referral-banner-text">
+          <strong data-i18n="hub.friends.bannerTitle">Arkadaşını Davet Et</strong>
+          <span id="referral-banner-sub"></span>
+        </div>
+      </div>
+      <div class="referral-ladder" id="referral-ladder"></div>
+    </button>
 
     <header class="topbar">
       <div class="profile">
@@ -158,6 +173,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v61"></script>
+  <script type="module" src="js/hub.js?v62"></script>
 </body>
 </html>

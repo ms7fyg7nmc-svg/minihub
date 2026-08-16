@@ -190,6 +190,20 @@ for (const [slot, disaAd] of Object.entries(gruplar)) {
 }
 check('sunucu fiyat tablosu data.js ile ayni', ayrisan.length === 0, `-> ayrisan: ${ayrisan.join(', ')}`);
 
+const hubKaynak = readFileSync('/Users/vtredi/minihub/js/hub.js', 'utf8');
+const workerSignup = /REFERRAL_SIGNUP_BONUS = (\d+)/.exec(workerKaynak)?.[1];
+const hubSignup = /REFERRAL_SIGNUP_BONUS = (\d+)/.exec(hubKaynak)?.[1];
+check('referral: afis katilim bonusu sunucuyla ayni', workerSignup && workerSignup === hubSignup,
+      `-> worker=${workerSignup} hub=${hubSignup}`);
+
+const workerBlok = workerKaynak.match(/REFERRAL_LEVEL_MILESTONES = \[([\s\S]*?)\];/)?.[1] || '';
+const workerEsikler = [...workerBlok.matchAll(/\[(\d+),\s*(\d+)\]/g)].map((m) => `${m[1]}:${m[2]}`);
+const hubBlok = hubKaynak.match(/REFERRAL_TIERS = \[([\s\S]*?)\];/)?.[1] || '';
+const hubEsikler = [...hubBlok.matchAll(/\{\s*lv:\s*(\d+),\s*amt:\s*(\d+)\s*\}/g)].map((m) => `${m[1]}:${m[2]}`);
+check('referral: afis esikleri sunucuyla ayni',
+      workerEsikler.length > 0 && JSON.stringify(workerEsikler) === JSON.stringify(hubEsikler),
+      `-> worker=${JSON.stringify(workerEsikler)} hub=${JSON.stringify(hubEsikler)}`);
+
 const DB8 = makeDb(); const env8 = { DB: DB8, BOT_TOKEN }; const id8 = signedInitData(999);
 await api(env8, 'sync', { initData: id8, points: 0, state: {} });
 
