@@ -1,5 +1,5 @@
 
-import { ada as adaTemasi, DRAGON_ANCHOR } from './data.js?v68';
+import { ada as adaTemasi, DRAGON_ANCHOR } from './data.js?v69';
 
 const KARE_MS = 33;
 

@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v68';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v69';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti,
-} from './store.js?v68';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v68';
+} from './store.js?v69';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v69';
 
 const BOT_LINK = '';
 const BOT_USERNAME = 'minihubgames_bot';
@@ -655,7 +655,7 @@ async function acLiderPanel() {
 
       const puan = document.createElement('span');
       puan.className = 'lider-puan';
-      puan.textContent = s.kazanilan.toLocaleString(locale());
+      puan.innerHTML = mhHtml(`${s.kazanilan.toLocaleString(locale())} $MH`);
 
       satir.append(sira, ad, puan);
       liste.appendChild(satir);
@@ -670,7 +670,7 @@ async function acLiderPanel() {
       const a = document.createElement('span'); a.className = 'lider-no'; a.textContent = veri.kendi.sira;
       const b = document.createElement('span'); b.className = 'lider-ad'; b.textContent = t('hub.rank.you');
       const c = document.createElement('span'); c.className = 'lider-puan';
-      c.textContent = veri.kendi.kazanilan.toLocaleString(locale());
+      c.innerHTML = mhHtml(`${veri.kendi.kazanilan.toLocaleString(locale())} $MH`);
       satir.append(a, b, c);
       kendi.appendChild(satir);
    } else {
