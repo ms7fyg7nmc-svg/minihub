@@ -9,7 +9,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v59">
+  <link rel="stylesheet" href="css/style.css?v60">
 </head>
 <body class="hub">
   <div class="app">
@@ -67,6 +67,17 @@
       <div class="daily-card-energy">
         <span class="card-energy" id="lider-sira">—</span>
         <span class="card-energy-alt" data-i18n="hub.rank.you">Sıran</span>
+      </div>
+    </button>
+
+    <button class="daily-card lider-card" id="friends-card" hidden>
+      <div class="daily-card-info">
+        <strong data-i18n="hub.friends.title">Arkadaşlarını Davet Et</strong>
+        <span id="friends-hint" class="daily-card-hint"></span>
+      </div>
+      <div class="daily-card-energy">
+        <span class="card-energy" id="friends-earned">0</span>
+        <span class="card-energy-alt" data-i18n="hub.friends.earned">Kazanç</span>
       </div>
     </button>
 
@@ -132,6 +143,21 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v59"></script>
+  <div class="daily-overlay" id="friends-overlay" hidden>
+    <div class="daily-modal">
+      <button class="daily-close" id="friends-close" aria-label="Kapat">✕</button>
+      <p class="daily-intro is-heading" data-i18n="hub.friends.intro"></p>
+
+      <button class="daily-btn" id="friends-invite-btn" data-i18n="hub.friends.invite">Arkadaşını Davet Et</button>
+
+      <section class="daily-section">
+        <h3 data-i18n="hub.friends.listTitle">Davet Ettiklerin</h3>
+        <div class="lider-liste" id="friends-liste"></div>
+        <p class="daily-card-hint" id="friends-empty" data-i18n="hub.friends.empty" hidden></p>
+      </section>
+    </div>
+  </div>
+
+  <script type="module" src="js/hub.js?v60"></script>
 </body>
 </html>

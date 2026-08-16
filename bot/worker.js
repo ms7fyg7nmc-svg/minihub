@@ -16,6 +16,11 @@ const STREAK_RESET_GAP_MS = 48 * 3600 * 1000;
 
 const SPIN_MIN_GAP_MS = 24 * 3600 * 1000;
 
+const REFERRAL_SIGNUP_BONUS = 25;
+const REFERRAL_LEVEL_MILESTONES = [
+  [5, 15], [15, 100], [30, 400], [50, 1500], [75, 4500], [99, 10000],
+];
+
 const SPIN_PRIZES = [
   { tur: 'coin',   miktar: 50,          agirlik: 260 },
   { tur: 'coin',   miktar: 100,         agirlik: 250 },
@@ -148,14 +153,23 @@ const TEXTS = {
   },
 };
 
+function parseReferralPayload(startText) {
+  const payload = startText.split(/\s+/)[1] || '';
+  const eslesme = /^r(\d{1,20})$/.exec(payload);
+  return eslesme ? eslesme[1] : null;
+}
+
 function textsFor(languageCode) {
   const lang = String(languageCode || '').slice(0, 2).toLowerCase();
   return TEXTS[lang] || TEXTS.en;
 }
 
-function keyboard(t) {
+function keyboard(t, inviterId) {
+  const inviteLink = inviterId
+    ? `https://t.me/${BOT_USERNAME}?start=r${inviterId}`
+    : `https://t.me/${BOT_USERNAME}`;
   const shareUrl =
-    'https://t.me/share/url?url=' + encodeURIComponent(`https://t.me/${BOT_USERNAME}`) +
+    'https://t.me/share/url?url=' + encodeURIComponent(inviteLink) +
     '&text=' + encodeURIComponent(t.shareText);
 
   return {
@@ -278,6 +292,39 @@ async function ensurePlayer(env, playerId, initialPoints = 0) {
   return res.meta.changes === 1;
 }
 
+async function applyReferralSignup(env, playerId) {
+  const bekleyen = await env.DB.prepare(
+    'SELECT referrer_id FROM pending_referrals WHERE user_id = ?',
+  ).bind(playerId).first();
+  if (!bekleyen) return;
+
+  await env.DB.prepare('DELETE FROM pending_referrals WHERE user_id = ?').bind(playerId).run();
+
+  const referrerId = bekleyen.referrer_id;
+  if (!referrerId || referrerId === playerId) return;
+
+  await env.DB.prepare('UPDATE players SET referrer_id = ? WHERE id = ?').bind(referrerId, playerId).run();
+
+  await ensurePlayer(env, referrerId);
+  await applyDelta(env, referrerId, `ref:signup:${playerId}`, REFERRAL_SIGNUP_BONUS);
+  await applyDelta(env, playerId, `ref:welcome:${playerId}`, REFERRAL_SIGNUP_BONUS);
+}
+
+async function applyReferralMilestones(env, playerId, state) {
+  const seviye = Math.max(0, Math.min(99, Math.floor(Number(state?.dragons?.[0]?.level)) || 0));
+  if (seviye < REFERRAL_LEVEL_MILESTONES[0][0]) return;
+
+  const oyuncu = await env.DB.prepare('SELECT referrer_id FROM players WHERE id = ?').bind(playerId).first();
+  const referrerId = oyuncu?.referrer_id;
+  if (!referrerId) return;
+
+  await ensurePlayer(env, referrerId);
+  for (const [esik, odul] of REFERRAL_LEVEL_MILESTONES) {
+    if (seviye < esik) break;
+    await applyDelta(env, referrerId, `ref:lvl:${esik}:${playerId}`, odul);
+  }
+}
+
 function streakDurumu(row, now) {
   const sonAlim = row.last_claim_at || 0;
   const gecenSure = sonAlim ? now - sonAlim : Infinity;
@@ -331,6 +378,8 @@ async function handleSync(env, playerId, body, ad) {
   const gelenState = (body.state && typeof body.state === 'object') ? body.state : {};
 
   if (isNew) {
+    await applyReferralSignup(env, playerId);
+
     const stmts = [];
     for (const [key, value] of Object.entries(gelenState)) {
       if (!gecerliVeriAnahtari(key)) continue;
@@ -655,6 +704,30 @@ async function handleLeaderboard(env, playerId) {
   return { liste, kendi, toplam: liste.length };
 }
 
+async function handleReferral(env, playerId) {
+  const kazanc = await env.DB.prepare(
+    "SELECT COALESCE(SUM(delta), 0) AS toplam FROM spend_log WHERE player_id = ? AND op_id LIKE 'ref:%'",
+  ).bind(playerId).first();
+
+  const rows = await env.DB.prepare(
+    `SELECT p.id, p.name, pd.value AS durum
+     FROM players p LEFT JOIN player_data pd ON pd.player_id = p.id AND pd.key = 'state_dragon'
+     WHERE p.referrer_id = ? ORDER BY p.created_at DESC LIMIT 100`,
+  ).bind(playerId).all();
+
+  const arkadaslar = rows.results.map((r) => {
+    let seviye = 0;
+    try { seviye = Math.max(0, Math.floor(Number(JSON.parse(r.durum)?.dragons?.[0]?.level)) || 0); } catch {}
+    return { ad: r.name || '', seviye };
+  });
+
+  return {
+    toplamKazanc: kazanc ? kazanc.toplam : 0,
+    sayi: arkadaslar.length,
+    arkadaslar,
+  };
+}
+
 async function handleBest(env, playerId, body) {
   const game = String(body.game || '').trim();
   if (!GECERLI_OYUNLAR.has(game)) return { error: 'bilinmeyen oyun' };
@@ -749,8 +822,11 @@ async function handleState(env, playerId, body) {
 
   const row = await env.DB.prepare('SELECT value, version FROM player_data WHERE player_id = ? AND key = ?')
     .bind(playerId, key).first();
+  const kayitliDurum = JSON.parse(row.value);
 
-  return { state: JSON.parse(row.value), version: row.version };
+  if (game === 'dragon') await applyReferralMilestones(env, playerId, kayitliDurum);
+
+  return { state: kayitliDurum, version: row.version };
 }
 
 async function handleApi(request, env, url) {
@@ -799,6 +875,8 @@ async function handleApi(request, env, url) {
         return json(await handleSpin(env, playerId));
       case '/api/leaderboard':
         return json(await handleLeaderboard(env, playerId));
+      case '/api/referral':
+        return json(await handleReferral(env, playerId));
       default:
         return json({ error: 'bulunamadi' }, 404);
     }
@@ -806,6 +884,8 @@ async function handleApi(request, env, url) {
     return json({ error: 'sunucu hatasi', detail: String(err?.message || err) }, 500);
   }
 }
+
+export { parseReferralPayload };
 
 export default {
   async fetch(request, env) {
@@ -840,13 +920,20 @@ export default {
 
     const t = textsFor(message.from?.language_code);
     const command = incoming.split(/[\s@]/)[0].toLowerCase();
+    const chatIdStr = String(chatId);
 
     if (command === '/start' || command === '/play') {
-      await sendWithBanner(env, chatId, t.welcome, keyboard(t));
+      const referrerId = parseReferralPayload(incoming);
+      if (referrerId && referrerId !== chatIdStr) {
+        await env.DB.prepare(
+          'INSERT OR IGNORE INTO pending_referrals (user_id, referrer_id, created_at) VALUES (?, ?, ?)',
+        ).bind(chatIdStr, referrerId, Date.now()).run();
+      }
+      await sendWithBanner(env, chatId, t.welcome, keyboard(t, chatIdStr));
     } else if (command === '/help') {
-      await send(env, chatId, t.help, keyboard(t));
+      await send(env, chatId, t.help, keyboard(t, chatIdStr));
     } else {
-      await send(env, chatId, t.nudge, keyboard(t));
+      await send(env, chatId, t.nudge, keyboard(t, chatIdStr));
     }
 
     return new Response('ok');

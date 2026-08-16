@@ -1,12 +1,14 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v59';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v60';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
-} from './store.js?v59';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v59';
+   referralOzeti,
+} from './store.js?v60';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v60';
 
 const BOT_LINK = '';
+const BOT_USERNAME = 'minihubgames_bot';
 
 const ICONS = {
    '2048': `<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -188,6 +190,8 @@ renderDailyCard();
 wireDailyPanel();
 renderLiderCard();
 wireLiderPanel();
+renderFriendsCard();
+wireFriendsPanel();
 
 document.addEventListener('langchange', () => {
    applyTranslations();
@@ -196,6 +200,7 @@ document.addEventListener('langchange', () => {
    renderSyncBadge();
    renderDailyCard();
    renderLiderCard();
+   renderFriendsCard();
 });
 
 function renderTelegramNotice() {
@@ -655,5 +660,71 @@ async function acLiderPanel() {
       kendi.appendChild(satir);
    } else {
       kendi.hidden = true;
+   }
+}
+
+function davetLinki() {
+   const id = getUser().id;
+   return `https://t.me/${BOT_USERNAME}?start=r${id}`;
+}
+
+function davetGonder() {
+   const url = 'https://t.me/share/url?url=' + encodeURIComponent(davetLinki()) +
+      '&text=' + encodeURIComponent(t('hub.friends.shareText'));
+   openShareLink(url);
+   haptic.tap();
+}
+
+async function renderFriendsCard() {
+   const card = document.getElementById('friends-card');
+   if (!card) return;
+
+   if ((await odulDurumu()) !== 'sunucu') { card.hidden = true; return; }
+
+   const veri = await referralOzeti();
+   if (!veri) { card.hidden = true; return; }
+
+   card.hidden = false;
+   document.getElementById('friends-earned').textContent = veri.toplamKazanc.toLocaleString(locale());
+   document.getElementById('friends-hint').textContent = t('hub.friends.count', { n: veri.sayi });
+}
+
+function wireFriendsPanel() {
+   const card = document.getElementById('friends-card');
+   const overlay = document.getElementById('friends-overlay');
+   if (!card || !overlay) return;
+   card.addEventListener('click', acFriendsPanel);
+   document.getElementById('friends-close')?.addEventListener('click', () => { overlay.hidden = true; });
+   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.hidden = true; });
+   document.getElementById('friends-invite-btn')?.addEventListener('click', davetGonder);
+}
+
+async function acFriendsPanel() {
+   const overlay = document.getElementById('friends-overlay');
+   overlay.hidden = false;
+   haptic.tap();
+
+   const veri = await referralOzeti();
+   const liste = document.getElementById('friends-liste');
+   const bos = document.getElementById('friends-empty');
+   liste.textContent = '';
+   if (!veri) return;
+
+   bos.hidden = veri.arkadaslar.length > 0;
+
+   for (const a of veri.arkadaslar) {
+      const satir = document.createElement('div');
+      satir.className = 'lider-satir';
+
+      const ad = document.createElement('span');
+      ad.className = 'lider-ad';
+      ad.textContent = a.ad || t('hub.player');
+
+      const seviye = document.createElement('span');
+      seviye.className = 'lider-puan';
+      seviye.textContent = a.seviye > 0 ? t('hub.friends.level', { n: a.seviye }) : '—';
+
+      satir.append(ad, seviye);
+      liste.appendChild(satir);
    }
 }

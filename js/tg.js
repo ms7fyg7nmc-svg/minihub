@@ -1,5 +1,5 @@
 
-import { t } from './i18n.js?v59';
+import { t } from './i18n.js?v60';
 
 export const tg = window.Telegram?.WebApp ?? null;
 
@@ -62,6 +62,11 @@ export function getUser() {
 
 export function getInitData() {
    return tg?.initData || '';
+}
+
+export function openShareLink(url) {
+   if (tg?.openTelegramLink) tg.openTelegramLink(url);
+   else window.open(url, '_blank', 'noopener');
 }
 
 export const haptic = {

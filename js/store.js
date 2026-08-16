@@ -1,5 +1,5 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v59';
+import { isTelegramUser, getInitData } from './tg.js?v60';
 
 const API_BASE = 'https://minihub-bot.volkanturedi1.workers.dev';
 
@@ -376,6 +376,12 @@ export async function liderTablosu() {
   const v = await senkron;
   if (!v) return null;
   return sunucuGonder('/api/leaderboard', {});
+}
+
+export async function referralOzeti() {
+  const v = await senkron;
+  if (!v) return null;
+  return sunucuGonder('/api/referral', {});
 }
 
 export async function getSpin() {

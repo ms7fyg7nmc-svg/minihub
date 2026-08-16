@@ -208,5 +208,70 @@ for (let i = 0; i < 30; i++) await api(env8, 'energy/spend', { initData: id8, op
 r = await api(env8, 'energy/spend', { initData: id8, opId: 'restart-drain-son' });
 check('restart: enerji 0da tikaniyor, negatife dusmuyor', r.energy === 0, `-> ${r.energy}`);
 
+check('referral: payload ayristirma calisiyor', worker.parseReferralPayload('/start r1001') === '1001',
+      `-> ${worker.parseReferralPayload('/start r1001')}`);
+check('referral: bosluksuz /start payload uretmiyor', worker.parseReferralPayload('/start') === null);
+check('referral: gecersiz payload yok sayiliyor', worker.parseReferralPayload('/start abc') === null);
+
+const DB9 = makeDb(); const env9 = { DB: DB9, BOT_TOKEN }; const idRef = signedInitData(1001);
+await api(env9, 'sync', { initData: idRef, points: 0, state: {} });
+
+const idA = signedInitData(2002);
+DB9.prepare('INSERT INTO pending_referrals (user_id, referrer_id, created_at) VALUES (?, ?, ?)')
+  .bind('2002', '1001', Date.now()).run();
+r = await api(env9, 'sync', { initData: idA, points: 0, state: {} });
+check('referral: davet edilen arkadas hos geldin bonusu aldi (+25)', r.points === 25, `-> ${r.points}`);
+
+let referrerRow = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first();
+check('referral: davet eden kayit bonusu aldi (+25)', referrerRow.points === 25, `-> ${referrerRow.points}`);
+
+const bekleyenA = DB9.prepare('SELECT * FROM pending_referrals WHERE user_id = ?').bind('2002').first();
+check('referral: bekleyen davet tuketildi', !bekleyenA);
+
+r = await api(env9, 'state', { initData: idA, game: 'dragon',
+  state: { v: 2, dragons: [{ id: 'd1', level: 10, xp: 0, look: {} }], owned: {}, ownedIslands: [] },
+  expectedVersion: 0 });
+check('referral: arkadasin ilk ejderha durumu taban olarak kabul edildi', r.state?.dragons?.[0]?.level === 10,
+      `-> ${JSON.stringify(r).slice(0, 80)}`);
+
+referrerRow = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first();
+check('referral: seviye 10 sadece esik-5 odulunu tetikledi (25+15=40)', referrerRow.points === 40, `-> ${referrerRow.points}`);
+
+const idB = signedInitData(2003);
+DB9.prepare('INSERT INTO pending_referrals (user_id, referrer_id, created_at) VALUES (?, ?, ?)')
+  .bind('2003', '1001', Date.now()).run();
+await api(env9, 'sync', { initData: idB, points: 0, state: {} });
+r = await api(env9, 'state', { initData: idB, game: 'dragon',
+  state: { v: 2, dragons: [{ id: 'd1', level: 99, xp: 0, look: {} }], owned: {}, ownedIslands: [] },
+  expectedVersion: 0 });
+check('referral: ikinci arkadasin seviye 99 durumu taban olarak kabul edildi', r.state?.dragons?.[0]?.level === 99);
+
+referrerRow = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first();
+const beklenenToplam = 40 + 25 /* B kayit */ + 15 + 100 + 400 + 1500 + 4500 + 10000 /* B tum esikler */;
+check('referral: ikinci arkadas tum esikleri tek seferde tetikledi', referrerRow.points === beklenenToplam,
+      `-> ${referrerRow.points} beklenen ${beklenenToplam}`);
+
+r = await api(env9, 'state', { initData: idB, game: 'dragon',
+  state: { v: 2, dragons: [{ id: 'd1', level: 99, xp: 0, look: {} }], owned: {}, ownedIslands: [] },
+  expectedVersion: 1 });
+referrerRow = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first();
+check('referral: ayni seviyeye tekrar senkron odulu tekrarlamiyor', referrerRow.points === beklenenToplam,
+      `-> ${referrerRow.points}`);
+
+const idC = signedInitData(2004);
+DB9.prepare('INSERT INTO pending_referrals (user_id, referrer_id, created_at) VALUES (?, ?, ?)')
+  .bind('2004', '2004', Date.now()).run();
+r = await api(env9, 'sync', { initData: idC, points: 0, state: {} });
+check('referral: kendi kendini davet etmek odul kazandirmiyor', r.points === 0, `-> ${r.points}`);
+referrerRow = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first();
+check('referral: kendi kendini davet referans toplamini etkilemedi', referrerRow.points === beklenenToplam);
+
+r = await api(env9, 'referral', { initData: idRef });
+check('referral: /api/referral arkadas sayisi dogru (2, kendi-davet halic)', r.sayi === 2, `-> ${r.sayi}`);
+check('referral: /api/referral toplam kazanc dogru', r.toplamKazanc === beklenenToplam, `-> ${r.toplamKazanc}`);
+const seviyeler = r.arkadaslar.map((a) => a.seviye).sort((a, b) => a - b);
+check('referral: arkadas listesi seviyeleri dogru', JSON.stringify(seviyeler) === JSON.stringify([10, 99]),
+      `-> ${JSON.stringify(seviyeler)}`);
+
 console.log(`\n${passed} basarili, ${failed} basarisiz`);
 process.exit(failed > 0 ? 1 : 0);

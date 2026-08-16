@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS players (
   last_claim_at INTEGER NOT NULL DEFAULT 0,
   last_spin_at  INTEGER NOT NULL DEFAULT 0,
   energy_at     INTEGER NOT NULL DEFAULT 0,
+  referrer_id   TEXT,
   created_at    INTEGER NOT NULL,
   updated_at    INTEGER NOT NULL
 );
@@ -44,6 +45,19 @@ CREATE TABLE IF NOT EXISTS players (
 --   ALTER TABLE players ADD COLUMN last_spin_at INTEGER NOT NULL DEFAULT 0;
 --   ALTER TABLE players ADD COLUMN energy_at INTEGER NOT NULL DEFAULT 0;
 --   ALTER TABLE players ADD COLUMN name TEXT;
+--   ALTER TABLE players ADD COLUMN referrer_id TEXT;
+
+-- Arkadas davet sistemi icin bekleme odasi: bir kullanici davet linkiyle
+-- botu ilk actiginda (henuz Mini App'i hic acmamis, yani henuz "players"
+-- tablosunda satiri yokken) davet eden kimin oldugunu burada saklariz.
+-- Kullanici Mini App'i ilk kez actiginda (bkz. worker.js
+-- applyReferralSignup) burasi okunur, players.referrer_id'ye yazilir ve bu
+-- satir silinir - yani her zaman kucuk kalir.
+CREATE TABLE IF NOT EXISTS pending_referrals (
+  user_id     TEXT PRIMARY KEY,
+  referrer_id TEXT NOT NULL,
+  created_at  INTEGER NOT NULL
+);
 
 -- Rekorlar (best_2048 gibi) ve oyun durumlari (state_dragon gibi) tek
 -- tabloda: key alani hangisi oldugunu ayirt eder. value her zaman JSON
