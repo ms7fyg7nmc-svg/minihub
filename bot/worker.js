@@ -11,10 +11,10 @@ const ENERGY_PER_EARN = 1;
 const EMPTY_ENERGY_CARPAN = 0.25;
 
 const STREAK_REWARDS = [100, 150, 200, 300, 400, 500, 1000];
-const STREAK_MIN_GAP_MS = 20 * 3600 * 1000;
+const STREAK_MIN_GAP_MS = 24 * 3600 * 1000;
 const STREAK_RESET_GAP_MS = 48 * 3600 * 1000;
 
-const SPIN_MIN_GAP_MS = 20 * 3600 * 1000;
+const SPIN_MIN_GAP_MS = 24 * 3600 * 1000;
 
 const SPIN_PRIZES = [
   { tur: 'coin',   miktar: 50,          agirlik: 260 },
