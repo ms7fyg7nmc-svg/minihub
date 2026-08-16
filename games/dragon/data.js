@@ -9,11 +9,12 @@ export const RARITIES = {
 };
 
 export const SLOTS = [
-  { key: 'wings',  title: 'shopWings' },
-  { key: 'tail',   title: 'shopTails' },
-  { key: 'head',   title: 'shopHeads' },
-  { key: 'face',   title: 'shopFaces' },
-  { key: 'aura',   title: 'shopAuras' },
+  { key: 'wings',    title: 'shopWings' },
+  { key: 'tail',     title: 'shopTails' },
+  { key: 'necklace', title: 'shopNecklaces' },
+  { key: 'head',     title: 'shopHeads' },
+  { key: 'face',     title: 'shopFaces' },
+  { key: 'aura',     title: 'shopAuras' },
 ];
 
 export const VARSAYILAN_GORUNUM = {
@@ -21,6 +22,7 @@ export const VARSAYILAN_GORUNUM = {
   skin: 'none',
   wings: 'leather',
   tail: 'basic',
+  necklace: 'none',
   head: 'none',
   face: 'none',
   aura: 'none',
@@ -113,6 +115,17 @@ export const HEADS = {
              isilti: true, needLevel: 85 },
 };
 
+export const NECKLACES = {
+  none:      { price: 0,     rarity: 'common',    nameKey: 'nkNone',     descKey: 'nkNoneD' },
+  fang:      { price: 150,   rarity: 'common',    nameKey: 'nkFang',     descKey: 'nkFangD' },
+  bronze:    { price: 500,   rarity: 'uncommon',  nameKey: 'nkBronze',   descKey: 'nkBronzeD' },
+  sapphire:  { price: 1800,  rarity: 'rare',      nameKey: 'nkSapphire',descKey: 'nkSapphireD' },
+  flame:     { price: 9000,  rarity: 'epic',      nameKey: 'nkFlame',   descKey: 'nkFlameD',   needLevel: 35 },
+  royal:     { price: 26000, rarity: 'legendary', nameKey: 'nkRoyal',   descKey: 'nkRoyalD',   needLevel: 60 },
+  celestial: { price: 58000, rarity: 'mythic',    nameKey: 'nkCelestial',descKey:'nkCelestialD',
+               isilti: true, needLevel: 80 },
+};
+
 export const FACES = {
   none:     { price: 0,     rarity: 'common',    nameKey: 'fcNone',   descKey: 'fcNoneD' },
   scar:     { price: 80,    rarity: 'common',    nameKey: 'fcScar',   descKey: 'fcScarD',   kind: 'scar',    color: '#ffd9c0' },
@@ -188,6 +201,7 @@ export const KATALOG = {
   skin: SKINS,
   wings: WINGS,
   tail: TAILS,
+  necklace: NECKLACES,
   head: HEADS,
   face: FACES,
   aura: AURAS,

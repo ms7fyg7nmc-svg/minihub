@@ -1,6 +1,6 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v55';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v55';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v57';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v57';
 
 const OWNER_ID = '8100679296';
 if (getUser().id !== OWNER_ID) {
@@ -21,14 +21,14 @@ if (getUser().id !== OWNER_ID) {
   throw new Error('dragon-island-maintenance');
 }
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v55';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v55';
-import { bakiyeOku, harca } from './economy.js?v55';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v57';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v57';
+import { bakiyeOku, harca } from './economy.js?v57';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v55';
-import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v55';
-import { ITEM_TEXTS } from './i18n-items.js?v55';
-import { createIsland } from './island.js?v55';
+         adaSahipMi, adaEkle } from './model.js?v57';
+import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v57';
+import { ITEM_TEXTS } from './i18n-items.js?v57';
+import { createIsland } from './island.js?v57';
 
 const GAME_ID = 'dragon';
 
@@ -71,6 +71,7 @@ registerTexts(GAME_ID, {
   shopColors: 'RENK',
   shopWings: 'KANAT',
   shopTails: 'KUYRUK',
+  shopNecklaces: 'KOLYE',
   shopIslands: 'ADA',
   equipIsland: 'Bu adaya taşın',
   shopSkins: 'DESEN',
@@ -494,6 +495,12 @@ function onizleme(slot, id, item) {
       <svg viewBox="-34 -80 68 40">${faceSvg(id)}</svg></span>`;
   }
 
+  if (slot === 'necklace') {
+    if (id === 'none') return bos;
+    const look = { ...VARSAYILAN_ONIZLEME, necklace: id };
+    return `<span class="swatch zoom necklace">${dragonSvg(99, look, 'happy')}</span>`;
+  }
+
   if (slot === 'wings' || slot === 'tail') {
     const look = { ...VARSAYILAN_ONIZLEME, [slot]: id };
     return `<span class="swatch zoom ${slot}">${dragonSvg(99, look, 'happy')}</span>`;
@@ -506,7 +513,7 @@ function onizleme(slot, id, item) {
 }
 
 const VARSAYILAN_ONIZLEME = {
-  color: 'ocean', skin: 'none', wings: 'leather', tail: 'basic',
+  color: 'ocean', skin: 'none', wings: 'leather', tail: 'basic', necklace: 'none',
   head: 'none', face: 'none', aura: 'none',
 };
 

@@ -41,6 +41,14 @@ export const ITEM_TEXTS = {
     tlKing: 'Dragon King Tail',   tlKingD: 'Armoured and decorated with a ruby.',
     tlCelestial: 'Celestial Tail',tlCelestialD: 'Long, glowing, part light.',
 
+    nkNone: 'None',                nkNoneD: 'No necklace.',
+    nkFang: 'Fang Necklace',       nkFangD: 'A braided cord with a small claw pendant.',
+    nkBronze: 'Bronze Necklace',   nkBronzeD: 'A bronze chain with a sun medallion.',
+    nkSapphire: 'Sapphire Necklace', nkSapphireD: 'Polished silver chain with a blue gem.',
+    nkFlame: 'Ember Necklace',     nkFlameD: 'Gold chain with a blazing sunburst gem.',
+    nkRoyal: 'Royal Collar',       nkRoyalD: 'A jeweled gold collar fit for a king.',
+    nkCelestial: 'Celestial Collar', nkCelestialD: 'Glowing starlight crystal, the rarest of all.',
+
     hdNone: 'None',               hdNoneD: 'Bare head.',
     hdTiny: 'Tiny Horn Crown',    hdTinyD: 'A small plain circlet.',
     hdBronze: 'Bronze Crown',     hdBronzeD: "A little bronze king's crown.",
@@ -119,6 +127,14 @@ export const ITEM_TEXTS = {
     tlLightning: 'Şimşek Kuyruk', tlLightningD: 'Üzerinde enerji çatırdıyor.',
     tlKing: 'Ejder Kralı Kuyruğu',tlKingD: 'Zırhlı ve yakutla süslü.',
     tlCelestial: 'Semavi Kuyruk', tlCelestialD: 'Uzun, parlayan, yarı ışık.',
+
+    nkNone: 'Yok',                  nkNoneD: 'Kolye yok.',
+    nkFang: 'Diş Kolyesi',          nkFangD: 'Küçük bir pençe ucuyla örülü kordon.',
+    nkBronze: 'Bronz Kolye',        nkBronzeD: 'Güneş amblemli bronz zincir.',
+    nkSapphire: 'Safir Kolye',      nkSapphireD: 'Mavi taşlı, parlak gümüş zincir.',
+    nkFlame: 'Kor Kolyesi',         nkFlameD: 'Alev güneşi taşlı altın zincir.',
+    nkRoyal: 'Kraliyet Gerdanlığı', nkRoyalD: 'Krallara yakışan mücevherli altın gerdanlık.',
+    nkCelestial: 'Semavi Gerdanlık', nkCelestialD: 'Yıldız ışığıyla parlayan kristal, koleksiyonun en nadiri.',
 
     hdNone: 'Yok',                hdNoneD: 'Başı açık.',
     hdTiny: 'Küçük Taç',          hdTinyD: 'Sade, ufak bir halka.',
@@ -199,6 +215,14 @@ export const ITEM_TEXTS = {
     tlKing: 'Cola del Rey Dragón',tlKingD: 'Blindada y decorada con un rubí.',
     tlCelestial: 'Cola Celestial',tlCelestialD: 'Larga, brillante, parte de luz.',
 
+    nkNone: 'Ninguno',              nkNoneD: 'Sin collar.',
+    nkFang: 'Collar de Colmillo',   nkFangD: 'Un cordón trenzado con un pequeño colmillo.',
+    nkBronze: 'Collar de Bronce',   nkBronzeD: 'Cadena de bronce con un medallón solar.',
+    nkSapphire: 'Collar de Zafiro', nkSapphireD: 'Cadena de plata pulida con una gema azul.',
+    nkFlame: 'Collar de Ascuas',    nkFlameD: 'Cadena de oro con una gema de fuego.',
+    nkRoyal: 'Collar Real',         nkRoyalD: 'Un collar de oro enjoyado digno de un rey.',
+    nkCelestial: 'Collar Celestial', nkCelestialD: 'Cristal de luz estelar, el más raro de todos.',
+
     hdNone: 'Ninguna',            hdNoneD: 'Cabeza descubierta.',
     hdTiny: 'Corona Pequeña',     hdTinyD: 'Un aro sencillo y pequeño.',
     hdBronze: 'Corona de Bronce', hdBronzeD: 'Una pequeña corona de bronce.',
@@ -277,6 +301,14 @@ export const ITEM_TEXTS = {
     tlLightning: 'Хвост Молний',  tlLightningD: 'По нему трещит энергия.',
     tlKing: 'Хвост Короля',       tlKingD: 'Бронированный, украшен рубином.',
     tlCelestial: 'Небесный Хвост',tlCelestialD: 'Длинный, светящийся, отчасти из света.',
+
+    nkNone: 'Нет',                  nkNoneD: 'Без ожерелья.',
+    nkFang: 'Ожерелье Клыка',       nkFangD: 'Плетёный шнур с маленьким клыком.',
+    nkBronze: 'Бронзовое Ожерелье', nkBronzeD: 'Бронзовая цепь с медальоном солнца.',
+    nkSapphire: 'Сапфировое Ожерелье', nkSapphireD: 'Полированная серебряная цепь с синим камнем.',
+    nkFlame: 'Ожерелье Углей',      nkFlameD: 'Золотая цепь с пылающим камнем.',
+    nkRoyal: 'Королевское Колье',   nkRoyalD: 'Золотое колье с драгоценностями, достойное короля.',
+    nkCelestial: 'Небесное Колье',  nkCelestialD: 'Сияющий звёздный кристалл, самый редкий из всех.',
 
     hdNone: 'Нет',                hdNoneD: 'Голова без украшений.',
     hdTiny: 'Малый Венец',        hdTinyD: 'Маленький простой обруч.',

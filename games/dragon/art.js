@@ -1,6 +1,6 @@
 
-import { palet, HEADS, FACES } from './data.js?v55';
-import { CONFIG, growthRatio } from './config.js?v55';
+import { palet, HEADS, FACES } from './data.js?v57';
+import { CONFIG, growthRatio } from './config.js?v57';
 
 let uidSayaci = 0;
 
@@ -821,6 +821,8 @@ const GORSEL = {
   kalca: { x: 730, y: 790 },
 
   tepe: { x: 511, y: 230 },
+  yuz: { x: 511, y: 455 },
+  boyun: { x: 511, y: 505 },
 };
 
 const MERKEZ = 92;
@@ -967,6 +969,39 @@ const KATMAN = {
       kok: { x: 518, y: 690 }, en: 0.36,
     },
   },
+
+  necklace: {
+    fang: {
+      yol: 'assets/necklace-fang.png',
+      kare: 1024, x0: 244, y0: 124, x1: 772, y1: 856,
+      kok: { x: 508, y: 124 }, en: 0.40,
+    },
+    bronze: {
+      yol: 'assets/necklace-bronze.png',
+      kare: 1024, x0: 226, y0: 180, x1: 802, y1: 835,
+      kok: { x: 514, y: 180 }, en: 0.40,
+    },
+    sapphire: {
+      yol: 'assets/necklace-sapphire.png',
+      kare: 1024, x0: 181, y0: 65, x1: 843, y1: 796,
+      kok: { x: 512, y: 65 }, en: 0.42,
+    },
+    flame: {
+      yol: 'assets/necklace-flame.png',
+      kare: 1024, x0: 212, y0: 164, x1: 804, y1: 880,
+      kok: { x: 508, y: 164 }, en: 0.42,
+    },
+    royal: {
+      yol: 'assets/necklace-royal.png',
+      kare: 1024, x0: 111, y0: 181, x1: 919, y1: 1022,
+      kok: { x: 515, y: 181 }, en: 0.46,
+    },
+    celestial: {
+      yol: 'assets/necklace-celestial.png',
+      kare: 1024, x0: 91, y0: 63, x1: 945, y1: 878,
+      kok: { x: 518, y: 63 }, en: 0.46,
+    },
+  },
 };
 
 function katmanSec(kategori, id) {
@@ -982,9 +1017,11 @@ export function dragonAssetUrls(look) {
   const kanat = katmanSec('wings', look?.wings);
   const kuyruk = katmanSec('tail', look?.tail);
   const tac = katmanSec('head', look?.head);
+  const kolye = katmanSec('necklace', look?.necklace);
   if (kanat) urls.push(kanat.yol);
   if (kuyruk) urls.push(kuyruk.yol);
   if (tac) urls.push(tac.yol);
+  if (kolye) urls.push(kolye.yol);
   return urls;
 }
 
@@ -1006,6 +1043,14 @@ function katmanCiz(k, ax, ay, gw, renkId, zorlaAyna = false) {
   return `<image href="${k.yol}" x="${x.toFixed(1)}" y="${y.toFixed(1)}"
                  width="${olcek.toFixed(1)}" height="${olcek.toFixed(1)}"
                  preserveAspectRatio="xMidYMid meet"${cevir}${suz}/>`;
+}
+
+/* faceSvg() vektor izlerini uretiyor ama kendi yerel koordinat sisteminde
+   (govde/kafa merkezli degil). Onden bakan yeni kafaya oturtmak icin
+   yuz noktasina tasiyip govde olcegine gore kucultuyoruz. */
+function yuzCiz(faceKey, fx, fy, gw) {
+  const olcek = gw / 185;
+  return `<g transform="translate(${fx.toFixed(1)} ${fy.toFixed(1)}) scale(${olcek.toFixed(3)})">${faceSvg(faceKey)}</g>`;
 }
 
 const ALFA_MATRIS = '0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0';
@@ -1181,9 +1226,12 @@ function gorselEjderha(level, mood, look) {
   const [omuzSagX, omuzSagY] = nokta(GORSEL.omuzSag);
   const [kalcaX, kalcaY] = nokta(GORSEL.kalca);
   const [tepeX, tepeY] = nokta(GORSEL.tepe);
+  const [yuzX, yuzY] = nokta(GORSEL.yuz);
+  const [boyunX, boyunY] = nokta(GORSEL.boyun);
   const kanat = katmanSec('wings', look?.wings);
   const kuyruk = katmanSec('tail', look?.tail);
   const tac = katmanSec('head', look?.head);
+  const kolye = katmanSec('necklace', look?.necklace);
 
   return `
     <svg viewBox="0 0 200 200" aria-hidden="true">
@@ -1196,6 +1244,8 @@ function gorselEjderha(level, mood, look) {
                width="${olcek.toFixed(1)}" height="${olcek.toFixed(1)}"
                preserveAspectRatio="xMidYMid meet"
                ${renkId ? `filter="url(#${renkId})"` : ''}/>
+        ${look?.face && look.face !== 'none' ? yuzCiz(look.face, yuzX, yuzY, hedefGen) : ''}
+        ${kolye ? katmanCiz(kolye, boyunX, boyunY, hedefGen, renkId) : ''}
         ${tac ? katmanCiz(tac, tepeX, tepeY, hedefGen, renkId) : ''}
       </g>
     </svg>`;
