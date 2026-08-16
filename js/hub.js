@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v65';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v66';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti,
-} from './store.js?v65';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v65';
+} from './store.js?v66';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v66';
 
 const BOT_LINK = '';
 const BOT_USERNAME = 'minihubgames_bot';
@@ -544,7 +544,7 @@ async function renderStreakSection() {
       return `
       <div class="streak-pill ${durum}${jackpot}">
         <span class="day">${gun}</span>
-        <span class="amt">${odul}</span>
+        <span class="amt"><img class="amt-coin" src="assets/coin.png" alt="">${odul}</span>
       </div>`;
    }).join('');
 
