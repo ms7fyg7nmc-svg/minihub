@@ -256,6 +256,21 @@
   50% { opacity: 0.34; transform: translate(-50%, -50%) scale(1.09); }
 }
 
+/* Yerdeki isik havuzu: ejderhanin ayaklarinin hemen altinda yumusak,
+   nefes alan bir aydinlik - buyu cemberinin zemine dustugu isigi verir. */
+.fx .halo-glow {
+  position: absolute;
+  left: 50%;
+  top: 94%;
+  width: 68%;
+  aspect-ratio: 3.2 / 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, var(--aura, #ffe9a8) 0%, transparent 72%);
+  opacity: 0.5;
+  animation: hale-nabiz 2.8s ease-in-out infinite;
+}
+
 /* Halka ejderhanin ayaklarinin cevresinde duran, dönen bir büyü çemberi.
    Once tum SVG'yi rotate(360deg) ile donduruyordu: yassi bir elips 2D'de
    dondurulunce 90/270 derecede ince bir cizgiye cokup govdenin onunden
@@ -265,14 +280,15 @@
 .fx .halo-ring {
   position: absolute;
   left: 50%;
-  top: 79%;
-  width: 76%;
+  top: 94%;
+  width: 66%;
   transform: translate(-50%, -50%);
-  filter: drop-shadow(0 0 5px var(--aura, #c079f2));
+  filter: drop-shadow(0 0 6px var(--aura, #ffe9a8));
 }
 
 .fx .halo-ring .ring-outer { animation: hale-akis-dis 2.6s linear infinite; }
 .fx .halo-ring .ring-inner { animation: hale-akis-ic 2.1s linear infinite reverse; }
+.fx .halo-ring .ring-runes { animation: hale-akis-dis 6s linear infinite reverse; }
 
 /* dasharray "10 7" toplami 17 - -68 (4x17) ile atlamasiz dongu */
 @keyframes hale-akis-dis { to { stroke-dashoffset: -68; } }

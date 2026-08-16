@@ -1,6 +1,6 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v54';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v54';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v55';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v55';
 
 const OWNER_ID = '8100679296';
 if (getUser().id !== OWNER_ID) {
@@ -21,14 +21,14 @@ if (getUser().id !== OWNER_ID) {
   throw new Error('dragon-island-maintenance');
 }
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v54';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v54';
-import { bakiyeOku, harca } from './economy.js?v54';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v55';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v55';
+import { bakiyeOku, harca } from './economy.js?v55';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v54';
-import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v54';
-import { ITEM_TEXTS } from './i18n-items.js?v54';
-import { createIsland } from './island.js?v54';
+         adaSahipMi, adaEkle } from './model.js?v55';
+import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v55';
+import { ITEM_TEXTS } from './i18n-items.js?v55';
+import { createIsland } from './island.js?v55';
 
 const GAME_ID = 'dragon';
 
@@ -792,11 +792,14 @@ function efektCiz(auraId) {
     fxEl.classList.add('halo');
     fxEl.style.setProperty('--aura', fx.color);
     fxEl.innerHTML = `
+      <div class="halo-glow"></div>
       <svg class="halo-ring" viewBox="0 0 100 100">
-        <ellipse class="ring-outer" cx="50" cy="50" rx="46" ry="15" fill="none" stroke="${fx.color}"
-                 stroke-width="2.5" stroke-dasharray="10 7" opacity=".85"/>
-        <ellipse class="ring-inner" cx="50" cy="50" rx="38" ry="12" fill="none" stroke="${fx.color}"
-                 stroke-width="1.2" stroke-dasharray="4 9" opacity=".5"/>
+        <ellipse class="ring-runes" cx="50" cy="50" rx="48" ry="16" fill="none" stroke="${fx.color}"
+                 stroke-width="1" stroke-dasharray="1.5 6" opacity=".55"/>
+        <ellipse class="ring-outer" cx="50" cy="50" rx="42" ry="14" fill="none" stroke="${fx.color}"
+                 stroke-width="2" stroke-dasharray="9 6" opacity=".9"/>
+        <ellipse class="ring-inner" cx="50" cy="50" rx="33" ry="11" fill="none" stroke="${fx.color}"
+                 stroke-width="1.1" stroke-dasharray="3 8" opacity=".6"/>
       </svg>`;
     parcacikSac({ ...EFEKT_AYAR.star, adet: 9 }, fx);
     return;

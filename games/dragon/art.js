@@ -1,6 +1,6 @@
 
-import { palet, HEADS, FACES } from './data.js?v54';
-import { CONFIG, growthRatio } from './config.js?v54';
+import { palet, HEADS, FACES } from './data.js?v55';
+import { CONFIG, growthRatio } from './config.js?v55';
 
 let uidSayaci = 0;
 
@@ -1146,7 +1146,11 @@ function gorselEjderha(level, mood, look) {
   const uid = ++uidSayaci;
   const g = growthRatio(level);
 
-  const hedefGen = 88 + g * 40;
+  /* Onden bakan poz eski 3/4 poza gore daha dar ve uzun bir icerik kutusuna
+     sahip (443x749 vs eski 643x752). Ayni hedefGen genislik hedeflenince boy
+     eskisinden %45 daha buyuk cikiyordu. 0.692 duzeltmesi eski boy oranini
+     geri getiriyor. */
+  const hedefGen = (88 + g * 40) * 0.692;
   const olcek = hedefGen * GORSEL.kare / (GORSEL.x1 - GORSEL.x0);
 
   const ix = MERKEZ - hedefGen / 2 - (GORSEL.x0 / GORSEL.kare) * olcek;
