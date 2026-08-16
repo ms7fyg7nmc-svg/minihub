@@ -1,6 +1,6 @@
 
-import { palet, HEADS, FACES } from './data.js?v57';
-import { CONFIG, growthRatio } from './config.js?v57';
+import { palet, HEADS, FACES } from './data.js?v58';
+import { CONFIG, growthRatio } from './config.js?v58';
 
 let uidSayaci = 0;
 
@@ -818,7 +818,7 @@ const GORSEL = {
   omuzSol: { x: 362, y: 560 },
   omuzSag: { x: 661, y: 560 },
 
-  kalca: { x: 730, y: 790 },
+  kalca: { x: 830, y: 660 },
 
   tepe: { x: 511, y: 230 },
   yuz: { x: 511, y: 455 },
@@ -931,42 +931,42 @@ const KATMAN = {
     tiny: {
       yol: 'assets/crown-tiny.png',
       kare: 1024, x0: 200, y0: 384, x1: 824, y1: 660,
-      kok: { x: 512, y: 660 }, en: 0.30,
+      kok: { x: 512, y: 660 }, en: 0.42,
     },
     bronze: {
       yol: 'assets/crown-bronze.png',
       kare: 1024, x0: 302, y0: 326, x1: 732, y1: 690,
-      kok: { x: 517, y: 690 }, en: 0.30,
+      kok: { x: 517, y: 690 }, en: 0.42,
     },
     silver: {
       yol: 'assets/crown-silver.png',
       kare: 1024, x0: 172, y0: 316, x1: 848, y1: 736,
-      kok: { x: 510, y: 736 }, en: 0.32,
+      kok: { x: 510, y: 736 }, en: 0.45,
     },
     golden: {
       yol: 'assets/crown-golden.png',
       kare: 1024, x0: 200, y0: 260, x1: 828, y1: 730,
-      kok: { x: 514, y: 730 }, en: 0.33,
+      kok: { x: 514, y: 730 }, en: 0.46,
     },
     flame: {
       yol: 'assets/crown-flame.png',
       kare: 1024, x0: 172, y0: 308, x1: 886, y1: 782,
-      kok: { x: 529, y: 782 }, en: 0.34,
+      kok: { x: 529, y: 782 }, en: 0.48,
     },
     ice: {
       yol: 'assets/crown-ice.png',
       kare: 1024, x0: 238, y0: 298, x1: 796, y1: 682,
-      kok: { x: 517, y: 682 }, en: 0.34,
+      kok: { x: 517, y: 682 }, en: 0.48,
     },
     king: {
       yol: 'assets/crown-king.png',
       kare: 1024, x0: 118, y0: 126, x1: 922, y1: 834,
-      kok: { x: 520, y: 834 }, en: 0.38,
+      kok: { x: 520, y: 834 }, en: 0.53,
     },
     celestial: {
       yol: 'assets/crown-celestial.png',
       kare: 1024, x0: 256, y0: 312, x1: 780, y1: 700,
-      kok: { x: 518, y: 690 }, en: 0.36,
+      kok: { x: 518, y: 690 }, en: 0.50,
     },
   },
 
@@ -974,7 +974,7 @@ const KATMAN = {
     fang: {
       yol: 'assets/necklace-fang.png',
       kare: 1024, x0: 244, y0: 124, x1: 772, y1: 856,
-      kok: { x: 508, y: 124 }, en: 0.40,
+      kok: { x: 508, y: 124 }, en: 0.29,
     },
     bronze: {
       yol: 'assets/necklace-bronze.png',
