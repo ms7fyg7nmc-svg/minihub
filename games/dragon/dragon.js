@@ -1,6 +1,6 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v50';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v50';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v52';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v52';
 
 const OWNER_ID = '8100679296';
 if (getUser().id !== OWNER_ID) {
@@ -21,14 +21,14 @@ if (getUser().id !== OWNER_ID) {
   throw new Error('dragon-island-maintenance');
 }
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v50';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v50';
-import { bakiyeOku, harca } from './economy.js?v50';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v52';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v52';
+import { bakiyeOku, harca } from './economy.js?v52';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v50';
-import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI } from './art.js?v50';
-import { ITEM_TEXTS } from './i18n-items.js?v50';
-import { createIsland } from './island.js?v50';
+         adaSahipMi, adaEkle } from './model.js?v52';
+import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v52';
+import { ITEM_TEXTS } from './i18n-items.js?v52';
+import { createIsland } from './island.js?v52';
 
 const GAME_ID = 'dragon';
 
@@ -117,6 +117,7 @@ const tryBuy = document.getElementById('try-buy');
 const tryCancel = document.getElementById('try-cancel');
 const tryRar = document.getElementById('try-rar');
 const foodEl = document.getElementById('food');
+const bootLoaderEl = document.getElementById('boot-loader');
 
 let oyuncu = null;
 let ejderha = null;
@@ -188,15 +189,37 @@ window.addEventListener('resize', adaYerlestir);
 basla();
 setInterval(ciz, 60000);
 
+function resimOnYukle(url) {
+  return new Promise((tamam) => {
+    const im = new Image();
+    im.onload = () => tamam();
+    im.onerror = () => tamam();
+    im.src = url;
+  });
+}
+
+function varliklariOnYukle(urls) {
+  return Promise.race([
+    Promise.all(urls.map(resimOnYukle)),
+    new Promise((tamam) => setTimeout(tamam, 5000)),
+  ]);
+}
+
 async function basla() {
   oyuncu = await oyuncuyuYukle();
   ejderha = aktifEjderha(oyuncu);
   coins = await bakiyeOku();
   ada.temaDegistir(oyuncu.island);
+
+  const yuklenecekler = [adaTemasi(oyuncu.island).img];
+  if (ejderha.level > CONFIG.EGG_UNTIL) yuklenecekler.push(...dragonAssetUrls(gorunum()));
+  await varliklariOnYukle(yuklenecekler);
+
   adaYerlestir();
   ada.basla();
   dukkanCiz();
   ciz();
+  bootLoaderEl?.classList.add('hidden');
 }
 
 function hubaDon() {
@@ -212,7 +235,8 @@ function adaYerlestir() {
     requestAnimationFrame(adaYerlestir);
     return;
   }
-  const p = ada.ejderhaNoktasi();
+  const yumurtaMi = !ejderha || ejderha.level <= CONFIG.EGG_UNTIL;
+  const p = ada.ejderhaNoktasi(yumurtaMi);
   const kutu = islandEl.getBoundingClientRect();
   slotEl.style.setProperty('--dx', `${(p.x / kutu.width) * 100}%`);
   slotEl.style.setProperty('--dy', `${(p.y / kutu.height) * 100}%`);

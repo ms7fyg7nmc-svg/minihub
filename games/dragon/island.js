@@ -1,5 +1,5 @@
 
-import { ada as adaTemasi } from './data.js?v50';
+import { ada as adaTemasi, DRAGON_ANCHOR } from './data.js?v52';
 
 const KARE_MS = 33;
 
@@ -18,6 +18,19 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
   let calisiyor = false;
   let sonKare = 0;
   let rafId = 0;
+
+  /* Resim kutuya "cover" mantigiyla sigdiriliyor: hicbir zaman gerilmiyor/
+     ezilmiyor, sadece tasan kisim kirpiliyor. Boylece market onizlemesi gibi
+     farkli en/boy oranli kutularda da resim bozulmadan gorunuyor. */
+  let cizimKutusu = { ox: 0, oy: 0, dw: 0, dh: 0 };
+
+  function kapatFit(imgW, imgH, cw, ch) {
+    if (!imgW || !imgH || !cw || !ch) return { ox: 0, oy: 0, dw: cw, dh: ch };
+    const olcek = Math.max(cw / imgW, ch / imgH);
+    const dw = imgW * olcek;
+    const dh = imgH * olcek;
+    return { ox: (cw - dw) / 2, oy: (ch - dh) / 2, dw, dh };
+  }
 
   function resimYukle(hedefTema) {
     const im = new Image();
@@ -79,8 +92,10 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
     arka.setTransform(dpr, 0, 0, dpr, 0, 0);
     arka.clearRect(0, 0, genislik, yukseklikPx);
     if (img) {
-      arka.drawImage(img, 0, 0, genislik, yukseklikPx);
+      cizimKutusu = kapatFit(img.naturalWidth, img.naturalHeight, genislik, yukseklikPx);
+      arka.drawImage(img, cizimKutusu.ox, cizimKutusu.oy, cizimKutusu.dw, cizimKutusu.dh);
     } else {
+      cizimKutusu = { ox: 0, oy: 0, dw: genislik, dh: yukseklikPx };
       arka.fillStyle = '#171429';
       arka.fillRect(0, 0, genislik, yukseklikPx);
     }
@@ -107,7 +122,7 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
     arka.globalAlpha = 1;
 
     on.setTransform(dpr, 0, 0, dpr, 0, 0);
-    on.clearRect(0, 0, genislik, yukseklikPx);
+    on.clearRect(0, 0, onCanvas.width, onCanvas.height);
   }
 
   function dongu(zaman) {
@@ -118,11 +133,11 @@ export function createIsland(arkaCanvas, onCanvas, adaId = 'grassland') {
     ciz(zaman);
   }
 
-  function ejderhaNoktasi() {
-    const p = tema.dragonPoint || { x: 0.5, y: 0.55, scale: 1 };
+  function ejderhaNoktasi(yumurtaMi) {
+    const p = yumurtaMi ? DRAGON_ANCHOR.egg : DRAGON_ANCHOR.grown;
     return {
-      x: p.x * genislik,
-      y: p.y * yukseklikPx,
+      x: cizimKutusu.ox + p.x * cizimKutusu.dw,
+      y: cizimKutusu.oy + p.y * cizimKutusu.dh,
       olcek: p.scale ?? 1,
     };
   }

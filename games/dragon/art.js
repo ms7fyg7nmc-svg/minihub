@@ -1,6 +1,6 @@
 
-import { palet, HEADS, FACES } from './data.js?v50';
-import { CONFIG, growthRatio } from './config.js?v50';
+import { palet, HEADS, FACES } from './data.js?v52';
+import { CONFIG, growthRatio } from './config.js?v52';
 
 let uidSayaci = 0;
 
@@ -973,6 +973,17 @@ function katmanSec(kategori, id) {
 }
 
 const VARSAYILAN = { wings: 'leather', tail: 'basic' };
+
+export function dragonAssetUrls(look) {
+  const urls = [GORSEL.yol];
+  const kanat = katmanSec('wings', look?.wings);
+  const kuyruk = katmanSec('tail', look?.tail);
+  const tac = katmanSec('head', look?.head);
+  if (kanat) urls.push(kanat.yol);
+  if (kuyruk) urls.push(kuyruk.yol);
+  if (tac) urls.push(tac.yol);
+  return urls;
+}
 
 function katmanCiz(k, ax, ay, gw, renkId) {
   const gorunenGen = k.en !== undefined

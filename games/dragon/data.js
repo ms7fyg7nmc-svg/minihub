@@ -9,8 +9,6 @@ export const RARITIES = {
 };
 
 export const SLOTS = [
-  { key: 'color',  title: 'shopColors' },
-  { key: 'skin',   title: 'shopSkins' },
   { key: 'wings',  title: 'shopWings' },
   { key: 'tail',   title: 'shopTails' },
   { key: 'head',   title: 'shopHeads' },
@@ -144,42 +142,45 @@ export const ISLANDS = {
   grassland: {
     price: 0, rarity: 'common', nameKey: 'islGrass', descKey: 'islGrassD',
     img: 'assets/islands/grassland.jpg',
-    dragonPoint: { x: 0.49, y: 0.52, scale: 1.0 },
     partikul: { tur: 'toz', renk: '#ffe9a8', adet: 14 },
   },
   fire: {
     price: 2500, rarity: 'uncommon', nameKey: 'islFire', descKey: 'islFireD',
     img: 'assets/islands/fire.jpg',
-    dragonPoint: { x: 0.50, y: 0.39, scale: 0.95 },
     partikul: { tur: 'kor', renk: '#ff9a4d', adet: 16 },
   },
   ice: {
     price: 7000, rarity: 'rare', nameKey: 'islIce', descKey: 'islIceD',
     img: 'assets/islands/ice.jpg',
-    dragonPoint: { x: 0.47, y: 0.37, scale: 0.95 },
     partikul: { tur: 'kar', renk: '#ffffff', adet: 20 },
   },
   volcanic: {
     price: 18000, rarity: 'epic', nameKey: 'islVolcanic', descKey: 'islVolcanicD',
     needLevel: 40,
     img: 'assets/islands/volcanic.jpg',
-    dragonPoint: { x: 0.47, y: 0.53, scale: 1.0 },
     partikul: { tur: 'kor', renk: '#ffb347', adet: 22 },
   },
   celestial: {
     price: 45000, rarity: 'legendary', nameKey: 'islCelestial', descKey: 'islCelestialD',
     needLevel: 65,
     img: 'assets/islands/celestial.jpg',
-    dragonPoint: { x: 0.49, y: 0.60, scale: 0.72 },
     partikul: { tur: 'yildiz', renk: '#e9dcff', adet: 22 },
   },
   kingdom: {
     price: 110000, rarity: 'mythic', nameKey: 'islKingdom', descKey: 'islKingdomD',
     needLevel: 85,
     img: 'assets/islands/kingdom.jpg',
-    dragonPoint: { x: 0.50, y: 0.48, scale: 1.0 },
     partikul: { tur: 'yildiz', renk: '#ffe9a8', adet: 24 },
   },
+};
+
+/* Butun adalarda ejderha ayni orantisal noktada duruyor (adaya gore ayri
+   ayarlanmiyor). Yumurta/kulucka asamasinda tam yuvanin ortasinda, hatch
+   sonrasinda ise yuvanin biraz onunde/altinda duruyor - buyumus bir
+   ejderhanin kucuk dal yuvasinin icinde oturması tuhaf gorunuyordu. */
+export const DRAGON_ANCHOR = {
+  egg:   { x: 0.49, y: 0.50, scale: 1.0 },
+  grown: { x: 0.49, y: 0.58, scale: 0.88 },
 };
 
 export const KATALOG = {

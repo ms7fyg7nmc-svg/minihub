@@ -12,11 +12,15 @@
       if (sessionStorage.getItem('mh_hub_open') !== '1') location.replace('../../index.html');
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="../../css/style.css?v50">
-  <link rel="stylesheet" href="../../css/game.css?v50">
-  <link rel="stylesheet" href="dragon.css?v50">
+  <link rel="stylesheet" href="../../css/style.css?v52">
+  <link rel="stylesheet" href="../../css/game.css?v52">
+  <link rel="stylesheet" href="dragon.css?v52">
 </head>
 <body class="game" data-i18n-title="title">
+  <div class="boot-loader" id="boot-loader">
+    <div class="boot-egg"></div>
+    <p class="boot-text">Ejderha Adası yükleniyor</p>
+  </div>
   <div class="app game-app">
 
     <header class="game-head">
@@ -123,6 +127,6 @@
 
   </div>
 
-  <script type="module" src="dragon.js?v50"></script>
+  <script type="module" src="dragon.js?v52"></script>
 </body>
 </html>

@@ -13,6 +13,55 @@
 
 .game-mid { gap: 10px; }
 
+/* --- ACILIS YUKLEME EKRANI ---
+   PNG parcalardan (govde/kanat/kuyruk/tac) olusan ejderha govdesi tek
+   seferde degil, her parca ayri indikce beliriyor. On yukleme bitene kadar
+   bu ekran sahneyi kapatiyor, boylece oyuncu "yarim yarim" cizilen ejderhayi
+   gormuyor. */
+.boot-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background:
+    radial-gradient(120% 80% at 50% 12%, rgba(150, 120, 255, 0.20), transparent 62%),
+    radial-gradient(90% 60% at 50% 96%, rgba(80, 60, 140, 0.28), transparent 70%),
+    linear-gradient(180deg, #171429 0%, #100d1c 100%);
+  transition: opacity 0.4s ease;
+}
+
+.boot-loader.hidden { opacity: 0; pointer-events: none; }
+
+.boot-egg {
+  width: 52px;
+  height: 64px;
+  border-radius: 50% 50% 46% 46% / 58% 58% 42% 42%;
+  background: linear-gradient(160deg, #ffe3d4 0%, #f0a37c 55%, #e0561f 100%);
+  box-shadow: 0 0 34px 4px rgba(245, 185, 66, 0.35);
+  animation: boot-bob 1.3s ease-in-out infinite;
+}
+
+@keyframes boot-bob {
+  50% { transform: translateY(-10px) scale(1.04); }
+}
+
+.boot-text {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--muted, #9aa0b4);
+  animation: boot-pulse 1.3s ease-in-out infinite;
+}
+
+@keyframes boot-pulse {
+  50% { opacity: 0.55; }
+}
+
 /* --- ADA SAHNESI --- */
 
 .island {
@@ -345,6 +394,12 @@ body.shop-open .island {
     linear-gradient(180deg, #1b1733 0%, #120f22 100%);
 }
 
+/* Ada onizlemesinde gercek sahne gorunuyor: kutuyu oyundakiyle ayni en/boy
+   oranina dondur, yoksa fotograf gerilip bozuk gorunuyor. */
+body.shop-open.island-preview .island {
+  aspect-ratio: 1 / 0.92;
+}
+
 body.shop-open .isle-layer { display: none; }
 body.shop-open .dragon-card { display: none; }
 
@@ -370,7 +425,7 @@ body.shop-open.island-preview .dragon-slot {
   left: var(--dx, 50%) !important;
   top: var(--dy, 55%) !important;
   width: var(--w, 38%) !important;
-  transform: translate(-50%, -78%);
+  transform: translate(calc(-1 * var(--cx, 50%)), -78%);
 }
 
 .shop-msg { margin: 0 0 10px; }
