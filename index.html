@@ -9,25 +9,10 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v63">
+  <link rel="stylesheet" href="css/style.css?v64">
 </head>
 <body class="hub">
   <div class="app">
-
-    <!-- Arkadas davet tanitim afisi: en tepede, dikkat cekmesi icin.
-         hub.js gorunurlugunu ayarlar (sadece sunucu modunda gosterilir,
-         Telegram disinda davet linki calismaz). -->
-    <button class="referral-banner" id="referral-banner" hidden>
-      <div class="referral-banner-glow"></div>
-      <div class="referral-banner-top">
-        <span class="referral-banner-icon">🎁</span>
-        <div class="referral-banner-text">
-          <strong data-i18n="hub.friends.bannerTitle">Arkadaşını Davet Et</strong>
-          <span id="referral-banner-sub"></span>
-        </div>
-      </div>
-      <div class="referral-ladder" id="referral-ladder"></div>
-    </button>
 
     <header class="topbar">
       <div class="profile">
@@ -86,8 +71,9 @@
     </button>
 
     <button class="daily-card lider-card" id="friends-card" hidden>
+      <span class="friends-card-icon" aria-hidden="true">🎁</span>
       <div class="daily-card-info">
-        <strong data-i18n="hub.friends.title">Arkadaşlarını Davet Et</strong>
+        <strong data-i18n="hub.friends.bannerTitle">Arkadaşını Davet Et</strong>
         <span id="friends-hint" class="daily-card-hint"></span>
       </div>
       <div class="daily-card-energy">
@@ -163,6 +149,8 @@
       <button class="daily-close" id="friends-close" aria-label="Kapat">✕</button>
       <p class="daily-intro is-heading" data-i18n="hub.friends.intro"></p>
 
+      <div class="referral-ladder" id="referral-ladder"></div>
+
       <button class="daily-btn" id="friends-invite-btn" data-i18n="hub.friends.invite">Arkadaşını Davet Et</button>
 
       <section class="daily-section">
@@ -173,6 +161,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v63"></script>
+  <script type="module" src="js/hub.js?v64"></script>
 </body>
 </html>

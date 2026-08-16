@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v63';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v64';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti,
-} from './store.js?v63';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v63';
+} from './store.js?v64';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v64';
 
 const BOT_LINK = '';
 const BOT_USERNAME = 'minihubgames_bot';
@@ -19,7 +19,6 @@ const REFERRAL_TIERS = [
    { lv: 5, amt: 750 }, { lv: 15, amt: 1500 }, { lv: 30, amt: 3000 },
    { lv: 50, amt: 5000 }, { lv: 75, amt: 7500 }, { lv: 99, amt: 10000 },
 ];
-const REFERRAL_TOTAL = REFERRAL_SIGNUP_BONUS + REFERRAL_TIERS.reduce((s, x) => s + x.amt, 0);
 
 const ICONS = {
    '2048': `<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -199,8 +198,7 @@ renderLiderCard();
 wireLiderPanel();
 renderFriendsCard();
 wireFriendsPanel();
-renderReferralBanner();
-wireReferralBanner();
+renderReferralLadder();
 
 document.addEventListener('langchange', () => {
    applyTranslations();
@@ -210,7 +208,7 @@ document.addEventListener('langchange', () => {
    renderDailyCard();
    renderLiderCard();
    renderFriendsCard();
-   renderReferralBanner();
+   renderReferralLadder();
 });
 
 function renderTelegramNotice() {
@@ -744,17 +742,9 @@ async function acFriendsPanel() {
    }
 }
 
-async function renderReferralBanner() {
-   const banner = document.getElementById('referral-banner');
-   if (!banner) return;
-
-   if ((await odulDurumu()) !== 'sunucu') { banner.hidden = true; return; }
-
-   banner.hidden = false;
-   document.getElementById('referral-banner-sub').textContent =
-      t('hub.friends.bannerSub', { n: REFERRAL_TOTAL.toLocaleString(locale()) });
-
+function renderReferralLadder() {
    const ladder = document.getElementById('referral-ladder');
+   if (!ladder) return;
    ladder.textContent = '';
 
    const kayitPill = document.createElement('div');
@@ -770,8 +760,4 @@ async function renderReferralBanner() {
          `<span class="amt">+${tier.amt.toLocaleString(locale())}</span>`;
       ladder.appendChild(pill);
    });
-}
-
-function wireReferralBanner() {
-   document.getElementById('referral-banner')?.addEventListener('click', acFriendsPanel);
 }
