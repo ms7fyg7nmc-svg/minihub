@@ -59,15 +59,15 @@ function guvenliSayi(deger, max) {
   return Math.min(n, max);
 }
 
-const BANNER_URL = 'https://ms7fyg7nmc-svg.github.io/minihub/bot/assets/banner.jpg?v=2';
+const BANNER_URL = 'https://ms7fyg7nmc-svg.github.io/minihub/bot/assets/banner.jpg?v=3';
 
 const TEXTS = {
   en: {
     welcome:
       '<b>Welcome to MINI HUB GAMES</b>\n\n' +
-      'A pocket full of mini games — puzzles, blocks, candy and more.\n\n' +
+      'A pocket full of mini games: puzzles, blocks, candy and more.\n\n' +
       'Spend what you earn raising your own dragon on a floating island.\n\n' +
-      'Every game you finish earns hub points, the early form of $MH — ' +
+      'Every game you finish earns hub points, the early form of $MH and ' +
       'part of a growing crypto ecosystem. Nothing to download.\n\n' +
       'Tap <b>Play</b> below to start.',
     help:
@@ -81,12 +81,12 @@ const TEXTS = {
     play: 'Play',
     invite: 'Invite a friend',
     channel: 'Join our channel',
-    shareText: 'A pocket full of mini games — come beat my score!',
+    shareText: 'A pocket full of mini games. Come beat my score!',
   },
   tr: {
     welcome:
       "<b>MINI HUB GAMES'e hoş geldin</b>\n\n" +
-      'Cebinde bir sürü mini oyun — bulmaca, blok, şeker ve dahası.\n\n' +
+      'Cebinde bir sürü mini oyun: bulmaca, blok, şeker ve dahası.\n\n' +
       'Kazandığın $MH ile uçan adadaki kendi ejderhanı büyüt.\n\n' +
       'Bitirdiğin her oyun hub puanı kazandırır. Bu puanlar, büyüyen bir ' +
       'kripto ekosisteminin parçası olan $MH’ın ilk hali. İndirme yok.\n\n' +
@@ -102,7 +102,7 @@ const TEXTS = {
     play: 'Oyna',
     invite: 'Arkadaşını davet et',
     channel: 'Kanalımıza katıl',
-    shareText: "Cebinde bir sürü mini oyun — gel skorumu geç bakalım!",
+    shareText: "Cebinde bir sürü mini oyun. Gel skorumu geç bakalım!",
   },
   es: {
     welcome:
@@ -110,7 +110,7 @@ const TEXTS = {
       'Un bolsillo lleno de minijuegos: puzles, bloques, caramelos y más.\n\n' +
       'Gasta lo que ganes criando tu dragón en una isla flotante.\n\n' +
       'Cada partida que terminas te da puntos de hub, la forma inicial de ' +
-      '$MH — parte de un ecosistema cripto en crecimiento. Sin descargas.\n\n' +
+      '$MH, parte de un ecosistema cripto en crecimiento. Sin descargas.\n\n' +
       'Pulsa <b>Jugar</b> para empezar.',
     help:
       '<b>Cómo funciona</b>\n\n' +
@@ -130,7 +130,7 @@ const TEXTS = {
       '<b>Добро пожаловать в MINI HUB GAMES</b>\n\n' +
       'Целый карман мини-игр: головоломки, блоки, конфеты и не только.\n\n' +
       'Трать заработанное на своего дракона с летающего острова.\n\n' +
-      'За каждую игру начисляются очки хаба - ранняя форма $MH, части ' +
+      'За каждую игру начисляются очки хаба, ранняя форма $MH и часть ' +
       'растущей крипто-экосистемы. Без загрузок.\n\n' +
       'Нажми <b>Играть</b>, чтобы начать.',
     help:
@@ -144,7 +144,7 @@ const TEXTS = {
     play: 'Играть',
     invite: 'Пригласить друга',
     channel: 'Подписаться на канал',
-    shareText: 'Целый карман мини-игр — попробуй побить мой счёт!',
+    shareText: 'Целый карман мини-игр. Попробуй побить мой счёт!',
   },
 };
 
