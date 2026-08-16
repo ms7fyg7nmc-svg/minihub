@@ -1,6 +1,6 @@
 
-import { palet, HEADS, FACES } from './data.js?v58';
-import { CONFIG, growthRatio } from './config.js?v58';
+import { palet, HEADS, FACES } from './data.js?v59';
+import { CONFIG, growthRatio } from './config.js?v59';
 
 let uidSayaci = 0;
 
@@ -818,7 +818,7 @@ const GORSEL = {
   omuzSol: { x: 362, y: 560 },
   omuzSag: { x: 661, y: 560 },
 
-  kalca: { x: 830, y: 660 },
+  kalca: { x: 772, y: 700 },
 
   tepe: { x: 511, y: 230 },
   yuz: { x: 511, y: 455 },
@@ -845,42 +845,42 @@ const KATMAN = {
     leather: {
       yol: 'assets/wing-leather.png',
       kare: 1024, x0: 223, y0: 191, x1: 863, y1: 837,
-      kok: { x: 267, y: 715 }, uzanim: 0.53, govdeRengi: true,
+      kok: { x: 267, y: 715 }, uzanim: 0.74, govdeRengi: true,
     },
     flame: {
       yol: 'assets/wing-flame.png',
       kare: 1024, x0: 148, y0: 93, x1: 933, y1: 916,
-      kok: { x: 201, y: 747 }, uzanim: 0.54,
+      kok: { x: 201, y: 747 }, uzanim: 0.76,
     },
     crystal: {
       yol: 'assets/wing-crystal.png',
       kare: 1024, x0: 210, y0: 135, x1: 909, y1: 864,
-      kok: { x: 260, y: 779 }, uzanim: 0.545,
+      kok: { x: 260, y: 779 }, uzanim: 0.76,
     },
     demon: {
       yol: 'assets/wing-demon.png',
       kare: 1024, x0: 176, y0: 110, x1: 907, y1: 914,
-      kok: { x: 229, y: 852 }, uzanim: 0.55,
+      kok: { x: 229, y: 852 }, uzanim: 0.77,
     },
     phoenix: {
       yol: 'assets/wing-phoenix.png',
       kare: 1024, x0: 202, y0: 59, x1: 931, y1: 879,
-      kok: { x: 253, y: 723 }, uzanim: 0.555,
+      kok: { x: 253, y: 723 }, uzanim: 0.78,
     },
     lightning: {
       yol: 'assets/wing-lightning.png',
       kare: 1024, x0: 122, y0: 163, x1: 977, y1: 810,
-      kok: { x: 186, y: 699 }, uzanim: 0.63,
+      kok: { x: 186, y: 699 }, uzanim: 0.88,
     },
     king: {
       yol: 'assets/wing-king.png',
       kare: 1024, x0: 147, y0: 148, x1: 923, y1: 907,
-      kok: { x: 207, y: 761 }, uzanim: 0.565,
+      kok: { x: 207, y: 761 }, uzanim: 0.79,
     },
     celestial: {
       yol: 'assets/wing-celestial.png',
       kare: 1024, x0: 183, y0: 167, x1: 873, y1: 883,
-      kok: { x: 234, y: 805 }, uzanim: 0.57,
+      kok: { x: 234, y: 805 }, uzanim: 0.80,
     },
   },
 
@@ -973,8 +973,8 @@ const KATMAN = {
   necklace: {
     fang: {
       yol: 'assets/necklace-fang.png',
-      kare: 1024, x0: 244, y0: 124, x1: 772, y1: 856,
-      kok: { x: 508, y: 124 }, en: 0.29,
+      kare: 1024, x0: 205, y0: 131, x1: 821, y1: 904,
+      kok: { x: 513, y: 131 }, en: 0.40,
     },
     bronze: {
       yol: 'assets/necklace-bronze.png',
