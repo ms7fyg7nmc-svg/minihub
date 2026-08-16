@@ -1,0 +1,8 @@
+name = "minihub-bot"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "minihub-bot-db"
+database_id = "68c697f7-7672-462d-9bdb-044014f4c499"
