@@ -1,10 +1,10 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v48';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v49';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
-} from './store.js?v48';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v48';
+} from './store.js?v49';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v49';
 
 const BOT_LINK = '';
 
@@ -78,16 +78,6 @@ const ICONS = {
       <path d="M4 17h6a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h5" fill="none" stroke="#fff"
             stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
       <circle cx="19" cy="3.5" r="2.6" fill="#fff" opacity=".55"/>
-   </svg>`,
-
-   minesweeper: `<svg viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="2.5" y="2.5" width="19" height="19" rx="3" fill="none" stroke="#fff"
-            stroke-width="1.5" opacity=".4"/>
-      <path d="M9 2.5v19M15 2.5v19M2.5 9h19M2.5 15h19" stroke="#fff"
-            stroke-width="1.1" opacity=".26"/>
-      <circle cx="12" cy="12" r="3.1" fill="#fff"/>
-      <path d="M12 6.2V4.4M12 17.8v1.8M6.2 12H4.4M17.8 12h1.8" stroke="#fff"
-            stroke-width="1.7" stroke-linecap="round"/>
    </svg>`,
 };
 

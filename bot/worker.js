@@ -34,7 +34,7 @@ const MAX_SPEND_PER_REQUEST = 100000;
 
 const GECERLI_OYUNLAR = new Set([
   '2048', 'blockblast', 'watersort', 'match3', 'tripletile',
-  'flow', 'snake', 'minesweeper', 'dragon', 'pet',
+  'flow', 'snake', 'dragon', 'pet',
 ]);
 
 const MAX_STATE_BYTES = 32 * 1024;
