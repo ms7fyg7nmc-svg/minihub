@@ -56,7 +56,7 @@ function sweep(c, f0, f1, dur, type, gain, delay = 0) {
   osc.stop(t0 + dur + 0.02);
 }
 
-function noiseBurst(c, dur, gain, filterFreq, delay = 0) {
+function noiseBurst(c, dur, gain, filterFreq, delay = 0, filterEnd = null) {
   const t0 = c.currentTime + delay;
   const n = Math.max(1, Math.floor(c.sampleRate * dur));
   const buffer = c.createBuffer(1, n, c.sampleRate);
@@ -66,7 +66,8 @@ function noiseBurst(c, dur, gain, filterFreq, delay = 0) {
   src.buffer = buffer;
   const filter = c.createBiquadFilter();
   filter.type = 'lowpass';
-  filter.frequency.value = filterFreq;
+  filter.frequency.setValueAtTime(filterFreq, t0);
+  if (filterEnd !== null) filter.frequency.exponentialRampToValueAtTime(Math.max(filterEnd, 40), t0 + dur);
   const g = c.createGain();
   g.gain.setValueAtTime(gain, t0);
   g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
@@ -113,7 +114,9 @@ export const SFX = {
   }),
 
   pour: guard((c) => {
-    noiseBurst(c, 0.16, 0.09, 1100);
+    noiseBurst(c, 0.22, 0.11, 2600, 0, 450);
+    noiseBurst(c, 0.16, 0.07, 900, 0.035, 260);
+    sweep(c, 360, 200, 0.18, 'sine', 0.045, 0.02);
   }),
 
   match: guard((c) => {

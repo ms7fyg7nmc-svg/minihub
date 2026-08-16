@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v46';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v46';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v46';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v46';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v48';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v48';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v48';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v48';
 
 const GAME_ID = 'tripletile';
 const POINTS_DIVISOR = 6;
@@ -279,6 +279,7 @@ async function resolve() {
   if (trio) {
     renderSlots(trio);
     haptic.success();
+    SFX.match();
     await wait(240);
     slots = slots.filter((_, i) => !trio.includes(i));
     score = Math.min(score + TRIPLE_SCORE, SCORE_CAP);

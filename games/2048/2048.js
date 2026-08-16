@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v46';
-import { submitScore, getBest, addPoints, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v46';
-import { initLang, t, locale, applyTranslations } from '../../js/i18n.js?v46';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v46';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v48';
+import { submitScore, getBest, addPoints, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v48';
+import { initLang, t, locale, applyTranslations } from '../../js/i18n.js?v48';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v48';
 
 const SIZE = 4;
 const GAME_ID = '2048';

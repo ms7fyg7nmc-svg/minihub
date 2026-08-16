@@ -1,6 +1,6 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v46';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v46';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v48';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v48';
 
 const OWNER_ID = '8100679296';
 if (getUser().id !== OWNER_ID) {
@@ -21,14 +21,14 @@ if (getUser().id !== OWNER_ID) {
   throw new Error('dragon-island-maintenance');
 }
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v46';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v46';
-import { bakiyeOku, harca } from './economy.js?v46';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v48';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v48';
+import { bakiyeOku, harca } from './economy.js?v48';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v46';
-import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI } from './art.js?v46';
-import { ITEM_TEXTS } from './i18n-items.js?v46';
-import { createIsland } from './island.js?v46';
+         adaSahipMi, adaEkle } from './model.js?v48';
+import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI } from './art.js?v48';
+import { ITEM_TEXTS } from './i18n-items.js?v48';
+import { createIsland } from './island.js?v48';
 
 const GAME_ID = 'dragon';
 

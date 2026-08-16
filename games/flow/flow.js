@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v46';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v46';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v46';
-import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v46';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v48';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v48';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v48';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v48';
 
 const GAME_ID = 'flow';
 const POINTS_PER_LEVEL = 48;
@@ -266,6 +266,7 @@ function endDrag() {
   } else {
     moves++;
     haptic.tap();
+    SFX.match();
   }
 
   render();
@@ -293,6 +294,7 @@ function undoLast() {
 async function finishLevel() {
   locked = true;
   haptic.success();
+  SFX.goldenPickup();
   clearState(GAME_ID);
   boardEl.classList.add('solved');
 

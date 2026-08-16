@@ -1,10 +1,10 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v46';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser } from './tg.js?v48';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
-} from './store.js?v46';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v46';
+} from './store.js?v48';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v48';
 
 const BOT_LINK = '';
 

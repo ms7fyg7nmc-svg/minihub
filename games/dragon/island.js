@@ -1,5 +1,5 @@
 
-import { ada as adaTemasi } from './data.js?v46';
+import { ada as adaTemasi } from './data.js?v48';
 
 const TILE_W = 46;
 const TILE_H = 23;

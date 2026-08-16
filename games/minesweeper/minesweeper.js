@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v46';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v46';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v46';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v46';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v48';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v48';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v48';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v48';
 
 const GAME_ID = 'minesweeper';
 const POINTS_PER_LEVEL = 150;
@@ -280,6 +280,7 @@ function onCellTap(index) {
   revealFrom(index);
   autoFlag();
   haptic.tap();
+  SFX.pickup();
   renderAll();
   persist();
 

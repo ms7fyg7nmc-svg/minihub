@@ -4,12 +4,13 @@
 .stage-wrap { position: relative; }
 
 .stage {
-  display: flex;
-  flex-wrap: wrap;
+  --tube-w: 42px;
+  --layer-h: 34px;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 5), var(--tube-w));
   align-content: center;
   justify-content: center;
   gap: 14px 12px;
-  /* Cok kisa ekranlarda bu alan butonlari asagi itiyordu */
   min-height: min(380px, calc(var(--app-h, 100dvh) - 290px));
   padding: 20px 10px;
   border-radius: 16px;
@@ -21,11 +22,9 @@
 /* --- Tup --- */
 
 .tube {
-  --tube-w: 42px;
-  --layer-h: 34px;
   position: relative;
   width: var(--tube-w);
-  height: calc(var(--layer-h) * 4 + 8px);
+  height: calc(var(--layer-h) * var(--capacity, 4) + 8px);
   padding: 4px;
   display: flex;
   flex-direction: column-reverse; /* ilk katman en altta dursun */
@@ -34,7 +33,7 @@
   border-radius: 6px 6px 20px 20px;
   background: rgba(255, 255, 255, 0.03);
   cursor: pointer;
-  transition: transform 0.16s ease;
+  transition: transform 0.16s ease, height 0.2s ease;
 }
 
 .tube.selected { transform: translateY(-14px); border-color: rgba(255, 255, 255, 0.45); }
@@ -43,6 +42,7 @@
 .layer {
   height: var(--layer-h);
   border-radius: 2px;
+  flex: none;
 }
 
 .layer.pour {
@@ -60,6 +60,5 @@
 
 /* Dar ekranda tupleri kucult */
 @media (max-width: 380px) {
-  .tube { --tube-w: 36px; --layer-h: 30px; }
-  .stage { gap: 12px 9px; }
+  .stage { --tube-w: 36px; --layer-h: 30px; gap: 12px 9px; }
 }

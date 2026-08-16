@@ -1,13 +1,14 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v46';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v46';
-import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js?v46';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v46';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v48';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v48';
+import { registerTexts, t, applyStaticTexts } from '../../js/i18n-hook.js?v48';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v48';
 
 const GAME_ID = 'watersort';
 const POINTS_PER_LEVEL = 90;
 const POINTS_PER_EXTRA_COLOR = 5;
-const CAPACITY = 4;
+const POINTS_PER_EXTRA_CAPACITY = 8;
+let capacity = 4;
 const EMPTY_TUBES = 2;
 const HARD_EMPTY_LEVEL = 15;
 
@@ -81,6 +82,8 @@ async function bootstrap() {
   if (saved && Array.isArray(saved.tubes) && saved.tubes.length) {
     level = Number(saved.level) || 1;
     moves = Number(saved.moves) || 0;
+    capacity = capacityFor(level);
+    stageEl.style.setProperty('--capacity', capacity);
     tubes = saved.tubes.map((tube) => [...tube]);
     history = [];
     render();
@@ -94,7 +97,14 @@ function goHome() {
 }
 
 function colorCountFor(levelNo) {
-  return Math.min(3 + Math.floor((levelNo - 1) / 2), COLORS.length);
+  if (levelNo <= 13) return Math.min(3 + Math.floor((levelNo - 1) / 2), 9);
+  if (levelNo <= 24) return 9;
+  return Math.min(9 + Math.floor((levelNo - 25) / 3) + 1, COLORS.length);
+}
+
+function capacityFor(levelNo) {
+  if (levelNo < 14) return 4;
+  return Math.min(4 + Math.floor((levelNo - 14) / 4) + 1, 7);
 }
 
 function emptyTubesFor(levelNo) {
@@ -102,7 +112,9 @@ function emptyTubesFor(levelNo) {
 }
 
 function pointsFor(levelNo) {
-  return POINTS_PER_LEVEL + (colorCountFor(levelNo) - 3) * POINTS_PER_EXTRA_COLOR;
+  return POINTS_PER_LEVEL
+    + (colorCountFor(levelNo) - 3) * POINTS_PER_EXTRA_COLOR
+    + (capacityFor(levelNo) - 4) * POINTS_PER_EXTRA_CAPACITY;
 }
 
 function buildLevel(levelNo) {
@@ -114,10 +126,12 @@ function buildLevel(levelNo) {
 
   const colorCount = colorCountFor(levelNo);
   const emptyTubes = emptyTubesFor(levelNo);
+  capacity = capacityFor(levelNo);
+  stageEl.style.setProperty('--capacity', capacity);
 
   for (let attempt = 0; attempt < 30; attempt++) {
     tubes = [];
-    for (let i = 0; i < colorCount; i++) tubes.push(new Array(CAPACITY).fill(i));
+    for (let i = 0; i < colorCount; i++) tubes.push(new Array(capacity).fill(i));
     for (let i = 0; i < emptyTubes; i++) tubes.push([]);
     scramble(colorCount * 14);
     if (!isSolved() && isSolvable(tubes)) break;
@@ -146,7 +160,7 @@ function scramble(steps) {
       for (let to = 0; to < tubes.length; to++) {
         if (to === from) continue;
         const target = tubes[to];
-        const room = CAPACITY - target.length;
+        const room = capacity - target.length;
         if (!room) continue;
         if (target.length && target[target.length - 1] === color) continue;
         options.push({ from, to, max: Math.min(maxTake, room) });
@@ -163,7 +177,7 @@ function scramble(steps) {
 function isSolvable(start) {
   const key = (state) => state.map((tube) => tube.join(',')).sort().join('|');
   const solved = (state) => state.every((tube) =>
-    tube.length === 0 || (tube.length === CAPACITY && tube.every((c) => c === tube[0])));
+    tube.length === 0 || (tube.length === capacity && tube.every((c) => c === tube[0])));
 
   const seen = new Set([key(start)]);
   const stack = [start.map((tube) => [...tube])];
@@ -206,14 +220,14 @@ function amount(state, from, to) {
   const source = state[from];
   const target = state[to];
   if (from === to || !source.length) return 0;
-  if (target.length === CAPACITY) return 0;
+  if (target.length === capacity) return 0;
   if (target.length && topColor(target) !== topColor(source)) return 0;
 
   const color = topColor(source);
   let run = 0;
   while (run < source.length && source[source.length - 1 - run] === color) run++;
 
-  return Math.min(run, CAPACITY - target.length);
+  return Math.min(run, capacity - target.length);
 }
 
 const pourAmount = (from, to) => amount(tubes, from, to);
@@ -243,7 +257,7 @@ function undo() {
 
 function isSolved() {
   return tubes.every((tube) => tube.length === 0 ||
-    (tube.length === CAPACITY && tube.every((c) => c === tube[0])));
+    (tube.length === capacity && tube.every((c) => c === tube[0])));
 }
 
 function persist() {
@@ -282,6 +296,7 @@ function onTubeClick(index) {
 async function finishLevel() {
   locked = true;
   haptic.success();
+  SFX.goldenPickup();
   clearState(GAME_ID);
 
   const result = await submitScore(GAME_ID, level);
@@ -295,16 +310,31 @@ async function finishLevel() {
   showOverlay(t('levelDone'), text, t('nextLevel'), () => buildLevel(level + 1));
 }
 
+const TUBE_W = () => (window.innerWidth <= 380 ? 36 : 42);
+const TUBE_GAP = () => (window.innerWidth <= 380 ? 9 : 12);
+
+function layoutStage() {
+  const w = TUBE_W(), gap = TUBE_GAP();
+  const maxCols = Math.max(1, Math.floor((stageEl.clientWidth + gap) / (w + gap)));
+  const total = tubes.length || 1;
+  const rows = Math.max(1, Math.ceil(total / maxCols));
+  const cols = Math.min(maxCols, Math.ceil(total / rows));
+  stageEl.style.setProperty('--cols', cols);
+}
+
+window.addEventListener('resize', () => { layoutStage(); });
+
 function render() {
   stageEl.textContent = '';
   levelEl.textContent = level;
   undoBtn.disabled = !history.length || locked;
+  layoutStage();
 
   tubes.forEach((tube, index) => {
     const el = document.createElement('div');
     el.className = 'tube';
     if (selected === index) el.classList.add('selected');
-    if (tube.length === CAPACITY && tube.every((c) => c === tube[0])) el.classList.add('done');
+    if (tube.length === capacity && tube.every((c) => c === tube[0])) el.classList.add('done');
 
     tube.forEach((colorIndex, li) => {
       const layer = document.createElement('div');
