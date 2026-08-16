@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v66';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v66';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v66';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v66';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v67';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v67';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v67';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v67';
 
 const GAME_ID = 'match3';
 const SIZE = 8;
@@ -512,7 +512,7 @@ function cellFromPoint(x, y) {
 
 function showOverlay(title, text, buttonLabel, action) {
   overlayTitle.textContent = title;
-  overlayText.textContent = text;
+  overlayText.innerHTML = mhHtml(text);
   overlayBtn.textContent = buttonLabel;
   overlayBtn.onclick = () => {
     haptic.tap();

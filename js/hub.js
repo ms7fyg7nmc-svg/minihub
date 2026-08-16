@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v66';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v67';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti,
-} from './store.js?v66';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v66';
+} from './store.js?v67';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v67';
 
 const BOT_LINK = '';
 const BOT_USERNAME = 'minihubgames_bot';
@@ -597,7 +597,7 @@ async function renderSpinSection() {
 function showDailyToast(text) {
    const toast = document.getElementById('daily-toast');
    if (!toast) return;
-   toast.textContent = text;
+   toast.innerHTML = mhHtml(text);
    toast.hidden = false;
    const yeni = toast.cloneNode(true);
    toast.parentNode.replaceChild(yeni, toast);

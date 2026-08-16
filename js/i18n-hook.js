@@ -1,6 +1,6 @@
 
-import { initLang, t as coreT, getLang } from './i18n.js?v66';
-export { locale } from './i18n.js?v66';
+import { initLang, t as coreT, getLang } from './i18n.js?v67';
+export { locale } from './i18n.js?v67';
 
 let gameId = '';
 let fallbackTexts = {};
@@ -18,6 +18,12 @@ export function registerItemTexts(pack) {
 function fillParams(text, params) {
   return String(text).replace(/\{(\w+)\}/g, (match, name) =>
     (params[name] !== undefined ? params[name] : match));
+}
+
+const MH_ICON = '<img class="mh-icon" src="../../assets/coin.png" alt="$MH">';
+
+export function mhHtml(text) {
+  return String(text).replace(/\$MH/g, MH_ICON);
 }
 
 export function t(key, params = {}) {
@@ -45,7 +51,7 @@ export function applyStaticTexts(root = document) {
   document.documentElement.lang = getLang();
 
   root.querySelectorAll('[data-i18n]').forEach((el) => {
-    el.textContent = t(el.dataset.i18n);
+    el.innerHTML = mhHtml(t(el.dataset.i18n));
   });
 
   const titleHolder = root.querySelector('[data-i18n-title]');

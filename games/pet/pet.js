@@ -1,7 +1,7 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v66';
-import { getPoints, spendPoints, saveState, loadState } from '../../js/store.js?v66';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v66';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v67';
+import { getPoints, spendPoints, saveState, loadState } from '../../js/store.js?v67';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v67';
 
 const GAME_ID = 'pet';
 
@@ -549,9 +549,9 @@ async function feed() {
 
 function uyar(metin) {
   haptic.error();
-  hintEl.textContent = metin;
+  hintEl.innerHTML = mhHtml(metin);
   hintEl.classList.add('warn');
-  shopMsgEl.textContent = metin;
+  shopMsgEl.innerHTML = mhHtml(metin);
   shopMsgEl.classList.add('warn');
   shopMsgEl.hidden = false;
 }
@@ -752,9 +752,9 @@ function render() {
 
   hintEl.classList.remove('warn');
   if (enSon) hintEl.textContent = t('maxLevel');
-  else if (coins < cost) { hintEl.textContent = t('notEnough'); hintEl.classList.add('warn'); }
+  else if (coins < cost) { hintEl.innerHTML = mhHtml(t('notEnough')); hintEl.classList.add('warn'); }
   else if (doyum < 25) hintEl.textContent = t('hungryHint');
-  else hintEl.textContent = t('hint');
+  else hintEl.innerHTML = mhHtml(t('hint'));
 }
 
 function renderTryBar() {
@@ -774,7 +774,7 @@ function renderTryBar() {
 
   tryNote.classList.toggle('warn', !!(kilit || parasiz));
   if (kilit) tryNote.textContent = t('lockedMsg', { level: item.needLevel });
-  else if (parasiz) tryNote.textContent = t('tryNoCoins');
+  else if (parasiz) tryNote.innerHTML = mhHtml(t('tryNoCoins'));
   else tryNote.textContent = t('tryHint');
 }
 

@@ -11,7 +11,7 @@ const DICT = {
     'hub.title': 'MINI HUB GAMES',
     'hub.subtitle': 'Play the games, earn $MH, and be part of our growing crypto ecosystem.',
     'hub.gamesTitle': 'Games',
-    'hub.version': 'Version 0.52',
+    'hub.version': 'Version 0.53',
     'hub.play': 'Play',
     'hub.soon': 'Soon',
     'hub.maintenance': 'Maintenance',
@@ -298,7 +298,7 @@ const DICT = {
     'hub.title': 'MINI HUB GAMES',
     'hub.subtitle': 'Oyunları oyna, $MH kazan ve büyüyen kripto ekosistemimizin bir parçası ol.',
     'hub.gamesTitle': 'Oyunlar',
-    'hub.version': 'Sürüm 0.52',
+    'hub.version': 'Sürüm 0.53',
     'hub.play': 'Oyna',
     'hub.soon': 'Yakında',
     'hub.maintenance': 'Bakımda',
@@ -585,7 +585,7 @@ const DICT = {
     'hub.title': 'MINI HUB GAMES',
     'hub.subtitle': 'Juega, gana $MH y forma parte de nuestro creciente ecosistema cripto.',
     'hub.gamesTitle': 'Juegos',
-    'hub.version': 'Versión 0.52',
+    'hub.version': 'Versión 0.53',
     'hub.play': 'Jugar',
     'hub.soon': 'Pronto',
     'hub.maintenance': 'Mantenimiento',
@@ -872,7 +872,7 @@ const DICT = {
     'hub.title': 'MINI HUB GAMES',
     'hub.subtitle': 'Играй, зарабатывай $MH и стань частью нашей растущей крипто-экосистемы.',
     'hub.gamesTitle': 'Игры',
-    'hub.version': 'Версия 0.52',
+    'hub.version': 'Версия 0.53',
     'hub.play': 'Играть',
     'hub.soon': 'Скоро',
     'hub.maintenance': 'Обслуживание',
@@ -1206,11 +1206,15 @@ export function locale() {
   return LOCALE_MAP[currentLang] || 'en-US';
 }
 
+export function mhHtml(text, iconSrc = 'assets/coin.png') {
+  return String(text).replace(/\$MH/g, `<img class="mh-icon" src="${iconSrc}" alt="$MH">`);
+}
+
 export function applyTranslations(root = document) {
   document.documentElement.lang = currentLang;
 
   root.querySelectorAll('[data-i18n]').forEach((el) => {
-    el.textContent = t(el.dataset.i18n);
+    el.innerHTML = mhHtml(t(el.dataset.i18n));
   });
 }
 

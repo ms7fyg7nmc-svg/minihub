@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v66';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v66';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v66';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v66';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v67';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v67';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v67';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v67';
 
 const GAME_ID = 'tripletile';
 const POINTS_DIVISOR = 6;
@@ -437,7 +437,7 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function showOverlay(title, text, buttonLabel, action) {
   overlayTitle.textContent = title;
-  overlayText.textContent = text;
+  overlayText.innerHTML = mhHtml(text);
   overlayBtn.textContent = buttonLabel;
   overlayBtn.onclick = () => {
     haptic.tap();

@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v66';
-import { submitScore, getBest, addPoints, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v66';
-import { initLang, t, locale, applyTranslations } from '../../js/i18n.js?v66';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v66';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v67';
+import { submitScore, getBest, addPoints, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v67';
+import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v67';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v67';
 
 const SIZE = 4;
 const GAME_ID = '2048';
@@ -360,7 +360,7 @@ function overlayVisible() {
 
 function showOverlay(title, text, buttonLabel, action) {
    overlayTitle.textContent = title;
-   overlayText.textContent = text;
+   overlayText.innerHTML = mhHtml(text, '../../assets/coin.png');
    overlayBtn.textContent = buttonLabel;
    overlayBtn.onclick = () => {
       haptic.tap();

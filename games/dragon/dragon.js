@@ -1,15 +1,15 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v66';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v66';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v67';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v67';
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v66';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v66';
-import { bakiyeOku, harca } from './economy.js?v66';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v67';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v67';
+import { bakiyeOku, harca } from './economy.js?v67';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v66';
-import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v66';
-import { ITEM_TEXTS } from './i18n-items.js?v66';
-import { createIsland } from './island.js?v66';
+         adaSahipMi, adaEkle } from './model.js?v67';
+import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v67';
+import { ITEM_TEXTS } from './i18n-items.js?v67';
+import { createIsland } from './island.js?v67';
 
 const GAME_ID = 'dragon';
 
@@ -339,9 +339,9 @@ function sureMetni(ms) {
 
 function uyar(metin) {
   haptic.error();
-  hintEl.textContent = metin;
+  hintEl.innerHTML = mhHtml(metin);
   hintEl.classList.add('warn');
-  shopMsgEl.textContent = metin;
+  shopMsgEl.innerHTML = mhHtml(metin);
   shopMsgEl.classList.add('warn');
   shopMsgEl.hidden = false;
 }
@@ -694,10 +694,10 @@ function ciz() {
   denemeCubuguCiz();
 
   if (!hintEl.classList.contains('warn')) {
-    if (coins < fiyat) hintEl.textContent = t('notEnough');
+    if (coins < fiyat) hintEl.innerHTML = mhHtml(t('notEnough'));
     else if (d < CONFIG.HUNGRY_BELOW) hintEl.textContent = t('hungryHint');
     else if (enSon) hintEl.textContent = t('maxLevel');
-    else hintEl.textContent = t('hint');
+    else hintEl.innerHTML = mhHtml(t('hint'));
   }
   hintEl.classList.remove('warn');
 }
@@ -722,7 +722,7 @@ function denemeCubuguCiz() {
 
   tryNote.classList.toggle('warn', !!(kilit || parasiz));
   if (kilit) tryNote.textContent = t('lockedMsg', { level: item.needLevel });
-  else if (parasiz) tryNote.textContent = t('tryNoCoins');
+  else if (parasiz) tryNote.innerHTML = mhHtml(t('tryNoCoins'));
   else tryNote.textContent = t(item.descKey);
 }
 

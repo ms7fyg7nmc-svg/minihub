@@ -97,6 +97,14 @@
 
 .score-box span { font-size: 10px; letter-spacing: 0.8px; color: var(--muted); }
 .score-box strong { font-size: 17px; font-variant-numeric: tabular-nums; }
+
+.mh-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  margin: 0 1px;
+}
 .score-box.warn strong { color: #ff6b6b; }
 
 /* --- Butonlar --- */
