@@ -465,6 +465,8 @@ body.shop-open.island-preview .dragon-slot {
 
 .swatch svg { position: relative; width: 30px; height: 30px; display: block; }
 
+.island-swatch img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
 .shop-name { font-size: 10.5px; line-height: 1.2; text-align: center; }
 .shop-price { font-size: 10.5px; font-weight: 800; color: var(--gold-yazi); font-variant-numeric: tabular-nums; }
 .shop-price.owned { color: var(--muted); font-weight: 600; }

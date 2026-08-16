@@ -1,6 +1,6 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v49';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v49';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v50';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v50';
 
 const OWNER_ID = '8100679296';
 if (getUser().id !== OWNER_ID) {
@@ -21,14 +21,14 @@ if (getUser().id !== OWNER_ID) {
   throw new Error('dragon-island-maintenance');
 }
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v49';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v49';
-import { bakiyeOku, harca } from './economy.js?v49';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v50';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v50';
+import { bakiyeOku, harca } from './economy.js?v50';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v49';
-import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI } from './art.js?v49';
-import { ITEM_TEXTS } from './i18n-items.js?v49';
-import { createIsland } from './island.js?v49';
+         adaSahipMi, adaEkle } from './model.js?v50';
+import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI } from './art.js?v50';
+import { ITEM_TEXTS } from './i18n-items.js?v50';
+import { createIsland } from './island.js?v50';
 
 const GAME_ID = 'dragon';
 
@@ -415,14 +415,9 @@ function onizleme(slot, id, item) {
   const bos = `<span class="swatch" style="background:rgba(255,255,255,.06)">—</span>`;
 
   if (slot === 'island') {
-    const z = item.zemin;
-    return `<span class="swatch" style="background:linear-gradient(180deg, ${item.gok[0]}, ${item.gok[1]})">
-      <svg viewBox="0 0 24 24">
-        <path d="M12 6 L22 11 L12 16 L2 11 Z" fill="${z.ustAcik}"/>
-        <path d="M2 11 L12 16 v4 L2 15 Z" fill="${z.yanSol}"/>
-        <path d="M22 11 L12 16 v4 L22 15 Z" fill="${z.yanSag}"/>
-        <path d="M12 20 L15 22 L12 24 L9 22 Z" fill="${z.kaya}"/>
-      </svg></span>`;
+    return `<span class="swatch island-swatch">
+      <img src="${item.img}" alt="" loading="lazy">
+    </span>`;
   }
 
   if (slot === 'color') {
