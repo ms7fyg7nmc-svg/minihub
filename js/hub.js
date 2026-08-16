@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v60';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v61';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti,
-} from './store.js?v60';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v60';
+} from './store.js?v61';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher } from './i18n.js?v61';
 
 const BOT_LINK = '';
 const BOT_USERNAME = 'minihubgames_bot';
@@ -83,9 +83,6 @@ const ICONS = {
    </svg>`,
 };
 
-const OWNER_ID = '8100679296';
-const isOwner = getUser().id === OWNER_ID;
-
 function gameList() {
    return [
       {
@@ -97,8 +94,7 @@ function gameList() {
          gradient: 'linear-gradient(140deg, #b083ec, #7b4fd0)',
          accent: '#a978e8',
          noBest: true,
-         ready: isOwner,
-         maintenance: !isOwner,
+         ready: true,
       },
       {
          id: '2048',

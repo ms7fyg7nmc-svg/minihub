@@ -1,34 +1,15 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v60';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v60';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v61';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v61';
 
-const OWNER_ID = '8100679296';
-if (getUser().id !== OWNER_ID) {
-  document.body.innerHTML = `
-    <div style="min-height:100dvh; display:flex; flex-direction:column;
-                align-items:center; justify-content:center; gap:14px;
-                padding:32px; text-align:center; background:var(--bg, #0a0b10);
-                color:var(--text, #fff); font:inherit;">
-      <div style="font-size:40px;">🛠️</div>
-      <h1 style="margin:0; font-size:22px;">Dragon Island is under maintenance</h1>
-      <p style="margin:0; max-width:32ch; color:var(--muted, #9aa0b4); font-size:14px; line-height:1.5;">
-        We're polishing this island. It'll be back soon — check the other games in the meantime.
-      </p>
-      <a href="../../index.html" style="margin-top:10px; padding:13px 28px; border-radius:14px;
-         background:var(--accent, #5b8cff); color:var(--accent-text, #fff); font-weight:600;
-         text-decoration:none;">Back to Hub</a>
-    </div>`;
-  throw new Error('dragon-island-maintenance');
-}
-
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v60';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v60';
-import { bakiyeOku, harca } from './economy.js?v60';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v61';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v61';
+import { bakiyeOku, harca } from './economy.js?v61';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v60';
-import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v60';
-import { ITEM_TEXTS } from './i18n-items.js?v60';
-import { createIsland } from './island.js?v60';
+         adaSahipMi, adaEkle } from './model.js?v61';
+import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v61';
+import { ITEM_TEXTS } from './i18n-items.js?v61';
+import { createIsland } from './island.js?v61';
 
 const GAME_ID = 'dragon';
 
