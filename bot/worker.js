@@ -16,9 +16,9 @@ const STREAK_RESET_GAP_MS = 48 * 3600 * 1000;
 
 const SPIN_MIN_GAP_MS = 24 * 3600 * 1000;
 
-const REFERRAL_SIGNUP_BONUS = 25;
+const REFERRAL_SIGNUP_BONUS = 40;
 const REFERRAL_LEVEL_MILESTONES = [
-  [5, 15], [15, 100], [30, 400], [50, 1500], [75, 4500], [99, 10000],
+  [5, 20], [15, 150], [30, 600], [50, 2200], [75, 6500], [99, 14000],
 ];
 
 const SPIN_PRIZES = [

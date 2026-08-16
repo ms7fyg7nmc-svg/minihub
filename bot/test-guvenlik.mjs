@@ -220,10 +220,10 @@ const idA = signedInitData(2002);
 DB9.prepare('INSERT INTO pending_referrals (user_id, referrer_id, created_at) VALUES (?, ?, ?)')
   .bind('2002', '1001', Date.now()).run();
 r = await api(env9, 'sync', { initData: idA, points: 0, state: {} });
-check('referral: davet edilen arkadas hos geldin bonusu aldi (+25)', r.points === 25, `-> ${r.points}`);
+check('referral: davet edilen arkadas hos geldin bonusu aldi (+40)', r.points === 40, `-> ${r.points}`);
 
 let referrerRow = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first();
-check('referral: davet eden kayit bonusu aldi (+25)', referrerRow.points === 25, `-> ${referrerRow.points}`);
+check('referral: davet eden kayit bonusu aldi (+40)', referrerRow.points === 40, `-> ${referrerRow.points}`);
 
 const bekleyenA = DB9.prepare('SELECT * FROM pending_referrals WHERE user_id = ?').bind('2002').first();
 check('referral: bekleyen davet tuketildi', !bekleyenA);
@@ -235,7 +235,7 @@ check('referral: arkadasin ilk ejderha durumu taban olarak kabul edildi', r.stat
       `-> ${JSON.stringify(r).slice(0, 80)}`);
 
 referrerRow = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first();
-check('referral: seviye 10 sadece esik-5 odulunu tetikledi (25+15=40)', referrerRow.points === 40, `-> ${referrerRow.points}`);
+check('referral: seviye 10 sadece esik-5 odulunu tetikledi (40+20=60)', referrerRow.points === 60, `-> ${referrerRow.points}`);
 
 const idB = signedInitData(2003);
 DB9.prepare('INSERT INTO pending_referrals (user_id, referrer_id, created_at) VALUES (?, ?, ?)')
@@ -247,7 +247,7 @@ r = await api(env9, 'state', { initData: idB, game: 'dragon',
 check('referral: ikinci arkadasin seviye 99 durumu taban olarak kabul edildi', r.state?.dragons?.[0]?.level === 99);
 
 referrerRow = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first();
-const beklenenToplam = 40 + 25 /* B kayit */ + 15 + 100 + 400 + 1500 + 4500 + 10000 /* B tum esikler */;
+const beklenenToplam = 60 + 40 /* B kayit */ + 20 + 150 + 600 + 2200 + 6500 + 14000 /* B tum esikler */;
 check('referral: ikinci arkadas tum esikleri tek seferde tetikledi', referrerRow.points === beklenenToplam,
       `-> ${referrerRow.points} beklenen ${beklenenToplam}`);
 
