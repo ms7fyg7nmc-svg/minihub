@@ -1,6 +1,6 @@
 
-import { palet, HEADS, FACES } from './data.js?v52';
-import { CONFIG, growthRatio } from './config.js?v52';
+import { palet, HEADS, FACES } from './data.js?v53';
+import { CONFIG, growthRatio } from './config.js?v53';
 
 let uidSayaci = 0;
 
@@ -809,15 +809,18 @@ export function dragonHeadSvg(look, mood = 'happy') {
     </svg>`;
 }
 
+/* Ejderha artik tam onden bakan bir pozda: iki omuz da simetrik,
+   kanatlar tek gorselden aynalanarak iki tarafa da ciziliyor. */
 const GORSEL = {
   yol: 'assets/dragon-base.png',
   kare: 1024,
-  x0: 188, y0: 139, x1: 831, y1: 891,
-  omuz: { x: 632, y: 508 },
+  x0: 290, y0: 142, x1: 733, y1: 891,
+  omuzSol: { x: 362, y: 560 },
+  omuzSag: { x: 661, y: 560 },
 
-  kalca: { x: 762, y: 648 },
+  kalca: { x: 730, y: 790 },
 
-  tepe: { x: 372, y: 262 },
+  tepe: { x: 511, y: 230 },
 };
 
 const MERKEZ = 92;
@@ -985,17 +988,18 @@ export function dragonAssetUrls(look) {
   return urls;
 }
 
-function katmanCiz(k, ax, ay, gw, renkId) {
+function katmanCiz(k, ax, ay, gw, renkId, zorlaAyna = false) {
   const gorunenGen = k.en !== undefined
     ? gw * k.en
     : gw * k.uzanim / ((k.x1 - k.kok.x) / (k.x1 - k.x0));
 
   const olcek = gorunenGen * k.kare / (k.x1 - k.x0);
+  const aynaMi = zorlaAyna ? !k.ayna : k.ayna;
 
   const x = ax - (k.kok.x / k.kare) * olcek;
   const y = ay - (k.kok.y / k.kare) * olcek;
 
-  const cevir = k.ayna ? ` transform="translate(${(ax * 2).toFixed(1)} 0) scale(-1 1)"` : '';
+  const cevir = aynaMi ? ` transform="translate(${(ax * 2).toFixed(1)} 0) scale(-1 1)"` : '';
 
   const suz = (k.govdeRengi && renkId) ? ` filter="url(#${renkId})"` : '';
 
@@ -1169,7 +1173,8 @@ function gorselEjderha(level, mood, look) {
     ix + (p.x / GORSEL.kare) * olcek,
     iy + (p.y / GORSEL.kare) * olcek,
   ];
-  const [omuzX, omuzY] = nokta(GORSEL.omuz);
+  const [omuzSolX, omuzSolY] = nokta(GORSEL.omuzSol);
+  const [omuzSagX, omuzSagY] = nokta(GORSEL.omuzSag);
   const [kalcaX, kalcaY] = nokta(GORSEL.kalca);
   const [tepeX, tepeY] = nokta(GORSEL.tepe);
   const kanat = katmanSec('wings', look?.wings);
@@ -1181,7 +1186,8 @@ function gorselEjderha(level, mood, look) {
       ${(suzgec || renkTanim) ? `<defs>${suzgec}${renkTanim}</defs>` : ''}
       <g ${suzgec ? `filter="url(#ruh${uid})"` : ''}>
         ${kuyruk ? katmanCiz(kuyruk, kalcaX, kalcaY, hedefGen, renkId) : ''}
-        ${kanat ? katmanCiz(kanat, omuzX, omuzY, hedefGen, renkId) : ''}
+        ${kanat ? katmanCiz(kanat, omuzSolX, omuzSolY, hedefGen, renkId, true) : ''}
+        ${kanat ? katmanCiz(kanat, omuzSagX, omuzSagY, hedefGen, renkId) : ''}
         <image href="${GORSEL.yol}" x="${ix.toFixed(1)}" y="${iy.toFixed(1)}"
                width="${olcek.toFixed(1)}" height="${olcek.toFixed(1)}"
                preserveAspectRatio="xMidYMid meet"
