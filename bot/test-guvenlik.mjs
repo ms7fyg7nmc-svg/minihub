@@ -93,6 +93,19 @@ const DB3 = makeDb(); const env3 = { DB: DB3, BOT_TOKEN }; const id3 = signedIni
 r = await api(env3, 'sync', { initData: id3, points: 999999999, state: {} });
 check('sahte baslangic bakiyesi 5.000e kirpildi', r.points === 5000, `-> ${r.points}`);
 
+const DB3b = makeDb(); const env3b = { DB: DB3b, BOT_TOKEN }; const id3b = signedInitData(334);
+r = await api(env3b, 'sync', {
+  initData: id3b, points: 0,
+  state: { best_2048: 999999999, state_dragon: { dragons: [{ level: 99 }], owned: { color: ['celestial'] }, ownedIslands: ['kingdom'] } },
+});
+check('ilk senkronda gelen sahte rekor de tavana kirpiliyor', r.state?.best_2048 === 10000000, `-> ${r.state?.best_2048}`);
+const tabanSatir3b = DB3b.prepare("SELECT value FROM player_data WHERE player_id = ? AND key = 'dragon_taban'").bind('334').first();
+check('ilk senkrondaki ejderha iddiasi hemen taban olarak kilitleniyor', !!tabanSatir3b, `-> ${JSON.stringify(tabanSatir3b)}`);
+r = await api(env3b, 'state', { initData: id3b, game: 'dragon',
+  state: { dragons: [{ level: 99 }], owned: { color: ['celestial', 'aurora'] }, ownedIslands: ['kingdom'] },
+  expectedVersion: 1 });
+check('senkronla kilitlenen tabanin uzerine harcamasiz yukselis reddediliyor', r.reddedildi === true, `-> ${JSON.stringify(r).slice(0, 90)}`);
+
 r = await api(env3, 'best', { initData: id3, game: 'uydurma-oyun', score: 100 });
 check('bilinmeyen oyun icin rekor reddedildi', r.error === 'bilinmeyen oyun', `-> ${JSON.stringify(r)}`);
 r = await api(env3, 'state', { initData: id3, game: '../../etc', state: { x: 1 }, expectedVersion: 0 });

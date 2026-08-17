@@ -4,10 +4,15 @@
 :root {
   /* Temaya gore koyulasan/aciklasan ayirici ve yuzey renkleri.
      --text zaten Telegram temasindan geliyor (koyu temada beyaz, acik
-     temada siyah), bunlari ondan turetince iki temada da goruluyorlar. */
-  --cizgi: color-mix(in srgb, var(--tg-text-color, #fff) 18%, transparent);
-  --cizgi-soft: color-mix(in srgb, var(--tg-text-color, #fff) 10%, transparent);
-  --yuzey: color-mix(in srgb, var(--tg-text-color, #fff) 5%, transparent);
+     temada siyah), bunlari ondan turetince iki temada da goruluyorlar.
+     Duz renkler burada YEDEK: color-mix() desteklemeyen motorlarda
+     (bazi masaustu/eski WebView'ler - orn. Telegram Desktop macOS/Linux)
+     asagidaki @supports blogu calismiyorsa widget'lar kenarliksiz/soluk
+     kalmasin diye. Telegram'in acik/koyu temasina gore [data-tg-theme]
+     ile ayriliyor (bkz. js/tg.js applyTheme). */
+  --cizgi: rgba(255, 255, 255, 0.18);
+  --cizgi-soft: rgba(255, 255, 255, 0.10);
+  --yuzey: rgba(255, 255, 255, 0.05);
   --bg: var(--tg-bg-color, #12131a);
   --bg-soft: var(--tg-secondary-bg-color, #1c1e29);
   --text: var(--tg-text-color, #ffffff);
@@ -20,15 +25,13 @@
   /* YAZI icin altin/pembe.
      --gold koyu zemine gore secilmis acik bir amber; Telegram'in gunduz
      temasinda kart neredeyse beyaz oluyor ve altin yazi okunmuyordu
-     ("HAZIR!", 24/24, rekor rozetleri). Asagidakiler metin rengini
-     --tg-text-color'a dogru karistiriyor: koyu temada beyaza dogru
-     (daha parlak), acik temada siyaha dogru (daha koyu) gidiyor - yani
-     zemin ne olursa olsun kontrast artiyor.
+     ("HAZIR!", 24/24, rekor rozetleri). Duz yedekler koyu temaya gore
+     secildi, [data-tg-theme="light"] altta acik temaya gore degistiriyor.
      DIKKAT: bunlar yalnizca YAZI icin. Dolgu/kenarlik/degradelerde ham
      --gold kalmali, yoksa altin kendi rengini kaybediyor. */
-  --gold-yazi: color-mix(in srgb, var(--gold), var(--tg-text-color, #fff) 38%);
-  --gold-yazi-parlak: color-mix(in srgb, #ffe28a, var(--tg-text-color, #fff) 48%);
-  --pembe-yazi: color-mix(in srgb, var(--c-pink), var(--tg-text-color, #fff) 26%);
+  --gold-yazi: #ffcf6b;
+  --gold-yazi-parlak: #ffe9b3;
+  --pembe-yazi: #ec8cb0;
 
   /* Hub'in renk paleti: arka plan lekeleri, baslik gecisi, kart seritleri */
   --c-blue: #5b8cff;
@@ -36,6 +39,32 @@
   --c-pink: #e2679c;
   --c-green: #4ecb8b;
   --c-orange: #f2884b;
+}
+
+:root[data-tg-theme="light"] {
+  --cizgi: rgba(0, 0, 0, 0.16);
+  --cizgi-soft: rgba(0, 0, 0, 0.09);
+  --yuzey: rgba(0, 0, 0, 0.05);
+  --gold-yazi: #ad7208;
+  --gold-yazi-parlak: #c28a12;
+  --pembe-yazi: #b23566;
+}
+
+/* color-mix() destekleyen motorlarda (guncel Chrome/Safari/Firefox) daha
+   dogru, temaya tam uyumlu renkleri devreye sokuyor. Ayni ozellikleri
+   [data-tg-theme] secicileriyle de tekrarliyoruz ki ozgunluk (specificity)
+   acisindan yukaridaki acik tema yedeginin onune gecebilsin. */
+@supports (color: color-mix(in srgb, red, red)) {
+  :root,
+  :root[data-tg-theme="light"],
+  :root[data-tg-theme="dark"] {
+    --cizgi: color-mix(in srgb, var(--tg-text-color, #fff) 18%, transparent);
+    --cizgi-soft: color-mix(in srgb, var(--tg-text-color, #fff) 10%, transparent);
+    --yuzey: color-mix(in srgb, var(--tg-text-color, #fff) 5%, transparent);
+    --gold-yazi: color-mix(in srgb, var(--gold), var(--tg-text-color, #fff) 38%);
+    --gold-yazi-parlak: color-mix(in srgb, #ffe28a, var(--tg-text-color, #fff) 48%);
+    --pembe-yazi: color-mix(in srgb, var(--c-pink), var(--tg-text-color, #fff) 26%);
+  }
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -569,6 +598,7 @@ body.hub::before {
   align-items: flex-end;
   justify-content: center;
   background: rgba(8, 8, 14, 0.62);
+  -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
   animation: overlay-in 0.2s ease-out both;
 }
@@ -954,16 +984,26 @@ body.hub::before {
 .lider-satir.tepe-3 .lider-no { background: linear-gradient(160deg, #f8d5a8, #cd7f32 45%, #7d4a17); }
 
 /* Satirin kendisi de madalyanin rengini hafifce alsin */
+/* Her kural once duz rgba yedegini, sonra color-mix() ustunu yaziyor -
+   color-mix() taniyamayan eski motorlar (ör. bazi masaustu WebView'leri)
+   ikinci satiri gecersiz sayip ilkini korur, boylece hicbir tarayicida
+   renk tamamen kaybolmuyor. */
 .lider-satir.tepe-1 {
+  background: linear-gradient(90deg, rgba(245, 185, 66, 0.20), transparent 70%);
   background: linear-gradient(90deg, color-mix(in srgb, #f5b942 20%, transparent), transparent 70%);
+  box-shadow: inset 0 0 0 1px rgba(245, 185, 66, 0.45);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, #f5b942 45%, transparent);
 }
 .lider-satir.tepe-2 {
+  background: linear-gradient(90deg, rgba(200, 204, 214, 0.18), transparent 70%);
   background: linear-gradient(90deg, color-mix(in srgb, #c8ccd6 18%, transparent), transparent 70%);
+  box-shadow: inset 0 0 0 1px rgba(200, 204, 214, 0.40);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, #c8ccd6 40%, transparent);
 }
 .lider-satir.tepe-3 {
+  background: linear-gradient(90deg, rgba(205, 127, 50, 0.18), transparent 70%);
   background: linear-gradient(90deg, color-mix(in srgb, #cd7f32 18%, transparent), transparent 70%);
+  box-shadow: inset 0 0 0 1px rgba(205, 127, 50, 0.42);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, #cd7f32 42%, transparent);
 }
 
@@ -1000,8 +1040,10 @@ body.hub::before {
 
 /* Oyuncunun kendi satiri - listede kendini hemen bulsun */
 .lider-satir.benim {
+  background: rgba(245, 185, 66, 0.14);
   background: color-mix(in srgb, var(--gold) 14%, transparent);
   border-radius: 10px;
+  box-shadow: inset 0 0 0 1px rgba(245, 185, 66, 0.40);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--gold) 40%, transparent);
 }
 

@@ -381,15 +381,31 @@ async function handleSync(env, playerId, body, ad) {
     await applyReferralSignup(env, playerId);
 
     const stmts = [];
+    let ejderhaKaydedildi = null;
     for (const [key, value] of Object.entries(gelenState)) {
       if (!gecerliVeriAnahtari(key)) continue;
-      const json = JSON.stringify(value);
+      // best_* skorlar da mevcut oyuncularin senkron yolundaki gibi tavana
+      // kirpiliyor - aksi halde ilk senkron devasa/sacma bir rekoru oldugu
+      // gibi kaydediyordu (points alaninin aksine buraya kirpma yoktu).
+      const toWrite = key.startsWith('best_') ? guvenliSayi(value, MAX_BEST_SCORE) : value;
+      const json = JSON.stringify(toWrite);
       if (json.length > MAX_STATE_BYTES) continue;
       stmts.push(env.DB.prepare(
         'INSERT INTO player_data (player_id, key, value, updated_at) VALUES (?, ?, ?, ?)',
       ).bind(playerId, key, json, now));
+      if (key === 'state_dragon') ejderhaKaydedildi = toWrite;
     }
     if (stmts.length) await env.DB.batch(stmts);
+
+    // Ilk senkronda gelen ejderha durumu icin de "taban" maliyeti hemen
+    // kilitleniyor - aksi halde bu satir hic olusmuyordu ve ayni hesap ilk
+    // gercek /api/state cagrisinda TEKRAR sinirsiz bir iddiayla tabani
+    // sisirebiliyordu (iki ayri bedava hamle). Ilk iddia yine de oldugu
+    // gibi kabul edilir (yerel ilerlemeyi Telegram'a tasima senaryosu icin
+    // kasitli), ama bundan sonraki her yukselis gercek harcamayla sinirlanir.
+    if (ejderhaKaydedildi && typeof ejderhaKaydedildi === 'object') {
+      await ejderhaIddiasiReddedilsinMi(env, playerId, ejderhaKaydedildi, now);
+    }
   } else {
     const stmts = [];
     for (const [key, value] of Object.entries(gelenState)) {

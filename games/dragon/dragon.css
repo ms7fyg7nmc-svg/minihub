@@ -568,6 +568,7 @@ body.shop-open.island-preview .dragon-slot {
   color: var(--rar, #9aa2b5);
 }
 
+.try-bar { border-color: rgba(245, 185, 66, 0.55); }
 .try-bar { border-color: color-mix(in srgb, var(--rar, #f5b942) 55%, transparent); }
 
 .try-name {

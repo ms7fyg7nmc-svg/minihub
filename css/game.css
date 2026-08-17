@@ -150,6 +150,7 @@
   padding: 20px;
   text-align: center;
   background: rgba(10, 11, 16, 0.86);
+  -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
   border-radius: 16px;
   animation: overlay-fade 0.25s ease-out;
