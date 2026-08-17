@@ -442,23 +442,17 @@ body.hub::before {
 .widgets-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  align-items: start;
   gap: 8px;
   margin: 14px 0 18px;
 }
 
-/* Liderlik karti: ikon+baslik ustte, cerceveli #sira altta - yatay degil
-   dikey yerlesim, sagda ayri bir kutu olmadigi icin daha "widget" hissi verir. */
-.daily-card.is-stacked { align-items: flex-start; }
-.daily-card.is-stacked .daily-card-info {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  width: 100%;
-}
-
+/* Liderlik karti: ikon solda, sagda baslik + altinda kendi boyutunda
+   (tam genislik degil) ortalanmis #sira kutusu. */
 .lider-rank-box {
-  align-self: stretch;
-  padding: 4px 8px;
+  align-self: center;
+  width: fit-content;
+  padding: 2px 9px;
   border-radius: 8px;
   background: rgba(245, 185, 66, 0.12);
   border: 1px solid rgba(245, 185, 66, 0.25);
