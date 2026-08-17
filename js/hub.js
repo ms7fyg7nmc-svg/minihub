@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v71';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v72';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti,
-} from './store.js?v71';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v71';
+} from './store.js?v72';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v72';
 
 const BOT_LINK = '';
 const BOT_USERNAME = 'minihubgames_bot';
@@ -610,14 +610,7 @@ async function renderLiderCard() {
    if (!veri) { card.hidden = true; return; }
 
    card.hidden = false;
-   const hintEl = document.getElementById('lider-hint');
-   if (veri.kendi) {
-      document.getElementById('lider-sira').textContent = `#${veri.kendi.sira}`;
-      hintEl.textContent = t('hub.rank.place', { n: veri.kendi.sira });
-   } else {
-      document.getElementById('lider-sira').textContent = '—';
-      hintEl.textContent = '';
-   }
+   document.getElementById('lider-sira').textContent = veri.kendi ? `#${veri.kendi.sira}` : '—';
 }
 
 function wireLiderPanel() {
