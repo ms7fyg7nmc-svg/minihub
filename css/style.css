@@ -441,7 +441,7 @@ body.hub::before {
    taraftaki sayi arasinda bosluk kalmiyor. */
 .widgets-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1.25fr 1fr;
   align-items: start;
   gap: 8px;
   margin: 14px 0 18px;

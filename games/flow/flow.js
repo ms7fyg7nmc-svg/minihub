@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v75';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v75';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v75';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v75';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v76';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v76';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v76';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v76';
 
 const GAME_ID = 'flow';
 const POINTS_PER_LEVEL = 48;
