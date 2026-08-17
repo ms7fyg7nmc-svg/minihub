@@ -1,5 +1,5 @@
 
-import { t } from './i18n.js?v83';
+import { t } from './i18n.js?v84';
 
 export const tg = window.Telegram?.WebApp ?? null;
 
@@ -67,6 +67,13 @@ export function getInitData() {
 export function openShareLink(url) {
    if (tg?.openTelegramLink) tg.openTelegramLink(url);
    else window.open(url, '_blank', 'noopener');
+}
+
+// Telegram Stars odeme sayfasini acar. onStatus('paid'|'failed'|'cancelled'|'pending')
+// ile sonucu bildirir. Telegram disinda (openInvoice yoksa) hicbir sey yapmaz.
+export function openInvoice(link, onStatus) {
+   if (tg?.openInvoice) tg.openInvoice(link, onStatus);
+   else onStatus?.('failed');
 }
 
 export const haptic = {

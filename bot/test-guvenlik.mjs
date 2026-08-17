@@ -50,6 +50,34 @@ async function api(env, path, body) {
   return res.json();
 }
 
+// Bot webhook (Stars odeme akisi dahil) gercek Telegram API'sine fetch()
+// atiyor - testte gercek aga cikmayalim diye api.telegram.org cagrilarini
+// yakalayip sahte cevap donduruyoruz, gerisini olduğu gibi birakiyoruz.
+const telegramCagrilari = [];
+const gercekFetch = globalThis.fetch;
+globalThis.fetch = async (url, opts) => {
+  const u = String(url);
+  if (u.includes('api.telegram.org')) {
+    const govde = opts?.body ? JSON.parse(opts.body) : null;
+    telegramCagrilari.push({ url: u, govde });
+    if (u.includes('/createInvoiceLink')) {
+      return { ok: true, json: async () => ({ ok: true, result: 'https://t.me/$sahte-fatura' }) };
+    }
+    return { ok: true, json: async () => ({ ok: true }) };
+  }
+  return gercekFetch(url, opts);
+};
+
+async function webhook(env, update) {
+  const res = await worker.default.fetch(
+    new Request('https://x/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Telegram-Bot-Api-Secret-Token': env.WEBHOOK_SECRET },
+      body: JSON.stringify(update),
+    }), env);
+  return res;
+}
+
 const DB = makeDb();
 const env = { DB, BOT_TOKEN };
 const initData = signedInitData(111);
@@ -234,6 +262,82 @@ check('restart: ayni opId tekrar enerji dusurmuyor (idempotent)', r.energy === 2
 for (let i = 0; i < 30; i++) await api(env8, 'energy/spend', { initData: id8, opId: `restart-drain-${i}` });
 r = await api(env8, 'energy/spend', { initData: id8, opId: 'restart-drain-son' });
 check('restart: enerji 0da tikaniyor, negatife dusmuyor', r.energy === 0, `-> ${r.energy}`);
+
+const WEBHOOK_SECRET = 'test-webhook-secret';
+const DB10 = makeDb(); const env10 = { DB: DB10, BOT_TOKEN, WEBHOOK_SECRET }; const id10 = signedInitData(4242);
+await api(env10, 'sync', { initData: id10, points: 0, state: {} });
+DB10.prepare('UPDATE players SET energy = 0 WHERE id = ?').bind('4242').run();
+
+r = await api(env10, 'energy/ad-refill', { initData: id10, opId: 'ad-1' });
+check('reklam refill enerjiyi +6 artiriyor', r.ok === true && r.energy === 6, `-> ${JSON.stringify(r)}`);
+r = await api(env10, 'energy/ad-refill', { initData: id10, opId: 'ad-1' });
+check('ayni opId ile reklam refill tekrar uygulanmiyor (idempotent)', r.energy === 6, `-> ${r.energy}`);
+
+for (let i = 2; i <= 6; i++) await api(env10, 'energy/ad-refill', { initData: id10, opId: `ad-${i}` });
+r = await api(env10, 'energy/ad-refill', { initData: id10, opId: 'ad-7' });
+check('reklamla gunde 6dan fazla enerji doldurulamiyor', r.ok === false && r.reason === 'gunluk-limit', `-> ${JSON.stringify(r)}`);
+
+const syncSonrasi = await api(env10, 'sync', { initData: id10, points: 0, state: {} });
+check('sync gunluk reklam hakkini dogru raporluyor (0 kaldi)', syncSonrasi.energyRefill?.adLeft === 0, `-> ${JSON.stringify(syncSonrasi.energyRefill)}`);
+check('sync gunluk star hakki hala tam (6)', syncSonrasi.energyRefill?.starLeft === 6, `-> ${JSON.stringify(syncSonrasi.energyRefill)}`);
+
+const DB10b = makeDb(); const env10b = { DB: DB10b, BOT_TOKEN, WEBHOOK_SECRET }; const id10b = signedInitData(4243);
+await api(env10b, 'sync', { initData: id10b, points: 0, state: {} });
+DB10b.prepare('UPDATE players SET energy = 20 WHERE id = ?').bind('4243').run();
+r = await api(env10b, 'energy/ad-refill', { initData: id10b, opId: 'ad-cap-test' });
+check('enerji dolumu MAX_ENERGY (24) ustune cikmiyor', r.ok === true && r.energy === 24, `-> ${JSON.stringify(r)}`);
+
+r = await api(env10, 'energy/star-invoice', { initData: id10 });
+check('star fatura linki uretiliyor', r.link === 'https://t.me/$sahte-fatura', `-> ${JSON.stringify(r)}`);
+const invoiceCagrisi = telegramCagrilari.find((c) => c.url.includes('/createInvoiceLink'));
+check('star fatura XTR para birimiyle ve dogru fiyatla isteniyor',
+      invoiceCagrisi?.govde?.currency === 'XTR' && invoiceCagrisi?.govde?.prices?.[0]?.amount === 25,
+      `-> ${JSON.stringify(invoiceCagrisi?.govde)}`);
+check('star fatura payload\'inda oyuncu id dogru', invoiceCagrisi?.govde?.payload === 'energy_refill:4242', `-> ${invoiceCagrisi?.govde?.payload}`);
+
+DB10.prepare('UPDATE players SET energy = 10 WHERE id = ?').bind('4242').run();
+let onOnayRes = await webhook(env10, {
+  pre_checkout_query: { id: 'pcq-1', invoice_payload: 'energy_refill:4242' },
+});
+const onOnayCagrisi = telegramCagrilari.find((c) => c.url.includes('/answerPreCheckoutQuery') && c.govde?.pre_checkout_query_id === 'pcq-1');
+check('gecerli on-odeme kabul ediliyor', onOnayCagrisi?.govde?.ok === true, `-> ${JSON.stringify(onOnayCagrisi?.govde)}`);
+
+await webhook(env10, {
+  message: {
+    chat: { id: 4242 },
+    successful_payment: { invoice_payload: 'energy_refill:4242', telegram_payment_charge_id: 'charge-abc-1' },
+  },
+});
+let oyuncu10 = DB10.prepare('SELECT energy FROM players WHERE id = ?').bind('4242').first();
+check('basarili Stars odemesi enerjiyi +6 kredilendiriyor', oyuncu10.energy === 16, `-> ${oyuncu10.energy}`);
+
+await webhook(env10, {
+  message: {
+    chat: { id: 4242 },
+    successful_payment: { invoice_payload: 'energy_refill:4242', telegram_payment_charge_id: 'charge-abc-1' },
+  },
+});
+oyuncu10 = DB10.prepare('SELECT energy FROM players WHERE id = ?').bind('4242').first();
+check('ayni telegram_payment_charge_id tekrar gelirse enerji ikinci kez kredilenmiyor', oyuncu10.energy === 16, `-> ${oyuncu10.energy}`);
+
+for (let i = 2; i <= 6; i++) {
+  await webhook(env10, {
+    message: {
+      chat: { id: 4242 },
+      successful_payment: { invoice_payload: 'energy_refill:4242', telegram_payment_charge_id: `charge-abc-${i}` },
+    },
+  });
+}
+r = await api(env10, 'energy/star-invoice', { initData: id10 });
+check('star ile de gunde 6dan fazla fatura uretilmiyor', r.error === 'gunluk-limit', `-> ${JSON.stringify(r)}`);
+
+onOnayRes = await webhook(env10, {
+  pre_checkout_query: { id: 'pcq-limit-asildi', invoice_payload: 'energy_refill:4242' },
+});
+const reddedilenOnOnay = telegramCagrilari.find((c) => c.url.includes('/answerPreCheckoutQuery') && c.govde?.pre_checkout_query_id === 'pcq-limit-asildi');
+check('gunluk star limiti dolunca on-odeme de reddediliyor', reddedilenOnOnay?.govde?.ok === false, `-> ${JSON.stringify(reddedilenOnOnay?.govde)}`);
+
+globalThis.fetch = gercekFetch;
 
 check('referral: payload ayristirma calisiyor', worker.parseReferralPayload('/start r1001') === '1001',
       `-> ${worker.parseReferralPayload('/start r1001')}`);

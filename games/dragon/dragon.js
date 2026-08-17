@@ -1,15 +1,15 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v83';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v83';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v84';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v84';
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v83';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v83';
-import { bakiyeOku, harca } from './economy.js?v83';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v84';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v84';
+import { bakiyeOku, harca } from './economy.js?v84';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v83';
-import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v83';
-import { ITEM_TEXTS } from './i18n-items.js?v83';
-import { createIsland } from './island.js?v83';
+         adaSahipMi, adaEkle } from './model.js?v84';
+import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v84';
+import { ITEM_TEXTS } from './i18n-items.js?v84';
+import { createIsland } from './island.js?v84';
 
 const GAME_ID = 'dragon';
 

@@ -48,6 +48,13 @@ const MAX_BEST_SCORE = 10000000;
 
 const MAX_SEED_POINTS = 5000;
 
+// Enerji bitince reklam izleyerek ya da Telegram Stars ile doldurma.
+// Sinirsiz enerji olmasin diye HER IKI kaynak da gunde ayri ayri
+// ENERGY_REFILL_DAILY_LIMIT kere ile sinirli (bkz. refillSayisiBugun).
+const ENERGY_REFILL_AMOUNT = 6;
+const ENERGY_REFILL_DAILY_LIMIT = 6;
+const ENERGY_REFILL_STAR_PRICE = 25;
+
 function gecerliVeriAnahtari(key) {
   if (key === 'dragon_taban') return false;
   if (typeof key !== 'string') return false;
@@ -442,12 +449,24 @@ async function handleSync(env, playerId, body, ad) {
     meta[r.key] = r.version;
   }
 
+  const [adSayi, starSayi] = await Promise.all([
+    refillSayisiBugun(env, playerId, 'ad'),
+    refillSayisiBugun(env, playerId, 'star'),
+  ]);
+
   return {
     points: player.points,
     energy: player.energy,
     maxEnergy: MAX_ENERGY,
     energyNextMs: player.energy >= MAX_ENERGY
       ? 0 : Math.max(0, ENERGY_REGEN_MS - (now - player.energy_at)),
+    energyRefill: {
+      amount: ENERGY_REFILL_AMOUNT,
+      dailyLimit: ENERGY_REFILL_DAILY_LIMIT,
+      adLeft: Math.max(0, ENERGY_REFILL_DAILY_LIMIT - adSayi),
+      starLeft: Math.max(0, ENERGY_REFILL_DAILY_LIMIT - starSayi),
+      starPrice: ENERGY_REFILL_STAR_PRICE,
+    },
     streak: streakDurumu(player, now),
     spin: { ...spinDurumu(player, now), prizes: SPIN_PRIZES.map((p) => ({ tur: p.tur, miktar: p.miktar })) },
     state,
@@ -569,6 +588,83 @@ async function handleEnergySpend(env, playerId, opId) {
     return { ok: true, total: row.points, energy: yeniEnerji };
   }
   return { ok: false, reason: 'yeniden dene' };
+}
+
+// kaynak: 'ad' (Adsgram reklami) veya 'star' (Telegram Stars odemesi).
+// Ikisi de spend_log'da 'energy:<kaynak>:...' onekiyle ayri ayri sayiliyor,
+// gunluk ENERGY_REFILL_DAILY_LIMIT'i asan istekler reddediliyor.
+async function refillSayisiBugun(env, playerId, kaynak) {
+  const row = await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM spend_log WHERE player_id = ? AND op_id LIKE ? AND created_at > ?",
+  ).bind(playerId, `energy:${kaynak}:%`, Date.now() - 24 * 3600 * 1000).first();
+  return row ? row.n : 0;
+}
+
+// opId burada TAM anahtar (orn. 'energy:ad:<uuid>' ya da
+// 'energy:star:<telegram_payment_charge_id>') - cagiran taraf onekliyor,
+// boylece refillSayisiBugun'daki LIKE deseni her zaman dogru sayiyor.
+async function applyEnergyRefill(env, playerId, opId, kaynak) {
+  const now = Date.now();
+
+  const prior = await env.DB.prepare(
+    'SELECT 1 FROM spend_log WHERE player_id = ? AND op_id = ?',
+  ).bind(playerId, opId).first();
+  if (prior) {
+    const guncel = await env.DB.prepare('SELECT points, energy FROM players WHERE id = ?').bind(playerId).first();
+    return { ok: true, total: guncel ? guncel.points : 0, energy: guncel ? guncel.energy : 0 };
+  }
+
+  const sayi = await refillSayisiBugun(env, playerId, kaynak);
+  if (sayi >= ENERGY_REFILL_DAILY_LIMIT) return { ok: false, reason: 'gunluk-limit' };
+
+  for (let deneme = 0; deneme < 3; deneme++) {
+    const row = await env.DB.prepare('SELECT points, energy FROM players WHERE id = ?').bind(playerId).first();
+    if (!row) return { ok: false, reason: 'oyuncu yok' };
+
+    const yeniEnerji = Math.min(MAX_ENERGY, row.energy + ENERGY_REFILL_AMOUNT);
+    const res = await env.DB.prepare(
+      'UPDATE players SET energy = ?, updated_at = ? WHERE id = ? AND energy = ?',
+    ).bind(yeniEnerji, now, playerId, row.energy).run();
+    if (res.meta.changes === 0) continue;
+
+    await env.DB.prepare(
+      'INSERT INTO spend_log (player_id, op_id, delta, balance_after, created_at) VALUES (?, ?, 0, ?, ?)',
+    ).bind(playerId, opId, row.points, now).run();
+
+    return { ok: true, total: row.points, energy: yeniEnerji };
+  }
+  return { ok: false, reason: 'yeniden dene' };
+}
+
+async function handleAdRefill(env, playerId, opId) {
+  const key = `energy:ad:${opId || crypto.randomUUID()}`;
+  return applyEnergyRefill(env, playerId, key, 'ad');
+}
+
+// Sadece bir Telegram Stars fatura linki uretir - gercek odul, botun
+// successful_payment webhook'unda (fetch handler'daki pre_checkout_query/
+// successful_payment bloklari) uygulanir, burada degil.
+async function handleStarInvoice(env, playerId) {
+  if (!env.BOT_TOKEN) return { error: 'sunucu yapilandirilmamis' };
+
+  const sayi = await refillSayisiBugun(env, playerId, 'star');
+  if (sayi >= ENERGY_REFILL_DAILY_LIMIT) return { error: 'gunluk-limit' };
+
+  const res = await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/createInvoiceLink`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      title: 'Energy Refill',
+      description: `+${ENERGY_REFILL_AMOUNT} energy`,
+      payload: `energy_refill:${playerId}`,
+      provider_token: '',
+      currency: 'XTR',
+      prices: [{ label: `+${ENERGY_REFILL_AMOUNT} Energy`, amount: ENERGY_REFILL_STAR_PRICE }],
+    }),
+  });
+  const data = await res.json().catch(() => null);
+  if (!data?.ok) return { error: 'fatura-hatasi' };
+  return { link: data.result };
 }
 
 async function handleStreakClaim(env, playerId) {
@@ -881,6 +977,10 @@ async function handleApi(request, env, url) {
         return json(await applyEarn(env, playerId, body.opId, guvenliSayi(body.amount, MAX_EARN_PER_REQUEST)));
       case '/api/energy/spend':
         return json(await handleEnergySpend(env, playerId, body.opId));
+      case '/api/energy/ad-refill':
+        return json(await handleAdRefill(env, playerId, body.opId));
+      case '/api/energy/star-invoice':
+        return json(await handleStarInvoice(env, playerId));
       case '/api/best':
         return json(await handleBest(env, playerId, body));
       case '/api/state':
@@ -925,6 +1025,38 @@ export default {
     try {
       update = await request.json();
     } catch {
+      return new Response('ok');
+    }
+
+    // Enerji dolumu icin Stars odemesi: once on-onay (kalan hakkini kontrol
+    // ediyoruz), sonra basarili odeme sonrasi asil enerji krediyi uyguluyoruz.
+    // Ikisi de /api/* kimlik dogrulamasindan (initData HMAC) BAGIMSIZ -
+    // Telegram'in kendisi cagiriyor, playerId invoice payload'indan geliyor.
+    if (update.pre_checkout_query) {
+      const q = update.pre_checkout_query;
+      const [tur, playerId] = String(q.invoice_payload || '').split(':');
+      let ok = tur === 'energy_refill' && !!playerId;
+      if (ok) {
+        const sayi = await refillSayisiBugun(env, playerId, 'star');
+        if (sayi >= ENERGY_REFILL_DAILY_LIMIT) ok = false;
+      }
+      await fetch(`https://api.telegram.org/bot${env.BOT_TOKEN}/answerPreCheckoutQuery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ok
+          ? { pre_checkout_query_id: q.id, ok: true }
+          : { pre_checkout_query_id: q.id, ok: false, error_message: 'Daily energy refill limit reached, try again tomorrow.' }),
+      });
+      return new Response('ok');
+    }
+
+    const successfulPayment = update.message?.successful_payment;
+    if (successfulPayment) {
+      const [tur, playerId] = String(successfulPayment.invoice_payload || '').split(':');
+      if (tur === 'energy_refill' && playerId) {
+        await ensurePlayer(env, playerId);
+        await applyEnergyRefill(env, playerId, `energy:star:${successfulPayment.telegram_payment_charge_id}`, 'star');
+      }
       return new Response('ok');
     }
 

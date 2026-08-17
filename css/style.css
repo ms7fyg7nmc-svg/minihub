@@ -774,6 +774,52 @@ body.hub::before {
 /* Geri sayimlar: "3s 12d" gibi kucuk, soluk metin */
 .geri-sayim { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 
+/* Enerji bitince reklam/Stars ile doldurma - iki esit buton yan yana. */
+.energy-refill-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+.energy-refill-row[hidden] { display: none; }
+
+.energy-refill-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(245, 185, 66, 0.22);
+  background: var(--yuzey);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+.energy-refill-btn:active { transform: scale(0.97); }
+.energy-refill-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.energy-refill-icon { flex: none; font-size: 16px; }
+
+.energy-refill-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.energy-refill-text strong { font-size: 12.5px; letter-spacing: -0.1px; }
+.energy-refill-sub {
+  font-size: 10px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 
 /* Gunluk seri seridi */
 /* Gunler tek bir cerceve icinde, aralarinda ince ayirici - dagilmis

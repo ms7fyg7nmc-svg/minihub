@@ -1,5 +1,5 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v83';
+import { isTelegramUser, getInitData } from './tg.js?v84';
 
 const API_BASE = 'https://minihub-bot.volkanturedi1.workers.dev';
 
@@ -221,6 +221,7 @@ async function senkronDene() {
       energy: Number(veri.energy) || 0,
       maxEnergy: Number(veri.maxEnergy) || 0,
       energyNextMs: Number(veri.energyNextMs) || 0,
+      energyRefill: veri.energyRefill && typeof veri.energyRefill === 'object' ? veri.energyRefill : null,
       streak: veri.streak && typeof veri.streak === 'object' ? veri.streak : null,
       spin: veri.spin && typeof veri.spin === 'object' ? veri.spin : null,
       state: veri.state && typeof veri.state === 'object' ? veri.state : {},
@@ -350,8 +351,26 @@ export async function odulDurumu() {
 
 export async function getEnergy() {
   const v = await senkron;
-  if (!v) return { energy: MISAFIR.energy, max: MISAFIR.maxEnergy, nextMs: 0, kilitli: true };
-  return { energy: v.energy, max: v.maxEnergy, nextMs: v.energyNextMs, kilitli: false };
+  if (!v) return { energy: MISAFIR.energy, max: MISAFIR.maxEnergy, nextMs: 0, kilitli: true, refill: null };
+  return { energy: v.energy, max: v.maxEnergy, nextMs: v.energyNextMs, kilitli: false, refill: v.energyRefill };
+}
+
+export async function adEnergyRefill() {
+  const v = await senkron;
+  if (!v) return { ok: false, reason: 'misafir' };
+  const sonuc = await sunucuGonder('/api/energy/ad-refill', { opId: uuid() });
+  if (!sonuc) return { ok: false, reason: 'ag' };
+  if (sonuc.ok) v.energy = sonuc.energy;
+  return sonuc;
+}
+
+export async function starEnergyInvoiceLink() {
+  const v = await senkron;
+  if (!v) return { ok: false, reason: 'misafir' };
+  const sonuc = await sunucuGonder('/api/energy/star-invoice', {});
+  if (!sonuc) return { ok: false, reason: 'ag' };
+  if (sonuc.error) return { ok: false, reason: sonuc.error };
+  return { ok: true, link: sonuc.link };
 }
 
 export async function getStreak() {
@@ -400,6 +419,7 @@ export async function refreshDaily() {
   if (!veri) return;
   v.energy = Number(veri.energy) || 0;
   v.energyNextMs = Number(veri.energyNextMs) || 0;
+  if (veri.energyRefill && typeof veri.energyRefill === 'object') v.energyRefill = veri.energyRefill;
   if (veri.streak && typeof veri.streak === 'object') v.streak = veri.streak;
   if (veri.spin && typeof veri.spin === 'object') v.spin = veri.spin;
 }

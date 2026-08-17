@@ -1,11 +1,17 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v83';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v84';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
-   referralOzeti,
-} from './store.js?v83';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v83';
+   referralOzeti, adEnergyRefill, starEnergyInvoiceLink,
+} from './store.js?v84';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v84';
+
+// Adsgram'da olusturulan "Reward" block'unun ID'si. adsgram.ai'de hesap
+// acip bu uygulama icin bir block olusturunca oradan alacaksin - buraya
+// yapistirmadan reklamla enerji doldurma butonu calismaz (tiklaninca
+// hata mesaji gosterir, cokme).
+const ADSGRAM_BLOCK_ID = 'REPLACE_WITH_YOUR_ADSGRAM_BLOCK_ID';
 
 const BOT_LINK = '';
 const BOT_USERNAME = 'minihubgames_bot';
@@ -475,6 +481,8 @@ function wireDailyPanel() {
    energyCard?.addEventListener('click', openEnergyModal);
    energyCloseBtn?.addEventListener('click', closeEnergyModal);
    energyOverlay?.addEventListener('click', (e) => { if (e.target === energyOverlay) closeEnergyModal(); });
+   document.getElementById('energy-ad-btn')?.addEventListener('click', watchAdForEnergy);
+   document.getElementById('energy-star-btn')?.addEventListener('click', buyEnergyWithStars);
 
    streakBtn?.addEventListener('click', async () => {
       streakBtn.disabled = true;
@@ -561,6 +569,91 @@ async function renderEnergySection() {
       const ipucu = document.getElementById('energy-next');
       if (ipucu && energy.nextMs > 0) ipucu.dataset.bitis = String(Date.now() + energy.nextMs);
    }
+
+   renderEnergyRefillRow(energy);
+}
+
+// Enerji bitince reklam ya da Telegram Stars ile doldurma - ikisi de
+// gunde sabit sayida (bkz. worker.js ENERGY_REFILL_DAILY_LIMIT) kullanilabilir,
+// sinirsiz enerji olmasin diye. Misafirde (kilitli) ya da sunucu verisi
+// gelmediyse satir tamamen gizli kalir.
+function renderEnergyRefillRow(energy) {
+   const row = document.getElementById('energy-refill-row');
+   if (!row) return;
+   const refill = energy.refill;
+   if (energy.kilitli || !refill) { row.hidden = true; return; }
+   row.hidden = false;
+
+   const dolu = energy.energy >= energy.max;
+
+   const adBtn = document.getElementById('energy-ad-btn');
+   const adSub = document.getElementById('energy-ad-sub');
+   adBtn.disabled = dolu || refill.adLeft <= 0;
+   adSub.textContent = refill.adLeft > 0
+      ? t('hub.energy.refillSub', { amount: refill.amount, left: refill.adLeft, max: refill.dailyLimit })
+      : t('hub.energy.limitReached');
+
+   const starBtn = document.getElementById('energy-star-btn');
+   const starLabel = document.getElementById('energy-star-label');
+   const starSub = document.getElementById('energy-star-sub');
+   starBtn.disabled = dolu || refill.starLeft <= 0;
+   starLabel.textContent = t('hub.energy.starLabel', { price: refill.starPrice });
+   starSub.textContent = refill.starLeft > 0
+      ? t('hub.energy.refillSub', { amount: refill.amount, left: refill.starLeft, max: refill.dailyLimit })
+      : t('hub.energy.limitReached');
+}
+
+async function watchAdForEnergy() {
+   const btn = document.getElementById('energy-ad-btn');
+   if (!btn || btn.disabled) return;
+
+   if (!window.Adsgram || ADSGRAM_BLOCK_ID.startsWith('REPLACE_')) {
+      showDailyToast(t('hub.energy.actionFailed'));
+      return;
+   }
+
+   btn.disabled = true;
+   const oncekiEnerji = (await getEnergy()).energy;
+   try {
+      const controller = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+      await controller.show();
+      haptic.success();
+      const sonuc = await adEnergyRefill();
+      if (sonuc?.ok) {
+         const kazanilan = Math.max(0, sonuc.energy - oncekiEnerji);
+         if (kazanilan > 0) showDailyToast(t('hub.energy.refilled', { amount: kazanilan }));
+      }
+   } catch {
+      // reklam yarida birakildi/yuklenemedi - sessizce vazgec
+   } finally {
+      await renderEnergySection();
+      await renderEnergyCard();
+   }
+}
+
+async function buyEnergyWithStars() {
+   const btn = document.getElementById('energy-star-btn');
+   if (!btn || btn.disabled) return;
+
+   btn.disabled = true;
+   const oncekiEnerji = (await getEnergy()).energy;
+   const sonuc = await starEnergyInvoiceLink();
+   if (!sonuc?.ok || !sonuc.link) {
+      showDailyToast(t('hub.energy.actionFailed'));
+      await renderEnergySection();
+      return;
+   }
+
+   openInvoice(sonuc.link, async (status) => {
+      if (status === 'paid') {
+         haptic.success();
+         await refreshDaily();
+         const kazanilan = Math.max(0, (await getEnergy()).energy - oncekiEnerji);
+         if (kazanilan > 0) showDailyToast(t('hub.energy.refilled', { amount: kazanilan }));
+      }
+      await renderEnergySection();
+      await renderEnergyCard();
+   });
 }
 
 async function renderStreakSection() {
