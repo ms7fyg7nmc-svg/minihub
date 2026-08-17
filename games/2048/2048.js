@@ -1,9 +1,9 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v89';
-import { getBest, saveState, loadState, clearState, startRun, finishRun } from '../../js/store.js?v89';
-import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v89';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v89';
-import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v89';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v90';
+import { getBest, saveState, loadState, clearState, startRun, finishRunOrLegacy, yerelTohum } from '../../js/store.js?v90';
+import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v90';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v90';
+import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v90';
 
 const GAME_ID = '2048';
 const POINTS_DIVISOR = 23;
@@ -88,8 +88,8 @@ function goHome() {
 
 async function startNewGame() {
    const run = await startRun(GAME_ID);
-   seed = run.seed;
-   runId = run.runId;
+   seed = run ? run.seed : yerelTohum();
+   runId = run ? run.runId : null;
    rng = mulberry32(seed);
    moves = [];
 
@@ -188,7 +188,7 @@ function makeTile(r, c, value) {
 }
 
 async function finishAndCredit() {
-   return finishRun(GAME_ID, runId, moves, score, POINTS_DIVISOR);
+   return finishRunOrLegacy(GAME_ID, runId, moves, score, POINTS_DIVISOR);
 }
 
 function move(direction) {

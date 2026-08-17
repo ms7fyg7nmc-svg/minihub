@@ -1,4 +1,5 @@
 import { replayRun as replay2048, CODE_TO_DIR as CODES_2048 } from '../games/2048/logic.js';
+import { generatePuzzle as generateFlowPuzzle, validateSolution as validateFlowSolution } from '../games/flow/logic.js';
 
 const MINI_APP_URL = 'https://ms7fyg7nmc-svg.github.io/minihub/';
 const BOT_USERNAME = 'minihubgames_bot';
@@ -965,22 +966,100 @@ async function handleBest(env, playerId, body) {
   return { best, isRecord };
 }
 
-// Skor-sahteciligine karsi "replay" dogrulamasi olan oyunlar. Sunucu tohumu
-// (seed) kendisi uretir, istemci sadece hangi hamleleri yaptigini bildirir,
-// sunucu bu hamleleri KENDI mantigiyla (games/2048/logic.js) yeniden
-// oynatip GERCEK skoru kendisi hesaplar - istemcinin iddia ettigi skor asla
-// krediye girmiyor. Simdilik sadece 2048; diger oyunlar ayni desenle ayri
-// fazlarda eklenecek (bkz. proje planı).
-const REPLAY_ENGINES = { '2048': replay2048 };
-const GAME_MOVE_CODES = { '2048': new Set(Object.keys(CODES_2048)) };
-// games/2048/2048.js'teki POINTS_DIVISOR ile AYNI olmali.
-const GAME_POINTS_DIVISOR = { '2048': 23 };
+// Skor-sahteciligine karsi "replay"/"cozum dogrulama" olan oyunlar. Sunucu
+// tohumu (seed) kendisi uretir, istemci ne yaptigini (hamle listesi ya da
+// nihai cozum) bildirir, sunucu bunu KENDI mantigiyla (games/<oyun>/logic.js)
+// bagimsiz olarak dogrulayip GERCEK skoru kendisi hesaplar - istemcinin
+// iddia ettigi skor asla krediye girmiyor. Her oyun kendi start()/finish()
+// mantigini tanimlar; ortak kosu(run)/idempotent-kredi iskeleti asagida.
 const RUN_MAX_MOVES = 20000;
+// games/2048/2048.js'teki POINTS_DIVISOR ile AYNI olmali.
+const GAME_2048_DIVISOR = 23;
+const GAME_2048_MOVE_CODES = new Set(Object.keys(CODES_2048));
+// games/flow/flow.js'teki POINTS_PER_LEVEL ile AYNI olmali.
+const FLOW_POINTS_PER_LEVEL = 48;
+// 8x8'lik en buyuk Flow tahtasinin tum hucre sayisi - tek bir yolun asla
+// asamayacagi guvenli bir ust sinir.
+const FLOW_MAX_PATH_CELLS = 64;
+
+async function upsertBestScore(env, playerId, game, score) {
+  const bestKey = `best_${game}`;
+  const now = Date.now();
+  const bestRes = await env.DB.prepare(
+    `INSERT INTO player_data (player_id, key, value, updated_at)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(player_id, key) DO UPDATE
+       SET value = excluded.value, updated_at = excluded.updated_at
+       WHERE CAST(player_data.value AS INTEGER) < ?`,
+  ).bind(playerId, bestKey, JSON.stringify(score), now, score).run();
+  const isRecord = bestRes.meta.changes === 1;
+  const bestRow = await env.DB.prepare('SELECT value FROM player_data WHERE player_id = ? AND key = ?')
+    .bind(playerId, bestKey).first();
+  const best = bestRow ? Number(JSON.parse(bestRow.value)) || 0 : score;
+  return { best, isRecord };
+}
+
+async function readBestScore(env, playerId, game) {
+  const bestRow = await env.DB.prepare('SELECT value FROM player_data WHERE player_id = ? AND key = ?')
+    .bind(playerId, `best_${game}`).first();
+  return bestRow ? Number(JSON.parse(bestRow.value)) || 0 : 0;
+}
+
+const GAME_RUNNERS = {
+  '2048': {
+    async start() {
+      const seed = Math.floor(Math.random() * 0xFFFFFFFF) >>> 0;
+      return { seed, extra: {} };
+    },
+    async finish(env, playerId, run, body) {
+      const movesGiris = Array.isArray(body.moves) ? body.moves : [];
+      if (movesGiris.length > RUN_MAX_MOVES || !movesGiris.every((m) => GAME_2048_MOVE_CODES.has(m))) {
+        return { ok: false, reason: 'gecersiz-hamle-listesi' };
+      }
+
+      const { score: hamSkor } = replay2048(run.seed, movesGiris, RUN_MAX_MOVES);
+      const verifiedScore = guvenliSayi(hamSkor, MAX_BEST_SCORE);
+      const earnAmount = guvenliSayi(Math.floor(verifiedScore / GAME_2048_DIVISOR), MAX_EARN_PER_REQUEST);
+      const { best, isRecord } = await upsertBestScore(env, playerId, '2048', verifiedScore);
+      return { ok: true, score: verifiedScore, best, isRecord, earnAmount };
+    },
+  },
+  flow: {
+    // Seviye (level) istemciden GELMIYOR - "bir sonraki seviye" her zaman
+    // sunucunun kendi kaydettigi best_flow + 1'dir, boylece bir istemci
+    // dogrudan yuksek bir seviye numarasi iddia edip atlama yapamaz.
+    async start(env, playerId) {
+      const currentBest = await readBestScore(env, playerId, 'flow');
+      const level = currentBest + 1;
+      const seed = Math.floor(Math.random() * 0xFFFFFFFF) >>> 0;
+      return { seed, extra: { level } };
+    },
+    async finish(env, playerId, run, body) {
+      const level = guvenliSayi(run.level, 100000);
+      if (!level) return { ok: false, reason: 'gecersiz-seviye' };
+
+      const puzzle = generateFlowPuzzle(level, run.seed);
+      const pathsGiris = Array.isArray(body.paths) ? body.paths : null;
+      const sekilUygun = pathsGiris
+        && pathsGiris.length === puzzle.endpoints.length
+        && pathsGiris.every((p) => Array.isArray(p) && p.length <= FLOW_MAX_PATH_CELLS);
+      if (!sekilUygun) return { ok: false, reason: 'gecersiz-cozum-sekli' };
+
+      if (!validateFlowSolution(puzzle.size, puzzle.endpoints, pathsGiris)) {
+        return { ok: false, reason: 'cozum-dogrulanamadi' };
+      }
+
+      const { best, isRecord } = await upsertBestScore(env, playerId, 'flow', level);
+      return { ok: true, score: level, best, isRecord, earnAmount: FLOW_POINTS_PER_LEVEL };
+    },
+  },
+};
 
 async function handleGameStart(env, playerId, game) {
-  if (!REPLAY_ENGINES[game]) return { error: 'desteklenmeyen oyun' };
+  const runner = GAME_RUNNERS[game];
+  if (!runner) return { error: 'desteklenmeyen oyun' };
 
-  const seed = Math.floor(Math.random() * 0xFFFFFFFF) >>> 0;
+  const { seed, extra } = await runner.start(env, playerId);
   const runId = crypto.randomUUID();
   const now = Date.now();
 
@@ -989,15 +1068,14 @@ async function handleGameStart(env, playerId, game) {
      VALUES (?, ?, ?, ?)
      ON CONFLICT(player_id, key) DO UPDATE
        SET value = excluded.value, updated_at = excluded.updated_at`,
-  ).bind(playerId, `run_${game}`, JSON.stringify({ seed, runId, startedAt: now }), now).run();
+  ).bind(playerId, `run_${game}`, JSON.stringify({ seed, runId, startedAt: now, ...extra }), now).run();
 
-  return { seed, runId };
+  return { seed, runId, ...extra };
 }
 
 async function handleGameFinish(env, playerId, game, body) {
-  const engine = REPLAY_ENGINES[game];
-  const divisor = GAME_POINTS_DIVISOR[game];
-  if (!engine || !divisor) return { error: 'desteklenmeyen oyun' };
+  const runner = GAME_RUNNERS[game];
+  if (!runner) return { error: 'desteklenmeyen oyun' };
 
   const runId = String(body.runId || '');
   if (!runId) return { ok: false, reason: 'gecersiz-runId' };
@@ -1011,40 +1089,20 @@ async function handleGameFinish(env, playerId, game, body) {
   try { run = JSON.parse(runSatir.value); } catch { run = null; }
   // runId eslesmiyorsa: baska bir sekme/oturum ayni oyun icin YENI bir
   // /api/game/start cagirip bu satiri ustune yazmis demektir - eski
-  // hamleleri YANLIS tohuma karsi oynatmak yerine dogrudan reddediyoruz.
+  // hamleleri/cozumu YANLIS tohuma/seviyeye karsi degerlendirmek yerine
+  // dogrudan reddediyoruz.
   if (!run || run.runId !== runId) return { ok: false, reason: 'kosu-uyusmuyor' };
 
-  const gecerliKodlar = GAME_MOVE_CODES[game];
-  const movesGiris = Array.isArray(body.moves) ? body.moves : [];
-  if (movesGiris.length > RUN_MAX_MOVES || !movesGiris.every((m) => gecerliKodlar.has(m))) {
-    return { ok: false, reason: 'gecersiz-hamle-listesi' };
-  }
+  const sonuc = await runner.finish(env, playerId, run, body);
+  if (!sonuc.ok) return sonuc;
 
-  const { score: hamSkor } = engine(run.seed, movesGiris, RUN_MAX_MOVES);
-  const verifiedScore = guvenliSayi(hamSkor, MAX_BEST_SCORE);
-  const earnAmount = guvenliSayi(Math.floor(verifiedScore / divisor), MAX_EARN_PER_REQUEST);
   const opId = `game:${game}:${runId}`;
-  const now = Date.now();
-
-  const bestKey = `best_${game}`;
-  const bestRes = await env.DB.prepare(
-    `INSERT INTO player_data (player_id, key, value, updated_at)
-     VALUES (?, ?, ?, ?)
-     ON CONFLICT(player_id, key) DO UPDATE
-       SET value = excluded.value, updated_at = excluded.updated_at
-       WHERE CAST(player_data.value AS INTEGER) < ?`,
-  ).bind(playerId, bestKey, JSON.stringify(verifiedScore), now, verifiedScore).run();
-  const isRecord = bestRes.meta.changes === 1;
-  const bestRow = await env.DB.prepare('SELECT value FROM player_data WHERE player_id = ? AND key = ?')
-    .bind(playerId, bestKey).first();
-  const best = bestRow ? Number(JSON.parse(bestRow.value)) || 0 : verifiedScore;
-
   let earnResult;
-  if (earnAmount > 0) {
+  if (sonuc.earnAmount > 0) {
     // applyEarn kendi op_id kontroluyle idempotent - ayni runId ikinci kez
     // gelirse (ag tekrari vb.) burada TEKRAR kredi verilmiyor, ilk sonuc
     // aynen donuyor.
-    earnResult = await applyEarn(env, playerId, opId, earnAmount);
+    earnResult = await applyEarn(env, playerId, opId, sonuc.earnAmount);
   } else {
     const oyuncu = await env.DB.prepare('SELECT points FROM players WHERE id = ?').bind(playerId).first();
     earnResult = { total: oyuncu ? oyuncu.points : 0, credited: 0 };
@@ -1052,9 +1110,9 @@ async function handleGameFinish(env, playerId, game, body) {
 
   return {
     ok: true,
-    score: verifiedScore,
-    best,
-    isRecord,
+    score: sonuc.score,
+    best: sonuc.best,
+    isRecord: sonuc.isRecord,
     earned: earnResult.credited || 0,
     total: earnResult.total,
   };

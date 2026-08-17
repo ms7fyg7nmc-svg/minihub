@@ -1,8 +1,9 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v89';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy } from '../../js/store.js?v89';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v89';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v89';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v90';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy, startRun, finishRun, yerelTohum } from '../../js/store.js?v90';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v90';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v90';
+import { generatePuzzle } from './logic.js?v90';
 
 const GAME_ID = 'flow';
 const POINTS_PER_LEVEL = 48;
@@ -45,6 +46,8 @@ let moves = 0;
 let locked = false;
 let cellEls = [];
 let drag = null;
+let seed = null;
+let runId = null;
 
 initTelegram();
 applyStaticTexts();
@@ -58,7 +61,7 @@ document.getElementById('back-link').addEventListener('click', (e) => {
 document.getElementById('new-game').addEventListener('click', async () => {
   haptic.tap();
   await spendRestartEnergy();
-  buildLevel(level);
+  buildLevel();
 });
 undoBtn.addEventListener('click', () => {
   haptic.tap();
@@ -76,44 +79,52 @@ async function bootstrap() {
   bestEl.textContent = bestLevel;
 
   const saved = await loadState(GAME_ID);
-  if (saved && Array.isArray(saved.endpoints) && saved.endpoints.length) {
-    level = Number(saved.level) || 1;
-    moves = Number(saved.moves) || 0;
-    size = Number(saved.size) || sizeFor(level);
-    endpoints = saved.endpoints;
-    paths = (saved.paths || endpoints.map(() => [])).map((p) => [...p]);
-    buildBoard();
-    renderAll();
+  if (saved && typeof saved.seed === 'number' && Array.isArray(saved.paths)) {
+    restore(saved);
   } else {
-    buildLevel(1);
+    await buildLevel();
   }
+}
+
+// Kaydedilmis seviye+tohum ciftinden bulmacayi (endpoints) yeniden uretir -
+// istemci ve sunucu bagimsiz olarak generatePuzzle() ile ayni sonuca ulasir,
+// o yuzden ham endpoints kaydetmeye/guvenmeye gerek yok.
+function restore(saved) {
+  level = Number(saved.level) || 1;
+  seed = saved.seed;
+  runId = saved.runId ?? null;
+  moves = Number(saved.moves) || 0;
+
+  const puzzle = generatePuzzle(level, seed);
+  size = puzzle.size;
+  endpoints = puzzle.endpoints;
+  paths = (Array.isArray(saved.paths) ? saved.paths : endpoints.map(() => [])).map((p) => [...p]);
+
+  buildBoard();
+  renderAll();
 }
 
 function goHome() {
   window.location.href = '../../index.html';
 }
 
-function sizeFor(levelNo) {
-  return Math.min(5 + Math.floor((levelNo - 1) / 3), 8);
-}
-
-function colorCountFor(levelNo, gridSize) {
-  const maxByColors = COLORS.length;
-  const wanted = 3 + Math.floor((levelNo - 1) / 2);
-  return Math.min(wanted, maxByColors, Math.floor((gridSize * gridSize) / 3));
-}
-
-function buildLevel(levelNo) {
-  level = levelNo;
+async function buildLevel() {
   moves = 0;
   locked = false;
-  size = sizeFor(levelNo);
-  const colorCount = colorCountFor(levelNo, size);
 
-  const route = randomHamiltonianPath(size);
-  const segments = splitIntoSegments(route, colorCount);
+  const run = await startRun(GAME_ID);
+  if (run) {
+    seed = run.seed;
+    runId = run.runId;
+    level = run.level;
+  } else {
+    seed = yerelTohum();
+    runId = null;
+  }
 
-  endpoints = segments.map((seg) => [seg[0], seg[seg.length - 1]]);
+  const puzzle = generatePuzzle(level, seed);
+  size = puzzle.size;
+  endpoints = puzzle.endpoints;
   paths = endpoints.map(() => []);
 
   hideOverlay();
@@ -121,50 +132,6 @@ function buildLevel(levelNo) {
   buildBoard();
   renderAll();
   persist();
-}
-
-function randomHamiltonianPath(n) {
-  const idx = (r, c) => r * n + c;
-  const path = [];
-
-  const rowMajor = Math.random() < 0.5;
-  const reverseMajor = Math.random() < 0.5;
-  const reverseMinor = Math.random() < 0.5;
-
-  const majorOrder = reverseMajor ? range(n).reverse() : range(n);
-
-  majorOrder.forEach((major, i) => {
-    const goForward = (i % 2 === 0) !== reverseMinor;
-    const minorOrder = goForward ? range(n) : range(n).reverse();
-    for (const minor of minorOrder) {
-      path.push(rowMajor ? idx(major, minor) : idx(minor, major));
-    }
-  });
-
-  return path;
-}
-
-function range(n) {
-  return Array.from({ length: n }, (_, i) => i);
-}
-
-function splitIntoSegments(route, count) {
-  const total = route.length;
-  const sizes = new Array(count).fill(2);
-
-  let extra = Math.max(0, total - count * 2);
-  while (extra > 0) {
-    sizes[Math.floor(Math.random() * count)]++;
-    extra--;
-  }
-
-  const segments = [];
-  let at = 0;
-  for (const s of sizes) {
-    segments.push(route.slice(at, at + s));
-    at += s;
-  }
-  return segments;
 }
 
 function cellOwner(cellIndex) {
@@ -291,6 +258,19 @@ function undoLast() {
   persist();
 }
 
+// Sunucu-dogrulamali (runId var) modda son cozumu (paths) gonderir; sunucu
+// bagimsiz olarak generatePuzzle(level,seed) ile ayni bulmacayi uretip
+// validateSolution() ile dogrular. Misafirde/basarisizlikta eski
+// (dogrulamasiz) submitScore+addPoints akisina duser.
+async function finishLevelRun() {
+  const result = runId ? await finishRun(GAME_ID, runId, { paths }) : null;
+  if (result) return { best: result.best, earned: result.earned };
+
+  const bestSonuc = await submitScore(GAME_ID, level);
+  await addPoints(POINTS_PER_LEVEL);
+  return { best: bestSonuc.best, earned: POINTS_PER_LEVEL };
+}
+
 async function finishLevel() {
   locked = true;
   haptic.success();
@@ -298,19 +278,17 @@ async function finishLevel() {
   clearState(GAME_ID);
   boardEl.classList.add('solved');
 
-  const result = await submitScore(GAME_ID, level);
-  bestLevel = result.best;
+  const { best, earned } = await finishLevelRun();
+  bestLevel = best;
   bestEl.textContent = bestLevel;
 
-  await addPoints(POINTS_PER_LEVEL);
-
-  const text = `${t('levelResult', { moves })} ${t('earnedPoints', { points: POINTS_PER_LEVEL })}`;
-  showOverlay(t('levelDone'), text, t('nextLevel'), () => buildLevel(level + 1));
+  const text = `${t('levelResult', { moves })} ${t('earnedPoints', { points: earned })}`;
+  showOverlay(t('levelDone'), text, t('nextLevel'), () => { level += 1; buildLevel(); });
 }
 
 function persist() {
   if (locked) return;
-  saveState(GAME_ID, { level, moves, size, endpoints, paths });
+  saveState(GAME_ID, { level, moves, seed, runId, paths });
 }
 
 function buildBoard() {

@@ -494,5 +494,74 @@ let kosuYok = await api(env13, 'game/finish', { initData: id13, game: '2048', ru
 check('2048: hic /api/game/start cagrilmadan finish reddediliyor', kosuYok.ok === false && kosuYok.reason === 'aktif-kosu-yok',
       `-> ${JSON.stringify(kosuYok)}`);
 
+// --- Flow Connect "cozum dogrulama": sunucu tohumu ve seviyeyi kendisi
+// veriyor (seviye = best_flow+1, istemci atlayamiyor), istemcinin gonderdigi
+// NIHAI yollari (paths) generatePuzzle(level,seed) ile bagimsiz uretilen
+// bulmacaya karsi validateSolution() ile dogruluyor. ---
+const logicFlow = await import(new URL('../games/flow/logic.js', BURASI).href);
+
+// generatePuzzle() ile AYNI sirada AYNI saf fonksiyonlari cagirarak o
+// bulmacanin gercek (dogru) cozumunu (segmentleri) yeniden kurar.
+function cozFlow(level, seed) {
+  const rng = logicFlow.mulberry32(seed);
+  const size = logicFlow.sizeFor(level);
+  const colorCount = logicFlow.colorCountFor(level, size);
+  const route = logicFlow.randomHamiltonianPath(size, rng);
+  const paths = logicFlow.splitIntoSegments(route, colorCount, rng);
+  return { size, paths };
+}
+
+const DB14 = makeDb(); const env14 = { DB: DB14, BOT_TOKEN }; const id14 = signedInitData(5555);
+await api(env14, 'sync', { initData: id14, points: 0, state: {} });
+
+let flowBaslat = await api(env14, 'game/start', { initData: id14, game: 'flow' });
+check('flow: /api/game/start seed, runId ve seviye 1 donuyor',
+      typeof flowBaslat.seed === 'number' && typeof flowBaslat.runId === 'string' && flowBaslat.level === 1,
+      `-> ${JSON.stringify(flowBaslat)}`);
+
+const cozum1 = cozFlow(1, flowBaslat.seed);
+let flowBitir = await api(env14, 'game/finish', { initData: id14, game: 'flow', runId: flowBaslat.runId, paths: cozum1.paths });
+check('flow: gercek cozum kabul ediliyor, skor = seviye', flowBitir.ok === true && flowBitir.score === 1,
+      `-> ${JSON.stringify(flowBitir)}`);
+check('flow: ilk seviye rekor olarak kaydediliyor', flowBitir.best === 1 && flowBitir.isRecord === true,
+      `-> ${JSON.stringify(flowBitir)}`);
+check('flow: sabit POINTS_PER_LEVEL (48) kazandiriyor', flowBitir.earned === 48,
+      `-> ${flowBitir.earned}`);
+
+let flowTekrar = await api(env14, 'game/finish', { initData: id14, game: 'flow', runId: flowBaslat.runId, paths: cozum1.paths });
+check('flow: ayni runId tekrar gonderilince ikinci kez kredi verilmiyor (idempotent)', flowTekrar.earned === 0,
+      `-> ${flowTekrar.earned}`);
+
+let flowBaslat2 = await api(env14, 'game/start', { initData: id14, game: 'flow' });
+check('flow: bir sonraki /api/game/start otomatik olarak 2. seviyeyi veriyor', flowBaslat2.level === 2,
+      `-> ${JSON.stringify(flowBaslat2)}`);
+
+let flowSahteAtlama = await api(env14, 'game/finish', {
+  initData: id14, game: 'flow', runId: flowBaslat2.runId, paths: cozFlow(1, flowBaslat.seed).paths,
+});
+check('flow: 1. seviyenin cozumu 2. seviyenin bulmacasina karsi reddediliyor', flowSahteAtlama.ok === false,
+      `-> ${JSON.stringify(flowSahteAtlama)}`);
+
+const bozukCozum = cozFlow(2, flowBaslat2.seed).paths.map((p, i) => (i === 0 ? p.slice(0, -1) : p));
+let flowBozuk = await api(env14, 'game/finish', { initData: id14, game: 'flow', runId: flowBaslat2.runId, paths: bozukCozum });
+check('flow: eksik/hatali cozum reddediliyor', flowBozuk.ok === false && flowBozuk.reason === 'cozum-dogrulanamadi',
+      `-> ${JSON.stringify(flowBozuk)}`);
+
+let flowYanlisSekil = await api(env14, 'game/finish', {
+  initData: id14, game: 'flow', runId: flowBaslat2.runId, paths: [[0, 1], [2, 3]],
+});
+check('flow: yol sayisi renk sayisiyla uyusmuyorsa reddediliyor', flowYanlisSekil.ok === false && flowYanlisSekil.reason === 'gecersiz-cozum-sekli',
+      `-> ${JSON.stringify(flowYanlisSekil)}`);
+
+const flowBaslat3 = await api(env14, 'game/start', { initData: id14, game: 'flow' });
+let flowEskiRunId = await api(env14, 'game/finish', { initData: id14, game: 'flow', runId: flowBaslat2.runId, paths: cozFlow(2, flowBaslat2.seed).paths });
+check('flow: uzerine yazilmis (eski) runId ile finish reddediliyor', flowEskiRunId.ok === false && flowEskiRunId.reason === 'kosu-uyusmuyor',
+      `-> ${JSON.stringify(flowEskiRunId)}`);
+
+const cozum3 = cozFlow(2, flowBaslat3.seed);
+let flowBitir3 = await api(env14, 'game/finish', { initData: id14, game: 'flow', runId: flowBaslat3.runId, paths: cozum3.paths });
+check('flow: 2. seviye dogru cozulunce best_flow 2 oluyor', flowBitir3.ok === true && flowBitir3.best === 2 && flowBitir3.isRecord === true,
+      `-> ${JSON.stringify(flowBitir3)}`);
+
 console.log(`\n${passed} basarili, ${failed} basarisiz`);
 process.exit(failed > 0 ? 1 : 0);
