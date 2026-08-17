@@ -471,6 +471,12 @@ body.hub::before {
 .daily-card[hidden] { display: none; }
 .daily-card:active { transform: scale(0.98); }
 
+/* Sol sutun (Gunluk Odul + Arkadas Davet) baslik+alt satir tasidigi icin
+   sag sutundan (Liderlik + Enerji, tek satir) dogal olarak daha uzun
+   cikiyor - sag sutuna dokunmadan alt/ust bosluklari sikip hizaliyoruz. */
+.widget-left { padding: 6px 10px; }
+.widget-left .daily-card-info { gap: 1px; }
+
 .widget-icon {
   flex: none;
   font-size: 17px;
@@ -496,7 +502,6 @@ body.hub::before {
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
 }
-.card-energy-alt { font-size: 7px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
 .daily-card-bolt { font-size: 15px; filter: drop-shadow(0 0 5px rgba(245, 185, 66, 0.6)); }
 
 .energy-pips { display: flex; gap: 3px; }
