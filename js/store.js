@@ -1,5 +1,5 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v88';
+import { isTelegramUser, getInitData } from './tg.js?v89';
 
 const API_BASE = 'https://minihub-bot.volkanturedi1.workers.dev';
 
@@ -473,6 +473,39 @@ export async function submitScore(game, score) {
   });
 
   return { best: enIyi, isRecord: yeniRekor };
+}
+
+function yerelTohum() {
+  return Math.floor(Math.random() * 0xFFFFFFFF) >>> 0;
+}
+
+// Sunucu-dogrulamali skor (replay) destegi olan oyunlar icin: submitScore/
+// addPoints yerine bu ikisi kullaniliyor. Misafirde/yerelde sunucu
+// dogrulamasi zaten yok, o yuzden eski (dogrulamasiz) davranisa aynen
+// dusuyor - sadece senkron oldugunda gercek guvenlik farki oluyor.
+export async function startRun(game) {
+  const v = await senkron;
+  if (!v) return { seed: yerelTohum(), runId: null };
+
+  const sonuc = await sunucuGonder('/api/game/start', { game });
+  if (!sonuc || typeof sonuc.seed !== 'number') return { seed: yerelTohum(), runId: null };
+  return { seed: sonuc.seed, runId: sonuc.runId };
+}
+
+export async function finishRun(game, runId, moves, claimedScore, divisor) {
+  const v = await senkron;
+  if (!v || !runId) {
+    const bestSonuc = await submitScoreYerel(game, claimedScore);
+    const earned = Math.max(0, Math.floor((Number(claimedScore) || 0) / divisor));
+    if (earned > 0) await addPointsYerel(earned);
+    return { ok: true, score: claimedScore, best: bestSonuc.best, isRecord: bestSonuc.isRecord, earned, total: null };
+  }
+
+  const sonuc = await sunucuGonder('/api/game/finish', { game, runId, moves, claimedScore });
+  if (!sonuc?.ok) return { ok: false };
+  v.points = sonuc.total;
+  if (typeof sonuc.best === 'number') v.state[`best_${game}`] = sonuc.best;
+  return sonuc;
 }
 
 export async function loadState(game) {

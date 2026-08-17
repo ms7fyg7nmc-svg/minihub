@@ -428,5 +428,71 @@ check('haric tutulan hesap kendi ekraninda sabit #99 goruyor', r.kendi?.sira ===
 check('haric tutulan hesap listenin disinda tutuluyor (kendisi listede yok)', !r.liste.some((x) => x.ben),
       `-> ${JSON.stringify(r.liste)}`);
 
+// --- 2048 "replay" dogrulamasi: sunucu tohumu kendisi veriyor, istemcinin
+// hamlelerini kendi mantigiyla yeniden oynatip skoru KENDISI hesapliyor. ---
+const logic2048 = await import(new URL('../games/2048/logic.js', BURASI).href);
+
+function oyna2048(seed, adim) {
+  const rng = logic2048.mulberry32(seed);
+  let { board } = logic2048.createBoard(rng);
+  const moves = [];
+  let score = 0;
+  const yonler = ['right', 'down', 'left', 'up'];
+  for (let i = 0; i < adim; i++) {
+    const yon = yonler[i % 4];
+    const sonuc = logic2048.applyMove(board, yon, rng);
+    if (!sonuc.moved) continue;
+    board = sonuc.board;
+    score += sonuc.gained;
+    moves.push(logic2048.DIR_TO_CODE[yon]);
+  }
+  return { moves, score };
+}
+
+const DB12 = makeDb(); const env12 = { DB: DB12, BOT_TOKEN }; const id12 = signedInitData(7777);
+await api(env12, 'sync', { initData: id12, points: 0, state: {} });
+
+let baslat = await api(env12, 'game/start', { initData: id12, game: '2048' });
+check('2048: /api/game/start seed ve runId donuyor', typeof baslat.seed === 'number' && typeof baslat.runId === 'string',
+      `-> ${JSON.stringify(baslat)}`);
+
+const oyun1 = oyna2048(baslat.seed, 40);
+let bitir = await api(env12, 'game/finish', { initData: id12, game: '2048', runId: baslat.runId, moves: oyun1.moves });
+check('2048: replay istemciyle AYNI gercek skoru hesapliyor', bitir.ok === true && bitir.score === oyun1.score,
+      `-> ${JSON.stringify(bitir)} beklenen=${oyun1.score}`);
+check('2048: ilk oyun rekor olarak kaydediliyor', bitir.best === oyun1.score && bitir.isRecord === true,
+      `-> ${JSON.stringify(bitir)}`);
+const beklenenKazanc = Math.floor(oyun1.score / 23);
+check('2048: kazanc dogru boluniyor (POINTS_DIVISOR=23)', bitir.earned === beklenenKazanc,
+      `-> ${bitir.earned} vs ${beklenenKazanc}`);
+
+let sahteIddia = await api(env12, 'game/finish', {
+  initData: id12, game: '2048', runId: baslat.runId, moves: oyun1.moves, claimedScore: 999999999,
+});
+check('2048: istemcinin sismis skor iddiasi yok sayiliyor (gercek skor donuyor)', sahteIddia.score === oyun1.score,
+      `-> ${JSON.stringify(sahteIddia)}`);
+check('2048: ayni runId tekrar gonderilince ikinci kez kredi verilmiyor (idempotent)', sahteIddia.earned === 0,
+      `-> ${sahteIddia.earned}`);
+
+const baslat2 = await api(env12, 'game/start', { initData: id12, game: '2048' });
+let uyusmaz = await api(env12, 'game/finish', { initData: id12, game: '2048', runId: baslat.runId, moves: oyun1.moves });
+check('2048: uzerine yazilmis (eski) runId ile finish reddediliyor', uyusmaz.ok === false && uyusmaz.reason === 'kosu-uyusmuyor',
+      `-> ${JSON.stringify(uyusmaz)}`);
+
+let gecersiz = await api(env12, 'game/finish', { initData: id12, game: '2048', runId: baslat2.runId, moves: ['U', 'X', 'D'] });
+check('2048: gecersiz hamle kodu iceren liste reddediliyor', gecersiz.ok === false && gecersiz.reason === 'gecersiz-hamle-listesi',
+      `-> ${JSON.stringify(gecersiz)}`);
+
+const cokUzunListe = Array.from({ length: 20001 }, () => 'U');
+let asiri = await api(env12, 'game/finish', { initData: id12, game: '2048', runId: baslat2.runId, moves: cokUzunListe });
+check('2048: asiri uzun hamle listesi reddediliyor', asiri.ok === false && asiri.reason === 'gecersiz-hamle-listesi',
+      `-> ${JSON.stringify(asiri)}`);
+
+const DB13 = makeDb(); const env13 = { DB: DB13, BOT_TOKEN }; const id13 = signedInitData(9999);
+await api(env13, 'sync', { initData: id13, points: 0, state: {} });
+let kosuYok = await api(env13, 'game/finish', { initData: id13, game: '2048', runId: 'uydurma-run-id', moves: ['U'] });
+check('2048: hic /api/game/start cagrilmadan finish reddediliyor', kosuYok.ok === false && kosuYok.reason === 'aktif-kosu-yok',
+      `-> ${JSON.stringify(kosuYok)}`);
+
 console.log(`\n${passed} basarili, ${failed} basarisiz`);
 process.exit(failed > 0 ? 1 : 0);

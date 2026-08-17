@@ -1,3 +1,4 @@
+import { replayRun as replay2048, CODE_TO_DIR as CODES_2048 } from '../games/2048/logic.js';
 
 const MINI_APP_URL = 'https://ms7fyg7nmc-svg.github.io/minihub/';
 const BOT_USERNAME = 'minihubgames_bot';
@@ -531,6 +532,22 @@ async function applyDelta(env, playerId, opId, delta) {
   ).bind(playerId, key).first();
   if (prior) return { ok: true, total: prior.balance_after };
 
+  // op_id'yi bakiyeye dokunmadan ONCE atomik olarak "isliyorum" diye
+  // isaretliyoruz. Ayni op_id ile es zamanli iki istek yukaridaki SELECT'i
+  // ikisi de bos gorup gecebilir - ama bu INSERT'i sadece biri "kazanir"
+  // (player_id+op_id PRIMARY KEY), digeri bakiyeye hic dokunmadan erken
+  // donuyor. Onceden bu INSERT en sonda oluyordu, iki istek de UPDATE'i
+  // calistirip bakiyeyi iki kez degistirebiliyordu (ikinci INSERT sadece
+  // sonradan, gec kalmis sekilde cakisiyordu).
+  const claim = await env.DB.prepare(
+    'INSERT OR IGNORE INTO spend_log (player_id, op_id, delta, balance_after, created_at) VALUES (?, ?, ?, 0, ?)',
+  ).bind(playerId, key, delta, now).run();
+
+  if (claim.meta.changes === 0) {
+    const row = await env.DB.prepare('SELECT points FROM players WHERE id = ?').bind(playerId).first();
+    return { ok: true, total: row ? row.points : 0 };
+  }
+
   if (delta < 0) {
     const gerekli = -delta;
     const res = await env.DB.prepare(
@@ -538,6 +555,7 @@ async function applyDelta(env, playerId, opId, delta) {
     ).bind(delta, now, playerId, gerekli).run();
 
     if (res.meta.changes === 0) {
+      await env.DB.prepare('DELETE FROM spend_log WHERE player_id = ? AND op_id = ?').bind(playerId, key).run();
       const row = await env.DB.prepare('SELECT points FROM players WHERE id = ?').bind(playerId).first();
       return { ok: false, total: row ? row.points : 0 };
     }
@@ -551,8 +569,8 @@ async function applyDelta(env, playerId, opId, delta) {
   const total = row ? row.points : 0;
 
   await env.DB.prepare(
-    'INSERT INTO spend_log (player_id, op_id, delta, balance_after, created_at) VALUES (?, ?, ?, ?, ?)',
-  ).bind(playerId, key, delta, total, now).run();
+    'UPDATE spend_log SET balance_after = ? WHERE player_id = ? AND op_id = ?',
+  ).bind(total, playerId, key).run();
 
   return { ok: true, total };
 }
@@ -567,6 +585,16 @@ async function applyEarn(env, playerId, opId, requestedAmount) {
   if (prior) {
     const guncel = await env.DB.prepare('SELECT points, energy FROM players WHERE id = ?').bind(playerId).first();
     return { ok: true, total: guncel ? guncel.points : prior.balance_after, energy: guncel ? guncel.energy : 0, credited: 0 };
+  }
+
+  // Ayni sebep: op_id'yi hesaplamadan ONCE iddia ediyoruz ki es zamanli bir
+  // ikinci istek gunluk tavan hesabini ve enerji dusumunu TEKRARLAMASIN.
+  const claim = await env.DB.prepare(
+    'INSERT OR IGNORE INTO spend_log (player_id, op_id, delta, balance_after, created_at) VALUES (?, ?, 0, 0, ?)',
+  ).bind(playerId, key, now).run();
+  if (claim.meta.changes === 0) {
+    const guncel = await env.DB.prepare('SELECT points, energy FROM players WHERE id = ?').bind(playerId).first();
+    return { ok: true, total: guncel ? guncel.points : 0, energy: guncel ? guncel.energy : 0, credited: 0 };
   }
 
   const pencere = await env.DB.prepare(
@@ -594,15 +622,27 @@ async function applyEarn(env, playerId, opId, requestedAmount) {
     const total = player.points;
 
     await env.DB.prepare(
-      'INSERT INTO spend_log (player_id, op_id, delta, balance_after, created_at) VALUES (?, ?, ?, ?, ?)',
-    ).bind(playerId, key, verilecek, total, now).run();
+      'UPDATE spend_log SET delta = ?, balance_after = ? WHERE player_id = ? AND op_id = ?',
+    ).bind(verilecek, total, playerId, key).run();
 
     return { ok: true, total, energy: yeniEnerji, credited: verilecek };
   }
 
+  // 3 deneme de enerji CAS'inde kaybettiyse (ayni oyuncunun cok nadir gorulen
+  // es zamanli farkli istekleri): applyDelta'yi TEKRAR cagirmiyoruz - bu
+  // op_id zaten yukarida iddia edildigi icin applyDelta onu "zaten var"
+  // sanip hicbir sey uygulamadan donerdi. Indirimli miktari dogrudan
+  // uyguluyoruz.
   const azaltilmis = Math.min(Math.round(requestedAmount * EMPTY_ENERGY_CARPAN), kalanHak);
-  const yedek = await applyDelta(env, playerId, key, azaltilmis);
-  return { ...yedek, energy: 0, credited: azaltilmis };
+  if (azaltilmis > 0) {
+    await env.DB.prepare('UPDATE players SET points = points + ?, updated_at = ? WHERE id = ?')
+      .bind(azaltilmis, now, playerId).run();
+  }
+  const row = await env.DB.prepare('SELECT points FROM players WHERE id = ?').bind(playerId).first();
+  const total = row ? row.points : 0;
+  await env.DB.prepare('UPDATE spend_log SET delta = ?, balance_after = ? WHERE player_id = ? AND op_id = ?')
+    .bind(azaltilmis, total, playerId, key).run();
+  return { ok: true, total, energy: 0, credited: azaltilmis };
 }
 
 async function handleEnergySpend(env, playerId, opId) {
@@ -925,6 +965,101 @@ async function handleBest(env, playerId, body) {
   return { best, isRecord };
 }
 
+// Skor-sahteciligine karsi "replay" dogrulamasi olan oyunlar. Sunucu tohumu
+// (seed) kendisi uretir, istemci sadece hangi hamleleri yaptigini bildirir,
+// sunucu bu hamleleri KENDI mantigiyla (games/2048/logic.js) yeniden
+// oynatip GERCEK skoru kendisi hesaplar - istemcinin iddia ettigi skor asla
+// krediye girmiyor. Simdilik sadece 2048; diger oyunlar ayni desenle ayri
+// fazlarda eklenecek (bkz. proje planı).
+const REPLAY_ENGINES = { '2048': replay2048 };
+const GAME_MOVE_CODES = { '2048': new Set(Object.keys(CODES_2048)) };
+// games/2048/2048.js'teki POINTS_DIVISOR ile AYNI olmali.
+const GAME_POINTS_DIVISOR = { '2048': 23 };
+const RUN_MAX_MOVES = 20000;
+
+async function handleGameStart(env, playerId, game) {
+  if (!REPLAY_ENGINES[game]) return { error: 'desteklenmeyen oyun' };
+
+  const seed = Math.floor(Math.random() * 0xFFFFFFFF) >>> 0;
+  const runId = crypto.randomUUID();
+  const now = Date.now();
+
+  await env.DB.prepare(
+    `INSERT INTO player_data (player_id, key, value, updated_at)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(player_id, key) DO UPDATE
+       SET value = excluded.value, updated_at = excluded.updated_at`,
+  ).bind(playerId, `run_${game}`, JSON.stringify({ seed, runId, startedAt: now }), now).run();
+
+  return { seed, runId };
+}
+
+async function handleGameFinish(env, playerId, game, body) {
+  const engine = REPLAY_ENGINES[game];
+  const divisor = GAME_POINTS_DIVISOR[game];
+  if (!engine || !divisor) return { error: 'desteklenmeyen oyun' };
+
+  const runId = String(body.runId || '');
+  if (!runId) return { ok: false, reason: 'gecersiz-runId' };
+
+  const runSatir = await env.DB.prepare(
+    'SELECT value FROM player_data WHERE player_id = ? AND key = ?',
+  ).bind(playerId, `run_${game}`).first();
+  if (!runSatir) return { ok: false, reason: 'aktif-kosu-yok' };
+
+  let run;
+  try { run = JSON.parse(runSatir.value); } catch { run = null; }
+  // runId eslesmiyorsa: baska bir sekme/oturum ayni oyun icin YENI bir
+  // /api/game/start cagirip bu satiri ustune yazmis demektir - eski
+  // hamleleri YANLIS tohuma karsi oynatmak yerine dogrudan reddediyoruz.
+  if (!run || run.runId !== runId) return { ok: false, reason: 'kosu-uyusmuyor' };
+
+  const gecerliKodlar = GAME_MOVE_CODES[game];
+  const movesGiris = Array.isArray(body.moves) ? body.moves : [];
+  if (movesGiris.length > RUN_MAX_MOVES || !movesGiris.every((m) => gecerliKodlar.has(m))) {
+    return { ok: false, reason: 'gecersiz-hamle-listesi' };
+  }
+
+  const { score: hamSkor } = engine(run.seed, movesGiris, RUN_MAX_MOVES);
+  const verifiedScore = guvenliSayi(hamSkor, MAX_BEST_SCORE);
+  const earnAmount = guvenliSayi(Math.floor(verifiedScore / divisor), MAX_EARN_PER_REQUEST);
+  const opId = `game:${game}:${runId}`;
+  const now = Date.now();
+
+  const bestKey = `best_${game}`;
+  const bestRes = await env.DB.prepare(
+    `INSERT INTO player_data (player_id, key, value, updated_at)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(player_id, key) DO UPDATE
+       SET value = excluded.value, updated_at = excluded.updated_at
+       WHERE CAST(player_data.value AS INTEGER) < ?`,
+  ).bind(playerId, bestKey, JSON.stringify(verifiedScore), now, verifiedScore).run();
+  const isRecord = bestRes.meta.changes === 1;
+  const bestRow = await env.DB.prepare('SELECT value FROM player_data WHERE player_id = ? AND key = ?')
+    .bind(playerId, bestKey).first();
+  const best = bestRow ? Number(JSON.parse(bestRow.value)) || 0 : verifiedScore;
+
+  let earnResult;
+  if (earnAmount > 0) {
+    // applyEarn kendi op_id kontroluyle idempotent - ayni runId ikinci kez
+    // gelirse (ag tekrari vb.) burada TEKRAR kredi verilmiyor, ilk sonuc
+    // aynen donuyor.
+    earnResult = await applyEarn(env, playerId, opId, earnAmount);
+  } else {
+    const oyuncu = await env.DB.prepare('SELECT points FROM players WHERE id = ?').bind(playerId).first();
+    earnResult = { total: oyuncu ? oyuncu.points : 0, credited: 0 };
+  }
+
+  return {
+    ok: true,
+    score: verifiedScore,
+    best,
+    isRecord,
+    earned: earnResult.credited || 0,
+    total: earnResult.total,
+  };
+}
+
 async function ejderhaIddiasiReddedilsinMi(env, playerId, durum, now) {
   if (!durum || typeof durum !== 'object') return false;
 
@@ -1044,6 +1179,10 @@ async function handleApi(request, env, url) {
         return json(await handleStarInvoice(env, playerId));
       case '/api/best':
         return json(await handleBest(env, playerId, body));
+      case '/api/game/start':
+        return json(await handleGameStart(env, playerId, String(body.game || '').trim()));
+      case '/api/game/finish':
+        return json(await handleGameFinish(env, playerId, String(body.game || '').trim(), body));
       case '/api/state':
         return json(await handleState(env, playerId, body));
       case '/api/streak/claim':
