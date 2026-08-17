@@ -1,5 +1,5 @@
 
-import { t } from './i18n.js?v85';
+import { t } from './i18n.js?v86';
 
 export const tg = window.Telegram?.WebApp ?? null;
 

@@ -1,6 +1,6 @@
 
-import { palet, HEADS, FACES } from './data.js?v85';
-import { CONFIG, growthRatio } from './config.js?v85';
+import { palet, HEADS, FACES } from './data.js?v86';
+import { CONFIG, growthRatio } from './config.js?v86';
 
 let uidSayaci = 0;
 

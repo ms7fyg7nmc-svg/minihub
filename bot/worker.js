@@ -94,6 +94,18 @@ const TEXTS = {
     invite: 'Invite a friend',
     channel: 'Join our channel',
     shareText: 'A pocket full of mini games. Come beat my score!',
+    terms:
+      '<b>Terms &amp; Conditions</b>\n\n' +
+      'Purchases in MINI HUB GAMES (energy refills) are paid in Telegram Stars ' +
+      'and delivered instantly as a digital item inside the game - no physical ' +
+      "goods are shipped.\n\nBy paying, you agree these are final digital " +
+      "purchases. If something goes wrong (energy not credited, duplicate " +
+      "charge), use /paysupport to reach us and we'll make it right.",
+    paysupport:
+      '<b>Payment support</b>\n\n' +
+      'Having an issue with a Stars purchase? Message us at ' + CHANNEL_URL +
+      " with your payment date, amount, and what went wrong, and we'll help " +
+      'or refund you.',
   },
   tr: {
     welcome:
@@ -115,6 +127,18 @@ const TEXTS = {
     invite: 'Arkadaşını davet et',
     channel: 'Kanalımıza katıl',
     shareText: "Cebinde bir sürü mini oyun. Gel skorumu geç bakalım!",
+    terms:
+      '<b>Kullanım Şartları</b>\n\n' +
+      'MINI HUB GAMES içindeki satın almalar (enerji dolumu) Telegram Stars ile ' +
+      'ödenir ve oyun içinde anında dijital olarak teslim edilir - fiziksel bir ' +
+      'gönderim yoktur.\n\nÖdeme yaptığında bunların kesin dijital satın almalar ' +
+      'olduğunu kabul etmiş olursun. Bir sorun olursa (enerji yüklenmedi, çift ' +
+      'ödeme alındı vb.) /paysupport ile bize ulaş, düzeltelim.',
+    paysupport:
+      '<b>Ödeme desteği</b>\n\n' +
+      'Stars ile yaptığın bir satın almada sorun mu yaşadın? Ödeme tarihini, ' +
+      'miktarı ve neyin yanlış gittiğini yazarak ' + CHANNEL_URL + ' üzerinden ' +
+      'bize ulaş, yardımcı olalım ya da iade edelim.',
   },
   es: {
     welcome:
@@ -136,6 +160,18 @@ const TEXTS = {
     invite: 'Invitar a un amigo',
     channel: 'Únete a nuestro canal',
     shareText: 'Un bolsillo lleno de minijuegos: ¡ven a superar mi puntuación!',
+    terms:
+      '<b>Términos y condiciones</b>\n\n' +
+      'Las compras en MINI HUB GAMES (recargas de energía) se pagan con Telegram ' +
+      'Stars y se entregan al instante como un artículo digital dentro del juego ' +
+      '- no se envía nada físico.\n\nAl pagar, aceptas que son compras digitales ' +
+      'finales. Si algo sale mal (energía no acreditada, cobro duplicado), usa ' +
+      '/paysupport para contactarnos y lo solucionamos.',
+    paysupport:
+      '<b>Soporte de pagos</b>\n\n' +
+      '¿Tuviste un problema con una compra de Stars? Escríbenos a ' + CHANNEL_URL +
+      ' con la fecha del pago, el monto y qué salió mal, y te ayudamos o te ' +
+      'reembolsamos.',
   },
   ru: {
     welcome:
@@ -157,6 +193,18 @@ const TEXTS = {
     invite: 'Пригласить друга',
     channel: 'Подписаться на канал',
     shareText: 'Целый карман мини-игр. Попробуй побить мой счёт!',
+    terms:
+      '<b>Условия использования</b>\n\n' +
+      'Покупки в MINI HUB GAMES (пополнение энергии) оплачиваются Telegram ' +
+      'Stars и доставляются мгновенно как цифровой товар внутри игры - ' +
+      'физической доставки нет.\n\nОплачивая, ты соглашаешься, что это ' +
+      'окончательные цифровые покупки. Если что-то пошло не так (энергия не ' +
+      'начислена, двойное списание), напиши /paysupport, и мы всё исправим.',
+    paysupport:
+      '<b>Поддержка по платежам</b>\n\n' +
+      'Возникла проблема с покупкой Stars? Напиши нам в ' + CHANNEL_URL +
+      ', указав дату платежа, сумму и что пошло не так - поможем или вернём ' +
+      'деньги.',
   },
 };
 
@@ -1080,6 +1128,10 @@ export default {
       await sendWithBanner(env, chatId, t.welcome, keyboard(t, chatIdStr));
     } else if (command === '/help') {
       await send(env, chatId, t.help, keyboard(t, chatIdStr));
+    } else if (command === '/terms') {
+      await send(env, chatId, t.terms);
+    } else if (command === '/paysupport') {
+      await send(env, chatId, t.paysupport);
     } else {
       await send(env, chatId, t.nudge, keyboard(t, chatIdStr));
     }

@@ -337,6 +337,14 @@ onOnayRes = await webhook(env10, {
 const reddedilenOnOnay = telegramCagrilari.find((c) => c.url.includes('/answerPreCheckoutQuery') && c.govde?.pre_checkout_query_id === 'pcq-limit-asildi');
 check('gunluk star limiti dolunca on-odeme de reddediliyor', reddedilenOnOnay?.govde?.ok === false, `-> ${JSON.stringify(reddedilenOnOnay?.govde)}`);
 
+await webhook(env10, { message: { chat: { id: 4242 }, text: '/terms', from: {} } });
+const termsCagrisi = telegramCagrilari.find((c) => c.url.includes('/sendMessage') && c.govde?.text?.includes('Terms'));
+check('/terms komutu kullanim sartlarini gonderiyor', !!termsCagrisi, '-> bulunamadi');
+
+await webhook(env10, { message: { chat: { id: 4242 }, text: '/paysupport', from: {} } });
+const paysupportCagrisi = telegramCagrilari.find((c) => c.url.includes('/sendMessage') && c.govde?.text?.includes('Payment support'));
+check('/paysupport komutu odeme destegini gonderiyor', !!paysupportCagrisi, '-> bulunamadi');
+
 globalThis.fetch = gercekFetch;
 
 check('referral: payload ayristirma calisiyor', worker.parseReferralPayload('/start r1001') === '1001',

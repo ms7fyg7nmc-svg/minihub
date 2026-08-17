@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v85';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v86';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink,
-} from './store.js?v85';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v85';
+} from './store.js?v86';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v86';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -741,7 +741,7 @@ async function renderLiderCard() {
    if (!veri) { card.hidden = true; return; }
 
    card.hidden = false;
-   document.getElementById('lider-sira').textContent = veri.kendi ? `#${veri.kendi.sira}` : '—';
+   document.getElementById('lider-sira').textContent = veri.kendi ? `#${veri.kendi.sira}` : '-';
 }
 
 function wireLiderPanel() {
@@ -861,7 +861,7 @@ async function acFriendsPanel() {
 
       const seviye = document.createElement('span');
       seviye.className = 'lider-puan';
-      seviye.textContent = a.seviye > 0 ? t('hub.friends.level', { n: a.seviye }) : '—';
+      seviye.textContent = a.seviye > 0 ? t('hub.friends.level', { n: a.seviye }) : '-';
 
       satir.append(ad, seviye);
       liste.appendChild(satir);
