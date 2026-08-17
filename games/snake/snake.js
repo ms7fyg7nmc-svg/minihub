@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v82';
-import { submitScore, addPoints, getBest, clearState, settleAbandonedRun } from '../../js/store.js?v82';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v82';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v82';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v83';
+import { submitScore, addPoints, getBest, clearState, settleAbandonedRun } from '../../js/store.js?v83';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v83';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v83';
 
 const GAME_ID = 'snake';
 const INTRO_SEEN_KEY = 'mh_snake_seen';
@@ -318,6 +318,10 @@ function tick() {
       SFX.goldenPickup();
       haptic.success();
       altinPatlama(hedef);
+      // Yenen altin yem hucresi yilanin yeni kafasiyla ayni - food'u
+      // temizlemezsek render() ayni hucreye hem 'head' hem 'food/gold'
+      // sinifini birden ekliyor, gold::before kafayi tamamen kapliyordu.
+      food = -1;
       render();
       return levelUp();
     }

@@ -1,5 +1,5 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v82';
+import { isTelegramUser, getInitData } from './tg.js?v83';
 
 const API_BASE = 'https://minihub-bot.volkanturedi1.workers.dev';
 
