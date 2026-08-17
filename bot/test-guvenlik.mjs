@@ -412,5 +412,21 @@ const seviyeler = r.arkadaslar.map((a) => a.seviye).sort((a, b) => a - b);
 check('referral: arkadas listesi seviyeleri dogru', JSON.stringify(seviyeler) === JSON.stringify([10, 99]),
       `-> ${JSON.stringify(seviyeler)}`);
 
+const DB11 = makeDb(); const env11 = { DB: DB11, BOT_TOKEN }; const idHaric = signedInitData(8100679296);
+const idNormal = signedInitData(5555);
+await api(env11, 'sync', { initData: idHaric, points: 0, state: {} });
+await api(env11, 'sync', { initData: idNormal, points: 0, state: {} });
+await api(env11, 'points/earn', { initData: idNormal, opId: 'lb-1', amount: 500 });
+
+r = await api(env11, 'leaderboard', { initData: idNormal });
+check('haric tutulan hesap listede gorunmuyor', !r.liste.some((x) => x.ben === true && x.kazanilan === 0) && r.toplam === 1,
+      `-> toplam=${r.toplam}`);
+
+r = await api(env11, 'leaderboard', { initData: idHaric });
+check('haric tutulan hesap kendi ekraninda sabit #99 goruyor', r.kendi?.sira === 99 && r.haric === true,
+      `-> ${JSON.stringify(r.kendi)}`);
+check('haric tutulan hesap listenin disinda tutuluyor (kendisi listede yok)', !r.liste.some((x) => x.ben),
+      `-> ${JSON.stringify(r.liste)}`);
+
 console.log(`\n${passed} basarili, ${failed} basarisiz`);
 process.exit(failed > 0 ? 1 : 0);

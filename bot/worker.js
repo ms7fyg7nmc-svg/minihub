@@ -825,6 +825,9 @@ function iddiaMaliyeti(durum, hesapYasiGun) {
 const LIDER_LIMIT = 50;
 
 const LIDER_HARIC = new Set(['8100679296']);
+// Haric tutulan (sahip) hesap listede hic gorunmuyor, ama kendi ekranindaki
+// widget bos/tire kalmasin diye sabit bir siralama numarasi gosteriliyor.
+const HARIC_GOSTERILEN_SIRA = 99;
 
 async function handleLeaderboard(env, playerId) {
   const kazanc = `p.points + COALESCE((SELECT -SUM(s.delta) FROM spend_log s
@@ -845,7 +848,17 @@ async function handleLeaderboard(env, playerId) {
     ben: r.id === playerId,
   }));
 
-  if (LIDER_HARIC.has(playerId)) return { liste, kendi: null, haric: true, toplam: liste.length };
+  if (LIDER_HARIC.has(playerId)) {
+    const benim = await env.DB.prepare(
+      `SELECT ${kazanc} AS kazanilan FROM players p WHERE p.id = ?`,
+    ).bind(playerId).first();
+    return {
+      liste,
+      kendi: { sira: HARIC_GOSTERILEN_SIRA, ad: '', kazanilan: benim ? benim.kazanilan : 0, ben: true },
+      haric: true,
+      toplam: liste.length,
+    };
+  }
 
   let kendi = liste.find((x) => x.ben) || null;
   if (!kendi) {
