@@ -559,6 +559,18 @@ body.hub::before {
 
 .daily-card-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
 .daily-card-info strong { font-size: 14px; letter-spacing: -0.2px; }
+
+/* Sag sutun basliklari (Leaderboard, Energy) genelde tek, uzun bir
+   kelime - dar sutunda kirilacak bosluk olmadigi icin tasip yanindaki
+   rozetin ustune biniyordu. Sol sutun (Daily Rewards, Invite Your
+   Friend) kasitli olarak 2 satira sarabiliyor, o yuzden bu sadece sag
+   sutuna uygulanıyor. */
+.daily-card:not(.widget-left) .daily-card-info strong {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .daily-card-hint { font-size: 12px; color: var(--muted); }
 .daily-card-hint .etiket { opacity: .75; }
 .daily-card-hint .sure {
