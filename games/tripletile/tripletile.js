@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v86';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v86';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v86';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v86';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v87';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v87';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v87';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v87';
 
 const GAME_ID = 'tripletile';
 const POINTS_DIVISOR = 6;

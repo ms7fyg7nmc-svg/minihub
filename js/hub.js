@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v86';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v87';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink,
-} from './store.js?v86';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v86';
+} from './store.js?v87';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v87';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -741,7 +741,7 @@ async function renderLiderCard() {
    if (!veri) { card.hidden = true; return; }
 
    card.hidden = false;
-   document.getElementById('lider-sira').textContent = veri.kendi ? `#${veri.kendi.sira}` : '-';
+   document.getElementById('lider-sira').innerHTML = veri.kendi ? `#${veri.kendi.sira}` : '<span class="rank-dash"></span>';
 }
 
 function wireLiderPanel() {

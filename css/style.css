@@ -980,6 +980,20 @@ body.hub::before {
 
 .lider-card .card-energy { font-size: 16px; }
 
+/* Siralamasi henuz olmayan oyuncu icin "-" yerine CSS ile cizilen bir
+   cubuk: metin karakteri (tire, em-dash) kullanmiyoruz cunku Telegram
+   Desktop'in fontunda bu karakterler kutunun tepesine yapisip
+   kirpiliyordu - cubuk fontdan bagimsiz oldugu icin her yerde ayni
+   gorunuyor. */
+.rank-dash {
+  display: inline-block;
+  width: 9px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--gold-yazi);
+  vertical-align: middle;
+}
+
 .lider-liste { display: flex; flex-direction: column; }
 
 .lider-satir {
