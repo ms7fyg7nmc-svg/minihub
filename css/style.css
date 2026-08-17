@@ -225,12 +225,6 @@ body.hub::before {
 
 /* --- Baslik --- */
 
-.widget-icon {
-  flex: none;
-  font-size: 22px;
-  filter: drop-shadow(0 0 8px rgba(245, 185, 66, 0.5));
-}
-
 .referral-ladder {
   position: relative;
   display: flex;
@@ -448,8 +442,8 @@ body.hub::before {
 .widgets-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin: 14px 0 20px;
+  gap: 8px;
+  margin: 14px 0 18px;
 }
 
 /* Liderlik karti: ikon+baslik ustte, cerceveli #sira altta - yatay degil
@@ -458,18 +452,17 @@ body.hub::before {
 .daily-card.is-stacked .daily-card-info {
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
 }
-.daily-card.is-stacked .widget-icon { font-size: 24px; }
 
 .lider-rank-box {
   align-self: stretch;
-  padding: 6px 10px;
-  border-radius: 10px;
+  padding: 4px 8px;
+  border-radius: 8px;
   background: rgba(245, 185, 66, 0.12);
   border: 1px solid rgba(245, 185, 66, 0.25);
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--gold-yazi);
   font-variant-numeric: tabular-nums;
@@ -480,16 +473,16 @@ body.hub::before {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   margin: 0;
-  padding: 12px;
+  padding: 9px 10px;
   border: 1px solid rgba(245, 185, 66, 0.22);
-  border-radius: 16px;
+  border-radius: 13px;
   background:
     linear-gradient(120deg, rgba(192, 121, 242, 0.20), rgba(245, 185, 66, 0.10)),
     var(--bg-soft);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
   color: var(--text);
   font: inherit;
   text-align: left;
@@ -500,26 +493,32 @@ body.hub::before {
 .daily-card[hidden] { display: none; }
 .daily-card:active { transform: scale(0.98); }
 
+.widget-icon {
+  flex: none;
+  font-size: 17px;
+  filter: drop-shadow(0 0 6px rgba(245, 185, 66, 0.5));
+}
+
 .daily-card-energy {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1px;
   flex: none;
-  min-width: 66px;
-  padding: 9px 10px;
-  border-radius: 14px;
+  min-width: 48px;
+  padding: 5px 7px;
+  border-radius: 10px;
   background: rgba(245, 185, 66, 0.12);
   border: 1px solid rgba(245, 185, 66, 0.25);
 }
 .card-energy {
-  font-size: 17px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--gold-yazi);
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
 }
-.card-energy-alt { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+.card-energy-alt { font-size: 7px; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
 .daily-card-bolt { font-size: 15px; filter: drop-shadow(0 0 5px rgba(245, 185, 66, 0.6)); }
 
 .energy-pips { display: flex; gap: 3px; }
@@ -537,7 +536,7 @@ body.hub::before {
 }
 
 .daily-card-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
-.daily-card-info strong { font-size: 16px; letter-spacing: -0.2px; }
+.daily-card-info strong { font-size: 14px; letter-spacing: -0.2px; }
 .daily-card-hint { font-size: 12px; color: var(--muted); }
 .daily-card-hint .etiket { opacity: .75; }
 .daily-card-hint .sure {

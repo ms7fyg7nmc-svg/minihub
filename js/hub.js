@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v73';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v74';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti,
-} from './store.js?v73';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v73';
+} from './store.js?v74';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v74';
 
 const BOT_LINK = '';
 const BOT_USERNAME = 'minihubgames_bot';
@@ -458,7 +458,6 @@ async function renderEnergyCard() {
 
 function wireDailyPanel() {
    const card = document.getElementById('daily-card');
-   const energyCard = document.getElementById('energy-card');
    const overlay = document.getElementById('daily-overlay');
    const closeBtn = document.getElementById('daily-close');
    const streakBtn = document.getElementById('streak-claim-btn');
@@ -466,9 +465,15 @@ function wireDailyPanel() {
    if (!card || !overlay) return;
 
    card?.addEventListener('click', openDailyModal);
-   energyCard?.addEventListener('click', openDailyModal);
    closeBtn?.addEventListener('click', closeDailyModal);
    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeDailyModal(); });
+
+   const energyCard = document.getElementById('energy-card');
+   const energyOverlay = document.getElementById('energy-overlay');
+   const energyCloseBtn = document.getElementById('energy-close');
+   energyCard?.addEventListener('click', openEnergyModal);
+   energyCloseBtn?.addEventListener('click', closeEnergyModal);
+   energyOverlay?.addEventListener('click', (e) => { if (e.target === energyOverlay) closeEnergyModal(); });
 
    streakBtn?.addEventListener('click', async () => {
       streakBtn.disabled = true;
@@ -516,12 +521,28 @@ async function openDailyModal() {
    overlay.hidden = false;
    panelOpen = true;
    haptic.tap();
-   await Promise.all([renderEnergySection(), renderStreakSection(), renderSpinSection()]);
+   await Promise.all([renderStreakSection(), renderSpinSection()]);
    sayaclariBaslat();
 }
 
 function closeDailyModal() {
    const overlay = document.getElementById('daily-overlay');
+   if (overlay) overlay.hidden = true;
+   panelOpen = false;
+}
+
+async function openEnergyModal() {
+   const overlay = document.getElementById('energy-overlay');
+   if (!overlay) return;
+   overlay.hidden = false;
+   panelOpen = true;
+   haptic.tap();
+   await renderEnergySection();
+   sayaclariBaslat();
+}
+
+function closeEnergyModal() {
+   const overlay = document.getElementById('energy-overlay');
    if (overlay) overlay.hidden = true;
    panelOpen = false;
 }

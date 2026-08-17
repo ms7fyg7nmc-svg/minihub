@@ -9,7 +9,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v73">
+  <link rel="stylesheet" href="css/style.css?v74">
 </head>
 <body class="hub">
   <div class="app">
@@ -107,22 +107,11 @@
 
   </div>
 
-  <!-- Gunluk Oduller paneli: enerji + seri + cark. Sadece Telegram/sunucu
-       modunda acilir (daily-card zaten misafirde hidden kaliyor). -->
+  <!-- Gunluk Oduller paneli: seri + cark. Sadece Telegram/sunucu modunda
+       acilir (daily-card zaten misafirde hidden kaliyor). -->
   <div class="daily-overlay" id="daily-overlay" hidden>
     <div class="daily-modal">
       <button class="daily-close" id="daily-close" aria-label="Kapat">✕</button>
-
-      <p class="daily-intro is-heading" data-i18n="hub.daily.intro"></p>
-
-      <section class="daily-section daily-energy-section">
-        <h3><span class="energy-bolt" aria-hidden="true">⚡</span><span data-i18n="hub.daily.energy">Enerji</span></h3>
-        <div class="energy-pips" id="energy-pips-modal"></div>
-        <div class="energy-row">
-          <span id="energy-next" class="geri-sayim"></span>
-          <span id="energy-label" class="energy-label"></span>
-        </div>
-      </section>
 
       <section class="daily-section">
         <h3 data-i18n="hub.daily.streak">Günlük Seri</h3>
@@ -140,6 +129,22 @@
       </section>
 
       <div class="daily-toast" id="daily-toast" hidden></div>
+    </div>
+  </div>
+
+  <!-- Enerji paneli: Gunluk Oduller'den ayrildi, kendi widget'inden acilir. -->
+  <div class="daily-overlay" id="energy-overlay" hidden>
+    <div class="daily-modal">
+      <button class="daily-close" id="energy-close" aria-label="Kapat">✕</button>
+
+      <section class="daily-section daily-energy-section">
+        <h3><span class="energy-bolt" aria-hidden="true">⚡</span><span data-i18n="hub.daily.energy">Enerji</span></h3>
+        <div class="energy-pips" id="energy-pips-modal"></div>
+        <div class="energy-row">
+          <span id="energy-next" class="geri-sayim"></span>
+          <span id="energy-label" class="energy-label"></span>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -169,6 +174,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v73"></script>
+  <script type="module" src="js/hub.js?v74"></script>
 </body>
 </html>
