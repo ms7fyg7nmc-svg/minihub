@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v72';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v73';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti,
-} from './store.js?v72';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v72';
+} from './store.js?v73';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v73';
 
 const BOT_LINK = '';
 const BOT_USERNAME = 'minihubgames_bot';
@@ -194,6 +194,7 @@ renderGames();
 renderTelegramNotice();
 renderSyncBadge();
 renderDailyCard();
+renderEnergyCard();
 wireDailyPanel();
 renderLiderCard();
 wireLiderPanel();
@@ -207,6 +208,7 @@ document.addEventListener('langchange', () => {
    renderGames();
    renderSyncBadge();
    renderDailyCard();
+   renderEnergyCard();
    renderLiderCard();
    renderFriendsCard();
    renderReferralLadder();
@@ -395,6 +397,7 @@ function sayaclariBaslat() {
             renderStreakSection();
             renderSpinSection();
             renderDailyCard();
+            renderEnergyCard();
          }
       });
    }, 1000);
@@ -418,7 +421,6 @@ async function renderDailyCard() {
    const kilitli = durum === 'misafir';
 
    card.hidden = false;
-   document.getElementById('daily-card-energy').textContent = `${energy.energy}/${energy.max}`;
 
    const hazir = kilitli || streak?.canClaim || spin?.canSpin;
    const ipucu = document.getElementById('daily-card-hint');
@@ -440,8 +442,23 @@ async function renderDailyCard() {
    sayaclariBaslat();
 }
 
+async function renderEnergyCard() {
+   const card = document.getElementById('energy-card');
+   if (!card) return;
+
+   const energy = await getEnergy();
+   if (!energy || !energy.max) { card.hidden = true; return; }
+
+   const durum = await odulDurumu();
+   if (durum === 'yerel') { card.hidden = true; return; }
+
+   card.hidden = false;
+   document.getElementById('energy-card-value').textContent = `${energy.energy}/${energy.max}`;
+}
+
 function wireDailyPanel() {
    const card = document.getElementById('daily-card');
+   const energyCard = document.getElementById('energy-card');
    const overlay = document.getElementById('daily-overlay');
    const closeBtn = document.getElementById('daily-close');
    const streakBtn = document.getElementById('streak-claim-btn');
@@ -449,6 +466,7 @@ function wireDailyPanel() {
    if (!card || !overlay) return;
 
    card?.addEventListener('click', openDailyModal);
+   energyCard?.addEventListener('click', openDailyModal);
    closeBtn?.addEventListener('click', closeDailyModal);
    overlay.addEventListener('click', (e) => { if (e.target === overlay) closeDailyModal(); });
 
@@ -462,6 +480,7 @@ function wireDailyPanel() {
       }
       await renderStreakSection();
       await renderDailyCard();
+      await renderEnergyCard();
       if (!sonuc?.ok) streakBtn.disabled = false;
    });
 
@@ -481,6 +500,7 @@ function wireDailyPanel() {
             renderEnergySection();
             renderSpinSection();
             renderDailyCard();
+            renderEnergyCard();
          };
          document.getElementById('wheel').addEventListener('transitionend', onWheel);
       } else {

@@ -225,9 +225,9 @@ body.hub::before {
 
 /* --- Baslik --- */
 
-.friends-card-icon {
+.widget-icon {
   flex: none;
-  font-size: 24px;
+  font-size: 22px;
   filter: drop-shadow(0 0 8px rgba(245, 185, 66, 0.5));
 }
 
@@ -442,17 +442,39 @@ body.hub::before {
 
 /* --- Gunluk Oduller karti (hub) --- */
 
-/* Uc widget (Gunluk Odul / Liderlik / Arkadaslar) 2 sutunlu sik bir izgarada -
-   her biri kendi kutusu ama dar oldugu icin baslik ile sag taraftaki sayi
-   arasinda bosluk kalmiyor. Arkadas kutusu ikon+metni daha uzun oldugu icin
-   tam genislik kaplar. */
+/* Dort widget (Gunluk Odul / Liderlik / Arkadaslar / Enerji) 2 sutunlu sik
+   bir izgarada - her biri kendi kutusu, dar oldugu icin baslik ile sag
+   taraftaki sayi arasinda bosluk kalmiyor. */
 .widgets-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
   margin: 14px 0 20px;
 }
-.widget-wide { grid-column: 1 / -1; }
+
+/* Liderlik karti: ikon+baslik ustte, cerceveli #sira altta - yatay degil
+   dikey yerlesim, sagda ayri bir kutu olmadigi icin daha "widget" hissi verir. */
+.daily-card.is-stacked { align-items: flex-start; }
+.daily-card.is-stacked .daily-card-info {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+}
+.daily-card.is-stacked .widget-icon { font-size: 24px; }
+
+.lider-rank-box {
+  align-self: stretch;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(245, 185, 66, 0.12);
+  border: 1px solid rgba(245, 185, 66, 0.25);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--gold-yazi);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
 
 .daily-card {
   position: relative;

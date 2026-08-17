@@ -9,7 +9,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v72">
+  <link rel="stylesheet" href="css/style.css?v73">
 </head>
 <body class="hub">
   <div class="app">
@@ -47,33 +47,28 @@
 
     <!-- Sadece Telegram icinde (sunucu modunda) gorunur - anlami sunucu
          tarafli hile korumasi, misafirde gostermenin anlami yok.
-         Widget tarzi sik bir izgara: her biri kendi kutusu, aralarinda
-         gereksiz bosluk olmasin diye 2 sutunlu ve kompakt. -->
+         Widget tarzi 2 sutunlu izgara: Gunluk Odul + Liderlik ust satirda,
+         Arkadaslar + Enerji alt satirda. Her widgetin basinda kendi ikonu var. -->
     <div class="widgets-grid">
       <button class="daily-card" id="daily-card" hidden>
+        <span class="widget-icon" aria-hidden="true">🎉</span>
         <div class="daily-card-info">
           <strong data-i18n="hub.daily.title">Günlük Ödüller</strong>
           <span id="daily-card-hint" class="daily-card-hint"></span>
         </div>
-        <div class="daily-card-energy">
-          <span class="card-energy" id="daily-card-energy">24/24</span>
-          <span class="card-energy-alt" data-i18n="hub.daily.energy">Enerji</span>
-        </div>
         <span class="daily-card-dot" id="daily-card-dot" hidden></span>
       </button>
 
-      <button class="daily-card lider-card" id="lider-card" hidden>
+      <button class="daily-card lider-card is-stacked" id="lider-card" hidden>
         <div class="daily-card-info">
+          <span class="widget-icon" aria-hidden="true">🏆</span>
           <strong data-i18n="hub.rank.title">Liderlik Tablosu</strong>
-        </div>
-        <div class="daily-card-energy">
-          <span class="card-energy" id="lider-sira">—</span>
-          <span class="card-energy-alt" data-i18n="hub.rank.you">Sıran</span>
+          <span class="lider-rank-box" id="lider-sira">—</span>
         </div>
       </button>
 
-      <button class="daily-card lider-card widget-wide" id="friends-card" hidden>
-        <span class="friends-card-icon" aria-hidden="true">🎁</span>
+      <button class="daily-card lider-card" id="friends-card" hidden>
+        <span class="widget-icon" aria-hidden="true">🎁</span>
         <div class="daily-card-info">
           <strong data-i18n="hub.friends.bannerTitle">Arkadaşını Davet Et</strong>
           <span id="friends-hint" class="daily-card-hint"></span>
@@ -81,6 +76,16 @@
         <div class="daily-card-energy">
           <span class="card-energy" id="friends-earned">0</span>
           <span class="card-energy-alt" data-i18n="hub.friends.earned">Kazanç</span>
+        </div>
+      </button>
+
+      <button class="daily-card" id="energy-card" hidden>
+        <span class="widget-icon" aria-hidden="true">⚡</span>
+        <div class="daily-card-info">
+          <strong data-i18n="hub.daily.energy">Enerji</strong>
+        </div>
+        <div class="daily-card-energy">
+          <span class="card-energy" id="energy-card-value">24/24</span>
         </div>
       </button>
     </div>
@@ -164,6 +169,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v72"></script>
+  <script type="module" src="js/hub.js?v73"></script>
 </body>
 </html>
