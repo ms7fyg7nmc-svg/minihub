@@ -1,17 +1,14 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v84';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v85';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink,
-} from './store.js?v84';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v84';
+} from './store.js?v85';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v85';
 
-// Adsgram'da olusturulan "Reward" block'unun ID'si. adsgram.ai'de hesap
-// acip bu uygulama icin bir block olusturunca oradan alacaksin - buraya
-// yapistirmadan reklamla enerji doldurma butonu calismaz (tiklaninca
-// hata mesaji gosterir, cokme).
-const ADSGRAM_BLOCK_ID = 'REPLACE_WITH_YOUR_ADSGRAM_BLOCK_ID';
+// Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
+const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
 const BOT_USERNAME = 'minihubgames_bot';
