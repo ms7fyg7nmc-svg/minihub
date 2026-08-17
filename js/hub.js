@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v78';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v79';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti,
-} from './store.js?v78';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v78';
+} from './store.js?v79';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v79';
 
 const BOT_LINK = '';
 const BOT_USERNAME = 'minihubgames_bot';
@@ -461,7 +461,8 @@ function wireDailyPanel() {
    const overlay = document.getElementById('daily-overlay');
    const closeBtn = document.getElementById('daily-close');
    const streakBtn = document.getElementById('streak-claim-btn');
-   const spinBtn = document.getElementById('spin-btn');
+   const spinBtn = document.getElementById('spin-claim-btn');
+   const wheelHub = document.getElementById('wheel-hub');
    if (!card || !overlay) return;
 
    card?.addEventListener('click', openDailyModal);
@@ -491,13 +492,13 @@ function wireDailyPanel() {
 
    spinBtn?.addEventListener('click', async () => {
       spinBtn.disabled = true;
-      spinBtn.classList.add('is-spinning');
+      wheelHub?.classList.add('is-spinning');
       const sonuc = await spinWheel();
       if (sonuc?.ok && dailyPrizes) {
          spinToIndex(sonuc.index, dailyPrizes.length);
          const onWheel = () => {
             document.getElementById('wheel').removeEventListener('transitionend', onWheel);
-            spinBtn.classList.remove('is-spinning');
+            wheelHub?.classList.remove('is-spinning');
             haptic.success();
             const kazanilan = sonuc.prize.tur === 'enerji' ? t('hub.daily.wonEnergy') : t('hub.daily.won', { amount: sonuc.prize.miktar });
             showDailyToast(kazanilan);
@@ -509,7 +510,7 @@ function wireDailyPanel() {
          };
          document.getElementById('wheel').addEventListener('transitionend', onWheel);
       } else {
-         spinBtn.classList.remove('is-spinning');
+         wheelHub?.classList.remove('is-spinning');
          spinBtn.disabled = false;
       }
    });
@@ -604,8 +605,7 @@ async function renderStreakSection() {
 
 async function renderSpinSection() {
    const spin = await getSpin();
-   const btn = document.getElementById('spin-btn');
-   const btnText = document.getElementById('spin-btn-text');
+   const btn = document.getElementById('spin-claim-btn');
    if (!spin || !btn) return;
 
    if (!dailyPrizes) {
@@ -614,20 +614,20 @@ async function renderSpinSection() {
    }
 
    const kilitli = (await odulDurumu()) === 'misafir';
-   btn.disabled = kilitli || !spin.canSpin;
-   btn.classList.toggle('is-locked', kilitli);
    if (kilitli) {
-      btnText.textContent = '—';
-      delete btnText.dataset.bitis;
-      btn.classList.remove('is-bekliyor');
+      btn.textContent = t('hub.daily.loginToClaim');
+      btn.disabled = true;
+      btn.classList.add('is-locked');
    } else if (spin.canSpin) {
-      btnText.textContent = t('hub.daily.spinBtn');
-      delete btnText.dataset.bitis;
-      btn.classList.remove('is-bekliyor');
+      btn.textContent = t('hub.daily.spinBtn');
+      btn.disabled = false;
+      btn.classList.remove('is-locked');
    } else {
-      btnText.textContent = kalanMetin(spin.nextInMs || 0);
-      btnText.dataset.bitis = String(Date.now() + (spin.nextInMs || 0));
-      btn.classList.add('is-bekliyor');
+      const kalan = spin.nextInMs || 0;
+      const zamanHtml = `<span class="geri-sayim" data-bitis="${Date.now() + kalan}">${kalanMetin(kalan)}</span>`;
+      btn.innerHTML = t('hub.daily.comeIn', { time: zamanHtml });
+      btn.disabled = true;
+      btn.classList.remove('is-locked');
    }
 }
 

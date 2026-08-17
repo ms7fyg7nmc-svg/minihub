@@ -9,7 +9,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v78">
+  <link rel="stylesheet" href="css/style.css?v79">
 </head>
 <body class="hub">
   <div class="app">
@@ -125,8 +125,9 @@
         <div class="wheel-wrap">
           <div class="wheel-pointer"></div>
           <svg class="wheel" id="wheel" viewBox="0 0 200 200"></svg>
-          <button class="wheel-center" id="spin-btn"><span id="spin-btn-text">ÇEVİR</span></button>
+          <div class="wheel-hub" id="wheel-hub"><img class="wheel-hub-coin" src="assets/coin.png" alt=""></div>
         </div>
+        <button class="daily-btn" id="spin-claim-btn"></button>
       </section>
 
       <div class="daily-toast" id="daily-toast" hidden></div>
@@ -175,6 +176,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v78"></script>
+  <script type="module" src="js/hub.js?v79"></script>
 </body>
 </html>
