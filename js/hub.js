@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v69';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink } from './tg.js?v71';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti,
-} from './store.js?v69';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v69';
+} from './store.js?v71';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v71';
 
 const BOT_LINK = '';
 const BOT_USERNAME = 'minihubgames_bot';
@@ -424,16 +424,11 @@ async function renderDailyCard() {
    const ipucu = document.getElementById('daily-card-hint');
    document.getElementById('daily-card-dot').hidden = !hazir;
 
-   const oyunlar = document.getElementById('games');
-   const basliklar = document.querySelectorAll('.section-title');
-
    if (hazir) {
-      if (basliklar[0]) basliklar[0].before(card);
       ipucu.textContent = t('hub.daily.ready');
       ipucu.className = 'daily-card-hint is-ready';
       delete ipucu.dataset.bitis;
    } else {
-      if (oyunlar) oyunlar.after(card);
       const kalanlar = [];
       if (streak && !streak.canClaim) kalanlar.push(streak.nextInMs || 0);
       if (spin && !spin.canSpin) kalanlar.push(spin.nextInMs || 0);
@@ -615,10 +610,14 @@ async function renderLiderCard() {
    if (!veri) { card.hidden = true; return; }
 
    card.hidden = false;
-   document.getElementById('lider-sira').textContent =
-      veri.kendi ? `#${veri.kendi.sira}` : '—';
-   document.getElementById('lider-hint').textContent =
-      t('hub.rank.of', { n: veri.toplam });
+   const hintEl = document.getElementById('lider-hint');
+   if (veri.kendi) {
+      document.getElementById('lider-sira').textContent = `#${veri.kendi.sira}`;
+      hintEl.textContent = t('hub.rank.place', { n: veri.kendi.sira });
+   } else {
+      document.getElementById('lider-sira').textContent = '—';
+      hintEl.textContent = '';
+   }
 }
 
 function wireLiderPanel() {

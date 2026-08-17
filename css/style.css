@@ -442,19 +442,28 @@ body.hub::before {
 
 /* --- Gunluk Oduller karti (hub) --- */
 
+/* Uc widget (Gunluk Odul / Liderlik / Arkadaslar) 2 sutunlu sik bir izgarada -
+   her biri kendi kutusu ama dar oldugu icin baslik ile sag taraftaki sayi
+   arasinda bosluk kalmiyor. Arkadas kutusu ikon+metni daha uzun oldugu icin
+   tam genislik kaplar. */
+.widgets-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 14px 0 20px;
+}
+.widget-wide { grid-column: 1 / -1; }
+
 .daily-card {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   width: 100%;
-  margin: 0 0 18px;
-  /* Oyun kartlariyla ayni dolgu ve yukseklik - daha az olunca listenin
-     yaninda bodur ve sonradan eklenmis gibi duruyordu. */
-  padding: 14px;
-  min-height: 82px;
+  margin: 0;
+  padding: 12px;
   border: 1px solid rgba(245, 185, 66, 0.22);
-  border-radius: var(--radius);
+  border-radius: 16px;
   background:
     linear-gradient(120deg, rgba(192, 121, 242, 0.20), rgba(245, 185, 66, 0.10)),
     var(--bg-soft);
