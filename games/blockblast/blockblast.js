@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v76';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v76';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v76';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v76';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v77';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v77';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v77';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v77';
 
 const GAME_ID = 'blockblast';
 const SIZE = 8;
