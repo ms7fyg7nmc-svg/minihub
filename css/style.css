@@ -465,16 +465,26 @@ body.hub::before {
 
 /* --- Gunluk Oduller karti (hub) --- */
 
-/* Dort widget (Gunluk Odul / Liderlik / Arkadaslar / Enerji) 2 sutunlu sik
-   bir izgarada - her biri kendi kutusu, dar oldugu icin baslik ile sag
-   taraftaki sayi arasinda bosluk kalmiyor. */
+/* Dort widget 2 sutunlu, ama TEK izgara degil - iki bagimsiz dikey sutun
+   (bkz. .widgets-col). Gercek icerikle (uzun geri sayim/davet metni) sol
+   sutun sik sik 2-3 satira tasiyor; tek bir grid'de bu, sag sutundaki
+   kisa tek satirlik kartlari da ayni satir yuksekligine zorlayip altlarinda
+   cirkin bir bosluk birakiyordu. Bagimsiz sutunlarda her taraf sadece
+   kendi icerigi kadar yer kaplar. */
 .widgets-grid {
-  display: grid;
-  grid-template-columns: 1.25fr 1fr;
-  align-items: start;
+  display: flex;
   gap: 8px;
   margin: 14px 0 18px;
 }
+
+.widgets-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.widgets-col:first-child { flex: 1.25; }
 
 .daily-card {
   position: relative;
@@ -500,9 +510,9 @@ body.hub::before {
 .daily-card[hidden] { display: none; }
 .daily-card:active { transform: scale(0.98); }
 
-/* Sol sutun (Gunluk Odul + Arkadas Davet) baslik+alt satir tasidigi icin
-   sag sutundan (Liderlik + Enerji, tek satir) dogal olarak daha uzun
-   cikiyor - sag sutuna dokunmadan alt/ust bosluklari sikip hizaliyoruz. */
+/* Sol sutun kartlari (Gunluk Odul + Arkadas Davet) baslik+alt satir
+   tasidigi icin dogal olarak daha uzun - alt/ust bosluklari sikarak
+   makul boyutta tutuyoruz. */
 .widget-left { padding: 6px 10px; }
 .widget-left .daily-card-info { gap: 1px; }
 

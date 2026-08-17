@@ -9,7 +9,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v81">
+  <link rel="stylesheet" href="css/style.css?v82">
 </head>
 <body class="hub">
   <div class="app">
@@ -50,45 +50,49 @@
          Widget tarzi 2 sutunlu izgara: Gunluk Odul + Liderlik ust satirda,
          Arkadaslar + Enerji alt satirda. Her widgetin basinda kendi ikonu var. -->
     <div class="widgets-grid">
-      <button class="daily-card widget-left" id="daily-card" hidden>
-        <span class="widget-icon" aria-hidden="true">🎉</span>
-        <div class="daily-card-info">
-          <strong data-i18n="hub.daily.title">Günlük Ödüller</strong>
-          <span id="daily-card-hint" class="daily-card-hint"></span>
-        </div>
-        <span class="daily-card-dot" id="daily-card-dot" hidden></span>
-      </button>
+      <div class="widgets-col">
+        <button class="daily-card widget-left" id="daily-card" hidden>
+          <span class="widget-icon" aria-hidden="true">🎉</span>
+          <div class="daily-card-info">
+            <strong data-i18n="hub.daily.title">Günlük Ödüller</strong>
+            <span id="daily-card-hint" class="daily-card-hint"></span>
+          </div>
+          <span class="daily-card-dot" id="daily-card-dot" hidden></span>
+        </button>
 
-      <button class="daily-card lider-card" id="lider-card" hidden>
-        <span class="widget-icon" aria-hidden="true">🏆</span>
-        <div class="daily-card-info">
-          <strong data-i18n="hub.rank.title">Liderlik Tablosu</strong>
-        </div>
-        <div class="daily-card-energy">
-          <span class="card-energy" id="lider-sira">—</span>
-        </div>
-      </button>
+        <button class="daily-card lider-card widget-left" id="friends-card" hidden>
+          <span class="widget-icon" aria-hidden="true">🎁</span>
+          <div class="daily-card-info">
+            <strong data-i18n="hub.friends.bannerTitle">Arkadaşını Davet Et</strong>
+            <span id="friends-hint" class="daily-card-hint"></span>
+          </div>
+          <div class="daily-card-energy">
+            <span class="card-energy" id="friends-earned">0</span>
+          </div>
+        </button>
+      </div>
 
-      <button class="daily-card lider-card widget-left" id="friends-card" hidden>
-        <span class="widget-icon" aria-hidden="true">🎁</span>
-        <div class="daily-card-info">
-          <strong data-i18n="hub.friends.bannerTitle">Arkadaşını Davet Et</strong>
-          <span id="friends-hint" class="daily-card-hint"></span>
-        </div>
-        <div class="daily-card-energy">
-          <span class="card-energy" id="friends-earned">0</span>
-        </div>
-      </button>
+      <div class="widgets-col">
+        <button class="daily-card lider-card" id="lider-card" hidden>
+          <span class="widget-icon" aria-hidden="true">🏆</span>
+          <div class="daily-card-info">
+            <strong data-i18n="hub.rank.title">Liderlik Tablosu</strong>
+          </div>
+          <div class="daily-card-energy">
+            <span class="card-energy" id="lider-sira">—</span>
+          </div>
+        </button>
 
-      <button class="daily-card" id="energy-card" hidden>
-        <span class="widget-icon" aria-hidden="true">⚡</span>
-        <div class="daily-card-info">
-          <strong data-i18n="hub.daily.energy">Enerji</strong>
-        </div>
-        <div class="daily-card-energy">
-          <span class="card-energy" id="energy-card-value">24/24</span>
-        </div>
-      </button>
+        <button class="daily-card" id="energy-card" hidden>
+          <span class="widget-icon" aria-hidden="true">⚡</span>
+          <div class="daily-card-info">
+            <strong data-i18n="hub.daily.energy">Enerji</strong>
+          </div>
+          <div class="daily-card-energy">
+            <span class="card-energy" id="energy-card-value">24/24</span>
+          </div>
+        </button>
+      </div>
     </div>
 
     <h2 class="section-title" data-i18n="hub.gamesTitle">Games</h2>
@@ -176,6 +180,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v81"></script>
+  <script type="module" src="js/hub.js?v82"></script>
 </body>
 </html>
