@@ -86,6 +86,17 @@ body.game {
   overflow: hidden;
 }
 
+/* Gunluk Odul/Enerji/Liderlik/Arkadaslar panellerinden biri acikken:
+   body'yi tamamen sabitleyip arkaplanin kaymasini engelliyor (bkz.
+   js/hub.js panelKaydirmayiKilitle). */
+body.panel-locked {
+  position: fixed;
+  left: 0;
+  right: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
 /* --- Arka plan grafikleri ---
    Renkli isik lekeleri + ince nokta dokusu.
    Sadece ana ekranda (body.hub) gosterilir; oyun ekranlari sakin kalsin. */
@@ -634,6 +645,7 @@ body.hub::before {
   max-width: 480px;
   max-height: 88vh;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 22px 18px calc(22px + env(safe-area-inset-bottom));
   border-radius: 24px 24px 0 0;
   background:

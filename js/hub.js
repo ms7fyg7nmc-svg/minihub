@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v91';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v92';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink,
-} from './store.js?v91';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v91';
+} from './store.js?v92';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v92';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -319,7 +319,29 @@ const WHEEL_COLORS = ['#5b8cff', '#4ecb8b', '#f2884b', '#c079f2', '#e2679c', '#3
 
 let dailyPrizes = null;
 let wheelRotation = 0;
-let panelOpen = false;
+
+// Alttan acilan panellerden (Gunluk Odul/Enerji/Liderlik/Arkadaslar) biri
+// acikken arkadaki sayfanin kaymasi (iOS'ta "arkaplan kayiyor" hissi) icin:
+// body'yi position:fixed yapip kaydirmayi tamamen kilitliyoruz, kapaninca
+// kaldigi yere geri donuyoruz. Sayac kullaniyoruz cunku teorik olarak iki
+// panel ust uste acilabilir - ilk kapanan kilidi erken acmasin diye.
+let kilitSayaci = 0;
+function panelKaydirmayiKilitle() {
+   kilitSayaci++;
+   if (kilitSayaci > 1) return;
+   const y = window.scrollY || document.documentElement.scrollTop || 0;
+   document.body.dataset.kilitliKaydirma = String(y);
+   document.body.style.top = `-${y}px`;
+   document.body.classList.add('panel-locked');
+}
+function panelKaydirmayiAc() {
+   kilitSayaci = Math.max(0, kilitSayaci - 1);
+   if (kilitSayaci > 0) return;
+   const y = Number(document.body.dataset.kilitliKaydirma || 0);
+   document.body.classList.remove('panel-locked');
+   document.body.style.top = '';
+   window.scrollTo(0, y);
+}
 
 function polar(cx, cy, r, angleDeg) {
    const a = (angleDeg * Math.PI) / 180;
@@ -525,7 +547,7 @@ async function openDailyModal() {
    const overlay = document.getElementById('daily-overlay');
    if (!overlay) return;
    overlay.hidden = false;
-   panelOpen = true;
+   panelKaydirmayiKilitle();
    haptic.tap();
    await Promise.all([renderStreakSection(), renderSpinSection()]);
    sayaclariBaslat();
@@ -534,14 +556,14 @@ async function openDailyModal() {
 function closeDailyModal() {
    const overlay = document.getElementById('daily-overlay');
    if (overlay) overlay.hidden = true;
-   panelOpen = false;
+   panelKaydirmayiAc();
 }
 
 async function openEnergyModal() {
    const overlay = document.getElementById('energy-overlay');
    if (!overlay) return;
    overlay.hidden = false;
-   panelOpen = true;
+   panelKaydirmayiKilitle();
    haptic.tap();
    await renderEnergySection();
    sayaclariBaslat();
@@ -550,7 +572,7 @@ async function openEnergyModal() {
 function closeEnergyModal() {
    const overlay = document.getElementById('energy-overlay');
    if (overlay) overlay.hidden = true;
-   panelOpen = false;
+   panelKaydirmayiAc();
 }
 
 async function renderEnergySection() {
@@ -749,13 +771,20 @@ function wireLiderPanel() {
    const overlay = document.getElementById('lider-overlay');
    if (!card || !overlay) return;
    card.addEventListener('click', acLiderPanel);
-   document.getElementById('lider-close')?.addEventListener('click', () => { overlay.hidden = true; });
-   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.hidden = true; });
+   document.getElementById('lider-close')?.addEventListener('click', closeLiderPanel);
+   overlay.addEventListener('click', (e) => { if (e.target === overlay) closeLiderPanel(); });
+}
+
+function closeLiderPanel() {
+   const overlay = document.getElementById('lider-overlay');
+   if (overlay) overlay.hidden = true;
+   panelKaydirmayiAc();
 }
 
 async function acLiderPanel() {
    const overlay = document.getElementById('lider-overlay');
    overlay.hidden = false;
+   panelKaydirmayiKilitle();
    haptic.tap();
 
    const veri = await liderTablosu();
@@ -833,14 +862,21 @@ function wireFriendsPanel() {
    const overlay = document.getElementById('friends-overlay');
    if (!card || !overlay) return;
    card.addEventListener('click', acFriendsPanel);
-   document.getElementById('friends-close')?.addEventListener('click', () => { overlay.hidden = true; });
-   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.hidden = true; });
+   document.getElementById('friends-close')?.addEventListener('click', closeFriendsPanel);
+   overlay.addEventListener('click', (e) => { if (e.target === overlay) closeFriendsPanel(); });
    document.getElementById('friends-invite-btn')?.addEventListener('click', davetGonder);
+}
+
+function closeFriendsPanel() {
+   const overlay = document.getElementById('friends-overlay');
+   if (overlay) overlay.hidden = true;
+   panelKaydirmayiAc();
 }
 
 async function acFriendsPanel() {
    const overlay = document.getElementById('friends-overlay');
    overlay.hidden = false;
+   panelKaydirmayiKilitle();
    haptic.tap();
 
    const veri = await referralOzeti();
