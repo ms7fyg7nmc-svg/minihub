@@ -1,9 +1,9 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v90';
-import { getBest, saveState, loadState, clearState, startRun, finishRunOrLegacy, yerelTohum } from '../../js/store.js?v90';
-import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v90';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v90';
-import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v90';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v91';
+import { getBest, saveState, loadState, clearState, startRun, finishRunOrLegacy, yerelTohum } from '../../js/store.js?v91';
+import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v91';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v91';
+import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v91';
 
 const GAME_ID = '2048';
 const POINTS_DIVISOR = 23;
@@ -188,7 +188,7 @@ function makeTile(r, c, value) {
 }
 
 async function finishAndCredit() {
-   return finishRunOrLegacy(GAME_ID, runId, moves, score, POINTS_DIVISOR);
+   return finishRunOrLegacy(GAME_ID, runId, { moves }, score, POINTS_DIVISOR);
 }
 
 function move(direction) {
@@ -222,6 +222,7 @@ function move(direction) {
 
 function rebuildCells(prevCells, result) {
    const next = new Array(SIZE * SIZE).fill(null);
+   const consumed = new Set();
 
    const mergesByDest = new Map();
    for (const tr of result.transitions) {
@@ -234,6 +235,7 @@ function rebuildCells(prevCells, result) {
    for (const tr of result.transitions) {
       if (tr.type !== 'move') continue;
       const fromIdx = tr.from.r * SIZE + tr.from.c;
+      consumed.add(fromIdx);
       const tile = prevCells[fromIdx] || makeTile(tr.from.r, tr.from.c, tr.value);
       tile.prevR = tr.from.r;
       tile.prevC = tr.from.c;
@@ -249,6 +251,7 @@ function rebuildCells(prevCells, result) {
       const destC = destKey % SIZE;
       const sources = group.map((tr) => {
          const fromIdx = tr.from.r * SIZE + tr.from.c;
+         consumed.add(fromIdx);
          const tile = prevCells[fromIdx] || makeTile(tr.from.r, tr.from.c, tr.value / 2);
          tile.prevR = tr.from.r;
          tile.prevC = tr.from.c;
@@ -257,6 +260,22 @@ function rebuildCells(prevCells, result) {
       const merged = makeTile(destR, destC, group[0].value);
       merged.mergedFrom = sources;
       next[destKey] = merged;
+   }
+
+   // Ne kaydi ne birlesti - yerinde duran taslar logic.js'ten hic transition
+   // almiyor (board'da degisiklik yok cunku), o yuzden burada elle tasimazsak
+   // render() o hucreyi bos saniyor ve tas gorunmez oluyor (skor/board
+   // etkilenmiyor, sadece ekranda kayboluyor - bir sonraki hamlede tekrar
+   // hareket edince "geri geliyor" gibi gorunmesinin sebebi buydu).
+   for (let i = 0; i < prevCells.length; i++) {
+      if (consumed.has(i) || next[i]) continue;
+      const tile = prevCells[i];
+      if (!tile) continue;
+      tile.prevR = tile.r;
+      tile.prevC = tile.c;
+      tile.isNew = false;
+      tile.mergedFrom = null;
+      next[i] = tile;
    }
 
    if (result.spawn) {

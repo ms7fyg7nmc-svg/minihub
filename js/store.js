@@ -1,5 +1,5 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v90';
+import { isTelegramUser, getInitData } from './tg.js?v91';
 
 const API_BASE = 'https://minihub-bot.volkanturedi1.workers.dev';
 
@@ -507,9 +507,11 @@ export { yerelTohum };
 
 // Biriken-skor/carpan modeliyle calisan oyunlar (2048, snake, vb.) icin:
 // sunucu dogrulamasi basarisizsa ya da misafirse, eski (dogrulamasiz)
-// submitScore+addPoints akisina aynen duser.
-export async function finishRunOrLegacy(game, runId, moves, claimedScore, divisor) {
-  const sonuc = runId ? await finishRun(game, runId, { moves, claimedScore }) : null;
+// submitScore+addPoints akisina aynen duser. `payload` oyuna gore degisir
+// (2048: {moves}, snake: {events, totalTicks}, vb.) - sadece finishRun'a
+// aynen iletiliyor.
+export async function finishRunOrLegacy(game, runId, payload, claimedScore, divisor) {
+  const sonuc = runId ? await finishRun(game, runId, { ...payload, claimedScore }) : null;
   if (sonuc) return sonuc;
 
   const bestSonuc = await submitScore(game, claimedScore);
