@@ -12,9 +12,9 @@
       if (sessionStorage.getItem('mh_hub_open') !== '1') location.replace('../../index.html');
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="../../css/style.css?v99">
-  <link rel="stylesheet" href="../../css/game.css?v99">
-  <link rel="stylesheet" href="coindrop.css?v99">
+  <link rel="stylesheet" href="../../css/style.css?v100">
+  <link rel="stylesheet" href="../../css/game.css?v100">
+  <link rel="stylesheet" href="coindrop.css?v100">
 </head>
 <body class="game" data-i18n-title="title">
   <div class="app game-app">
@@ -38,16 +38,21 @@
       </div>
     </header>
 
+    <!-- Ust serit: sonraki para + ulasilan kademe yolu.
+         Ikisi de eskiden canvas'in icinde duruyordu ve oyun alanini
+         kapatiyordu; disari alininca tahta tamamen oyuna kaldi. -->
+    <div class="cd-bar">
+      <div class="cd-next-well">
+        <span class="cd-bar-label" data-i18n="next">SIRADAKİ</span>
+        <span class="cd-next" id="next-chip"></span>
+      </div>
+      <div class="cd-ladder" id="ladder"></div>
+    </div>
+
     <div class="game-mid">
       <div class="board-wrap">
         <div class="cd-stage" id="stage">
           <canvas id="cv"></canvas>
-
-          <!-- Sonraki para + ilerleme serisi -->
-          <div class="cd-hud">
-            <span class="cd-hud-label" data-i18n="next">SIRADAKİ</span>
-            <span class="cd-next" id="next-chip"></span>
-          </div>
 
           <div class="overlay" id="overlay" hidden>
             <h2 id="overlay-title"></h2>
@@ -55,9 +60,6 @@
             <button class="btn primary" id="overlay-btn"></button>
           </div>
         </div>
-
-        <!-- Kademe serisi: hangi paradan hangisine gidiliyor -->
-        <div class="cd-ladder" id="ladder"></div>
       </div>
     </div>
 
@@ -72,6 +74,6 @@
 
   </div>
 
-  <script type="module" src="coindrop.js?v99"></script>
+  <script type="module" src="coindrop.js?v100"></script>
 </body>
 </html>

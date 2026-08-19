@@ -1,32 +1,90 @@
 /* Coin Drop: fizik tabanli para birlestirme.
-   Tahta tek bir <canvas>; premium his icin kasa cercevesi, ic golge ve
-   altin bir taban seridi CSS ile ekleniyor - canvas sadece paralari ciziyor. */
+   Tahta tek bir <canvas>; kasa cercevesi, ic golge ve altin taban seridi
+   CSS ile - canvas sadece paralari ciziyor. */
 
 .board-wrap { position: relative; }
 
-/* Sahne: 360x540 sanal dunyanin ekrandaki karsiligi. aspect-ratio ile
-   oraniyla birlikte buyuyup kuculuyor, canvas icini tam dolduruyor. */
+/* --- Ust serit: sonraki para + kademe yolu --- */
+.cd-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 14px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015)), var(--bg-soft);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.cd-next-well {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 9px 4px 4px;
+  border-radius: 999px;
+  flex: none;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(245, 185, 66, 0.22);
+}
+
+.cd-bar-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  color: var(--gold-yazi, #f5b942);
+  white-space: nowrap;
+}
+
+.cd-next { width: 30px; height: 30px; flex: none; display: block; }
+.cd-next img { width: 100%; height: 100%; display: block; }
+
+/* Kademe yolu: 1c -> 100$ arasindaki 13 kademe. Ulasilanlar aydinlanir,
+   en yuksek olan hafifce buyur - "nerede kaldim" tek bakista belli olsun. */
+.cd-ladder {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.cd-ladder span {
+  /* Kademe ilerledikce serit de buyuyor (--i, hub.js'teki kart gecikmesi
+     gibi JS'ten geliyor) - 13 esit nokta yerine gercek bir "yol" okunuyor. */
+  width: calc(12px + var(--i, 0) * 0.75px);
+  height: calc(12px + var(--i, 0) * 0.75px);
+  flex: 0 0 auto;
+  display: block;
+  opacity: 0.3;
+  transition: opacity 0.25s ease, transform 0.25s ease, filter 0.25s ease;
+}
+.cd-ladder span img { width: 100%; height: 100%; display: block; }
+
+.cd-ladder span.reached { opacity: 1; }
+.cd-ladder span.top { filter: drop-shadow(0 0 6px rgba(245, 185, 66, 0.85)); }
+
+/* --- Sahne --- */
 .cd-stage {
   position: relative;
   width: 100%;
-  /* Sahne 2:3 dikey. Yuksekligi genislikten tureyecegi icin ust sinir
-     GENISLIGE konuyor: ekranin tahtaya kalan yuksekligi neyse (baslik +
-     ipucu + butonlar + serit ~300px), genislik onun 2/3'unu asamaz.
-     blockblast ile ayni desen - flex icinde ezilmemesi icin board-wrap
-     flex degil, sahne margin:auto ile ortalaniyor. */
-  max-width: min(100%, max(170px, calc((var(--app-h, 100dvh) - 300px) * 0.6667)));
+  /* Sahne 2:3 dikey; yukseklik genislikten tureyecegi icin ust sinir
+     GENISLIGE konuyor (baslik + serit + ipucu + butonlar ~330px). */
+  max-width: min(100%, max(170px, calc((var(--app-h, 100dvh) - 330px) * 0.6667)));
   margin: 0 auto;
   aspect-ratio: 360 / 540;
-  border-radius: 18px;
+  border-radius: 20px;
   overflow: hidden;
   background:
-    radial-gradient(120% 70% at 50% 0%, rgba(245, 185, 66, 0.10), transparent 62%),
-    linear-gradient(180deg, #14161f 0%, #0d0f16 62%, #0a0b11 100%);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+    radial-gradient(90% 45% at 50% 104%, rgba(245, 185, 66, 0.20), transparent 68%),
+    radial-gradient(120% 60% at 50% 0%, rgba(120, 150, 255, 0.07), transparent 60%),
+    linear-gradient(180deg, #171a25 0%, #0f1119 55%, #0a0b11 100%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   box-shadow:
-    0 14px 34px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    inset 0 -26px 40px rgba(0, 0, 0, 0.45);
+    0 16px 38px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 -30px 46px rgba(0, 0, 0, 0.5);
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
@@ -34,69 +92,34 @@
 
 .cd-stage canvas { display: block; width: 100%; height: 100%; }
 
-/* Zeminde altin bir serit: paralar bosluga degil bir kasaya dusuyor hissi */
+/* Yan raylar: kasanin ici gibi dursun, paralar bosluga dusmesin */
+.cd-stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05), transparent 6%),
+    linear-gradient(270deg, rgba(255, 255, 255, 0.05), transparent 6%);
+}
+
+/* Zemin: altin bir esik - paralarin oturdugu yer belli olsun */
 .cd-stage::after {
   content: '';
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 10px;
-  background: linear-gradient(180deg, var(--gold, #f5b942), #8a5f10);
-  box-shadow: 0 -6px 16px rgba(245, 185, 66, 0.28);
+  height: 9px;
+  background: linear-gradient(180deg, #ffd76e, var(--gold, #f5b942) 40%, #7d5409);
+  box-shadow: 0 -8px 20px rgba(245, 185, 66, 0.32);
 }
 
-/* Ust bant: sonraki para */
-.cd-hud {
-  position: absolute;
-  top: 8px;
-  left: 10px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  pointer-events: none;
-}
-
-.cd-hud-label {
-  font-size: 9.5px;
-  font-weight: 800;
-  letter-spacing: 0.8px;
-  color: var(--muted);
-}
-
-.cd-next {
-  width: 26px;
-  height: 26px;
-  display: block;
-}
-.cd-next svg { width: 100%; height: 100%; display: block; }
-
-/* Kademe serisi: 1c -> ... -> 100$ yolunu gosteren minik seritler */
-.cd-ladder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 3px;
-  width: 100%;
-  max-width: min(100%, max(170px, calc((var(--app-h, 100dvh) - 300px) * 0.6667)));
-  margin: 8px auto 0;
-}
-
-.cd-ladder span {
-  width: 19px;
-  height: 19px;
-  display: block;
-  opacity: 0.35;
-  transition: opacity 0.25s ease, transform 0.25s ease;
-}
-.cd-ladder span svg { width: 100%; height: 100%; display: block; }
-
-/* Oyuncunun ulastigi en yuksek kademeye kadar olanlar aydinlaniyor */
-.cd-ladder span.reached { opacity: 1; }
-.cd-ladder span.top { transform: scale(1.24); }
-
-/* Kisa ekranlarda seri sikissin */
 @media (max-height: 700px) {
-  .cd-ladder span { width: 16px; height: 16px; }
+  .cd-ladder span {
+    width: calc(10px + var(--i, 0) * 0.6px);
+    height: calc(10px + var(--i, 0) * 0.6px);
+  }
+  .cd-next { width: 26px; height: 26px; }
 }

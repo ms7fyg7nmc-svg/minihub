@@ -1,6 +1,6 @@
 
-import { loadState, saveState } from '../../js/store.js?v99';
-import { SLOTS, VARSAYILAN_GORUNUM } from './data.js?v99';
+import { loadState, saveState } from '../../js/store.js?v100';
+import { SLOTS, VARSAYILAN_GORUNUM } from './data.js?v100';
 
 const OYUN_ID = 'dragon';
 const SURUM = 2;

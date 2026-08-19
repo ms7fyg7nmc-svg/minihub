@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v99';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v99';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v99';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v99';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v100';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v100';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v100';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v100';
 
 const GAME_ID = 'coindrop';
 
@@ -103,6 +103,19 @@ let over = false;
 let sonKare = 0;
 let olcek = 1;
 let nextId = 1;
+
+/* Para gorselleri: Scenario ile uretilen tek bir usta paradan turetilen
+   4 alasim (bakir/gumus/altin/kraliyet). Hepsi ayni kabartma ve birebir
+   dairesel siluet - fizik daire oldugu icin bu onemli. */
+const SPRITE = {};
+let spriteSayaci = 0;
+for (const ad of ['copper', 'silver', 'gold', 'royal']) {
+  const im = new Image();
+  im.onload = () => { spriteSayaci++; ciz(); };
+  im.src = `assets/coin-${ad}.webp`;
+  SPRITE[ad] = im;
+}
+const hazirMi = (im) => im && im.complete && im.naturalWidth > 0;
 
 const amblem = new Image();
 let amblemHazir = false;
@@ -481,114 +494,65 @@ function ciz() {
   g.globalAlpha = 1;
 }
 
-/* Tek bir madeni para: tirtikli kenar, ic yuz, kabartma yazi ve $MH amblemi */
+/* Tek bir madeni para: uretilen alasim gorseli + uzerine kabartma
+   deger yazisi ve $MH darphane amblemi. Yazi gorsele gomulmedi cunku
+   13 kademenin her biri icin ayri gorsel uretmek hem tutarsiz hem agir
+   olurdu; ayrica uretici modeller rakamlari guvenilir yazamiyor. */
 function coinCiz(x, y, r, ti, aci) {
-  const M = METAL[TIERS[ti].metal];
+  const T = TIERS[ti];
+  const M = METAL[T.metal];
+  const im = SPRITE[T.metal];
+
   g.save();
   g.translate(x, y);
   g.rotate(aci);
 
-  // Govde
-  const gd = g.createRadialGradient(-r * 0.36, -r * 0.42, r * 0.06, 0, 0, r * 1.06);
-  gd.addColorStop(0, M.hi);
-  gd.addColorStop(0.46, M.mid);
-  gd.addColorStop(1, M.lo);
-  g.beginPath();
-  g.arc(0, 0, r, 0, TAU);
-  g.fillStyle = gd;
-  g.fill();
-
-  // Tirtikli kenar
-  const tirtik = Math.max(18, Math.round(r * 0.78));
-  g.strokeStyle = M.rim;
-  g.globalAlpha = 0.5;
-  g.lineWidth = Math.max(0.8, r * 0.05);
-  for (let i = 0; i < tirtik; i++) {
-    const a = (i / tirtik) * TAU;
-    const c1 = Math.cos(a);
-    const s1 = Math.sin(a);
+  if (hazirMi(im)) {
+    g.drawImage(im, -r, -r, r * 2, r * 2);
+  } else {
+    // Gorsel daha yuklenmediyse duz bir disk - oyun beklemesin
+    const gd = g.createRadialGradient(-r * 0.36, -r * 0.42, r * 0.06, 0, 0, r * 1.06);
+    gd.addColorStop(0, M.hi);
+    gd.addColorStop(0.46, M.mid);
+    gd.addColorStop(1, M.lo);
     g.beginPath();
-    g.moveTo(c1 * r * 0.9, s1 * r * 0.9);
-    g.lineTo(c1 * r * 0.995, s1 * r * 0.995);
-    g.stroke();
-  }
-  g.globalAlpha = 1;
-
-  // Dis cember
-  g.beginPath();
-  g.arc(0, 0, r * 0.97, 0, TAU);
-  g.lineWidth = Math.max(0.9, r * 0.06);
-  g.strokeStyle = M.rim;
-  g.stroke();
-
-  // Ic yuz
-  const f = r * 0.76;
-  const fg = g.createRadialGradient(-f * 0.32, -f * 0.36, f * 0.05, 0, 0, f * 1.12);
-  fg.addColorStop(0, M.hi);
-  fg.addColorStop(0.5, M.mid);
-  fg.addColorStop(1, M.lo);
-  g.beginPath();
-  g.arc(0, 0, f, 0, TAU);
-  g.fillStyle = fg;
-  g.fill();
-  g.globalAlpha = 0.65;
-  g.beginPath();
-  g.arc(0, 0, f, 0, TAU);
-  g.lineWidth = Math.max(0.8, r * 0.04);
-  g.strokeStyle = M.rim;
-  g.stroke();
-  g.globalAlpha = 1;
-
-  // Mythic kademelerde ince yesil defne halkasi (referans gorseldeki gibi)
-  if (TIERS[ti].metal === 'royal') {
-    g.globalAlpha = 0.55;
-    g.beginPath();
-    g.arc(0, 0, f * 0.92, 0, TAU);
-    g.lineWidth = Math.max(1, r * 0.045);
-    g.strokeStyle = '#2f6b4f';
-    g.setLineDash([r * 0.16, r * 0.1]);
-    g.stroke();
-    g.setLineDash([]);
-    g.globalAlpha = 1;
+    g.arc(0, 0, r, 0, TAU);
+    g.fillStyle = gd;
+    g.fill();
   }
 
-  const amblemVar = amblemHazir && r >= 24;
-  const yaziY = amblemVar ? -f * 0.22 : 0;
+  // Madalyon alani (gorselin ortasindaki bos yuzey) ~ capin %58'i
+  const f = r * 0.58;
+  const amblemVar = amblemHazir && r >= 26;
+  const yaziY = amblemVar ? -f * 0.18 : 0;
 
-  // Kabartma yazi: once koyu golge, ustune acik yuz
-  const txt = TIERS[ti].txt;
-  let boy = f * (txt.length >= 4 ? 0.62 : txt.length === 3 ? 0.76 : 0.92);
-  g.font = `900 ${boy}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-  const gen = g.measureText(txt).width;
-  const sinir = f * (amblemVar ? 1.42 : 1.5);
-  if (gen > sinir) {
-    boy *= sinir / gen;
+  const txt = T.txt;
+  let boy = f * (txt.length >= 4 ? 0.66 : txt.length === 3 ? 0.8 : 0.96);
+  const yaziKur = () => {
     g.font = `900 ${boy}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-  }
+  };
+  yaziKur();
+  const sinir = f * 1.5;
+  const gen = g.measureText(txt).width;
+  if (gen > sinir) { boy *= sinir / gen; yaziKur(); }
+
   g.textAlign = 'center';
   g.textBaseline = 'middle';
+  // Kabartma: once koyu golge biraz asagida, ustune acik yuz
+  g.globalAlpha = 0.5;
   g.fillStyle = M.ink;
-  g.globalAlpha = 0.55;
-  g.fillText(txt, 0, yaziY + Math.max(0.7, r * 0.035));
+  g.fillText(txt, 0, yaziY + Math.max(0.8, r * 0.032));
   g.globalAlpha = 1;
   g.fillStyle = M.hi;
   g.fillText(txt, 0, yaziY);
 
-  // $MH amblemi (darphane isareti gibi, yazinin altinda)
+  // $MH darphane amblemi - yazinin altinda, kucuk
   if (amblemVar) {
-    const d = f * 0.56;
-    g.globalAlpha = 0.95;
-    g.drawImage(amblem, -d / 2, f * 0.24, d, d);
+    const d = f * 0.5;
+    g.globalAlpha = 0.9;
+    g.drawImage(amblem, -d / 2, f * 0.2, d, d);
     g.globalAlpha = 1;
   }
-
-  // Ust parlama
-  g.globalAlpha = 0.16;
-  g.beginPath();
-  g.ellipse(-r * 0.3, -r * 0.44, r * 0.42, r * 0.22, -0.5, 0, TAU);
-  g.fillStyle = '#fff';
-  g.fill();
-  g.globalAlpha = 1;
 
   g.restore();
 }
@@ -608,31 +572,12 @@ function guncelleHud() {
 }
 
 function buildLadder() {
-  ladderEl.innerHTML = TIERS.map((_, i) => `<span>${coinSvg(i)}</span>`).join('');
+  ladderEl.innerHTML = TIERS.map((_, i) => `<span style="--i:${i}">${coinSvg(i)}</span>`).join('');
 }
 
-/* HUD/serit icin kucuk SVG para - canvas'takiyle ayni renk mantigi */
+/* HUD/serit icin ayni para gorseli - canvas'takiyle birebir ayni sanat */
 function coinSvg(ti) {
-  const M = METAL[TIERS[ti].metal];
-  const txt = TIERS[ti].txt;
-  const boy = txt.length >= 4 ? 8 : txt.length === 3 ? 10 : 12;
-  return `<svg viewBox="0 0 32 32" aria-hidden="true">
-    <defs>
-      <radialGradient id="cd${ti}" cx="0.34" cy="0.3" r="0.78">
-        <stop offset="0" stop-color="${M.hi}"/>
-        <stop offset="0.5" stop-color="${M.mid}"/>
-        <stop offset="1" stop-color="${M.lo}"/>
-      </radialGradient>
-    </defs>
-    <circle cx="16" cy="16" r="15" fill="url(#cd${ti})" stroke="${M.rim}" stroke-width="1.6"/>
-    <circle cx="16" cy="16" r="11.5" fill="none" stroke="${M.rim}" stroke-width="1" opacity=".6"/>
-    <text x="16" y="17" text-anchor="middle" dominant-baseline="middle"
-          font-family="-apple-system, BlinkMacSystemFont, sans-serif"
-          font-size="${boy}" font-weight="900" fill="${M.ink}" opacity=".5">${txt}</text>
-    <text x="16" y="16" text-anchor="middle" dominant-baseline="middle"
-          font-family="-apple-system, BlinkMacSystemFont, sans-serif"
-          font-size="${boy}" font-weight="900" fill="${M.hi}">${txt}</text>
-  </svg>`;
+  return `<img src="assets/coin-${TIERS[ti].metal}.webp" alt="${TIERS[ti].txt}">`;
 }
 
 /* --- Giris --- */
