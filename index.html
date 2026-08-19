@@ -11,7 +11,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v94">
+  <link rel="stylesheet" href="css/style.css?v95">
 </head>
 <body class="hub">
   <div class="app">
@@ -154,11 +154,11 @@
         </div>
 
         <div class="energy-refill-row" id="energy-refill-row" hidden>
-          <button class="energy-refill-btn" id="energy-ad-btn">
+          <button class="energy-refill-btn" id="energy-ad-btn" disabled>
             <span class="energy-refill-icon" aria-hidden="true">🎬</span>
             <span class="energy-refill-text">
               <strong data-i18n="hub.energy.watchAd">Reklam izle</strong>
-              <span id="energy-ad-sub" class="energy-refill-sub"></span>
+              <span class="energy-refill-sub" data-i18n="hub.energy.comingSoon">Yakında</span>
             </span>
           </button>
           <button class="energy-refill-btn" id="energy-star-btn">
@@ -199,6 +199,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v94"></script>
+  <script type="module" src="js/hub.js?v95"></script>
 </body>
 </html>

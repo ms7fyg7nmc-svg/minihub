@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v94';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v95';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi,
-} from './store.js?v94';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v94';
+} from './store.js?v95';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v95';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -128,17 +128,6 @@ function gameList() {
          url: 'games/blockblast/index.html',
          gradient: 'linear-gradient(140deg, #7f9bff, #5b6bff)',
          accent: '#5b8cff',
-         ready: true,
-      },
-      {
-         id: 'watersort',
-         title: t('game.watersort.title'),
-         desc: t('game.watersort.desc'),
-         icon: ICONS.watersort,
-         url: 'games/watersort/index.html',
-         gradient: 'linear-gradient(140deg, #4ecb8b, #2fa9a0)',
-         accent: '#4ecb8b',
-         bestKey: 'hub.level',
          ready: true,
       },
       {
@@ -505,7 +494,8 @@ function wireDailyPanel() {
    energyCard?.addEventListener('click', openEnergyModal);
    energyCloseBtn?.addEventListener('click', closeEnergyModal);
    energyOverlay?.addEventListener('click', (e) => { if (e.target === energyOverlay) closeEnergyModal(); });
-   document.getElementById('energy-ad-btn')?.addEventListener('click', watchAdForEnergy);
+   // Reklamla enerji doldurma gecici olarak kapali (Adsgram onayi bekleniyor) -
+   // energy-ad-btn hep disabled, tiklama dinleyicisi baglanmiyor.
    document.getElementById('energy-star-btn')?.addEventListener('click', buyEnergyWithStars);
 
    streakBtn?.addEventListener('click', async () => {
@@ -610,12 +600,8 @@ function renderEnergyRefillRow(energy) {
 
    const dolu = energy.energy >= energy.max;
 
-   const adBtn = document.getElementById('energy-ad-btn');
-   const adSub = document.getElementById('energy-ad-sub');
-   adBtn.disabled = dolu || refill.adLeft <= 0;
-   adSub.textContent = refill.adLeft > 0
-      ? t('hub.energy.refillSub', { amount: refill.amount, left: refill.adLeft, max: refill.dailyLimit })
-      : t('hub.energy.limitReached');
+   // Reklamla enerji doldurma gecici olarak kapali (Adsgram onayi bekleniyor) -
+   // buton hep devre disi, "Yakinda" yaziyor (bkz. index.html).
 
    const starBtn = document.getElementById('energy-star-btn');
    const starLabel = document.getElementById('energy-star-label');

@@ -1,15 +1,15 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v94';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v94';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v95';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v95';
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v94';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v94';
-import { bakiyeOku, harca } from './economy.js?v94';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v95';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v95';
+import { bakiyeOku, harca } from './economy.js?v95';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v94';
-import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v94';
-import { ITEM_TEXTS } from './i18n-items.js?v94';
-import { createIsland } from './island.js?v94';
+         adaSahipMi, adaEkle } from './model.js?v95';
+import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v95';
+import { ITEM_TEXTS } from './i18n-items.js?v95';
+import { createIsland } from './island.js?v95';
 
 const GAME_ID = 'dragon';
 
@@ -28,7 +28,7 @@ registerTexts(GAME_ID, {
   hint: 'Diğer oyunlarda jeton kazan, burada ejderhanı besle.',
   notEnough: 'Yeterli $MH’ın yok. Bir oyun oynayıp geri gel.',
   hungryHint: 'Ejderhan acıktı, beslenmeyi bekliyor.',
-  maxLevel: 'Ejderhan en yüksek seviyeye ulaştı.',
+  maxLevel: 'Ejderhan en yüksek seviyeye ulaştı. Yakında ejderhanı mint etmeye hak kazanacaksın.',
   levelUp: 'Seviye {level}!',
   xpGain: '+{n} XP',
   playSoon: 'Ejderhan dinleniyor. {time} sonra tekrar oynayın.',
