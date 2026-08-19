@@ -10,7 +10,6 @@ export const RARITIES = {
 
 export const SLOTS = [
   { key: 'wings',    title: 'shopWings' },
-  { key: 'tail',     title: 'shopTails' },
   { key: 'necklace', title: 'shopNecklaces' },
   { key: 'head',     title: 'shopHeads' },
   { key: 'face',     title: 'shopFaces' },
@@ -21,7 +20,6 @@ export const VARSAYILAN_GORUNUM = {
   color: 'ember',
   skin: 'none',
   wings: 'leather',
-  tail: 'basic',
   necklace: 'none',
   head: 'none',
   face: 'none',
@@ -81,17 +79,6 @@ export const WINGS = {
               kind: 'king',    span: 1.20, parmak: 5, kenar: '#f5c74a', needLevel: 60 },
   celestial:{ price: 58000, rarity: 'mythic',    nameKey: 'wgCelestial',descKey:'wgCelestialD',
               kind: 'celestial', span: 1.26, parmak: 5, kenar: '#fff0a8', isilti: true, needLevel: 80 },
-};
-
-export const TAILS = {
-  basic:    { price: 0,     rarity: 'common',    nameKey: 'tlBasic',   descKey: 'tlBasicD',   kind: 'plain' },
-  spiked:   { price: 350,   rarity: 'common',    nameKey: 'tlSpiked',  descKey: 'tlSpikedD',  kind: 'spiked' },
-  flame:    { price: 800,   rarity: 'uncommon',  nameKey: 'tlFlame',   descKey: 'tlFlameD',   kind: 'flame',   kenar: '#ff8a3d' },
-  crystal:  { price: 1800,  rarity: 'rare',      nameKey: 'tlCrystal', descKey: 'tlCrystalD', kind: 'crystal', kenar: '#bfeaff' },
-  demon:    { price: 4000,  rarity: 'rare',      nameKey: 'tlDemon',   descKey: 'tlDemonD',   kind: 'demon' },
-  lightning:{ price: 9000,  rarity: 'epic',      nameKey: 'tlLightning',descKey:'tlLightningD',kind: 'lightning', kenar: '#8fd0ff', needLevel: 35 },
-  king:     { price: 20000, rarity: 'legendary', nameKey: 'tlKing',    descKey: 'tlKingD',    kind: 'king',    kenar: '#f5c74a', needLevel: 60 },
-  celestial:{ price: 45000, rarity: 'mythic',    nameKey: 'tlCelestial',descKey:'tlCelestialD',kind: 'celestial', kenar: '#fff0a8', isilti: true, needLevel: 80 },
 };
 
 export const HEADS = {
@@ -200,7 +187,6 @@ export const KATALOG = {
   color: COLORS,
   skin: SKINS,
   wings: WINGS,
-  tail: TAILS,
   necklace: NECKLACES,
   head: HEADS,
   face: FACES,
@@ -224,6 +210,5 @@ export function palet(look) {
     pattern: desen.kind || null,
     ink: desen.ink || renk.dark,
     wings: WINGS[look.wings] || WINGS.leather,
-    tail: TAILS[look.tail] || TAILS.basic,
   };
 }

@@ -32,15 +32,6 @@ export const ITEM_TEXTS = {
     wgKing: 'Dragon King Wings',  wgKingD: 'Armoured and set with jewels.',
     wgCelestial: 'Celestial Wings', wgCelestialD: 'Half light, half crystal. Enormous.',
 
-    tlBasic: 'Basic Tail',        tlBasicD: 'A classic dragon tail.',
-    tlSpiked: 'Spiked Tail',      tlSpikedD: 'Small spines run the length.',
-    tlFlame: 'Flame Tail',        tlFlameD: 'The tip burns.',
-    tlCrystal: 'Crystal Tail',    tlCrystalD: 'Crystal shards along the tail.',
-    tlDemon: 'Demon Tail',        tlDemonD: 'Sharp, barbed and heavy.',
-    tlLightning: 'Lightning Tail',tlLightningD: 'Energy crackles along it.',
-    tlKing: 'Dragon King Tail',   tlKingD: 'Armoured and decorated with a ruby.',
-    tlCelestial: 'Celestial Tail',tlCelestialD: 'Long, glowing, part light.',
-
     nkNone: 'None',                nkNoneD: 'No necklace.',
     nkFang: 'Fang Necklace',       nkFangD: 'A braided cord with a small claw pendant.',
     nkBronze: 'Bronze Necklace',   nkBronzeD: 'A bronze chain with a sun medallion.',
@@ -118,15 +109,6 @@ export const ITEM_TEXTS = {
     wgLightning: 'Şimşek Kanat',  wgLightningD: 'Zarda enerji akıyor.',
     wgKing: 'Ejder Kralı Kanadı', wgKingD: 'Zırhlı ve değerli taşlarla bezeli.',
     wgCelestial: 'Semavi Kanat',  wgCelestialD: 'Yarı ışık, yarı kristal. Devasa.',
-
-    tlBasic: 'Klasik Kuyruk',     tlBasicD: 'Sade bir ejderha kuyruğu.',
-    tlSpiked: 'Dikenli Kuyruk',   tlSpikedD: 'Boyunca küçük dikenler.',
-    tlFlame: 'Alev Kuyruk',       tlFlameD: 'Ucu yanıyor.',
-    tlCrystal: 'Kristal Kuyruk',  tlCrystalD: 'Kuyruk boyunca kristal parçalar.',
-    tlDemon: 'İblis Kuyruğu',     tlDemonD: 'Sivri, zıpkın uçlu ve ağır.',
-    tlLightning: 'Şimşek Kuyruk', tlLightningD: 'Üzerinde enerji çatırdıyor.',
-    tlKing: 'Ejder Kralı Kuyruğu',tlKingD: 'Zırhlı ve yakutla süslü.',
-    tlCelestial: 'Semavi Kuyruk', tlCelestialD: 'Uzun, parlayan, yarı ışık.',
 
     nkNone: 'Yok',                  nkNoneD: 'Kolye yok.',
     nkFang: 'Diş Kolyesi',          nkFangD: 'Küçük bir pençe ucuyla örülü kordon.',
@@ -206,15 +188,6 @@ export const ITEM_TEXTS = {
     wgKing: 'Alas del Rey Dragón',wgKingD: 'Blindadas y con joyas.',
     wgCelestial: 'Alas Celestiales', wgCelestialD: 'Mitad luz, mitad cristal. Enormes.',
 
-    tlBasic: 'Cola Básica',       tlBasicD: 'Una cola de dragón clásica.',
-    tlSpiked: 'Cola con Púas',    tlSpikedD: 'Pequeñas púas a lo largo.',
-    tlFlame: 'Cola de Llama',     tlFlameD: 'La punta arde.',
-    tlCrystal: 'Cola de Cristal', tlCrystalD: 'Fragmentos de cristal en la cola.',
-    tlDemon: 'Cola de Demonio',   tlDemonD: 'Afilada, con arpón y pesada.',
-    tlLightning: 'Cola de Rayo',  tlLightningD: 'La energía crepita en ella.',
-    tlKing: 'Cola del Rey Dragón',tlKingD: 'Blindada y decorada con un rubí.',
-    tlCelestial: 'Cola Celestial',tlCelestialD: 'Larga, brillante, parte de luz.',
-
     nkNone: 'Ninguno',              nkNoneD: 'Sin collar.',
     nkFang: 'Collar de Colmillo',   nkFangD: 'Un cordón trenzado con un pequeño colmillo.',
     nkBronze: 'Collar de Bronce',   nkBronzeD: 'Cadena de bronce con un medallón solar.',
@@ -292,15 +265,6 @@ export const ITEM_TEXTS = {
     wgLightning: 'Крылья Молний', wgLightningD: 'По перепонке бежит энергия.',
     wgKing: 'Крылья Короля',      wgKingD: 'Бронированные и в самоцветах.',
     wgCelestial: 'Небесные Крылья', wgCelestialD: 'Наполовину свет, наполовину кристалл.',
-
-    tlBasic: 'Обычный Хвост',     tlBasicD: 'Классический драконий хвост.',
-    tlSpiked: 'Шипастый Хвост',   tlSpikedD: 'Мелкие шипы по всей длине.',
-    tlFlame: 'Огненный Хвост',    tlFlameD: 'Кончик горит.',
-    tlCrystal: 'Кристальный Хвост', tlCrystalD: 'Осколки кристалла вдоль хвоста.',
-    tlDemon: 'Хвост Демона',      tlDemonD: 'Острый, с гарпуном и тяжёлый.',
-    tlLightning: 'Хвост Молний',  tlLightningD: 'По нему трещит энергия.',
-    tlKing: 'Хвост Короля',       tlKingD: 'Бронированный, украшен рубином.',
-    tlCelestial: 'Небесный Хвост',tlCelestialD: 'Длинный, светящийся, отчасти из света.',
 
     nkNone: 'Нет',                  nkNoneD: 'Без ожерелья.',
     nkFang: 'Ожерелье Клыка',       nkFangD: 'Плетёный шнур с маленьким клыком.',

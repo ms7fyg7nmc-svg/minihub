@@ -1,15 +1,15 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v95';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v95';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v97';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v97';
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v95';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v95';
-import { bakiyeOku, harca } from './economy.js?v95';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v97';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v97';
+import { bakiyeOku, harca } from './economy.js?v97';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v95';
-import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v95';
-import { ITEM_TEXTS } from './i18n-items.js?v95';
-import { createIsland } from './island.js?v95';
+         adaSahipMi, adaEkle } from './model.js?v97';
+import { dragonSvg, faceSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v97';
+import { ITEM_TEXTS } from './i18n-items.js?v97';
+import { createIsland } from './island.js?v97';
 
 const GAME_ID = 'dragon';
 
@@ -51,7 +51,6 @@ registerTexts(GAME_ID, {
 
   shopColors: 'RENK',
   shopWings: 'KANAT',
-  shopTails: 'KUYRUK',
   shopNecklaces: 'KOLYE',
   shopIslands: 'ADA',
   equipIsland: 'Bu adaya taşın',
@@ -472,8 +471,8 @@ function onizleme(slot, id, item) {
 
   if (slot === 'face') {
     if (!item.kind) return bos;
-    return `<span class="swatch" style="background:rgba(255,255,255,.06)">
-      <svg viewBox="-34 -80 68 40">${faceSvg(id)}</svg></span>`;
+    const look = { ...VARSAYILAN_ONIZLEME, face: id };
+    return `<span class="swatch zoom face">${dragonSvg(99, look, 'happy')}</span>`;
   }
 
   if (slot === 'necklace') {
@@ -482,9 +481,20 @@ function onizleme(slot, id, item) {
     return `<span class="swatch zoom necklace">${dragonSvg(99, look, 'happy')}</span>`;
   }
 
-  if (slot === 'wings' || slot === 'tail') {
+  if (slot === 'wings') {
     const look = { ...VARSAYILAN_ONIZLEME, [slot]: id };
     return `<span class="swatch zoom ${slot}">${dragonSvg(99, look, 'happy')}</span>`;
+  }
+
+  if (slot === 'aura') {
+    if (!item.kind) return bos;
+    // Duz bir renk cemberi yerine, efektin oyun icinde kullandigi AYNI
+    // parcacik seklini (yildiz/kor/ayaz/simsek/sis/kozmik) gosteriyor -
+    // hangi animasyonu satin aldigini gercekten anlatiyor.
+    const sekilAdi = item.kind === 'celestial' ? 'star' : item.kind;
+    const sekil = (EFEKT_SEKLI[sekilAdi] || '').replace(/<svg[^>]*>|<\/svg>/g, '');
+    return `<span class="swatch" style="background:radial-gradient(circle, ${item.color}44, rgba(255,255,255,.05));color:${item.color}">
+      <svg viewBox="0 0 24 24" style="filter:drop-shadow(0 0 3px ${item.color})">${sekil}</svg></span>`;
   }
 
   if (!item.kind) return bos;
@@ -494,7 +504,7 @@ function onizleme(slot, id, item) {
 }
 
 const VARSAYILAN_ONIZLEME = {
-  color: 'ocean', skin: 'none', wings: 'leather', tail: 'basic', necklace: 'none',
+  color: 'ocean', skin: 'none', wings: 'leather', necklace: 'none',
   head: 'none', face: 'none', aura: 'none',
 };
 
@@ -779,17 +789,18 @@ function efektCiz(auraId) {
   if (fx.kind === 'celestial') {
     fxEl.classList.add('halo');
     fxEl.style.setProperty('--aura', fx.color);
-    fxEl.innerHTML = `
-      <div class="halo-glow"></div>
-      <svg class="halo-ring" viewBox="0 0 100 100">
-        <ellipse class="ring-runes" cx="50" cy="50" rx="48" ry="16" fill="none" stroke="${fx.color}"
-                 stroke-width="1" stroke-dasharray="1.5 6" opacity=".55"/>
-        <ellipse class="ring-outer" cx="50" cy="50" rx="42" ry="14" fill="none" stroke="${fx.color}"
-                 stroke-width="2" stroke-dasharray="9 6" opacity=".9"/>
-        <ellipse class="ring-inner" cx="50" cy="50" rx="33" ry="11" fill="none" stroke="${fx.color}"
-                 stroke-width="1.1" stroke-dasharray="3 8" opacity=".6"/>
-      </svg>`;
-    parcacikSac({ ...EFEKT_AYAR.star, adet: 9 }, fx);
+
+    const YILDIZ_SAYISI = 6;
+    const SURE = 9;
+    let yildizlar = '';
+    for (let i = 0; i < YILDIZ_SAYISI; i++) {
+      const gecikme = (-(i * SURE) / YILDIZ_SAYISI).toFixed(2);
+      const yaricap = 54 + (i % 2) * 14;
+      yildizlar += `<span class="halo-star"
+        style="--orbit-delay:${gecikme}s;--orbit-dur:${SURE}s;--orbit-r:${yaricap}px">${EFEKT_SEKLI.star}</span>`;
+    }
+    fxEl.innerHTML = `<div class="halo-glow"></div><div class="halo-orbit">${yildizlar}</div>`;
+    parcacikSac({ ...EFEKT_AYAR.star, adet: 5 }, fx);
     return;
   }
 

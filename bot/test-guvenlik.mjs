@@ -219,7 +219,11 @@ check('istemci dahili taban anahtarini yazamiyor', r.error === 'bilinmeyen oyun'
 
 const dataJs = await import('/Users/vtredi/minihub/games/dragon/data.js');
 const workerKaynak = readFileSync('/Users/vtredi/minihub/bot/worker.js', 'utf8');
-const gruplar = { color: 'COLORS', skin: 'SKINS', wings: 'WINGS', tail: 'TAILS',
+// 'tail' burada yok: kategori hub'dan kaldirildi, data.js'te artik satis
+// kataloğu yok - worker.js'teki FIYAT.tail sadece eskiden sahip olan
+// oyunculari degerlendirmek icin (bkz. iddiaMaliyeti) donuk halde duruyor,
+// karsilastirilacak canli bir client listesi kalmadi.
+const gruplar = { color: 'COLORS', skin: 'SKINS', wings: 'WINGS',
                   head: 'HEADS', face: 'FACES', aura: 'AURAS', island: 'ISLANDS' };
 let ayrisan = [];
 for (const [slot, disaAd] of Object.entries(gruplar)) {

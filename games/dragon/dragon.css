@@ -14,7 +14,7 @@
 .game-mid { gap: 10px; }
 
 /* --- ACILIS YUKLEME EKRANI ---
-   PNG parcalardan (govde/kanat/kuyruk/tac) olusan ejderha govdesi tek
+   PNG parcalardan (govde/kanat/tac) olusan ejderha govdesi tek
    seferde degil, her parca ayri indikce beliriyor. On yukleme bitene kadar
    bu ekran sahneyi kapatiyor, boylece oyuncu "yarim yarim" cizilen ejderhayi
    gormuyor. */
@@ -237,63 +237,85 @@
   50%      { opacity: 1; transform: scale(1) rotate(80deg); }
 }
 
-/* Hale: ejderhanin cevresinde donen halka + yumusak isik */
+/* Hale (celestial, mythic seviye): ejderhanin ust govdesini saran yumusak
+   isik + onun cevresinde yavasca yorungede donen yildizlar. Eskiden
+   ayaklarin altinda yassi, donen bir buyu cemberiydi - "havada suzulen"
+   yerine "yerde takili duran bir cember" gibi durup ucuz gorunuyordu.
+   Simdi isik govdenin ustunde, yildizlar govdenin cevresinde 3D bir
+   yorungedeymis hissi verecek sekilde donuyor (ayni aci/zamanlamada
+   donen scale+opacity ikilisi "onden geciyor / arkaya gidiyor" hissini
+   veriyor - gercek 3D degil ama goze oyle okunuyor). */
 .fx.halo::before {
   content: '';
   position: absolute;
   left: 50%;
-  top: 54%;
-  width: 84%;
+  top: 38%;
+  width: 92%;
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(circle, var(--aura, #c079f2) 0%, transparent 64%);
-  opacity: 0.2;
-  animation: hale-nabiz 2.8s ease-in-out infinite;
+  background: radial-gradient(circle, var(--aura, #ffe9a8) 0%, transparent 62%);
+  opacity: 0.22;
+  animation: hale-nabiz 3.2s ease-in-out infinite;
 }
 
 @keyframes hale-nabiz {
-  50% { opacity: 0.34; transform: translate(-50%, -50%) scale(1.09); }
+  50% { opacity: 0.38; transform: translate(-50%, -50%) scale(1.08); }
 }
 
-/* Yerdeki isik havuzu: ejderhanin ayaklarinin hemen altinda yumusak,
-   nefes alan bir aydinlik - buyu cemberinin zemine dustugu isigi verir. */
 .fx .halo-glow {
   position: absolute;
   left: 50%;
-  top: 94%;
-  width: 68%;
-  aspect-ratio: 3.2 / 1;
+  top: 30%;
+  width: 60%;
+  aspect-ratio: 1;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: radial-gradient(ellipse, var(--aura, #ffe9a8) 0%, transparent 72%);
-  opacity: 0.5;
-  animation: hale-nabiz 2.8s ease-in-out infinite;
+  background: radial-gradient(circle, var(--aura, #ffe9a8) 0%, transparent 70%);
+  opacity: 0.4;
+  animation: hale-nabiz 3.2s ease-in-out infinite reverse;
 }
 
-/* Halka ejderhanin ayaklarinin cevresinde duran, dönen bir büyü çemberi.
-   Once tum SVG'yi rotate(360deg) ile donduruyordu: yassi bir elips 2D'de
-   dondurulunce 90/270 derecede ince bir cizgiye cokup govdenin onunden
-   "kilic gibi" gecip gidiyordu. Halka artik hic donmuyor - sadece kesik
-   cizgi deseni akiyor (stroke-dashoffset), boylece hep yassi bir cember
-   gibi duruyor ama yine de "buyu donuyor" hissi veriyor. */
-.fx .halo-ring {
+/* Yorungedeki yildizlar: her biri kendi yaricapinda tam tur atiyor, ayni
+   sure/gecikmeyle esleşen opaklik dongusu "onde parlak / arkada sonuk"
+   hissini veriyor. scale(1, .4) yorungeyi govdeyi saran bir elipse
+   yassiltiyor, ic scale(1, 2.5) yildizin kendisini geri sikistirmadan
+   duz tutuyor. */
+.fx .halo-orbit {
   position: absolute;
   left: 50%;
-  top: 94%;
-  width: 66%;
-  transform: translate(-50%, -50%);
-  filter: drop-shadow(0 0 6px var(--aura, #ffe9a8));
+  top: 42%;
+  width: 0;
+  height: 0;
 }
 
-.fx .halo-ring .ring-outer { animation: hale-akis-dis 2.6s linear infinite; }
-.fx .halo-ring .ring-inner { animation: hale-akis-ic 2.1s linear infinite reverse; }
-.fx .halo-ring .ring-runes { animation: hale-akis-dis 6s linear infinite reverse; }
+.fx .halo-orbit .halo-star {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  color: var(--aura, #ffe9a8);
+  filter: drop-shadow(0 0 5px var(--aura, #ffe9a8));
+  animation-name: halo-orbit-don, halo-orbit-parilda;
+  animation-timing-function: linear, linear;
+  animation-iteration-count: infinite, infinite;
+  animation-duration: var(--orbit-dur, 9s);
+  animation-delay: var(--orbit-delay, 0s);
+}
 
-/* dasharray "10 7" toplami 17 - -68 (4x17) ile atlamasiz dongu */
-@keyframes hale-akis-dis { to { stroke-dashoffset: -68; } }
-/* dasharray "4 9" toplami 13 - -52 (4x13) ile atlamasiz dongu */
-@keyframes hale-akis-ic { to { stroke-dashoffset: -52; } }
+.fx .halo-orbit .halo-star svg { width: 100%; height: 100%; display: block; }
+
+@keyframes halo-orbit-don {
+  from { transform: rotate(0deg) translateX(var(--orbit-r, 60px)) rotate(0deg) scale(1, 0.4); }
+  to   { transform: rotate(360deg) translateX(var(--orbit-r, 60px)) rotate(-360deg) scale(1, 0.4); }
+}
+
+@keyframes halo-orbit-parilda {
+  0%, 100% { opacity: 0.32; }
+  50%      { opacity: 1; }
+}
 
 /* Ucusan yazilar (+1 XP, Seviye 12!) */
 .floaters { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
@@ -399,7 +421,7 @@
 /* MARKET ONIZLEMESI
 
    Dukkan aciktken sahne degil EJDERHA one cikar: ada katmanlari gizlenir,
-   ejderha kutunun ortasinda buyuk durur. Boylece kanat, kuyruk, tac ve yuz
+   ejderha kutunun ortasinda buyuk durur. Boylece kanat, tac ve yuz
    detaylari satin almadan once gercekten gorulebiliyor. Idle animasyonu
    devam eder. */
 body.shop-open .island {
@@ -503,7 +525,7 @@ body.shop-open.island-preview .dragon-slot {
 
 .shop-item { position: relative; }
 
-/* Kanat/kuyruk kutucugu: ejderhanin tamami degil, o parcanin bulundugu
+/* Kanat/kolye kutucugu: ejderhanin tamami degil, o parcanin bulundugu
    bolge buyutulup kirpiliyor. 200 birimlik kadrajdan ilgili pencereyi
    gostermek icin svg buyutulup kaydiriliyor. */
 .swatch.zoom { width: 46px; height: 42px; background: rgba(255, 255, 255, 0.05); }
@@ -514,14 +536,14 @@ body.shop-open.island-preview .dragon-slot {
    viewbox birimi, zoom = 46 / (x1-x0), svg boyu = 200*zoom, left/top = -x0*zoom / -y0*zoom. */
 .swatch.zoom.wings svg { width: 80px; height: 80px; left: -34px; top: -22px; }
 
-/* Kuyruk: kalcadan cikip asagi kivrilan bolge. */
-.swatch.zoom.tail svg { width: 131px; height: 131px; left: -76px; top: -95px; }
-
 /* Kolye: boyunda, cenenin hemen altinda. */
 .swatch.zoom.necklace svg { width: 108px; height: 108px; left: -27px; top: -49px; }
 
 /* Tac: kafanin tepesi, boynuzlarin arasi. */
 .swatch.zoom.head svg { width: 123px; height: 123px; left: -34px; top: -6px; }
+
+/* Yuz: gozlerin ve yanaklarin oldugu dar bant. */
+.swatch.zoom.face svg { width: 200px; height: 200px; left: -68px; top: -52px; }
 
 .swatch {
   position: relative;
