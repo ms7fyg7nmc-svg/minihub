@@ -948,13 +948,12 @@ body.hub::before {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 58px;
-  height: 58px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   overflow: hidden;
   display: grid;
   place-items: center;
-  border: 3px solid var(--bg-soft);
   background: linear-gradient(150deg, #ffe28a, var(--gold));
   box-shadow: 0 6px 14px rgba(245, 185, 66, 0.4);
   z-index: 2;
