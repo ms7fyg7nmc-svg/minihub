@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v92';
-import { submitScore, addPoints, getBest, clearState, settleAbandonedRun } from '../../js/store.js?v92';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v92';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v92';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v93';
+import { submitScore, addPoints, getBest, clearState, settleAbandonedRun, oynanabilirMi } from '../../js/store.js?v93';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v93';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v93';
 
 const GAME_ID = 'snake';
 const INTRO_SEEN_KEY = 'mh_snake_seen';
@@ -82,8 +82,9 @@ document.getElementById('back-link').addEventListener('click', (e) => {
   goHome();
 });
 document.getElementById('new-game').addEventListener('click', async () => {
+  if (!(await oynanabilirMi())) { haptic.error(); goHome(); return; }
   haptic.tap();
-  if (running && !over) await settleAbandonedRun(score, POINTS_DIVISOR);
+  if (running && !over) { await crash(-1); return; }
   resetGame();
 });
 document.getElementById('start-btn').addEventListener('click', () => {

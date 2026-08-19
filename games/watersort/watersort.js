@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v92';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v92';
-import { registerTexts, t, applyStaticTexts, mhHtml } from '../../js/i18n-hook.js?v92';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v92';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v93';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v93';
+import { registerTexts, t, applyStaticTexts, mhHtml } from '../../js/i18n-hook.js?v93';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v93';
 
 const GAME_ID = 'watersort';
 const POINTS_PER_LEVEL = 90;
@@ -60,7 +60,8 @@ document.getElementById('back-link').addEventListener('click', (e) => {
   e.preventDefault();
   goHome();
 });
-document.getElementById('restart').addEventListener('click', () => {
+document.getElementById('restart').addEventListener('click', async () => {
+  if (!(await oynanabilirMi())) { haptic.error(); goHome(); return; }
   haptic.tap();
   buildLevel(level);
 });

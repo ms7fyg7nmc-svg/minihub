@@ -1,5 +1,5 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v92';
+import { isTelegramUser, getInitData } from './tg.js?v93';
 
 const API_BASE = 'https://minihub-bot.volkanturedi1.workers.dev';
 
@@ -353,6 +353,13 @@ export async function getEnergy() {
   const v = await senkron;
   if (!v) return { energy: MISAFIR.energy, max: MISAFIR.maxEnergy, nextMs: 0, kilitli: true, refill: null };
   return { energy: v.energy, max: v.maxEnergy, nextMs: v.energyNextMs, kilitli: false, refill: v.energyRefill };
+}
+
+// Misafir/yerel modda enerji zaten sahte/sinirsiz - sadece sunucuya
+// baglanan gercek hesaplarda 0 enerjiyle yeni oyuna baslamayi engelliyoruz.
+export async function oynanabilirMi() {
+  const enerji = await getEnergy();
+  return enerji.kilitli || enerji.energy > 0;
 }
 
 export async function adEnergyRefill() {

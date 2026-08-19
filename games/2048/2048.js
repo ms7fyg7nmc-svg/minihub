@@ -1,9 +1,9 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v92';
-import { getBest, saveState, loadState, clearState, startRun, finishRunOrLegacy, yerelTohum } from '../../js/store.js?v92';
-import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v92';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v92';
-import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v92';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v93';
+import { getBest, saveState, loadState, clearState, startRun, finishRunOrLegacy, yerelTohum, oynanabilirMi } from '../../js/store.js?v93';
+import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v93';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v93';
+import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v93';
 
 const GAME_ID = '2048';
 const POINTS_DIVISOR = 23;
@@ -48,8 +48,12 @@ document.getElementById('back-link').addEventListener('click', (e) => {
    goHome();
 });
 document.getElementById('new-game').addEventListener('click', async () => {
+   if (!(await oynanabilirMi())) { haptic.error(); goHome(); return; }
    haptic.tap();
-   if (!over) await finishAndCredit();
+   // Oyun devam ederken "Yeni Oyun"a basmak = yarida birakma: dogal
+   // game-over ile AYNI ekrani (skor/rekor/kazanc) gosterip oradan
+   // "Yeniden oyna"ya basinca yeni oyuna geciyoruz - sessizce atlamiyoruz.
+   if (!over) { await endGame(); return; }
    await startNewGame();
 });
 
