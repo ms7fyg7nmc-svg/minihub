@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v97';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v98';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi,
-} from './store.js?v97';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v97';
+} from './store.js?v98';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v98';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -267,7 +267,7 @@ gameList().forEach((game, index) => {
    card.innerHTML = `
    <div class="game-icon${game.ready ? '' : ' soon'}">${game.icon}</div>
    <div class="game-info">
-   <h3></h3>
+   <div class="game-title-row"><h3></h3><span class="game-score" hidden></span></div>
    <p></p>
    </div>
    <div class="badge"></div>
@@ -283,12 +283,16 @@ gameList().forEach((game, index) => {
 
    const badge = card.querySelector('.badge');
    if (game.ready) {
+      // "Oyna" rozeti rekor geldiginde de kalir - skor artik basligin
+      // yanindaki ayri bir etikette gosteriliyor.
       badge.textContent = t('hub.play');
+      badge.classList.add('play');
       if (!game.noBest) {
+         const scoreEl = card.querySelector('.game-score');
          getBest(game.id).then((best) => {
             if (best > 0) {
-               badge.textContent = t(game.bestKey ?? 'hub.record', { best: best.toLocaleString(locale()) });
-               badge.classList.add('record');
+               scoreEl.textContent = t(game.bestKey ?? 'hub.record', { best: best.toLocaleString(locale()) });
+               scoreEl.hidden = false;
             }
          });
       }

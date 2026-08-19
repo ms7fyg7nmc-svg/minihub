@@ -1,5 +1,5 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v97';
+import { isTelegramUser, getInitData } from './tg.js?v98';
 
 const API_BASE = 'https://minihub-bot.volkanturedi1.workers.dev';
 
@@ -398,10 +398,36 @@ export async function claimStreak() {
   return sonuc;
 }
 
+// Liderlik tablosu panele her acilista sunucuya gitmesin diye 4 saat
+// istemci tarafinda onbelleklendiriliyor - gorunur bir geri sayim yok,
+// sadece istek sayisini azaltmak icin. localStorage'da tutuluyor ki
+// sayfa yeniden acilinca da onbellek gecerli kalsin.
+const LIDER_ONBELLEK_ANAHTARI = 'mh_lider_cache';
+const LIDER_ONBELLEK_SURESI = 4 * 3600 * 1000;
+
 export async function liderTablosu() {
   const v = await senkron;
   if (!v) return null;
-  return sunucuGonder('/api/leaderboard', {});
+
+  try {
+    const ham = localGet(LIDER_ONBELLEK_ANAHTARI);
+    if (ham) {
+      const onbellek = JSON.parse(ham);
+      if (onbellek && Date.now() - onbellek.zaman < LIDER_ONBELLEK_SURESI) {
+        return onbellek.veri;
+      }
+    }
+  } catch {
+  }
+
+  const veri = await sunucuGonder('/api/leaderboard', {});
+  if (veri) {
+    try {
+      localSet(LIDER_ONBELLEK_ANAHTARI, JSON.stringify({ zaman: Date.now(), veri }));
+    } catch {
+    }
+  }
+  return veri;
 }
 
 export async function referralOzeti() {
