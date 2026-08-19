@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Şeker Eşleştir</title>
+  <title>Coin Drop</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     /* Uygulama dogrudan bu oyun sayfasinda acildiysa once hub'i goster.
@@ -14,40 +14,40 @@
   </script>
   <link rel="stylesheet" href="../../css/style.css?v99">
   <link rel="stylesheet" href="../../css/game.css?v99">
-  <link rel="stylesheet" href="match3.css?v99">
+  <link rel="stylesheet" href="coindrop.css?v99">
 </head>
 <body class="game" data-i18n-title="title">
   <div class="app game-app">
 
     <header class="game-head">
       <div>
-        <h1 class="game-title" data-i18n="title">Şeker Eşleştir</h1>
-        <p class="game-sub" data-i18n="subtitle">3 aynı şekeri yan yana getir</p>
+        <h1 class="game-title" data-i18n="title">Coin Drop</h1>
+        <p class="game-sub" data-i18n="subtitle">Aynı paraları birleştir</p>
       </div>
       <div class="head-right">
         <div class="scores">
-        <div class="score-box">
-          <span data-i18n="score">SKOR</span>
-          <strong id="score">0</strong>
-        </div>
-        <div class="score-box" id="time-box">
-          <span data-i18n="time">SÜRE</span>
-          <strong id="time">60</strong>
-        </div>
-        <div class="score-box">
-          <span data-i18n="best">REKOR</span>
-          <strong id="best">0</strong>
+          <div class="score-box">
+            <span data-i18n="score">SKOR</span>
+            <strong id="score">0</strong>
+          </div>
+          <div class="score-box">
+            <span data-i18n="best">REKOR</span>
+            <strong id="best">0</strong>
+          </div>
         </div>
       </div>
-</div>
     </header>
 
-    <!-- Ekranin ortasinda duran oyun alani -->
     <div class="game-mid">
       <div class="board-wrap">
-        <div class="board" id="board">
-          <div class="cells" id="cells"></div>
-          <div class="tiles" id="tiles"></div>
+        <div class="cd-stage" id="stage">
+          <canvas id="cv"></canvas>
+
+          <!-- Sonraki para + ilerleme serisi -->
+          <div class="cd-hud">
+            <span class="cd-hud-label" data-i18n="next">SIRADAKİ</span>
+            <span class="cd-next" id="next-chip"></span>
+          </div>
 
           <div class="overlay" id="overlay" hidden>
             <h2 id="overlay-title"></h2>
@@ -55,12 +55,14 @@
             <button class="btn primary" id="overlay-btn"></button>
           </div>
         </div>
+
+        <!-- Kademe serisi: hangi paradan hangisine gidiliyor -->
+        <div class="cd-ladder" id="ladder"></div>
       </div>
     </div>
 
-    <p class="hint" data-i18n="hint">Şekeri komşusuyla değiştirmek için parmağınla it.</p>
+    <p class="hint" data-i18n="hint">Parmağını kaydır, bırakınca para düşer.</p>
 
-    <!-- Butonlar en altta: tek elle bas parmakla rahat ulasilsin -->
     <div class="controls">
       <button class="btn" id="new-game" data-i18n="newGame">Yeni oyun</button>
       <a class="btn" href="../../index.html" id="back-link" data-i18n="backToHub">Hub'a dön</a>
@@ -70,6 +72,6 @@
 
   </div>
 
-  <script type="module" src="match3.js?v99"></script>
+  <script type="module" src="coindrop.js?v99"></script>
 </body>
 </html>

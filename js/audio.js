@@ -124,6 +124,25 @@ export const SFX = {
     tone(c, 1020, 0.08, 'sine', 0.10, 0.05);
   }),
 
+  /* Madeni para sesi (coindrop): kisa metalik bir "cling".
+     Ust uste binen uc ton + minik bir tikirti, birlesen paranin
+     tonu tier'a gore yukseliyor (perde carpani parametreden). */
+  coin: guard((c, perde = 1) => {
+    noiseBurst(c, 0.035, 0.05, 7000);
+    tone(c, 1180 * perde, 0.09, 'square', 0.045);
+    tone(c, 1760 * perde, 0.16, 'triangle', 0.095, 0.012);
+    tone(c, 2640 * perde, 0.11, 'sine', 0.05, 0.022);
+  }),
+
+  /* Buyuk birlesme (altin kademe ve ustu): daha dolgun, uc notali */
+  coinBig: guard((c) => {
+    noiseBurst(c, 0.05, 0.07, 7000);
+    tone(c, 880, 0.13, 'triangle', 0.10);
+    tone(c, 1320, 0.18, 'triangle', 0.10, 0.05);
+    tone(c, 1980, 0.24, 'sine', 0.09, 0.11);
+    tone(c, 2640, 0.20, 'sine', 0.05, 0.16);
+  }),
+
   merge: guard((c) => {
     tone(c, 500, 0.08, 'triangle', 0.12);
     tone(c, 700, 0.08, 'triangle', 0.10, 0.04);

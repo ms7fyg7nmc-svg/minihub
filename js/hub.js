@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v98';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v99';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi,
-} from './store.js?v98';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v98';
+} from './store.js?v99';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v99';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -90,6 +90,12 @@ const ICONS = {
       <path d="M14.4 5.4 14.8 2.2l-2 2.4z" fill="#fff"/>
    </svg>`,
 
+   coindrop: `<svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="9" cy="8" r="5.4" fill="#fff" opacity=".45"/>
+      <circle cx="15.6" cy="15.2" r="7" fill="#fff"/>
+      <circle cx="15.6" cy="15.2" r="4.4" fill="none" stroke="#c8902a" stroke-width="1.5" opacity=".85"/>
+   </svg>`,
+
    snake: `<svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M4 17h6a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h5" fill="none" stroke="#fff"
             stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
@@ -169,6 +175,16 @@ function gameList() {
          url: 'games/snake/index.html',
          gradient: 'linear-gradient(140deg, #6ee7a8, #2fa06a)',
          accent: '#4ecb8b',
+         ready: true,
+      },
+      {
+         id: 'coindrop',
+         title: t('game.coindrop.title'),
+         desc: t('game.coindrop.desc'),
+         icon: ICONS.coindrop,
+         url: 'games/coindrop/index.html',
+         gradient: 'linear-gradient(140deg, #ffd76e, #c8902a)',
+         accent: '#f5b942',
          ready: true,
       },
    ];

@@ -1,0 +1,102 @@
+/* Coin Drop: fizik tabanli para birlestirme.
+   Tahta tek bir <canvas>; premium his icin kasa cercevesi, ic golge ve
+   altin bir taban seridi CSS ile ekleniyor - canvas sadece paralari ciziyor. */
+
+.board-wrap { position: relative; }
+
+/* Sahne: 360x540 sanal dunyanin ekrandaki karsiligi. aspect-ratio ile
+   oraniyla birlikte buyuyup kuculuyor, canvas icini tam dolduruyor. */
+.cd-stage {
+  position: relative;
+  width: 100%;
+  /* Sahne 2:3 dikey. Yuksekligi genislikten tureyecegi icin ust sinir
+     GENISLIGE konuyor: ekranin tahtaya kalan yuksekligi neyse (baslik +
+     ipucu + butonlar + serit ~300px), genislik onun 2/3'unu asamaz.
+     blockblast ile ayni desen - flex icinde ezilmemesi icin board-wrap
+     flex degil, sahne margin:auto ile ortalaniyor. */
+  max-width: min(100%, max(170px, calc((var(--app-h, 100dvh) - 300px) * 0.6667)));
+  margin: 0 auto;
+  aspect-ratio: 360 / 540;
+  border-radius: 18px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 70% at 50% 0%, rgba(245, 185, 66, 0.10), transparent 62%),
+    linear-gradient(180deg, #14161f 0%, #0d0f16 62%, #0a0b11 100%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    inset 0 -26px 40px rgba(0, 0, 0, 0.45);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.cd-stage canvas { display: block; width: 100%; height: 100%; }
+
+/* Zeminde altin bir serit: paralar bosluga degil bir kasaya dusuyor hissi */
+.cd-stage::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 10px;
+  background: linear-gradient(180deg, var(--gold, #f5b942), #8a5f10);
+  box-shadow: 0 -6px 16px rgba(245, 185, 66, 0.28);
+}
+
+/* Ust bant: sonraki para */
+.cd-hud {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  pointer-events: none;
+}
+
+.cd-hud-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+}
+
+.cd-next {
+  width: 26px;
+  height: 26px;
+  display: block;
+}
+.cd-next svg { width: 100%; height: 100%; display: block; }
+
+/* Kademe serisi: 1c -> ... -> 100$ yolunu gosteren minik seritler */
+.cd-ladder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 3px;
+  width: 100%;
+  max-width: min(100%, max(170px, calc((var(--app-h, 100dvh) - 300px) * 0.6667)));
+  margin: 8px auto 0;
+}
+
+.cd-ladder span {
+  width: 19px;
+  height: 19px;
+  display: block;
+  opacity: 0.35;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+.cd-ladder span svg { width: 100%; height: 100%; display: block; }
+
+/* Oyuncunun ulastigi en yuksek kademeye kadar olanlar aydinlaniyor */
+.cd-ladder span.reached { opacity: 1; }
+.cd-ladder span.top { transform: scale(1.24); }
+
+/* Kisa ekranlarda seri sikissin */
+@media (max-height: 700px) {
+  .cd-ladder span { width: 16px; height: 16px; }
+}
