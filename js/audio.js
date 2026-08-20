@@ -75,6 +75,45 @@ function noiseBurst(c, dur, gain, filterFreq, delay = 0, filterEnd = null) {
   src.start(t0);
 }
 
+
+/* Tek bir madeni para carpmasi. Sinus yerine INHARMONIK kismi tonlar
+   (1, 1.72, 2.31, 3.14) kullaniyor - armonik seri "muzikal nota" gibi
+   duyuluyor, inharmonik olan "metal" gibi. Ustune kisa bir bantgecirgen
+   tislama biniyor ki vurus hissi olsun. */
+function metalClink(c, freq, gain, delay = 0, dur = 0.14) {
+  const t0 = c.currentTime + delay;
+  const oranlar = [1, 1.72, 2.31, 3.14];
+  oranlar.forEach((o, i) => {
+    const osc = c.createOscillator();
+    const g = c.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq * o, t0);
+    const tepe = gain * (i === 0 ? 1 : 0.42 / i);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(tepe, t0 + 0.003);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur * (1 - i * 0.14));
+    osc.connect(g).connect(c.destination);
+    osc.start(t0);
+    osc.stop(t0 + dur + 0.02);
+  });
+
+  const n = Math.max(1, Math.floor(c.sampleRate * 0.03));
+  const buf = c.createBuffer(1, n, c.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  const bp = c.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.setValueAtTime(freq * 2.4, t0);
+  bp.Q.setValueAtTime(1.2, t0);
+  const g2 = c.createGain();
+  g2.gain.setValueAtTime(gain * 0.45, t0);
+  g2.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.045);
+  src.connect(bp).connect(g2).connect(c.destination);
+  src.start(t0);
+}
+
 function guard(fn) {
   return (...args) => {
     if (isMuted()) return;
@@ -124,23 +163,30 @@ export const SFX = {
     tone(c, 1020, 0.08, 'sine', 0.10, 0.05);
   }),
 
-  /* Madeni para sesi (coindrop): kisa metalik bir "cling".
-     Ust uste binen uc ton + minik bir tikirti, birlesen paranin
-     tonu tier'a gore yukseliyor (perde carpani parametreden). */
+  /* Madeni para sesi (coindrop): tek bir "bip" degil, bir avuc paranin
+     birbirine carpmasi - altin kesesi hissi. Rastgele zamanli/perdeli
+     bes clink ust uste biniyor, hicbir iki birlesme ayni duyulmuyor. */
   coin: guard((c, perde = 1) => {
-    noiseBurst(c, 0.035, 0.05, 7000);
-    tone(c, 1180 * perde, 0.09, 'square', 0.045);
-    tone(c, 1760 * perde, 0.16, 'triangle', 0.095, 0.012);
-    tone(c, 2640 * perde, 0.11, 'sine', 0.05, 0.022);
+    for (let i = 0; i < 5; i++) {
+      const gecikme = i === 0 ? 0 : 0.012 + Math.random() * 0.055;
+      const f = (1500 + Math.random() * 900) * perde;
+      metalClink(c, f, i === 0 ? 0.075 : 0.042, gecikme);
+    }
   }),
 
-  /* Buyuk birlesme (altin kademe ve ustu): daha dolgun, uc notali */
+  /* Buyuk birlesme (altin kademe ve ustu): daha kalabalik, daha uzun
+     bir kese sesi - dokuz para, daha genis perde araligi. */
   coinBig: guard((c) => {
-    noiseBurst(c, 0.05, 0.07, 7000);
-    tone(c, 880, 0.13, 'triangle', 0.10);
-    tone(c, 1320, 0.18, 'triangle', 0.10, 0.05);
-    tone(c, 1980, 0.24, 'sine', 0.09, 0.11);
-    tone(c, 2640, 0.20, 'sine', 0.05, 0.16);
+    for (let i = 0; i < 9; i++) {
+      const gecikme = i === 0 ? 0 : Math.random() * 0.13;
+      const f = 1100 + Math.random() * 1100;
+      metalClink(c, f, i === 0 ? 0.08 : 0.048, gecikme, 0.2);
+    }
+  }),
+
+  /* Para birakma: tek, sakin bir tik */
+  coinDrop: guard((c) => {
+    metalClink(c, 900 + Math.random() * 250, 0.05, 0, 0.09);
   }),
 
   merge: guard((c) => {

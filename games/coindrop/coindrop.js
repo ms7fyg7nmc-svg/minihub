@@ -1,14 +1,16 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v100';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v100';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v100';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v100';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v101';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v101';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v101';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v101';
 
 const GAME_ID = 'coindrop';
 
-/* Skor, birlesen paranin CENT degeri kadar artiyor (2 tane 5c birlesince
-   +10). Bastan sona (100$) oynanan bir el ~86.000 puan getiriyor; bolen
-   bunu diger oyunlarla ayni bandda ($MH olarak ~100-900) tutuyor. */
+/* Skor, birlesen KADEMENIN puani kadar artiyor (10, 20, 35, 55, ...).
+   Once cent degerini kullaniyordum ama o, ust kademelerde patliyordu
+   ($100 tek basina +10.000). Referans oyunda kademe puani olculu
+   buyuyor; bastan sona bir el ~102.000 getiriyor, bolen bunu diger
+   oyunlarla ayni bandda ($MH olarak ~50-1000) tutuyor. */
 const POINTS_DIVISOR = 100;
 
 registerTexts(GAME_ID, {
@@ -33,24 +35,24 @@ registerTexts(GAME_ID, {
    6 cent kademesi, sonra ayni mantikla altin kademeler; 100$ oyunu bitiriyor.
    value = cent cinsinden deger (skor bundan geliyor), r = sanal dunya yaricapi. */
 const TIERS = [
-  { txt: '1¢',   value: 1,     r: 14,   metal: 'copper' },
-  { txt: '2¢',   value: 2,     r: 17.5, metal: 'copper' },
-  { txt: '5¢',   value: 5,     r: 21.5, metal: 'copper' },
-  { txt: '10¢',  value: 10,    r: 26,   metal: 'silver' },
-  { txt: '25¢',  value: 25,    r: 31,   metal: 'silver' },
-  { txt: '50¢',  value: 50,    r: 37,   metal: 'silver' },
-  { txt: '$1',   value: 100,   r: 44,   metal: 'gold' },
-  { txt: '$2',   value: 200,   r: 52,   metal: 'gold' },
-  { txt: '$5',   value: 500,   r: 61,   metal: 'gold' },
-  { txt: '$10',  value: 1000,  r: 71,   metal: 'gold' },
-  { txt: '$25',  value: 2500,  r: 82,   metal: 'royal' },
-  { txt: '$50',  value: 5000,  r: 95,   metal: 'royal' },
-  { txt: '$100', value: 10000, r: 112,  metal: 'royal' },
+  { txt: '1¢',   puan: 0,   r: 24.0, metal: 'copper' },
+  { txt: '2¢',   puan: 10,  r: 26.2, metal: 'copper' },
+  { txt: '5¢',   puan: 20,  r: 28.6, metal: 'copper' },
+  { txt: '10¢',  puan: 35,  r: 31.2, metal: 'silver' },
+  { txt: '25¢',  puan: 55,  r: 34.1, metal: 'silver' },
+  { txt: '50¢',  puan: 80,  r: 37.2, metal: 'silver' },
+  { txt: '$1',   puan: 110, r: 40.6, metal: 'gold' },
+  { txt: '$2',   puan: 145, r: 44.3, metal: 'gold' },
+  { txt: '$5',   puan: 185, r: 48.4, metal: 'gold' },
+  { txt: '$10',  puan: 230, r: 52.8, metal: 'gold' },
+  { txt: '$25',  puan: 280, r: 57.6, metal: 'royal' },
+  { txt: '$50',  puan: 335, r: 62.9, metal: 'royal' },
+  { txt: '$100', puan: 395, r: 68.6, metal: 'royal' },
 ];
 
 const SON_KADEME = TIERS.length - 1;
 /* Yeni para sadece ilk 5 kademeden gelir - yoksa oyun kendi kendini cozer */
-const DUSEN_KADEMELER = [0, 0, 0, 1, 1, 1, 2, 2, 3, 4];
+const DUSEN_KADEMELER = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3];
 
 const METAL = {
   copper: { hi: '#f7bd85', mid: '#c8783c', lo: '#7c4116', rim: '#552c0d', ink: '#4a2409' },
@@ -341,17 +343,19 @@ function birlestir() {
         x: (a.x + b.x) / 2,
         y: (a.y + b.y) / 2,
         vx: (a.vx + b.vx) / 2,
-        vy: (a.vy + b.vy) / 2 - 40,
+        // Birlesen para gozle gorulur sekilde ziplasin - referans
+        // oyunda birlesme anindaki en belirgin geri bildirim bu.
+        vy: Math.min(a.vy, b.vy) - 155,
         a: (a.a + b.a) / 2,
         yas: 0.5,
         pop: 1,
       };
       coins.push(yeni);
 
-      score += TIERS[ust].value;
+      score += TIERS[ust].puan;
       enYuksek = Math.max(enYuksek, ust);
       patlama(yeni.x, yeni.y, TIERS[ust].r, ust);
-      yazilar.push({ x: yeni.x, y: yeni.y, txt: `+${bicim(TIERS[ust].value)}`, om: 1 });
+      yazilar.push({ x: yeni.x, y: yeni.y, txt: `+${bicim(TIERS[ust].puan)}`, om: 1 });
 
       if (ust >= 6) SFX.coinBig();
       else SFX.coin(1 + ust * 0.06);
@@ -398,7 +402,7 @@ function efektler(dt) {
   }
   yazilar = yazilar.filter((y) => y.om > 0);
 
-  for (const c of coins) if (c.pop) c.pop = Math.max(0, c.pop - dt * 4.5);
+  for (const c of coins) if (c.pop) c.pop = Math.max(0, c.pop - dt * 3.6);
 }
 
 /* Cizginin ustunde kalan (ve yeni dusmemis) bir para varsa kasa doluyor */
@@ -467,7 +471,7 @@ function ciz() {
   }
 
   for (const c of coins) {
-    const r = TIERS[c.ti].r * (1 + (c.pop || 0) * 0.16);
+    const r = TIERS[c.ti].r * (1 + (c.pop || 0) * 0.30);
     coinCiz(c.x, c.y, r, c.ti, c.a);
   }
 
@@ -521,9 +525,11 @@ function coinCiz(x, y, r, ti, aci) {
     g.fill();
   }
 
-  // Madalyon alani (gorselin ortasindaki bos yuzey) ~ capin %58'i
-  const f = r * 0.58;
-  const amblemVar = amblemHazir && r >= 26;
+  // Madalyon (gorselin ortasindaki bos yuzey) her alasimda ayni degil:
+  // kraliyet parasinda yesil mine halkasi ortayi daralttigi icin rakam
+  // orada daha kucuk basiliyor, yoksa celengin uzerine tasiyor.
+  const f = r * (T.metal === 'royal' ? 0.44 : 0.55);
+  const amblemVar = amblemHazir && r >= 40;
   const yaziY = amblemVar ? -f * 0.18 : 0;
 
   const txt = T.txt;
@@ -532,7 +538,7 @@ function coinCiz(x, y, r, ti, aci) {
     g.font = `900 ${boy}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
   };
   yaziKur();
-  const sinir = f * 1.5;
+  const sinir = f * 1.62;
   const gen = g.measureText(txt).width;
   if (gen > sinir) { boy *= sinir / gen; yaziKur(); }
 
@@ -548,9 +554,9 @@ function coinCiz(x, y, r, ti, aci) {
 
   // $MH darphane amblemi - yazinin altinda, kucuk
   if (amblemVar) {
-    const d = f * 0.5;
-    g.globalAlpha = 0.9;
-    g.drawImage(amblem, -d / 2, f * 0.2, d, d);
+    const d = f * 0.44;
+    g.globalAlpha = 0.85;
+    g.drawImage(amblem, -d / 2, f * 0.26, d, d);
     g.globalAlpha = 1;
   }
 
@@ -622,7 +628,7 @@ function dus() {
   });
   sonraki = yeniKademe();
   bekleme = BEKLEME;
-  SFX.place();
+  SFX.coinDrop();
   haptic.tap('light');
   guncelleHud();
   persist();
