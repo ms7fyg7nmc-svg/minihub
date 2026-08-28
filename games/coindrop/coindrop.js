@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v101';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v101';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v101';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v101';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v103';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v103';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v103';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v103';
 
 const GAME_ID = 'coindrop';
 
@@ -106,23 +106,18 @@ let sonKare = 0;
 let olcek = 1;
 let nextId = 1;
 
-/* Para gorselleri: Scenario ile uretilen tek bir usta paradan turetilen
-   4 alasim (bakir/gumus/altin/kraliyet). Hepsi ayni kabartma ve birebir
-   dairesel siluet - fizik daire oldugu icin bu onemli. */
-const SPRITE = {};
-let spriteSayaci = 0;
-for (const ad of ['copper', 'silver', 'gold', 'royal']) {
+/* Para gorselleri: her KADEMENIN kendi gorseli var (coin-tier0..12),
+   rakam gorselin icine Scenario'dan uretilen ayri bir kabartma
+   katmaniyla onceden basildi (bkz. uretim notlari). Canvas'ta artik
+   ustune metin cizmiyoruz - "1", "25" gibi degerler paranin kendi
+   dokusunun bir parcasi, gercek bir basili paradaki gibi. */
+const SPRITE = TIERS.map((t, i) => {
   const im = new Image();
-  im.onload = () => { spriteSayaci++; ciz(); };
-  im.src = `assets/coin-${ad}.webp`;
-  SPRITE[ad] = im;
-}
+  im.onload = () => ciz();
+  im.src = `assets/coin-tier${i}.webp`;
+  return im;
+});
 const hazirMi = (im) => im && im.complete && im.naturalWidth > 0;
-
-const amblem = new Image();
-let amblemHazir = false;
-amblem.onload = () => { amblemHazir = true; };
-amblem.src = '../../assets/coin.png';
 
 initTelegram();
 applyStaticTexts();
@@ -266,8 +261,16 @@ function adim(dt) {
   for (const c of coins) {
     c.vx = ((c.x - c.px) / dt) * 0.995;
     c.vy = ((c.y - c.py) / dt) * 0.995;
+    // Guvenlik agi: cozumleyici ne yaparsa yapsin bir para asla sahnenin
+    // disina cikmasin. Hiz de o yondeki bilesenden temizleniyor ki
+    // duvara yaslanmis kalsin, tekrar disari itilmeye calisip titremesin.
+    const r = TIERS[c.ti].r;
+    if (c.x < r || c.x > W - r) c.vx = 0;
+    if (c.y < r || c.y > H - r) c.vy = 0;
+    c.x = Math.min(Math.max(c.x, r), W - r);
+    c.y = Math.min(Math.max(c.y, r), H - r);
     const hiz = Math.hypot(c.vx, c.vy);
-    if (hiz > 2200) { c.vx *= 2200 / hiz; c.vy *= 2200 / hiz; }
+    if (hiz > 1400) { c.vx *= 1400 / hiz; c.vy *= 1400 / hiz; }
     c.a += (c.vx / TIERS[c.ti].r) * dt * 0.9;
     c.yas += dt;
   }
@@ -297,7 +300,10 @@ function ayir(a, b) {
     ny = dy / d;
   }
 
-  const girinti = (top - d) * 0.9;
+  // Tek bir cakisma cozumu bir iterasyonda cok buyuk yer degistirmesin -
+  // yeni birlesen (daha buyuk yaricapli) bir para birden cok komsuya
+  // derin gomulebiliyor, sinirsiz duzeltme birikip parayi firlatiyordu.
+  const girinti = Math.min((top - d) * 0.9, Math.min(ra, rb) * 0.55);
   const ma = ra * ra;
   const mb = rb * rb;
   const toplam = ma + mb;
@@ -313,6 +319,10 @@ function duvarlar(c) {
   if (c.x - r < 0) c.x = r;
   if (c.x + r > W) c.x = W - r;
   if (c.y + r > H) c.y = H - r;
+  // Tavan: eskiden yoktu. Birlesme sonrasi cozumleyici bir parayi guclu
+  // itince yukari dogru sinirsiz gidip haritadan "kayboluyordu" - artik
+  // sahnenin en tepesinde duruyor.
+  if (c.y - r < 0) c.y = r;
 }
 
 /* Ayni kademeden degen iki para birlesiyor. Kare basina her para en fazla
@@ -343,9 +353,12 @@ function birlestir() {
         x: (a.x + b.x) / 2,
         y: (a.y + b.y) / 2,
         vx: (a.vx + b.vx) / 2,
-        // Birlesen para gozle gorulur sekilde ziplasin - referans
-        // oyunda birlesme anindaki en belirgin geri bildirim bu.
-        vy: Math.min(a.vy, b.vy) - 155,
+        // Birlesen para gozle gorulur ama olculu bir sekilde ziplasin.
+        // Sabit -155 kucuk paralarda asiri firlama, cozumleyiciyle
+        // birlesince bazen paranin haritadan cikmasina yol aciyordu.
+        // Simdi kademenin kendi yaricapiyla olcekleniyor - gorsel ziplama
+        // her boyutta ayni ORANDA kaliyor, mutlak hizi degil.
+        vy: Math.min(a.vy, b.vy) - TIERS[ust].r * 3.1,
         a: (a.a + b.a) / 2,
         yas: 0.5,
         pop: 1,
@@ -499,13 +512,15 @@ function ciz() {
 }
 
 /* Tek bir madeni para: uretilen alasim gorseli + uzerine kabartma
-   deger yazisi ve $MH darphane amblemi. Yazi gorsele gomulmedi cunku
+   deger yazisi. Yazi gorsele gomulmedi cunku
    13 kademenin her biri icin ayri gorsel uretmek hem tutarsiz hem agir
    olurdu; ayrica uretici modeller rakamlari guvenilir yazamiyor. */
+// Rakam artik gorselin kendi dokusunda (Scenario'dan uretilip kabartma
+// katmani olarak basildi) - canvas'ta ustune ayrica hicbir sey cizmiyoruz.
 function coinCiz(x, y, r, ti, aci) {
   const T = TIERS[ti];
   const M = METAL[T.metal];
-  const im = SPRITE[T.metal];
+  const im = SPRITE[ti];
 
   g.save();
   g.translate(x, y);
@@ -523,41 +538,6 @@ function coinCiz(x, y, r, ti, aci) {
     g.arc(0, 0, r, 0, TAU);
     g.fillStyle = gd;
     g.fill();
-  }
-
-  // Madalyon (gorselin ortasindaki bos yuzey) her alasimda ayni degil:
-  // kraliyet parasinda yesil mine halkasi ortayi daralttigi icin rakam
-  // orada daha kucuk basiliyor, yoksa celengin uzerine tasiyor.
-  const f = r * (T.metal === 'royal' ? 0.44 : 0.55);
-  const amblemVar = amblemHazir && r >= 40;
-  const yaziY = amblemVar ? -f * 0.18 : 0;
-
-  const txt = T.txt;
-  let boy = f * (txt.length >= 4 ? 0.66 : txt.length === 3 ? 0.8 : 0.96);
-  const yaziKur = () => {
-    g.font = `900 ${boy}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-  };
-  yaziKur();
-  const sinir = f * 1.62;
-  const gen = g.measureText(txt).width;
-  if (gen > sinir) { boy *= sinir / gen; yaziKur(); }
-
-  g.textAlign = 'center';
-  g.textBaseline = 'middle';
-  // Kabartma: once koyu golge biraz asagida, ustune acik yuz
-  g.globalAlpha = 0.5;
-  g.fillStyle = M.ink;
-  g.fillText(txt, 0, yaziY + Math.max(0.8, r * 0.032));
-  g.globalAlpha = 1;
-  g.fillStyle = M.hi;
-  g.fillText(txt, 0, yaziY);
-
-  // $MH darphane amblemi - yazinin altinda, kucuk
-  if (amblemVar) {
-    const d = f * 0.44;
-    g.globalAlpha = 0.85;
-    g.drawImage(amblem, -d / 2, f * 0.26, d, d);
-    g.globalAlpha = 1;
   }
 
   g.restore();
@@ -583,7 +563,7 @@ function buildLadder() {
 
 /* HUD/serit icin ayni para gorseli - canvas'takiyle birebir ayni sanat */
 function coinSvg(ti) {
-  return `<img src="assets/coin-${TIERS[ti].metal}.webp" alt="${TIERS[ti].txt}">`;
+  return `<img src="assets/coin-tier${ti}.webp" alt="${TIERS[ti].txt}">`;
 }
 
 /* --- Giris --- */
