@@ -77,18 +77,23 @@ function noiseBurst(c, dur, gain, filterFreq, delay = 0, filterEnd = null) {
 
 
 /* Tek bir madeni para carpmasi. Sinus yerine INHARMONIK kismi tonlar
-   (1, 1.72, 2.31, 3.14) kullaniyor - armonik seri "muzikal nota" gibi
-   duyuluyor, inharmonik olan "metal" gibi. Ustune kisa bir bantgecirgen
-   tislama biniyor ki vurus hissi olsun. */
+   (1, 1.68, 2.4) kullaniyor - armonik seri "muzikal nota" gibi duyuluyor,
+   inharmonik olan "metal" gibi. Ustune kisa bir bantgecirgen tislama
+   biniyor ki vurus hissi olsun.
+   Tum kismi tonlar ve tislama TAVAN_HZ ile kirpiliyor - eskiden kademe
+   arttikca (perde carpani) ust kismi tonlar 10-13 kHz'e kadar cikabiliyordu,
+   bu da kulakta "tiz/rahatsiz edici" bir cizilti gibi duyuluyordu. Kirpma
+   sayesinde en tiz kademede bile ses hala "metal" ama artik agrisiz. */
+const TAVAN_HZ = 3200;
 function metalClink(c, freq, gain, delay = 0, dur = 0.14) {
   const t0 = c.currentTime + delay;
-  const oranlar = [1, 1.72, 2.31, 3.14];
+  const oranlar = [1, 1.68, 2.4];
   oranlar.forEach((o, i) => {
     const osc = c.createOscillator();
     const g = c.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq * o, t0);
-    const tepe = gain * (i === 0 ? 1 : 0.42 / i);
+    osc.frequency.setValueAtTime(Math.min(freq * o, TAVAN_HZ), t0);
+    const tepe = gain * (i === 0 ? 1 : 0.34 / (i + 1));
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.linearRampToValueAtTime(tepe, t0 + 0.003);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur * (1 - i * 0.14));
@@ -97,7 +102,7 @@ function metalClink(c, freq, gain, delay = 0, dur = 0.14) {
     osc.stop(t0 + dur + 0.02);
   });
 
-  const n = Math.max(1, Math.floor(c.sampleRate * 0.03));
+  const n = Math.max(1, Math.floor(c.sampleRate * 0.025));
   const buf = c.createBuffer(1, n, c.sampleRate);
   const d = buf.getChannelData(0);
   for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n);
@@ -105,13 +110,43 @@ function metalClink(c, freq, gain, delay = 0, dur = 0.14) {
   src.buffer = buf;
   const bp = c.createBiquadFilter();
   bp.type = 'bandpass';
-  bp.frequency.setValueAtTime(freq * 2.4, t0);
-  bp.Q.setValueAtTime(1.2, t0);
+  bp.frequency.setValueAtTime(Math.min(freq * 1.7, TAVAN_HZ), t0);
+  bp.Q.setValueAtTime(1.1, t0);
   const g2 = c.createGain();
-  g2.gain.setValueAtTime(gain * 0.45, t0);
-  g2.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.045);
+  g2.gain.setValueAtTime(gain * 0.32, t0);
+  g2.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.04);
   src.connect(bp).connect(g2).connect(c.destination);
   src.start(t0);
+}
+
+/* Zincirleme birlesmeler ust uste patladiginda (Suika tarzi kademeli
+   zincir tepkimesi) her biri icin tam kalabalik "kese" sesini calmak,
+   ust uste binen tiz clinklerden olusan rahatsiz edici bir duvar
+   yaratiyordu. Ardisik cagrilar 90ms'den yakinsa daha sade, tek notalik
+   yumusak bir "tik" ile yetiniyoruz - hizli zincir kulakta pattir pattir
+   akiyor, tek tek yigilan kalabalik clink degil. Izole/seyrek birlesmeler
+   ise hala dolu, tatmin edici kese sesini aliyor. */
+let sonCoinZamani = -1;
+function coinCascade(c, perde, buyuk) {
+  const simdi = c.currentTime;
+  const zincirIci = sonCoinZamani >= 0 && (simdi - sonCoinZamani) < 0.09;
+  sonCoinZamani = simdi;
+
+  const taban = (buyuk ? 560 : 620) * (1 + (perde - 1) * 0.35);
+
+  if (zincirIci) {
+    metalClink(c, taban + Math.random() * 220, buyuk ? 0.05 : 0.036, 0, 0.07);
+    return;
+  }
+
+  const adet = buyuk ? 5 : 3;
+  const sure = buyuk ? 0.16 : 0.12;
+  for (let i = 0; i < adet; i++) {
+    const gecikme = i === 0 ? 0 : 0.01 + Math.random() * (buyuk ? 0.07 : 0.045);
+    const f = taban + Math.random() * (buyuk ? 420 : 320);
+    const tepe = i === 0 ? (buyuk ? 0.07 : 0.062) : (buyuk ? 0.04 : 0.034);
+    metalClink(c, f, tepe, gecikme, sure);
+  }
 }
 
 function guard(fn) {
@@ -163,30 +198,23 @@ export const SFX = {
     tone(c, 1020, 0.08, 'sine', 0.10, 0.05);
   }),
 
-  /* Madeni para sesi (coindrop): tek bir "bip" degil, bir avuc paranin
-     birbirine carpmasi - altin kesesi hissi. Rastgele zamanli/perdeli
-     bes clink ust uste biniyor, hicbir iki birlesme ayni duyulmuyor. */
-  coin: guard((c, perde = 1) => {
-    for (let i = 0; i < 5; i++) {
-      const gecikme = i === 0 ? 0 : 0.012 + Math.random() * 0.055;
-      const f = (1500 + Math.random() * 900) * perde;
-      metalClink(c, f, i === 0 ? 0.075 : 0.042, gecikme);
-    }
-  }),
+  /* Madeni para sesi (coindrop): birkac clink ust uste biniyor, hicbir iki
+     birlesme ayni duyulmuyor. Eskiden 1500-2400 Hz'lik bir taban * kademe
+     carpani (perde) ile ust kademelerde temel frekans zaten 4000+ Hz'e
+     cikiyor, uzerine 3.14 kati bir kismi ton binince 12+ kHz'e varan tiz
+     bir cizilti oluyordu - hizli zincirleme birlesmelerde bu ust uste
+     yiginilinca kulaga hic iyi gelmiyordu. Taban artik cok daha alcak ve
+     kademe farki perde yerine hafif bir renk degisimiyle veriliyor.
+     Ayrica coinCascade() ile hizli ardisik cagrilar otomatik yumusatiliyor. */
+  coin: guard((c, perde = 1) => coinCascade(c, perde, false)),
 
-  /* Buyuk birlesme (altin kademe ve ustu): daha kalabalik, daha uzun
-     bir kese sesi - dokuz para, daha genis perde araligi. */
-  coinBig: guard((c) => {
-    for (let i = 0; i < 9; i++) {
-      const gecikme = i === 0 ? 0 : Math.random() * 0.13;
-      const f = 1100 + Math.random() * 1100;
-      metalClink(c, f, i === 0 ? 0.08 : 0.048, gecikme, 0.2);
-    }
-  }),
+  /* Buyuk birlesme (altin kademe ve ustu): biraz daha kalabalik ve derin
+     bir kese sesi. */
+  coinBig: guard((c) => coinCascade(c, 1, true)),
 
   /* Para birakma: tek, sakin bir tik */
   coinDrop: guard((c) => {
-    metalClink(c, 900 + Math.random() * 250, 0.05, 0, 0.09);
+    metalClink(c, 620 + Math.random() * 160, 0.045, 0, 0.08);
   }),
 
   merge: guard((c) => {

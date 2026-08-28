@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v103';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v104';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi,
-} from './store.js?v103';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v103';
+} from './store.js?v104';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v104';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -23,6 +23,11 @@ const REFERRAL_TIERS = [
    { lv: 50, amt: 5000 }, { lv: 75, amt: 7500 }, { lv: 99, amt: 10000 },
 ];
 const REFERRAL_TOTAL = REFERRAL_SIGNUP_BONUS + REFERRAL_TIERS.reduce((s, x) => s + x.amt, 0);
+// Davet banner'inda "28,250" yerine kisa "28k" - hem daha carpici hem de
+// widget'i tek satirda tutmaya yardimci oluyor (bkz. .daily-card-hint).
+const REFERRAL_TOTAL_KISA = REFERRAL_TOTAL >= 1000
+   ? `${Math.floor(REFERRAL_TOTAL / 1000)}k`
+   : String(REFERRAL_TOTAL);
 
 const ICONS = {
    '2048': `<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -865,7 +870,7 @@ async function renderFriendsCard() {
    card.hidden = false;
    document.getElementById('friends-earned').textContent = veri.toplamKazanc.toLocaleString(locale());
    document.getElementById('friends-hint').innerHTML =
-      mhHtml(t('hub.friends.upTo', { n: REFERRAL_TOTAL.toLocaleString(locale()) }));
+      mhHtml(t('hub.friends.upTo', { n: REFERRAL_TOTAL_KISA }));
 }
 
 function wireFriendsPanel() {

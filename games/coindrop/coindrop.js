@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v103';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v103';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v103';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v103';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v104';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v104';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v104';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v104';
 
 const GAME_ID = 'coindrop';
 
@@ -249,6 +249,15 @@ function adim(dt) {
     c.vy += GRAVITY * dt;
     c.x += c.vx * dt;
     c.y += c.vy * dt;
+    // Zemine carpma anindaki hizi burada yakaliyoruz (cozumleyici konumu
+    // hemen kirpip sifirlamadan once) - asagida gercekci bir sekme icin
+    // lazim.
+    c._carpmaVy = c.vy;
+    // Bu karede bu paraya toplam ne kadar konum duzeltmesi uygulanabilecegi.
+    // Cozumleyici COZUM_TURU kadar gecis yapiyor; her gecis kendi icinde
+    // sinirli olsa da ust uste binince toplamda yine de parayi firlatabiliyordu -
+    // gercek sinir parayi TUM kare icin.
+    c._pay = TIERS[c.ti].r * 0.45;
   }
 
   for (let tur = 0; tur < COZUM_TURU; tur++) {
@@ -262,15 +271,28 @@ function adim(dt) {
     c.vx = ((c.x - c.px) / dt) * 0.995;
     c.vy = ((c.y - c.py) / dt) * 0.995;
     // Guvenlik agi: cozumleyici ne yaparsa yapsin bir para asla sahnenin
-    // disina cikmasin. Hiz de o yondeki bilesenden temizleniyor ki
-    // duvara yaslanmis kalsin, tekrar disari itilmeye calisip titremesin.
+    // disina cikmasin.
     const r = TIERS[c.ti].r;
     if (c.x < r || c.x > W - r) c.vx = 0;
-    if (c.y < r || c.y > H - r) c.vy = 0;
+    if (c.y < r) c.vy = 0; // tavan - burada sekme yok, sadece durur
     c.x = Math.min(Math.max(c.x, r), W - r);
     c.y = Math.min(Math.max(c.y, r), H - r);
+
+    if (c.y > H - r - 0.5) {
+      // Zemine deymis: eskiden hiz burada direkt sifirlaniyordu, para havadan
+      // dusup aninda yapisiyordu. Gercek bir madeni para gibi kucuk, sonup
+      // giden bir sekme veriyoruz - yavas gelen paralar (zaten oturmus
+      // olanlar) icin esik altinda kalip sekmeden dogrudan duruyor.
+      if (c._carpmaVy > 110) {
+        c.vy = -c._carpmaVy * 0.24;
+        c.vx *= 0.82;
+      } else {
+        c.vy = 0;
+      }
+    }
+
     const hiz = Math.hypot(c.vx, c.vy);
-    if (hiz > 1400) { c.vx *= 1400 / hiz; c.vy *= 1400 / hiz; }
+    if (hiz > 1100) { c.vx *= 1100 / hiz; c.vy *= 1100 / hiz; }
     c.a += (c.vx / TIERS[c.ti].r) * dt * 0.9;
     c.yas += dt;
   }
@@ -303,15 +325,29 @@ function ayir(a, b) {
   // Tek bir cakisma cozumu bir iterasyonda cok buyuk yer degistirmesin -
   // yeni birlesen (daha buyuk yaricapli) bir para birden cok komsuya
   // derin gomulebiliyor, sinirsiz duzeltme birikip parayi firlatiyordu.
-  const girinti = Math.min((top - d) * 0.9, Math.min(ra, rb) * 0.55);
+  let girinti = Math.min((top - d) * 0.9, Math.min(ra, rb) * 0.55);
   const ma = ra * ra;
   const mb = rb * rb;
   const toplam = ma + mb;
 
-  a.x -= nx * girinti * (mb / toplam);
-  a.y -= ny * girinti * (mb / toplam);
-  b.x += nx * girinti * (ma / toplam);
-  b.y += ny * girinti * (ma / toplam);
+  // Karede kalan pay: tek bir carpisma degil, COZUM_TURU boyunca ayni
+  // paraya art arda uygulanan kucuk duzeltmelerin TOPLAMI da firlatmaya
+  // yol acabiliyordu (her tur kendi icinde makul ama 6 turun toplami
+  // degil). Buradaki pay adim()'da kare basi sifirlaniyor ve her
+  // duzeltmeden dustukce azaliyor.
+  const aPay = (a._pay ?? Infinity) / (mb / toplam || 1);
+  const bPay = (b._pay ?? Infinity) / (ma / toplam || 1);
+  girinti = Math.min(girinti, aPay, bPay);
+  if (girinti <= 0) return;
+
+  const dA = girinti * (mb / toplam);
+  const dB = girinti * (ma / toplam);
+  a.x -= nx * dA;
+  a.y -= ny * dA;
+  b.x += nx * dB;
+  b.y += ny * dB;
+  if (a._pay !== undefined) a._pay -= dA;
+  if (b._pay !== undefined) b._pay -= dB;
 }
 
 function duvarlar(c) {
@@ -357,8 +393,9 @@ function birlestir() {
         // Sabit -155 kucuk paralarda asiri firlama, cozumleyiciyle
         // birlesince bazen paranin haritadan cikmasina yol aciyordu.
         // Simdi kademenin kendi yaricapiyla olcekleniyor - gorsel ziplama
-        // her boyutta ayni ORANDA kaliyor, mutlak hizi degil.
-        vy: Math.min(a.vy, b.vy) - TIERS[ust].r * 3.1,
+        // her boyutta ayni ORANDA kaliyor, mutlak hizi degil. (3.1 -> 2.1:
+        // hala fark edilir ama "patlama" gibi degil.)
+        vy: Math.min(a.vy, b.vy) - TIERS[ust].r * 2.1,
         a: (a.a + b.a) / 2,
         yas: 0.5,
         pop: 1,
