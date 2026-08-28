@@ -802,6 +802,13 @@ body.hub::before {
   transition: transform 0.12s ease, opacity 0.12s ease;
 }
 .daily-btn:active { transform: scale(0.98); }
+
+/* Arkadas davet panelinde buton bir .daily-section'in ICINDE degil,
+   direkt referral-ladder'dan sonra tek basina duruyor (diger panellerdeki
+   gunluk/cark butonlarinin aksine) - o yuzden hemen ardindan gelen
+   "Davet Ettiklerin" basligi kendi ust bosluguna sahip degildi ve
+   butona yapisik gorunuyordu. */
+.daily-btn + .daily-section { margin-top: 22px; }
 .daily-btn:disabled {
   background: var(--yuzey);
   color: var(--muted);
