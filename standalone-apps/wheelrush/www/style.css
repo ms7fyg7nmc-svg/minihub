@@ -1,0 +1,137 @@
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --bg: #101018;
+  --bg-soft: #181826;
+  --text: #f2f2f7;
+  --muted: #9a9ab0;
+  --accent: #f5b942;
+  --accent2: #ff8a3d;
+  --danger: #e2544e;
+  --line: rgba(255,255,255,.08);
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+  overscroll-behavior: none;
+  user-select: none;
+}
+
+.app {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.head {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px 8px;
+}
+
+.score-box {
+  flex: 1;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 6px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.score-box .label { font-size: 10px; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+.score-box strong { font-size: 19px; font-variant-numeric: tabular-nums; }
+
+.stage-wrap {
+  position: relative;
+  flex: 1;
+  margin: 6px 12px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #1c1c2c;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+#cv { display: block; width: 100%; height: 100%; touch-action: none; }
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10,10,16,.72);
+  backdrop-filter: blur(3px);
+}
+.overlay[hidden] { display: none; }
+
+.card {
+  width: min(86%, 300px);
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 22px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.card h1 {
+  font-size: 24px;
+  background: linear-gradient(95deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.card h2 { font-size: 20px; color: var(--danger); }
+.card p { color: var(--muted); font-size: 13px; }
+.card .record { color: var(--accent); font-weight: 800; }
+
+.btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn.primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #241400;
+  margin-top: 4px;
+}
+.btn.tg {
+  background: #229ED9;
+  color: #fff;
+}
+.btn:active { transform: scale(.97); }
+
+.hint {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 4px 0 2px;
+}
+
+.foot {
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+  opacity: .6;
+  padding: 4px 0 10px;
+}

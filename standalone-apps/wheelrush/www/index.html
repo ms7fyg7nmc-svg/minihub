@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Wheel Rush</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="head">
+      <div class="score-box">
+        <span class="label">SCORE</span>
+        <strong id="score">0</strong>
+      </div>
+      <div class="score-box">
+        <span class="label">BEST</span>
+        <strong id="best">0</strong>
+      </div>
+    </header>
+
+    <div class="stage-wrap">
+      <canvas id="cv"></canvas>
+
+      <div class="overlay" id="start-overlay">
+        <div class="card">
+          <h1>Wheel Rush</h1>
+          <p>Tap left or right to switch lanes.<br>Dodge rocks and rivals, grab coins.</p>
+          <button class="btn primary" id="start-btn">Start</button>
+        </div>
+      </div>
+
+      <div class="overlay" id="over-overlay" hidden>
+        <div class="card">
+          <h2 id="over-title">Crashed!</h2>
+          <p id="over-score">Score: 0</p>
+          <p id="over-record" class="record" hidden>New best!</p>
+          <button class="btn primary" id="retry-btn">Play Again</button>
+          <a class="btn tg" id="tg-btn" href="https://t.me/minihubgames_bot" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path fill="currentColor" d="M21.9 4.3 2.9 11.7c-1.3.5-1.3 1.2-.2 1.6l4.9 1.5 1.9 5.8c.2.7.5.9 1 .9.4 0 .6-.2.9-.5l2.4-2.3 4.9 3.6c.9.5 1.5.2 1.8-.8L23.8 5.6c.4-1.2-.4-1.8-1.9-1.3ZM8.6 14.6l9.4-5.9c.5-.3.9-.1.5.2l-8 7.4-.3 3.1-1.6-4.8Z"/>
+            </svg>
+            More free games
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <p class="hint">No ads. No purchases. Just a quick race.</p>
+    <footer class="foot">Wheel Rush</footer>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

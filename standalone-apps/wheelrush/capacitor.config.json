@@ -1,0 +1,10 @@
+{
+  "appId": "com.minihub.wheelrush",
+  "appName": "Wheel Rush",
+  "webDir": "www",
+  "backgroundColor": "#101018",
+  "android": {
+    "backgroundColor": "#101018",
+    "allowMixedContent": false
+  }
+}

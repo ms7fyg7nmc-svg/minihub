@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body style="margin:0">
+<canvas id="cv" width="1024" height="1024"></canvas>
+<script>
+const ctx = document.getElementById('cv').getContext('2d');
+const S = 1024;
+
+// background - rounded square feel via radial glow, but Play Store adds its
+// own mask, so keep this a full-bleed square with the wheel centered.
+const bgGrad = ctx.createRadialGradient(S*0.5, S*0.42, S*0.05, S*0.5, S*0.5, S*0.72);
+bgGrad.addColorStop(0, '#242440');
+bgGrad.addColorStop(1, '#101018');
+ctx.fillStyle = bgGrad;
+ctx.fillRect(0, 0, S, S);
+
+function drawWheel(x, y, r) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(-0.35);
+
+  // soft shadow
+  ctx.save();
+  ctx.translate(0, r*0.08);
+  ctx.beginPath();
+  ctx.arc(0, 0, r*1.02, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(0,0,0,.35)';
+  ctx.filter = 'blur(18px)';
+  ctx.fill();
+  ctx.restore();
+
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI*2);
+  const rimGrad = ctx.createRadialGradient(-r*0.3,-r*0.3,r*0.1, 0,0,r);
+  rimGrad.addColorStop(0, '#ffe28a');
+  rimGrad.addColorStop(0.55, '#f5b942');
+  rimGrad.addColorStop(1, '#c8781f');
+  ctx.fillStyle = rimGrad;
+  ctx.fill();
+  ctx.lineWidth = r*0.05;
+  ctx.strokeStyle = 'rgba(0,0,0,.28)';
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(255,255,255,.65)';
+  ctx.lineWidth = r * 0.16;
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(a) * r * 0.78, Math.sin(a) * r * 0.78);
+    ctx.stroke();
+  }
+
+  ctx.beginPath();
+  ctx.arc(0, 0, r*0.32, 0, Math.PI*2);
+  const hubGrad = ctx.createRadialGradient(-r*0.08,-r*0.08,r*0.02, 0,0,r*0.32);
+  hubGrad.addColorStop(0, '#a5711a');
+  hubGrad.addColorStop(1, '#6b4610');
+  ctx.fillStyle = hubGrad;
+  ctx.fill();
+  ctx.lineWidth = r*0.02;
+  ctx.strokeStyle = 'rgba(0,0,0,.3)';
+  ctx.stroke();
+
+  // speed streaks
+  ctx.restore();
+}
+
+drawWheel(S*0.5, S*0.5, S*0.32);
+
+// motion streaks behind
+ctx.strokeStyle = 'rgba(245,185,66,.35)';
+ctx.lineCap = 'round';
+for (let i=0;i<3;i++){
+  ctx.lineWidth = 26 - i*6;
+  ctx.beginPath();
+  ctx.moveTo(S*0.08, S*0.62 + i*46);
+  ctx.lineTo(S*0.30, S*0.62 + i*46);
+  ctx.stroke();
+}
+
+window.__done = true;
+</script>
+</body></html>

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Wheel Rush</string>
+    <string name="title_activity_main">Wheel Rush</string>
+    <string name="package_name">com.minihub.wheelrush</string>
+    <string name="custom_url_scheme">com.minihub.wheelrush</string>
+</resources>
