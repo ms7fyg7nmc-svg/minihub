@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v106';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v106';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v106';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v106';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v107';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v107';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v107';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v107';
 
 const GAME_ID = 'coindrop';
 
@@ -257,7 +257,7 @@ function adim(dt) {
     // Cozumleyici COZUM_TURU kadar gecis yapiyor; her gecis kendi icinde
     // sinirli olsa da ust uste binince toplamda yine de parayi firlatabiliyordu -
     // gercek sinir parayi TUM kare icin.
-    c._pay = TIERS[c.ti].r * 0.45;
+    c._pay = TIERS[c.ti].r * 0.38;
   }
 
   for (let tur = 0; tur < COZUM_TURU; tur++) {
@@ -283,16 +283,27 @@ function adim(dt) {
       // dusup aninda yapisiyordu. Gercek bir madeni para gibi kucuk, sonup
       // giden bir sekme veriyoruz - yavas gelen paralar (zaten oturmus
       // olanlar) icin esik altinda kalip sekmeden dogrudan duruyor.
+      // Sekme orani agirlikla ters oranti: kucuk/hafif kademeler (tier0)
+      // biraz daha canli sekiyor, buyuk/agir kademeler (tier12) neredeyse
+      // hic sekmiyor - gercek bir bozuk para gibi hafif, buyuk bir madalyon
+      // gibi agir hissettiriyor.
       if (c._carpmaVy > 110) {
-        c.vy = -c._carpmaVy * 0.24;
+        const sekmeOrani = Math.max(0.08, 0.26 - c.ti * 0.016);
+        c.vy = -c._carpmaVy * sekmeOrani;
         c.vx *= 0.82;
       } else {
         c.vy = 0;
+        // Surtunme: zeminde otururken yatay hiz eskiden sadece genel
+        // %0.5'lik sayisal sonumle ile kayboluyordu - bir para yana
+        // itilince neredeyse SURTUNMESIZ gibi saniyelerce kaymaya devam
+        // ediyordu. Zeminde gercekten dinlenirken (sekmiyorken) belirgin
+        // bir surtunme uyguluyoruz, para birkac kare icinde duruyor.
+        c.vx *= 0.86;
       }
     }
 
     const hiz = Math.hypot(c.vx, c.vy);
-    if (hiz > 1100) { c.vx *= 1100 / hiz; c.vy *= 1100 / hiz; }
+    if (hiz > 750) { c.vx *= 750 / hiz; c.vy *= 750 / hiz; }
     c.a += (c.vx / TIERS[c.ti].r) * dt * 0.9;
     c.yas += dt;
   }
@@ -325,9 +336,13 @@ function ayir(a, b) {
   // Tek bir cakisma cozumu bir iterasyonda cok buyuk yer degistirmesin -
   // yeni birlesen (daha buyuk yaricapli) bir para birden cok komsuya
   // derin gomulebiliyor, sinirsiz duzeltme birikip parayi firlatiyordu.
-  let girinti = Math.min((top - d) * 0.9, Math.min(ra, rb) * 0.55);
-  const ma = ra * ra;
-  const mb = rb * rb;
+  let girinti = Math.min((top - d) * 0.85, Math.min(ra, rb) * 0.42);
+  // Agirlik yaricapin KUPU ile olculuyor (hacim gibi) - eskiden kare
+  // (r*r) kullaniliyordu, iki kademe farkli paralarda bile buyugu
+  // hemen hemen kucugu kadar itiliyordu. Kup ile kucuk para artik
+  // buyugu ciddi sekilde daha az itebiliyor, "agirlik" hissi geliyor.
+  const ma = ra * ra * ra;
+  const mb = rb * rb * rb;
   const toplam = ma + mb;
 
   // Karede kalan pay: tek bir carpisma degil, COZUM_TURU boyunca ayni
@@ -390,12 +405,15 @@ function birlestir() {
         y: (a.y + b.y) / 2,
         vx: (a.vx + b.vx) / 2,
         // Birlesen para gozle gorulur ama olculu bir sekilde ziplasin.
-        // Sabit -155 kucuk paralarda asiri firlama, cozumleyiciyle
-        // birlesince bazen paranin haritadan cikmasina yol aciyordu.
-        // Simdi kademenin kendi yaricapiyla olcekleniyor - gorsel ziplama
-        // her boyutta ayni ORANDA kaliyor, mutlak hizi degil. (3.1 -> 2.1:
-        // hala fark edilir ama "patlama" gibi degil.)
-        vy: Math.min(a.vy, b.vy) - TIERS[ust].r * 2.1,
+        // Eskiden kademenin yaricapiyla SINIRSIZ buyuyordu - buyuk paralar
+        // (agir olmalari gerekirken) kucuklerden orantili olarak DAHA
+        // sert zipliyordu. Artik r, orta bir kademede (34 birim ~ 10 sent)
+        // tavana carpiyor - agirligin (bkz. ayir() r^3 kutle) beklendigi
+        // gibi buyuk paralari zipliyor degil, yerinde duruyor hissettirmesi
+        // icin: sabit tavandan sonra mutlak zipla mesafesi artmiyor, oysa
+        // paranin kendisi buyudukce bu sabit mesafe onun icin orantisal
+        // olarak KUCULUYOR - gorsel olarak "agir" okunuyor.
+        vy: Math.min(a.vy, b.vy) - Math.min(TIERS[ust].r, 34) * 2.1,
         a: (a.a + b.a) / 2,
         yas: 0.5,
         pop: 1,
