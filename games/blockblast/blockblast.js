@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v105';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun, oynanabilirMi } from '../../js/store.js?v105';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v105';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v105';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v106';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun, oynanabilirMi } from '../../js/store.js?v106';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v106';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v106';
 
 const GAME_ID = 'blockblast';
 const SIZE = 8;
@@ -300,7 +300,11 @@ function renderTray() {
       }
     }
 
-    el.addEventListener('pointerdown', (e) => startDrag(e, piece, slotIndex, el));
+    // Dokunma dinleyicisi parcanin kendisi yerine tum rafina (slot) baglaniyor -
+    // tekli (1x1) parcalar sadece 14px genisliginde, parmakla secilmesi neredeyse
+    // imkansizdi. Slot, tepside ayrilan tum hucreyi kapliyor (~92px), o yuzden
+    // parcanin gorsel boyutu aynen kalirken dokunma alani cok daha genis oluyor.
+    slot.addEventListener('pointerdown', (e) => startDrag(e, piece, slotIndex, el, slot));
     slot.appendChild(el);
   });
 }
@@ -353,7 +357,7 @@ function boardMetrics() {
   return { rect, gap, pad, cell };
 }
 
-function startDrag(event, piece, slotIndex, sourceEl) {
+function startDrag(event, piece, slotIndex, pieceEl, captureEl) {
   if (over || drag) return;
   event.preventDefault();
 
@@ -376,7 +380,7 @@ function startDrag(event, piece, slotIndex, sourceEl) {
     }
   }
   document.body.appendChild(ghost);
-  sourceEl.classList.add('dragging');
+  pieceEl.classList.add('dragging');
 
   const width = piece.w * cell + (piece.w - 1) * gap;
   const height = piece.h * cell + (piece.h - 1) * gap;
@@ -385,19 +389,20 @@ function startDrag(event, piece, slotIndex, sourceEl) {
     piece,
     slotIndex,
     ghost,
-    sourceEl,
+    pieceEl,
+    captureEl,
     offsetX: width / 2,
     offsetY: height / 2 + cell * 1.3,
     target: null,
   };
 
   try {
-    sourceEl.setPointerCapture(event.pointerId);
+    captureEl.setPointerCapture(event.pointerId);
   } catch {
   }
-  sourceEl.addEventListener('pointermove', onDragMove);
-  sourceEl.addEventListener('pointerup', onDragEnd);
-  sourceEl.addEventListener('pointercancel', onDragEnd);
+  captureEl.addEventListener('pointermove', onDragMove);
+  captureEl.addEventListener('pointerup', onDragEnd);
+  captureEl.addEventListener('pointercancel', onDragEnd);
 
   moveGhost(event.clientX, event.clientY);
 }
@@ -439,13 +444,13 @@ function onDragMove(event) {
 
 function onDragEnd(event) {
   if (!drag) return;
-  const { piece, slotIndex, target, ghost, sourceEl } = drag;
+  const { piece, slotIndex, target, ghost, pieceEl, captureEl } = drag;
 
-  sourceEl.removeEventListener('pointermove', onDragMove);
-  sourceEl.removeEventListener('pointerup', onDragEnd);
-  sourceEl.removeEventListener('pointercancel', onDragEnd);
+  captureEl.removeEventListener('pointermove', onDragMove);
+  captureEl.removeEventListener('pointerup', onDragEnd);
+  captureEl.removeEventListener('pointercancel', onDragEnd);
   ghost.remove();
-  sourceEl.classList.remove('dragging');
+  pieceEl.classList.remove('dragging');
   for (const el of squares) el.classList.remove('preview', 'preview-bad');
   drag = null;
 
