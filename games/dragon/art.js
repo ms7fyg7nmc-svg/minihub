@@ -1,6 +1,6 @@
 
-import { palet, FACES } from './data.js?v105';
-import { CONFIG, growthRatio } from './config.js?v105';
+import { palet } from './data.js?v106';
+import { CONFIG, growthRatio } from './config.js?v106';
 
 let uidSayaci = 0;
 
@@ -13,109 +13,6 @@ function ton(hex, miktar) {
     return Math.round(v + (hedef - v) * k);
   };
   return `rgb(${kanal(16)},${kanal(8)},${kanal(0)})`;
-}
-
-export function faceSvg(key) {
-  const f = FACES[key];
-  if (!f || key === 'none' || !f.kind) return '';
-  const c = f.color;
-
-  /* Not: bu koordinatlar eski (3/4 acili) prosedurel ejderha icin
-     ayarlanmisti - onden bakan yeni PNG govdeye gore gozler cok daha
-     ACIKTA (x=~-37/+37, y=-45..-50), kas y=-55..-60, boynuz arasi
-     y=-88..-95, cene/agiz y=-20..-28 (bkz. art.js gecmisindeki DEBUGGRID
-     kalibrasyonu). Asagidaki degerler yanak bandina (gozun disinda/altinda,
-     x=30..46, y=-25..-48) gore yeniden konumlandirildi - eskiden hepsi
-     kas/alin hizasinda VE gozlerin arasinda (x=6..26) kalip yuze hic
-     degmiyordu. */
-
-  if (f.kind === 'scar') {
-    return `
-      <path d="M36 -48 C38 -40 39.5 -32 40 -25" fill="none" stroke="${c}"
-            stroke-width="2.8" stroke-linecap="round" opacity=".95"/>
-      <path d="M33 -42 h7.5 M34.5 -35 h7" stroke="${c}" stroke-width="2"
-            stroke-linecap="round" opacity=".8"/>`;
-  }
-
-  if (f.kind === 'twinScar') {
-    return `
-      <path d="M33 -50 C36 -42 38 -34 39 -27" fill="none" stroke="${c}"
-            stroke-width="2.8" stroke-linecap="round" opacity=".95"/>
-      <path d="M44 -44 C40 -38 36 -33 32 -29" fill="none" stroke="${c}"
-            stroke-width="2.4" stroke-linecap="round" opacity=".85"/>
-      <path d="M-36 -46 C-38 -38 -39.5 -31 -40.5 -25" fill="none" stroke="${c}"
-            stroke-width="2.2" stroke-linecap="round" opacity=".75"/>`;
-  }
-
-  if (f.kind === 'paint') {
-    // Boyanin rengi bazi ejderha tonlarina (orn. varsayilan "ember") cok
-    // yakin dusup govdeyle karisiyordu - koyu bir dis cizgiyle kontrast
-    // ekleniyor, govde rengi ne olursa olsun secilebilsin diye.
-    const yan = (yon) => `
-      <g transform="scale(${yon} 1)">
-        <path d="M29 -36 l7 -3 l-1.5 7 l7 -2 l-2 7" fill="none" stroke="#2a1216"
-              stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/>
-        <path d="M29 -36 l7 -3 l-1.5 7 l7 -2 l-2 7" fill="none" stroke="${c}"
-              stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity=".95"/>
-      </g>`;
-    return yan(1) + yan(-1);
-  }
-
-  if (f.kind === 'darkMark') {
-    const yan = (yon) => `
-      <g transform="scale(${yon} 1)">
-        <path d="M19 -39 C25 -46 35 -45 39 -36 C35 -29 23 -30 19 -35 Z"
-              fill="${c}" opacity=".5"/>
-        <path d="M33 -26 l-3 7" stroke="${c}" stroke-width="2.4"
-              stroke-linecap="round" opacity=".7"/>
-      </g>`;
-    return yan(1) + yan(-1);
-  }
-
-  if (f.kind === 'flame') {
-    const yan = (yon) => `
-      <g transform="scale(${yon} 1)">
-        <path d="M28 -40 C34 -46 36 -54 33 -62
-                 C39 -56 40 -45 35 -38 C32 -36 29 -37.5 28 -40 Z"
-              fill="${c}" opacity=".92"/>
-        <path d="M30 -42 C33.5 -47 34.5 -51 33 -55 C36.5 -50 36 -44 33 -40 Z"
-              fill="#ffe066" opacity=".8"/>
-      </g>`;
-    return yan(1) + yan(-1);
-  }
-
-  if (f.kind === 'rune') {
-    return `
-      <circle cx="0" cy="-78" r="10" fill="${c}" opacity=".22"/>
-      <path d="M0 -85 v13 M-5 -81 h10 M0 -72 l4 6 h-8 z" fill="none" stroke="${c}"
-            stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M-25 -58 l4 4 M25 -58 l-4 4" stroke="${c}" stroke-width="2"
-            stroke-linecap="round" opacity=".7"/>`;
-  }
-
-  if (f.kind === 'demon') {
-    const yan = (yon) => `
-      <g transform="scale(${yon} 1)">
-        <path d="M24 -72 L40 -75 L37 -67 L41 -65 L26 -59 Z" fill="${c}" opacity=".9"/>
-        <path d="M27 -53 L38 -50 L32 -44 Z" fill="${c}" opacity=".75"/>
-        <path d="M21 -42 L28 -40 L24 -36 Z" fill="${c}" opacity=".6"/>
-      </g>`;
-    return `${yan(1)}${yan(-1)}
-      <path d="M0 -86 L4 -77 L0 -73 L-4 -77 Z" fill="${c}" opacity=".9"/>`;
-  }
-
-  return `
-    <circle cx="0" cy="-79" r="12" fill="${c}" opacity=".22"/>
-    <path d="M0 -89 C2 -81 4 -79 12 -77 C4 -75 2 -73 0 -65
-             C-2 -73 -4 -75 -12 -77 C-4 -79 -2 -81 0 -89 Z" fill="${c}"/>
-    <path d="M-29 -69 C-23 -75 -12 -74 -8 -67" fill="none" stroke="${c}"
-          stroke-width="2.4" stroke-linecap="round" opacity=".9"/>
-    <path d="M29 -69 C23 -75 12 -74 8 -67" fill="none" stroke="${c}"
-          stroke-width="2.4" stroke-linecap="round" opacity=".9"/>
-    <path d="M-21 -54 l-3 8 M21 -54 l3 8" stroke="${c}" stroke-width="2.2"
-          stroke-linecap="round" opacity=".8"/>
-    <circle cx="-24" cy="-45" r="2" fill="${c}"/>
-    <circle cx="24" cy="-45" r="2" fill="${c}"/>`;
 }
 
 function yumurtaSvg(level, pal) {
@@ -163,6 +60,13 @@ const GORSEL = {
   tepe: { x: 511, y: 230 },
   yuz: { x: 511, y: 455 },
   boyun: { x: 511, y: 505 },
+
+  /* Yuz ogeleri (kesikler, boya, ruhani isaretler) artik gercek Scenario
+     PNG'leri - alnin ortasina tek basina oturanlar icin "alin", yanaga
+     (goz disi/alti) simetrik oturanlar icin "yanakSag"/"yanakSol". */
+  alin: { x: 511, y: 300 },
+  yanakSag: { x: 655, y: 405 },
+  yanakSol: { x: 367, y: 405 },
 };
 
 const MERKEZ = 92;
@@ -227,8 +131,8 @@ const KATMAN = {
   head: {
     tiny: {
       yol: 'assets/crown-tiny.png',
-      kare: 1024, x0: 200, y0: 384, x1: 824, y1: 660,
-      kok: { x: 512, y: 660 }, en: 0.42,
+      kare: 1024, x0: 117, y0: 137, x1: 904, y1: 879,
+      kok: { x: 510, y: 879 }, en: 0.40,
     },
     bronze: {
       yol: 'assets/crown-bronze.png',
@@ -252,8 +156,8 @@ const KATMAN = {
     },
     ice: {
       yol: 'assets/crown-ice.png',
-      kare: 1024, x0: 238, y0: 298, x1: 796, y1: 682,
-      kok: { x: 517, y: 682 }, en: 0.48,
+      kare: 1024, x0: 159, y0: 94, x1: 865, y1: 928,
+      kok: { x: 512, y: 928 }, en: 0.48,
     },
     king: {
       yol: 'assets/crown-king.png',
@@ -262,8 +166,8 @@ const KATMAN = {
     },
     celestial: {
       yol: 'assets/crown-celestial.png',
-      kare: 1024, x0: 256, y0: 312, x1: 780, y1: 700,
-      kok: { x: 518, y: 690 }, en: 0.50,
+      kare: 1024, x0: 127, y0: 89, x1: 885, y1: 948,
+      kok: { x: 506, y: 948 }, en: 0.50,
     },
   },
 
@@ -271,32 +175,82 @@ const KATMAN = {
     fang: {
       yol: 'assets/necklace-fang.png',
       kare: 1024, x0: 205, y0: 131, x1: 821, y1: 904,
-      kok: { x: 513, y: 131 }, en: 0.40,
+      kok: { x: 512, y: 380 }, en: 0.22,
     },
     bronze: {
       yol: 'assets/necklace-bronze.png',
       kare: 1024, x0: 226, y0: 180, x1: 802, y1: 835,
-      kok: { x: 514, y: 180 }, en: 0.40,
+      kok: { x: 514, y: 391 }, en: 0.22,
     },
     sapphire: {
       yol: 'assets/necklace-sapphire.png',
       kare: 1024, x0: 181, y0: 65, x1: 843, y1: 796,
-      kok: { x: 512, y: 65 }, en: 0.42,
+      kok: { x: 512, y: 293 }, en: 0.231,
     },
     flame: {
       yol: 'assets/necklace-flame.png',
       kare: 1024, x0: 212, y0: 164, x1: 804, y1: 880,
-      kok: { x: 508, y: 164 }, en: 0.42,
+      kok: { x: 508, y: 359 }, en: 0.231,
     },
     royal: {
       yol: 'assets/necklace-royal.png',
       kare: 1024, x0: 111, y0: 181, x1: 919, y1: 1022,
-      kok: { x: 515, y: 181 }, en: 0.46,
+      kok: { x: 515, y: 354 }, en: 0.253,
     },
     celestial: {
       yol: 'assets/necklace-celestial.png',
       kare: 1024, x0: 91, y0: 63, x1: 945, y1: 878,
-      kok: { x: 518, y: 63 }, en: 0.46,
+      kok: { x: 518, y: 311 }, en: 0.253,
+    },
+  },
+
+  /* Yuz ogeleri: eskiden govde/kafa merkezli olmayan, elle yazilmis
+     vektor koordinatlarla ciziliyordu ve onden bakan kafaya hicbir
+     zaman gercekten oturmuyordu (bkz. eski faceSvg()). Artik digerleri
+     gibi gercek Scenario PNG'leri, ayni kok/en/anchor sistemiyle
+     yerlestiriliyor. `yer` hangi GORSEL ceapasina (alin/tepe/yanak)
+     oturacagini, `cift` true ise oge iki yanaga simetrik (ayna) iki kez
+     cizilir (tek govde noktasi degil). */
+  face: {
+    scar: {
+      yol: 'assets/face-scar.png',
+      kare: 1024, x0: 287, y0: 248, x1: 745, y1: 768,
+      kok: { x: 516, y: 508 }, en: 0.22, yer: 'yanak',
+    },
+    twinScar: {
+      yol: 'assets/face-twinscar.png',
+      kare: 1024, x0: 257, y0: 256, x1: 767, y1: 775,
+      kok: { x: 512, y: 515 }, en: 0.20, yer: 'yanak', cift: true,
+    },
+    warPaint: {
+      yol: 'assets/face-warpaint.png',
+      kare: 1024, x0: 195, y0: 290, x1: 821, y1: 706,
+      kok: { x: 508, y: 498 }, en: 0.26, yer: 'yanak', cift: true,
+    },
+    darkMark: {
+      yol: 'assets/face-darkmark.png',
+      kare: 1024, x0: 210, y0: 71, x1: 817, y1: 960,
+      kok: { x: 513, y: 515 }, en: 0.22, yer: 'alin',
+    },
+    flameFace: {
+      yol: 'assets/face-flame.png',
+      kare: 1024, x0: 286, y0: 252, x1: 750, y1: 749,
+      kok: { x: 518, y: 500 }, en: 0.20, yer: 'alin',
+    },
+    runeFace: {
+      yol: 'assets/face-rune.png',
+      kare: 1024, x0: 254, y0: 156, x1: 769, y1: 887,
+      kok: { x: 511, y: 521 }, en: 0.20, yer: 'alin',
+    },
+    demon: {
+      yol: 'assets/face-demon.png',
+      kare: 1024, x0: 208, y0: 268, x1: 815, y1: 747,
+      kok: { x: 511, y: 507 }, en: 0.32, yer: 'tepe',
+    },
+    kingMark: {
+      yol: 'assets/face-kingmark.png',
+      kare: 1024, x0: 146, y0: 124, x1: 879, y1: 880,
+      kok: { x: 512, y: 502 }, en: 0.22, yer: 'alin',
     },
   },
 };
@@ -314,9 +268,11 @@ export function dragonAssetUrls(look) {
   const kanat = katmanSec('wings', look?.wings);
   const tac = katmanSec('head', look?.head);
   const kolye = katmanSec('necklace', look?.necklace);
+  const yuz = katmanSec('face', look?.face);
   if (kanat) urls.push(kanat.yol);
   if (tac) urls.push(tac.yol);
   if (kolye) urls.push(kolye.yol);
+  if (yuz) urls.push(yuz.yol);
   return urls;
 }
 
@@ -340,12 +296,19 @@ function katmanCiz(k, ax, ay, gw, renkId, zorlaAyna = false) {
                  preserveAspectRatio="xMidYMid meet"${cevir}${suz}/>`;
 }
 
-/* faceSvg() vektor izlerini uretiyor ama kendi yerel koordinat sisteminde
-   (govde/kafa merkezli degil). Onden bakan yeni kafaya oturtmak icin
-   yuz noktasina tasiyip govde olcegine gore kucultuyoruz. */
-function yuzCiz(faceKey, fx, fy, gw) {
-  const olcek = gw / 185;
-  return `<g transform="translate(${fx.toFixed(1)} ${fy.toFixed(1)}) scale(${olcek.toFixed(3)})">${faceSvg(faceKey)}</g>`;
+/* Yuz ogeleri KATMAN.face'teki `yer` alanina gore tek (alin/tepe) ya da
+   iki yanaga simetrik-aynali (cift: true) cizilir - bkz. KATMAN.face
+   tanimlarindaki not. */
+function yuzKatmanCiz(k, anchors, gw, renkId) {
+  if (!k) return '';
+  if (k.cift) {
+    return katmanCiz(k, anchors.yanakSag[0], anchors.yanakSag[1], gw, renkId)
+      + katmanCiz(k, anchors.yanakSol[0], anchors.yanakSol[1], gw, renkId, true);
+  }
+  const nokta = k.yer === 'yanak' ? anchors.yanakSag
+    : k.yer === 'tepe' ? anchors.tepe
+    : anchors.alin;
+  return katmanCiz(k, nokta[0], nokta[1], gw, renkId);
 }
 
 function gorselEjderha(level, mood, look) {
@@ -386,11 +349,17 @@ function gorselEjderha(level, mood, look) {
   const [omuzSolX, omuzSolY] = nokta(GORSEL.omuzSol);
   const [omuzSagX, omuzSagY] = nokta(GORSEL.omuzSag);
   const [tepeX, tepeY] = nokta(GORSEL.tepe);
-  const [yuzX, yuzY] = nokta(GORSEL.yuz);
   const [boyunX, boyunY] = nokta(GORSEL.boyun);
+  const yuzAnchors = {
+    alin: nokta(GORSEL.alin),
+    yanakSag: nokta(GORSEL.yanakSag),
+    yanakSol: nokta(GORSEL.yanakSol),
+    tepe: [tepeX, tepeY],
+  };
   const kanat = katmanSec('wings', look?.wings);
   const tac = katmanSec('head', look?.head);
   const kolye = katmanSec('necklace', look?.necklace);
+  const yuz = katmanSec('face', look?.face);
 
   return `
     <svg viewBox="0 0 200 200" aria-hidden="true">
@@ -402,7 +371,7 @@ function gorselEjderha(level, mood, look) {
                width="${olcek.toFixed(1)}" height="${olcek.toFixed(1)}"
                preserveAspectRatio="xMidYMid meet"
                ${renkId ? `filter="url(#${renkId})"` : ''}/>
-        ${look?.face && look.face !== 'none' ? yuzCiz(look.face, yuzX, yuzY, hedefGen) : ''}
+        ${yuzKatmanCiz(yuz, yuzAnchors, hedefGen, renkId)}
         ${kolye ? katmanCiz(kolye, boyunX, boyunY, hedefGen, renkId) : ''}
         ${tac ? katmanCiz(tac, tepeX, tepeY, hedefGen, renkId) : ''}
       </g>
