@@ -93,13 +93,17 @@ export const HEADS = {
              kind: 'jewel',  metal: '#f5c74a', edge: '#c9922a', gem: '#fff3d0' },
   flame:   { price: 4400,  rarity: 'rare',      nameKey: 'hdFlame',  descKey: 'hdFlameD',
              kind: 'flame',  metal: '#e8a13c', edge: '#a8621c', gem: '#ff7a3d' },
+  // ice ve celestial taclar sahnede iyi oturmuyor (asset gorsel olarak
+  // basina uymuyor) - duzgun bir gorsel gelene kadar dukkandan gizli.
+  // Katalogdan silmiyoruz: zaten takmis biri varsa ejderhasinda kalsin.
   ice:     { price: 10000, rarity: 'epic',      nameKey: 'hdIce',    descKey: 'hdIceD',
-             kind: 'ice',    metal: '#cfeeff', edge: '#79b6d8', gem: '#ffffff', needLevel: 40 },
+             kind: 'ice',    metal: '#cfeeff', edge: '#79b6d8', gem: '#ffffff', needLevel: 40,
+             hidden: true },
   king:    { price: 22000, rarity: 'legendary', nameKey: 'hdKing',   descKey: 'hdKingD',
              kind: 'king',   metal: '#f0d78a', edge: '#a8761c', gem: '#e2544e', needLevel: 65 },
   celestial:{ price: 50000, rarity: 'mythic',   nameKey: 'hdCelestial',descKey:'hdCelestialD',
              kind: 'celestial', metal: '#ffe9a8', edge: '#c9922a', gem: '#8fe3ff',
-             isilti: true, needLevel: 85 },
+             isilti: true, needLevel: 85, hidden: true },
 };
 
 export const NECKLACES = {

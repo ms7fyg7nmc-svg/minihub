@@ -1,6 +1,6 @@
 
-import { palet } from './data.js?v111';
-import { CONFIG, growthRatio } from './config.js?v111';
+import { palet } from './data.js?v112';
+import { CONFIG, growthRatio } from './config.js?v112';
 
 let uidSayaci = 0;
 
@@ -65,8 +65,11 @@ const GORSEL = {
      PNG'leri - alnin ortasina tek basina oturanlar icin "alin", yanaga
      (goz disi/alti) simetrik oturanlar icin "yanakSag"/"yanakSol". */
   alin: { x: 511, y: 300 },
-  yanakSag: { x: 655, y: 405 },
-  yanakSol: { x: 367, y: 405 },
+  // Eskiden goz kosesinin tam ustundeydi (655/367, y:405) - izler/yara
+  // gozun icine biniyordu. Cene/yanak hizasina (goz altindan agiz kosesine
+  // dogru) indirildi.
+  yanakSag: { x: 618, y: 478 },
+  yanakSol: { x: 404, y: 478 },
 };
 
 const MERKEZ = 92;

@@ -1,15 +1,15 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v111';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v111';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v112';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v112';
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v111';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v111';
-import { bakiyeOku, harca } from './economy.js?v111';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v112';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v112';
+import { bakiyeOku, harca } from './economy.js?v112';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v111';
-import { dragonSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v111';
-import { ITEM_TEXTS } from './i18n-items.js?v111';
-import { createIsland } from './island.js?v111';
+         adaSahipMi, adaEkle } from './model.js?v112';
+import { dragonSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v112';
+import { ITEM_TEXTS } from './i18n-items.js?v112';
+import { createIsland } from './island.js?v112';
 
 const GAME_ID = 'dragon';
 
@@ -108,6 +108,12 @@ let busy = false;
 let dukkanAcik = false;
 
 let deneme = null;
+// Zaten sahip olunan bir ada secilince deneme aninda uygulanip null'a
+// donuyor (satin alma onayi gerekmiyor) - ama bu yuzden sahne onizlemesi
+// hic tetiklenmiyordu, "Worn" yazsa da ustte hala notr ejderha ekrani
+// kaliyordu. Son tiklanan slot'u ayrica tutup deneme bitince de ada
+// sekmesindeysek sahneyi gostermeye devam ediyoruz.
+let sonSlot = null;
 
 function gorunum() {
   return deneme ? { ...ejderha.look, [deneme.slot]: deneme.id } : ejderha.look;
@@ -135,7 +141,7 @@ tryBuy.addEventListener('click', satinAlOnayla);
 tryCancel.addEventListener('click', denemeyiBirak);
 
 function onizlemeModu() {
-  const adaOnizleme = dukkanAcik && deneme?.slot === 'island';
+  const adaOnizleme = dukkanAcik && (deneme ? deneme.slot === 'island' : sonSlot === 'island');
   document.body.classList.toggle('island-preview', adaOnizleme);
   requestAnimationFrame(adaYerlestir);
 }
@@ -409,6 +415,7 @@ function dukkanGoster(acik) {
 
   if (!acik) {
     deneme = null;
+    sonSlot = null;
     dukkanCiz();
   }
   adaSahnesiniTazele();
@@ -571,7 +578,12 @@ function dukkanCiz() {
   shopEl.textContent = '';
 
   for (const slot of SLOTS) {
-    grupCiz(slot.title, Object.entries(KATALOG[slot.key]).map(([id, item]) => ({
+    // "hidden" isaretli parcalar dukkanda gozukmuyor (henuz gorsel olarak
+    // iyi durmayan gecici gizlemeler) - ama zaten uzerinde takiliysa listeden
+    // birden kaybolmasin diye o istisna kaliyor.
+    grupCiz(slot.title, Object.entries(KATALOG[slot.key])
+      .filter(([id, item]) => !item.hidden || ejderha.look[slot.key] === id)
+      .map(([id, item]) => ({
       slot: slot.key, id, item,
       sahip: sahipMi(oyuncu, slot.key, id),
       secili: ejderha.look[slot.key] === id,
@@ -604,6 +616,7 @@ function dukkanCiz() {
 function parcaSec(slot, id, item) {
   if (busy) return;
 
+  sonSlot = slot;
   const sahip = slot === 'island' ? adaSahipMi(oyuncu, id) : sahipMi(oyuncu, slot, id);
 
   if (sahip) {
