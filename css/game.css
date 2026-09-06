@@ -157,8 +157,10 @@
 }
 
 .overlay[hidden] { display: none; }
-.overlay h2 { margin: 0; font-size: 23px; }
-.overlay p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+/* Overlay arka plani temadan bagimsiz hep koyu - yazi rengi de oyle sabitlenmeli,
+   yoksa acik Telegram temasinda --text/--muted koyulasip okunmaz oluyor. */
+.overlay h2 { margin: 0; font-size: 23px; color: #ffffff; }
+.overlay p { margin: 0; color: #b7bad0; font-size: 14px; line-height: 1.5; }
 
 @keyframes overlay-fade { from { opacity: 0; } }
 

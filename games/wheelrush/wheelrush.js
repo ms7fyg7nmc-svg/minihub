@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v108';
-import { submitScore, addPoints, getBest, oynanabilirMi } from '../../js/store.js?v108';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v108';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v108';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v109';
+import { submitScore, addPoints, getBest, oynanabilirMi } from '../../js/store.js?v109';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v109';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v109';
 
 const GAME_ID = 'wheelrush';
 /* Skor = mesafe/10 + coin*15 - iyi bir kosu ~150-450 arasi cikiyor.
@@ -43,6 +43,10 @@ const overlayEl = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlayText = document.getElementById('overlay-text');
 const overlayBtn = document.getElementById('overlay-btn');
+
+const coinImg = new Image();
+coinImg.src = '../../assets/coin.png';
+const hazirMi = (im) => im && im.complete && im.naturalWidth > 0;
 
 let best = 0;
 let lane = 1;
@@ -157,9 +161,13 @@ function setLane(target) {
   lane = Math.max(0, Math.min(2, target));
 }
 
-stageEl.addEventListener('pointerdown', (e) => {
+/* Stage yukseklige kilitli oldugu icin genis ekranlarda dar kalabiliyor;
+   .game-mid'in tamamini dinleyip yatayda ortadan bolerek, canvas'in
+   disinda kalan sol/sag bosluklardan da serit degistirilebiliyor. */
+const controlEl = document.querySelector('.game-mid') || stageEl;
+controlEl.addEventListener('pointerdown', (e) => {
   if (over) return;
-  const rect = cv.getBoundingClientRect();
+  const rect = controlEl.getBoundingClientRect();
   const x = e.clientX - rect.left;
   setLane(x < rect.width / 2 ? lane - 1 : lane + 1);
 });
@@ -298,17 +306,21 @@ function drawRock(x, y) {
 function drawCoin(x, y, bob) {
   g.save();
   g.translate(x, y + bob);
-  g.beginPath();
-  g.arc(0, 0, COIN_R, 0, Math.PI * 2);
-  g.fillStyle = '#f5b942';
-  g.fill();
-  g.strokeStyle = '#c98a1f';
-  g.lineWidth = 2;
-  g.stroke();
-  g.fillStyle = 'rgba(255,255,255,.6)';
-  g.beginPath();
-  g.arc(-3, -3, 2.6, 0, Math.PI * 2);
-  g.fill();
+  if (hazirMi(coinImg)) {
+    g.drawImage(coinImg, -COIN_R, -COIN_R, COIN_R * 2, COIN_R * 2);
+  } else {
+    g.beginPath();
+    g.arc(0, 0, COIN_R, 0, Math.PI * 2);
+    g.fillStyle = '#f5b942';
+    g.fill();
+    g.strokeStyle = '#c98a1f';
+    g.lineWidth = 2;
+    g.stroke();
+    g.fillStyle = 'rgba(255,255,255,.6)';
+    g.beginPath();
+    g.arc(-3, -3, 2.6, 0, Math.PI * 2);
+    g.fill();
+  }
   g.restore();
 }
 

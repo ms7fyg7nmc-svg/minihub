@@ -1,6 +1,6 @@
 
-import { palet } from './data.js?v108';
-import { CONFIG, growthRatio } from './config.js?v108';
+import { palet } from './data.js?v109';
+import { CONFIG, growthRatio } from './config.js?v109';
 
 let uidSayaci = 0;
 
@@ -59,7 +59,7 @@ const GORSEL = {
 
   tepe: { x: 511, y: 230 },
   yuz: { x: 511, y: 455 },
-  boyun: { x: 511, y: 505 },
+  boyun: { x: 511, y: 600 },
 
   /* Yuz ogeleri (kesikler, boya, ruhani isaretler) artik gercek Scenario
      PNG'leri - alnin ortasina tek basina oturanlar icin "alin", yanaga
