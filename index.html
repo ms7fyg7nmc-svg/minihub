@@ -11,7 +11,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v110">
+  <link rel="stylesheet" href="css/style.css?v111">
 </head>
 <body class="hub">
   <div class="app">
@@ -177,6 +177,7 @@
     <div class="daily-modal">
       <button class="daily-close" id="lider-close" aria-label="Kapat">✕</button>
       <p class="daily-intro" data-i18n="hub.rank.intro"></p>
+      <p class="daily-card-hint" data-i18n="hub.rank.refreshNote"></p>
       <div class="lider-liste" id="lider-liste"></div>
       <div class="lider-kendi" id="lider-kendi" hidden></div>
     </div>
@@ -199,6 +200,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v110"></script>
+  <script type="module" src="js/hub.js?v111"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v110';
+import { isTelegramUser, getInitData } from './tg.js?v111';
 
 const API_BASE = 'https://minihub-bot.volkanturedi1.workers.dev';
 
@@ -264,7 +264,7 @@ async function kuyruguBosalt() {
 
     if (giris.tur === 'earn') {
       sonuc = await sunucuGonder('/api/points/earn', { opId: giris.opId, amount: giris.amount });
-      if (sonuc) { v.points = sonuc.total; v.energy = sonuc.energy; liderOnbellegiDusur(); }
+      if (sonuc) { v.points = sonuc.total; v.energy = sonuc.energy; }
     } else if (giris.tur === 'best') {
       sonuc = await sunucuGonder('/api/best', { game: giris.game, score: giris.score });
       if (sonuc) v.state[`best_${giris.game}`] = sonuc.best;
@@ -329,7 +329,6 @@ export async function addPoints(amount) {
   }
   v.points = sonuc.total;
   v.energy = sonuc.energy;
-  liderOnbellegiDusur();
   return v.points;
 }
 
@@ -395,7 +394,6 @@ export async function claimStreak() {
   if (sonuc.ok) {
     v.points = sonuc.total;
     v.streak = sonuc.durum || { ...v.streak, count: sonuc.streak, canClaim: false };
-    liderOnbellegiDusur();
   }
   return sonuc;
 }
@@ -407,15 +405,12 @@ export async function claimStreak() {
 const LIDER_ONBELLEK_ANAHTARI = 'mh_lider_cache';
 const LIDER_ONBELLEK_SURESI = 4 * 3600 * 1000;
 
-// Puan degisince (kazanc/harcama) onbellegi hemen dusuruyoruz - yoksa bir
-// oyun bitirip direkt liderlik tablosuna bakan biri 4 saate kadar eski
-// siralamayi gorebilirdi.
-function liderOnbellegiDusur() {
-  try {
-    localStorage.removeItem(LIDER_ONBELLEK_ANAHTARI);
-  } catch {
-  }
-}
+// LIDER_ONBELLEK_SURUM'u artirmak, suredolumunu beklemeden HERKESIN
+// onbellegini bir kerelik gecersiz kilar (surum uyusmuyorsa onbellek yok
+// sayilir) - sonraki her acilis yine normal 4 saatlik dongude kalir. Duzenli
+// bir yenileme mekanizmasi degil, sadece "bu surum icin bir kerelik zorla
+// tazele" anahtari.
+const LIDER_ONBELLEK_SURUM = 2;
 
 export async function liderTablosu() {
   const v = await senkron;
@@ -425,7 +420,8 @@ export async function liderTablosu() {
     const ham = localGet(LIDER_ONBELLEK_ANAHTARI);
     if (ham) {
       const onbellek = JSON.parse(ham);
-      if (onbellek && Date.now() - onbellek.zaman < LIDER_ONBELLEK_SURESI) {
+      if (onbellek && onbellek.surum === LIDER_ONBELLEK_SURUM &&
+          Date.now() - onbellek.zaman < LIDER_ONBELLEK_SURESI) {
         return onbellek.veri;
       }
     }
@@ -435,7 +431,7 @@ export async function liderTablosu() {
   const veri = await sunucuGonder('/api/leaderboard', {});
   if (veri) {
     try {
-      localSet(LIDER_ONBELLEK_ANAHTARI, JSON.stringify({ zaman: Date.now(), veri }));
+      localSet(LIDER_ONBELLEK_ANAHTARI, JSON.stringify({ surum: LIDER_ONBELLEK_SURUM, zaman: Date.now(), veri }));
     } catch {
     }
   }
@@ -478,7 +474,6 @@ export async function spinWheel() {
     v.points = sonuc.total;
     v.energy = sonuc.energy;
     if (v.spin) v.spin = { ...v.spin, ...(sonuc.durum || { canSpin: false }) };
-    liderOnbellegiDusur();
   }
   return sonuc;
 }
@@ -493,7 +488,6 @@ export async function spendPoints(amount) {
     return { ok: false, total: v.points };
   }
   v.points = sonuc.total;
-  liderOnbellegiDusur();
   return sonuc;
 }
 
@@ -547,7 +541,6 @@ export async function finishRun(game, runId, payload) {
   if (!sonuc?.ok) return null;
   v.points = sonuc.total;
   if (typeof sonuc.best === 'number') v.state[`best_${game}`] = sonuc.best;
-  liderOnbellegiDusur();
   return sonuc;
 }
 
