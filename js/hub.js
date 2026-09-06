@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v107';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v108';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi,
-} from './store.js?v107';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v107';
+} from './store.js?v108';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v108';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -106,6 +106,20 @@ const ICONS = {
             stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
       <circle cx="19" cy="3.5" r="2.6" fill="#fff" opacity=".55"/>
    </svg>`,
+
+   wheelrush: `<svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" fill="#fff" opacity=".18"/>
+      <circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="1.6"/>
+      <g stroke="#fff" stroke-width="2" stroke-linecap="round">
+         <path d="M12 12 12 4.4"/>
+         <path d="M12 12 18.6 8.2"/>
+         <path d="M12 12 18.6 15.8"/>
+         <path d="M12 12 12 19.6"/>
+         <path d="M12 12 5.4 15.8"/>
+         <path d="M12 12 5.4 8.2"/>
+      </g>
+      <circle cx="12" cy="12" r="3.2" fill="#fff"/>
+   </svg>`,
 };
 
 function gameList() {
@@ -190,6 +204,16 @@ function gameList() {
          url: 'games/coindrop/index.html',
          gradient: 'linear-gradient(140deg, #ffd76e, #c8902a)',
          accent: '#f5b942',
+         ready: true,
+      },
+      {
+         id: 'wheelrush',
+         title: t('game.wheelrush.title'),
+         desc: t('game.wheelrush.desc'),
+         icon: ICONS.wheelrush,
+         url: 'games/wheelrush/index.html',
+         gradient: 'linear-gradient(140deg, #f5b942, #e2544e)',
+         accent: '#f2884b',
          ready: true,
       },
    ];

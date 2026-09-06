@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Coin Drop</title>
+  <title>Tekerlek Yarışı</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     /* Uygulama dogrudan bu oyun sayfasinda acildiysa once hub'i goster.
@@ -14,15 +14,15 @@
   </script>
   <link rel="stylesheet" href="../../css/style.css?v108">
   <link rel="stylesheet" href="../../css/game.css?v108">
-  <link rel="stylesheet" href="coindrop.css?v108">
+  <link rel="stylesheet" href="wheelrush.css?v108">
 </head>
 <body class="game" data-i18n-title="title">
   <div class="app game-app">
 
     <header class="game-head">
       <div>
-        <h1 class="game-title" data-i18n="title">Coin Drop</h1>
-        <p class="game-sub" data-i18n="subtitle">Aynı paraları birleştir</p>
+        <h1 class="game-title" data-i18n="title">Tekerlek Yarışı</h1>
+        <p class="game-sub" data-i18n="subtitle">Şeritler arası kay, engellerden kaç</p>
       </div>
       <div class="head-right">
         <div class="scores">
@@ -38,32 +38,19 @@
       </div>
     </header>
 
-    <!-- Ust serit: sonraki para + ulasilan kademe yolu.
-         Ikisi de eskiden canvas'in icinde duruyordu ve oyun alanini
-         kapatiyordu; disari alininca tahta tamamen oyuna kaldi. -->
-    <div class="cd-bar">
-      <div class="cd-next-well">
-        <span class="cd-bar-label" data-i18n="next">SIRADAKİ</span>
-        <span class="cd-next" id="next-chip"></span>
-      </div>
-      <div class="cd-ladder" id="ladder"></div>
-    </div>
-
     <div class="game-mid">
-      <div class="board-wrap">
-        <div class="cd-stage" id="stage">
-          <canvas id="cv"></canvas>
+      <div class="wr-stage" id="stage">
+        <canvas id="cv"></canvas>
 
-          <div class="overlay" id="overlay" hidden>
-            <h2 id="overlay-title"></h2>
-            <p id="overlay-text"></p>
-            <button class="btn primary" id="overlay-btn"></button>
-          </div>
+        <div class="overlay" id="overlay" hidden>
+          <h2 id="overlay-title"></h2>
+          <p id="overlay-text"></p>
+          <button class="btn primary" id="overlay-btn"></button>
         </div>
       </div>
-    </div>
 
-    <p class="hint" data-i18n="hint">Parmağını kaydır, bırakınca para düşer.</p>
+      <p class="hint" data-i18n="hint">Ekranın sol/sağ yarısına dokun, şerit değiştir.</p>
+    </div>
 
     <div class="controls">
       <button class="btn" id="new-game" data-i18n="newGame">Yeni oyun</button>
@@ -74,6 +61,6 @@
 
   </div>
 
-  <script type="module" src="coindrop.js?v108"></script>
+  <script type="module" src="wheelrush.js?v108"></script>
 </body>
 </html>

@@ -1,0 +1,27 @@
+/* Tekerlek Yarışı: 3 şeritli kaçış/toplama koşusu.
+   Tahta tek bir <canvas>; kasa cercevesi CSS ile, canvas sadece yolu ciziyor. */
+
+.wr-stage {
+  position: relative;
+  width: 100%;
+  /* Sahne 360:640 dikey (bkz. wheelrush.js LW/LH) - yukseklik genislikten
+     turedigi icin ust sinir GENISLIGE konuyor (baslik + ipucu + butonlar
+     icin ~300px pay birakiyoruz, coindrop'taki ayni yaklasim). */
+  max-width: min(100%, max(170px, calc((var(--app-h, 100dvh) - 300px) * 0.5625)));
+  margin: 0 auto;
+  aspect-ratio: 360 / 640;
+  border-radius: 20px;
+  overflow: hidden;
+  background:
+    radial-gradient(90% 40% at 50% 0%, rgba(245, 185, 66, 0.10), transparent 65%),
+    linear-gradient(180deg, #232338 0%, #1a1a2a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.wr-stage canvas { display: block; width: 100%; height: 100%; }
