@@ -1,21 +1,23 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v112';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v112';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v113';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v113';
 
-import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v112';
-import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v112';
-import { bakiyeOku, harca } from './economy.js?v112';
+import { CONFIG, feedCost, xpNeeded, rewardForLevel } from './config.js?v113';
+import { SLOTS, KATALOG, AURAS, ISLANDS, RARITIES, ada as adaTemasi } from './data.js?v113';
+import { bakiyeOku, harca } from './economy.js?v113';
+import { bakimdaMi } from '../../js/store.js?v113';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, sahipMi, dolabaEkle,
-         adaSahipMi, adaEkle } from './model.js?v112';
-import { dragonSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v112';
-import { ITEM_TEXTS } from './i18n-items.js?v112';
-import { createIsland } from './island.js?v112';
+         adaSahipMi, adaEkle } from './model.js?v113';
+import { dragonSvg, GOVDE_MERKEZ_ORANI, dragonAssetUrls } from './art.js?v113';
+import { ITEM_TEXTS } from './i18n-items.js?v113';
+import { createIsland } from './island.js?v113';
 
 const GAME_ID = 'dragon';
 
 registerTexts(GAME_ID, {
   title: 'Ejderha Adası',
   loading: 'Ejderha Adası yükleniyor',
+  maintenance: 'Ejderha Adası bakımda. Kısa süre sonra geri dönecek.',
   level: 'SEVİYE',
   coins: '$MH',
   fullness: 'Doyum',
@@ -193,7 +195,26 @@ function varliklariOnYukle(urls) {
   ]);
 }
 
+function bakimEkraniGoster() {
+  bootLoaderEl?.classList.remove('hidden');
+  const egg = bootLoaderEl?.querySelector('.boot-egg');
+  if (egg) egg.style.animation = 'none';
+  const yazi = bootLoaderEl?.querySelector('.boot-text');
+  if (yazi) yazi.textContent = t('maintenance');
+  document.querySelector('.app')?.setAttribute('hidden', '');
+  showBackButton(hubaDon);
+}
+
 async function basla() {
+  /* Bakim kilidi: karari SUNUCU veriyor (bot/worker.js BAKIMDAKI_OYUNLAR).
+     Hub karti da kilitli ama dogrudan link/onbellek ile gelinebildigi icin
+     sayfa kendi basina da kontrol ediyor. Sunucu zaten /api/state ve
+     /api/best isteklerini reddediyor, yani burasi asilsa bile veri yazilmiyor. */
+  if (await bakimdaMi(GAME_ID)) {
+    bakimEkraniGoster();
+    return;
+  }
+
   oyuncu = await oyuncuyuYukle();
   ejderha = aktifEjderha(oyuncu);
   coins = await bakiyeOku();

@@ -521,6 +521,8 @@ async function handleSync(env, playerId, body, ad) {
     spin: { ...spinDurumu(player, now), prizes: SPIN_PRIZES.map((p) => ({ tur: p.tur, miktar: p.miktar })) },
     state,
     meta,
+    // Bu oyuncuya kapali olan oyunlar. Sahipte bos dizi doner.
+    bakim: [...bakimdakiOyunlar(env)].filter((g) => bakimdaMi(env, playerId, g)),
   };
 }
 
@@ -865,7 +867,29 @@ function iddiaMaliyeti(durum, hesapYasiGun) {
 
 const LIDER_LIMIT = 50;
 
-const LIDER_HARIC = new Set(['8100679296']);
+// Sahibin Telegram kimligi. Bakim kilidi ve liderlik tablosu ayni kaynagi
+// kullaniyor ki iki yerde birbirini tutmayan kimlik olmasin.
+const SAHIP_ID = '8100679296';
+
+/* Bakimdaki oyunlar: SAHIP_ID disindaki herkese kapali.
+   Varsayilan kodda duruyor ama Cloudflare'deki BAKIM degiskeni onu eziyor,
+   boylece bakim kod deploy etmeden acilip kapanabiliyor (bos deger = bakim yok).
+   Eksik/yanlis degiskende varsayilana dusuyoruz: kilit acik kalmasin diye
+   guvenli taraf kapali olmak. */
+const BAKIM_VARSAYILAN = 'dragon';
+
+function bakimdakiOyunlar(env) {
+  const ham = env && env.BAKIM !== undefined && env.BAKIM !== null
+    ? String(env.BAKIM) : BAKIM_VARSAYILAN;
+  return new Set(ham.split(',').map((s) => s.trim()).filter(Boolean));
+}
+
+function bakimdaMi(env, playerId, game) {
+  if (String(playerId) === SAHIP_ID) return false;
+  return bakimdakiOyunlar(env).has(game);
+}
+
+const LIDER_HARIC = new Set([SAHIP_ID]);
 // Haric tutulan (sahip) hesap listede hic gorunmuyor, ama kendi ekranindaki
 // widget bos/tire kalmasin diye sabit bir siralama numarasi gosteriliyor.
 const HARIC_GOSTERILEN_SIRA = 99;
@@ -945,6 +969,7 @@ async function handleReferral(env, playerId) {
 async function handleBest(env, playerId, body) {
   const game = String(body.game || '').trim();
   if (!GECERLI_OYUNLAR.has(game)) return { error: 'bilinmeyen oyun' };
+  if (bakimdaMi(env, playerId, game)) return { error: 'bakimda' };
   const key = `best_${game}`;
   const score = guvenliSayi(body.score, MAX_BEST_SCORE);
   const now = Date.now();
@@ -1056,6 +1081,7 @@ const GAME_RUNNERS = {
 };
 
 async function handleGameStart(env, playerId, game) {
+  if (bakimdaMi(env, playerId, game)) return { error: 'bakimda' };
   const runner = GAME_RUNNERS[game];
   if (!runner) return { error: 'desteklenmeyen oyun' };
 
@@ -1074,6 +1100,7 @@ async function handleGameStart(env, playerId, game) {
 }
 
 async function handleGameFinish(env, playerId, game, body) {
+  if (bakimdaMi(env, playerId, game)) return { error: 'bakimda' };
   const runner = GAME_RUNNERS[game];
   if (!runner) return { error: 'desteklenmeyen oyun' };
 
@@ -1153,6 +1180,7 @@ async function ejderhaIddiasiReddedilsinMi(env, playerId, durum, now) {
 async function handleState(env, playerId, body) {
   const game = String(body.game || '').trim();
   if (!GECERLI_OYUNLAR.has(game)) return { error: 'bilinmeyen oyun' };
+  if (bakimdaMi(env, playerId, game)) return { error: 'bakimda' };
   const key = `state_${game}`;
   const now = Date.now();
   const expected = Number(body.expectedVersion) || 0;

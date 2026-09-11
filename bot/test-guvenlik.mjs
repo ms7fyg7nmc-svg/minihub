@@ -79,7 +79,7 @@ async function webhook(env, update) {
 }
 
 const DB = makeDb();
-const env = { DB, BOT_TOKEN };
+const env = { DB, BOT_TOKEN, BAKIM: '' };
 const initData = signedInitData(111);
 
 let r = await api(env, 'sync', { initData, points: 0, state: {} });
@@ -100,7 +100,7 @@ for (let i = 2; i <= 8; i++) {
 check('gunluk tavan tuttu: bakiye 30.000de kaldi', r.total === 30000, `-> ${r.total}`);
 check('tavan dolunca sonraki kazanc 0', r.credited === 0, `-> ${r.credited}`);
 
-const DB2 = makeDb(); const env2 = { DB: DB2, BOT_TOKEN }; const id2 = signedInitData(222);
+const DB2 = makeDb(); const env2 = { DB: DB2, BOT_TOKEN, BAKIM: '' }; const id2 = signedInitData(222);
 await api(env2, 'sync', { initData: id2, points: 0, state: {} });
 async function hamApi(env, path, hamGovde) {
   const res = await worker.default.fetch(new Request(`https://x/api/${path}`, {
@@ -117,11 +117,11 @@ check('metin miktar 0 sayildi', r.credited === 0, `-> ${r.credited}`);
 r = await api(env2, 'points/earn', { initData: id2, opId: 'neg', amount: -5000 });
 check('negatif kazanc 0 sayildi (bakiye dusurulemedi)', r.credited === 0, `-> ${r.credited}`);
 
-const DB3 = makeDb(); const env3 = { DB: DB3, BOT_TOKEN }; const id3 = signedInitData(333);
+const DB3 = makeDb(); const env3 = { DB: DB3, BOT_TOKEN, BAKIM: '' }; const id3 = signedInitData(333);
 r = await api(env3, 'sync', { initData: id3, points: 999999999, state: {} });
 check('sahte baslangic bakiyesi 5.000e kirpildi', r.points === 5000, `-> ${r.points}`);
 
-const DB3b = makeDb(); const env3b = { DB: DB3b, BOT_TOKEN }; const id3b = signedInitData(334);
+const DB3b = makeDb(); const env3b = { DB: DB3b, BOT_TOKEN, BAKIM: '' }; const id3b = signedInitData(334);
 r = await api(env3b, 'sync', {
   initData: id3b, points: 0,
   state: { best_2048: 999999999, state_dragon: { dragons: [{ level: 99 }], owned: { color: ['celestial'] }, ownedIslands: ['kingdom'] } },
@@ -156,7 +156,7 @@ const sahteRes = await worker.default.fetch(new Request('https://x/api/points/ea
 }), env);
 check('sahte imza 401 ile reddedildi', sahteRes.status === 401, `-> ${sahteRes.status}`);
 
-const DB5 = makeDb(); const env5 = { DB: DB5, BOT_TOKEN }; const id5 = signedInitData(666);
+const DB5 = makeDb(); const env5 = { DB: DB5, BOT_TOKEN, BAKIM: '' }; const id5 = signedInitData(666);
 await api(env5, 'sync', { initData: id5, points: 0, state: {} });
 let toplamKazanc = 0;
 for (let i = 0; i < 24; i++) {
@@ -187,7 +187,7 @@ check('harcama hala calisiyor', r.ok === true, `-> ${JSON.stringify(r)}`);
 r = await api(env5, 'points/spend', { initData: id5, opId: 'harca-2', amount: 99999999 });
 check('bakiyeden fazla harcanamiyor', r.ok === false, `-> ${JSON.stringify(r)}`);
 
-const DB6 = makeDb(); const env6 = { DB: DB6, BOT_TOKEN }; const id6 = signedInitData(777);
+const DB6 = makeDb(); const env6 = { DB: DB6, BOT_TOKEN, BAKIM: '' }; const id6 = signedInitData(777);
 await api(env6, 'sync', { initData: id6, points: 0, state: {} });
 
 const mutevazi = { v: 2, dragons: [{ id: 'd1', level: 3, xp: 0, look: {} }],
@@ -203,7 +203,7 @@ r = await api(env6, 'state', { initData: id6, game: 'dragon', state: hileli, exp
 check('harcamasiz seviye 99 + mythic esyalar REDDEDILDI', r.reddedildi === true, `-> ${JSON.stringify(r).slice(0, 90)}`);
 check('reddedilince sunucudaki eski durum korundu', r.state?.dragons?.[0]?.level === 3, `-> ${r.state?.dragons?.[0]?.level}`);
 
-const DB7 = makeDb(); const env7 = { DB: DB7, BOT_TOKEN }; const id7 = signedInitData(888);
+const DB7 = makeDb(); const env7 = { DB: DB7, BOT_TOKEN, BAKIM: '' }; const id7 = signedInitData(888);
 await api(env7, 'sync', { initData: id7, points: 0, state: {} });
 DB7.prepare('UPDATE players SET points = 900000 WHERE id = ?').bind('888').run();
 r = await api(env7, 'state', { initData: id7, game: 'dragon', state: mutevazi, expectedVersion: 0 });
@@ -249,7 +249,7 @@ check('referral: afis esikleri sunucuyla ayni',
       workerEsikler.length > 0 && JSON.stringify(workerEsikler) === JSON.stringify(hubEsikler),
       `-> worker=${JSON.stringify(workerEsikler)} hub=${JSON.stringify(hubEsikler)}`);
 
-const DB8 = makeDb(); const env8 = { DB: DB8, BOT_TOKEN }; const id8 = signedInitData(999);
+const DB8 = makeDb(); const env8 = { DB: DB8, BOT_TOKEN, BAKIM: '' }; const id8 = signedInitData(999);
 await api(env8, 'sync', { initData: id8, points: 0, state: {} });
 
 r = await api(env8, 'points/earn', { initData: id8, opId: 'restart-earn-1', amount: 120 });
@@ -356,7 +356,7 @@ check('referral: payload ayristirma calisiyor', worker.parseReferralPayload('/st
 check('referral: bosluksuz /start payload uretmiyor', worker.parseReferralPayload('/start') === null);
 check('referral: gecersiz payload yok sayiliyor', worker.parseReferralPayload('/start abc') === null);
 
-const DB9 = makeDb(); const env9 = { DB: DB9, BOT_TOKEN }; const idRef = signedInitData(1001);
+const DB9 = makeDb(); const env9 = { DB: DB9, BOT_TOKEN, BAKIM: '' }; const idRef = signedInitData(1001);
 await api(env9, 'sync', { initData: idRef, points: 0, state: {} });
 
 const idA = signedInitData(2002);
@@ -416,7 +416,7 @@ const seviyeler = r.arkadaslar.map((a) => a.seviye).sort((a, b) => a - b);
 check('referral: arkadas listesi seviyeleri dogru', JSON.stringify(seviyeler) === JSON.stringify([10, 99]),
       `-> ${JSON.stringify(seviyeler)}`);
 
-const DB11 = makeDb(); const env11 = { DB: DB11, BOT_TOKEN }; const idHaric = signedInitData(8100679296);
+const DB11 = makeDb(); const env11 = { DB: DB11, BOT_TOKEN, BAKIM: '' }; const idHaric = signedInitData(8100679296);
 const idNormal = signedInitData(5555);
 await api(env11, 'sync', { initData: idHaric, points: 0, state: {} });
 await api(env11, 'sync', { initData: idNormal, points: 0, state: {} });
@@ -453,7 +453,7 @@ function oyna2048(seed, adim) {
   return { moves, score };
 }
 
-const DB12 = makeDb(); const env12 = { DB: DB12, BOT_TOKEN }; const id12 = signedInitData(7777);
+const DB12 = makeDb(); const env12 = { DB: DB12, BOT_TOKEN, BAKIM: '' }; const id12 = signedInitData(7777);
 await api(env12, 'sync', { initData: id12, points: 0, state: {} });
 
 let baslat = await api(env12, 'game/start', { initData: id12, game: '2048' });
@@ -492,7 +492,7 @@ let asiri = await api(env12, 'game/finish', { initData: id12, game: '2048', runI
 check('2048: asiri uzun hamle listesi reddediliyor', asiri.ok === false && asiri.reason === 'gecersiz-hamle-listesi',
       `-> ${JSON.stringify(asiri)}`);
 
-const DB13 = makeDb(); const env13 = { DB: DB13, BOT_TOKEN }; const id13 = signedInitData(9999);
+const DB13 = makeDb(); const env13 = { DB: DB13, BOT_TOKEN, BAKIM: '' }; const id13 = signedInitData(9999);
 await api(env13, 'sync', { initData: id13, points: 0, state: {} });
 let kosuYok = await api(env13, 'game/finish', { initData: id13, game: '2048', runId: 'uydurma-run-id', moves: ['U'] });
 check('2048: hic /api/game/start cagrilmadan finish reddediliyor', kosuYok.ok === false && kosuYok.reason === 'aktif-kosu-yok',
@@ -515,7 +515,7 @@ function cozFlow(level, seed) {
   return { size, paths };
 }
 
-const DB14 = makeDb(); const env14 = { DB: DB14, BOT_TOKEN }; const id14 = signedInitData(5555);
+const DB14 = makeDb(); const env14 = { DB: DB14, BOT_TOKEN, BAKIM: '' }; const id14 = signedInitData(5555);
 await api(env14, 'sync', { initData: id14, points: 0, state: {} });
 
 let flowBaslat = await api(env14, 'game/start', { initData: id14, game: 'flow' });
@@ -566,6 +566,44 @@ const cozum3 = cozFlow(2, flowBaslat3.seed);
 let flowBitir3 = await api(env14, 'game/finish', { initData: id14, game: 'flow', runId: flowBaslat3.runId, paths: cozum3.paths });
 check('flow: 2. seviye dogru cozulunce best_flow 2 oluyor', flowBitir3.ok === true && flowBitir3.best === 2 && flowBitir3.isRecord === true,
       `-> ${JSON.stringify(flowBitir3)}`);
+
+// --- Bakim kilidi ---
+// Diger testler BAKIM:'' ile calisiyor (guvenlik mantigini olcuyorlar).
+// Burada kilidin kendisini olcuyoruz: bakimdaki oyun sahibe acik, herkese kapali.
+const DB15 = makeDb();
+const envBakim = { DB: DB15, BOT_TOKEN, BAKIM: 'dragon' };
+const idSahip = signedInitData(8100679296);
+const idBaskasi = signedInitData(515151);
+
+const bakimSync = await api(envBakim, 'sync', { initData: idBaskasi });
+check('bakim: sync bakimdaki oyunu bildiriyor',
+      Array.isArray(bakimSync.bakim) && bakimSync.bakim.includes('dragon'),
+      `-> ${JSON.stringify(bakimSync.bakim)}`);
+
+const sahipSync = await api(envBakim, 'sync', { initData: idSahip });
+check('bakim: sahibe bakim listesi bos geliyor',
+      Array.isArray(sahipSync.bakim) && sahipSync.bakim.length === 0,
+      `-> ${JSON.stringify(sahipSync.bakim)}`);
+
+const yabanciYaz = await api(envBakim, 'state', {
+  initData: idBaskasi, game: 'dragon', expectedVersion: 0, state: { v: 2, dragons: [] },
+});
+check('bakim: baskasi ejderha durumunu yazamiyor',
+      yabanciYaz.error === 'bakimda', `-> ${JSON.stringify(yabanciYaz)}`);
+
+const yabanciSkor = await api(envBakim, 'best', { initData: idBaskasi, game: 'dragon', score: 500 });
+check('bakim: baskasi ejderha skoru gonderemiyor',
+      yabanciSkor.error === 'bakimda', `-> ${JSON.stringify(yabanciSkor)}`);
+
+const sahipYaz = await api(envBakim, 'state', {
+  initData: idSahip, game: 'dragon', expectedVersion: 0, state: { v: 2, dragons: [] },
+});
+check('bakim: sahip ejderha durumunu yazabiliyor',
+      sahipYaz.error === undefined && sahipYaz.version === 1, `-> ${JSON.stringify(sahipYaz)}`);
+
+const baskaOyun = await api(envBakim, 'best', { initData: idBaskasi, game: 'snake', score: 10 });
+check('bakim: bakimda olmayan oyun etkilenmiyor',
+      baskaOyun.error === undefined && baskaOyun.best === 10, `-> ${JSON.stringify(baskaOyun)}`);
 
 console.log(`\n${passed} basarili, ${failed} basarisiz`);
 process.exit(failed > 0 ? 1 : 0);

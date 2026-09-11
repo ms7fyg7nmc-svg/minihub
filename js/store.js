@@ -1,5 +1,5 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v112';
+import { isTelegramUser, getInitData } from './tg.js?v113';
 
 const API_BASE = 'https://minihub-bot.volkanturedi1.workers.dev';
 
@@ -226,6 +226,7 @@ async function senkronDene() {
       spin: veri.spin && typeof veri.spin === 'object' ? veri.spin : null,
       state: veri.state && typeof veri.state === 'object' ? veri.state : {},
       meta: veri.meta && typeof veri.meta === 'object' ? veri.meta : {},
+      bakim: Array.isArray(veri.bakim) ? veri.bakim : [],
     };
   }
 }
@@ -604,6 +605,24 @@ export function clearState(game) {
     });
   });
 }
+
+/* Bakim kilidi: hangi oyunlarin kapali oldugunu SUNUCU soyler (bot/worker.js
+   BAKIMDAKI_OYUNLAR). Istemcide kimlik listesi tutmuyoruz. Sunucuya
+   ulasilamazsa kapali kabul ediliyor: kim oldugunu dogrulayamadigimiz
+   birine bakimdaki oyunu acmiyoruz. */
+export async function bakimListesi() {
+  const v = await senkron;
+  if (!v) return [...BAKIM_VARSAYILAN];
+  return v.bakim || [];
+}
+
+export async function bakimdaMi(game) {
+  const v = await senkron;
+  if (!v) return BAKIM_VARSAYILAN.has(game);
+  return (v.bakim || []).includes(game);
+}
+
+const BAKIM_VARSAYILAN = new Set(['dragon']);
 
 export async function sunucuDurumu() {
   if (!isTelegramUser()) return 'misafir';

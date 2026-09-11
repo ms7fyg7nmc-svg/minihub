@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v112';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v113';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
-   referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi,
-} from './store.js?v112';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v112';
+   referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi, bakimListesi,
+} from './store.js?v113';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v113';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -123,7 +123,12 @@ const ICONS = {
 };
 
 function gameList() {
-   return [
+   /* Bakimdaki oyun kartta kilitli gorunuyor ("Bakimda" rozeti) ve tiklanmiyor.
+      Asil engel sunucuda; bu sadece kullaniciya durumu gosteriyor. */
+   const bakimUygula = (liste) => liste.map((g) => (
+      BAKIM.has(g.id) ? { ...g, ready: false, maintenance: true } : g
+   ));
+   return bakimUygula([
       {
          id: 'dragon',
          title: t('game.dragon.title'),
@@ -216,7 +221,7 @@ function gameList() {
          accent: '#f2884b',
          ready: true,
       },
-   ];
+     ]);
 }
 
 initTelegram();
@@ -225,6 +230,10 @@ hideBackButton();
 await initLang();
 applyTranslations();
 renderLangSwitcher(document.getElementById('lang-switcher'));
+
+/* Bakimdaki oyunlari sunucu belirliyor (bot/worker.js BAKIMDAKI_OYUNLAR).
+   Acilista bir kez okunup gameList()'e veriliyor; renderGames senkron kaliyor. */
+const BAKIM = new Set(await bakimListesi());
 
 renderProfile();
 renderGames();
