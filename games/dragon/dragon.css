@@ -1,725 +1,1153 @@
-/* Dragon Island gorunumu.
-   Ortak parcalar (baslik, skor kutulari, butonlar) css/game.css icinde. */
+/* DRAGON ISLAND - arayuz
+   Tasarim notu: Duck My Duck'in arayuzu incelendiginde zenginligin susten
+   degil dort seyden geldigi goruldu: arka planda tek bir sicak isik kaynagi,
+   nesnelerin buyuk ve parlak olmasi, nadirlige gore renkli isima ve iri
+   tipografi. Buradaki duzen o dort ilkeye gore kuruldu. */
 
-/* game.css yalnizca min-height veriyor; bu oyunda kozmetik katalogu uzun
-   oldugu icin sayfanin kendisi uzuyor ve panelin ic kaydirmasi devreye
-   girmiyordu. Yuksekligi ekrana sabitleyince .panel gercekten kayiyor ve
-   "Bitti" butonu her zaman gorunur kaliyor. */
-.game-app {
-  height: var(--app-h, 100dvh);
-  max-height: var(--app-h, 100dvh);
+.dragon-app [hidden] { display: none !important; }
+
+.dragon-app {
+  --zemin: #0d1018;
+  --kart: rgba(30, 35, 50, 0.72);
+  --kart-ust: rgba(255, 255, 255, 0.07);
+  --kenar: rgba(255, 255, 255, 0.10);
+  --yazi: #f2f4fb;
+  --soluk: #97a0bb;
+  --altin: #f0bb52;
+  --altin-acik: #ffe3a6;
+  --altin-koyu: #8a5f18;
+  --kor: #ff8a3d;
+  --kirmizi: #a52733;
+  --kirmizi-acik: #e2606c;
+  --golge: 0 10px 26px rgba(0, 0, 0, 0.55);
+
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--zemin);
+  color: var(--yazi);
   overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.game-mid { gap: 10px; }
+/* ---------- ATMOSFER ---------- */
 
-/* --- ACILIS YUKLEME EKRANI ---
-   PNG parcalardan (govde/kanat/tac) olusan ejderha govdesi tek
-   seferde degil, her parca ayri indikce beliriyor. On yukleme bitene kadar
-   bu ekran sahneyi kapatiyor, boylece oyuncu "yarim yarim" cizilen ejderhayi
-   gormuyor. */
-.boot-loader {
+/* Sahne arka plani: ekrana gore degisen tek gorsel + uzerine okunabilirlik
+   icin koyu bir gecis. Gorseller 8-11 KB, telefonu yormuyor. */
+.sky {
   position: fixed;
   inset: 0;
-  z-index: 999;
+  z-index: 0;
+  background-image: url('../../assets/bg/forge.webp');
+  background-size: cover;
+  background-position: center 72%;
+  transition: opacity 0.4s ease;
+}
+
+.sky::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(75% 45% at 50% 78%, rgba(255, 138, 61, 0.16), transparent 70%),
+    linear-gradient(180deg, rgba(10, 12, 18, 0.72) 0%, rgba(10, 12, 18, 0.42) 34%,
+                    rgba(10, 12, 18, 0.62) 72%, rgba(10, 12, 18, 0.94) 100%);
+}
+
+body[data-screen="dragon"] .sky { background-image: url('../../assets/bg/nest.webp'); }
+
+/* Gorev ekraninda arka plan daha geride dursun: kartlar okunakli kalsin. */
+body[data-screen="tasks"] .sky::after {
+  background: linear-gradient(180deg, rgba(10, 12, 18, 0.86) 0%, rgba(10, 12, 18, 0.78) 45%,
+                              rgba(10, 12, 18, 0.92) 100%);
+}
+
+/* Yukari suzulen korlar: tek oge, uc katman radial gradient. */
+.embers {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.55;
+  background-image:
+    radial-gradient(2px 2px at 18% 90%, rgba(255, 176, 92, 0.9), transparent 60%),
+    radial-gradient(1.5px 1.5px at 42% 95%, rgba(255, 146, 60, 0.8), transparent 60%),
+    radial-gradient(2px 2px at 68% 88%, rgba(255, 200, 120, 0.75), transparent 60%),
+    radial-gradient(1.5px 1.5px at 84% 96%, rgba(255, 160, 70, 0.8), transparent 60%);
+  background-repeat: repeat-y;
+  background-size: 100% 60vh;
+  animation: emberRise 14s linear infinite;
+}
+
+@keyframes emberRise {
+  from { background-position: 0 0, 0 0, 0 0, 0 0; }
+  to { background-position: 0 -60vh, 0 -60vh, 0 -60vh, 0 -60vh; }
+}
+
+/* ---------- ACILIS ---------- */
+
+.boot {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
+  gap: 16px;
   background:
-    radial-gradient(120% 80% at 50% 12%, rgba(150, 120, 255, 0.20), transparent 62%),
-    radial-gradient(90% 60% at 50% 96%, rgba(80, 60, 140, 0.28), transparent 70%),
-    linear-gradient(180deg, #171429 0%, #100d1c 100%);
-  transition: opacity 0.4s ease;
+    radial-gradient(70% 45% at 50% 46%, rgba(240, 187, 82, 0.13), transparent 70%),
+    url('../../assets/bg/forge.webp') center 70% / cover,
+    #0b0d14;
 }
 
-.boot-loader.hidden { opacity: 0; pointer-events: none; }
-
-.boot-egg {
-  width: 52px;
-  height: 64px;
-  border-radius: 50% 50% 46% 46% / 58% 58% 42% 42%;
-  background: linear-gradient(160deg, #ffe3d4 0%, #f0a37c 55%, #e0561f 100%);
-  box-shadow: 0 0 34px 4px rgba(245, 185, 66, 0.35);
-  animation: boot-bob 1.3s ease-in-out infinite;
-}
-
-@keyframes boot-bob {
-  50% { transform: translateY(-10px) scale(1.04); }
-}
-
-.boot-text {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  color: var(--muted, #9aa0b4);
-  animation: boot-pulse 1.3s ease-in-out infinite;
-}
-
-@keyframes boot-pulse {
-  50% { opacity: 0.55; }
-}
-
-/* --- ADA SAHNESI --- */
-
-.island {
-  position: relative;
-  width: 100%;
-  max-width: 380px;
-  margin: 0 auto;
-  aspect-ratio: 1 / 0.92;
-  border-radius: 22px;
-  overflow: hidden;
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-  /* Gokyuzu: ustte mor gece, altta derinlik */
-  background:
-    radial-gradient(120% 80% at 50% 12%, rgba(150, 120, 255, 0.20), transparent 62%),
-    radial-gradient(90% 60% at 50% 96%, rgba(80, 60, 140, 0.28), transparent 70%),
-    linear-gradient(180deg, #171429 0%, #100d1c 100%);
-}
-
-/* Yildizlar: tek bir tekrarli desen, ek istek yok */
-.island::before {
+.boot::after {
   content: '';
   position: absolute;
   inset: 0;
-  background-image:
-    radial-gradient(1.4px 1.4px at 18% 14%, rgba(255,255,255,.7), transparent),
-    radial-gradient(1.2px 1.2px at 72% 9%, rgba(255,255,255,.55), transparent),
-    radial-gradient(1.6px 1.6px at 44% 22%, rgba(255,255,255,.5), transparent),
-    radial-gradient(1.2px 1.2px at 88% 28%, rgba(255,255,255,.45), transparent),
-    radial-gradient(1.3px 1.3px at 8% 34%, rgba(255,255,255,.4), transparent);
-  animation: yildiz-parla 5s ease-in-out infinite;
+  background: linear-gradient(180deg, rgba(8, 10, 16, 0.78), rgba(8, 10, 16, 0.92));
 }
 
-@keyframes yildiz-parla { 50% { opacity: 0.55; } }
-
-.isle-layer {
+.boot-glow {
   position: absolute;
-  inset: 0;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(240, 187, 82, 0.22) 0%, transparent 62%);
+  animation: bootPulse 2.6s ease-in-out infinite;
+  z-index: 1;
+}
+
+.boot-logo {
+  position: relative;
+  z-index: 1;
+  width: 136px;
+  height: 136px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 26px rgba(240, 187, 82, 0.45));
+  animation: bootFloat 2.8s ease-in-out infinite;
+}
+
+.boot-title {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fff3d4 10%, var(--altin) 65%, #b07c1f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.7));
+}
+
+.boot-bar {
+  position: relative;
+  z-index: 1;
+  width: min(230px, 62vw);
+  height: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.boot-bar i {
+  display: block;
+  height: 100%;
+  width: 0%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #7a4f12, var(--altin) 60%, var(--altin-acik));
+  box-shadow: 0 0 12px rgba(240, 187, 82, 0.55);
+  transition: width 0.25s ease;
+}
+
+.boot-text {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  color: var(--soluk);
+}
+
+.boot.is-gone { opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+
+@keyframes bootFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@keyframes bootPulse { 0%, 100% { opacity: 0.5; transform: scale(0.94); } 50% { opacity: 1; transform: scale(1.06); } }
+
+/* ---------- KABUK ---------- */
+
+.dragon-shell {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  padding-top: env(safe-area-inset-top);
+}
+
+/* ---------- UST BAR ---------- */
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 6px;
+}
+
+.top-back {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border: 1px solid var(--kenar);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03));
+  backdrop-filter: blur(8px);
+  color: var(--yazi);
+  cursor: pointer;
+}
+
+.top-back svg { width: 19px; height: 19px; }
+
+.res-row { display: flex; gap: 7px; margin-left: auto; }
+
+/* Kaynak rozeti: ikon solda kendi kuyusunda, sayi sagda iri ve hizali. */
+.res {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 13px 4px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 99px;
+  background: linear-gradient(180deg, rgba(38, 44, 62, 0.95), rgba(20, 24, 36, 0.95));
+  box-shadow: var(--golge), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.2px;
+}
+
+.res img {
+  display: block;
+  width: 26px;
+  height: 26px;
+  padding: 3px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.14), rgba(0, 0, 0, 0.45));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10);
+}
+
+.res.bump { animation: resBump 0.45s cubic-bezier(.34,1.56,.64,1); }
+
+@keyframes resBump {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.16); }
+  100% { transform: scale(1); }
+}
+
+/* ---------- EKRANLAR ---------- */
+
+.screens {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 6px 14px 18px;
+}
+
+.screen { display: flex; flex-direction: column; gap: 14px; animation: screenIn 0.3s ease; }
+
+/* Ocak ekraninda icerik dikeyde ortalaniyor, altta bosluk kalmiyor. */
+#screen-grid { min-height: 100%; justify-content: center; gap: 18px; }
+
+@keyframes screenIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+.screen-head { text-align: center; }
+
+.screen-head h2 {
+  margin: 0;
+  font-size: 23px;
+  font-weight: 900;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fff4d8 8%, var(--altin) 62%, #a97518 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.75));
+}
+
+.screen-head p {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--soluk);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* ---------- IZGARA ---------- */
+
+.board-wrap { display: flex; justify-content: center; }
+
+.board {
+  /* Hucre genisligi ekrana gore: 4x4 de 6x6 da tasmiyor. */
+  --hucre: min(72px, (100vw - 132px) / var(--n));
+  --n: 4;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--n), var(--hucre));
+  grid-auto-rows: var(--hucre);
+  gap: 5px;
+  padding: 11px;
+  border-style: solid;
+  border-width: 24px 24px 28px 21px;
+  border-image: url('../../assets/board/frame.png') 65 66 77 56 stretch;
+  filter: drop-shadow(0 14px 30px rgba(0, 0, 0, 0.65));
+  touch-action: none;
+}
+
+/* Her hucre bir "yuva": ici oyuk, kenarinda ince isik. */
+.cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(0, 0, 0, 0.12)),
+    rgba(10, 13, 20, 0.62);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.75),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.cell.alt { background: linear-gradient(180deg, rgba(255,255,255,.065), rgba(0,0,0,.10)), rgba(16, 20, 30, 0.62); }
+
+/* Yumurtanin seviyesine gore yuvanin altinda renkli bir isima.
+   Nadirlik hissini veren sey bu; Duck My Duck da ayni yolu kullaniyor. */
+.cell[data-lv]::before {
+  content: '';
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--isik, rgba(240,187,82,.45)) 0%, transparent 68%);
+  filter: blur(6px);
+  opacity: 0.85;
+}
+
+.cell[data-lv="1"] { --isik: rgba(214, 219, 232, 0.40); }
+.cell[data-lv="2"] { --isik: rgba(226, 96, 108, 0.48); }
+.cell[data-lv="3"] { --isik: rgba(255, 138, 61, 0.55); }
+.cell[data-lv="4"] { --isik: rgba(240, 187, 82, 0.60); }
+.cell[data-lv="5"] { --isik: rgba(255, 214, 120, 0.65); }
+.cell[data-lv="6"] { --isik: rgba(236, 84, 116, 0.60); }
+.cell[data-lv="7"] { --isik: rgba(255, 120, 90, 0.68); }
+.cell[data-lv="8"] { --isik: rgba(122, 142, 255, 0.62); }
+
+.cell.drop-ok {
+  box-shadow:
+    inset 0 0 0 2px var(--altin),
+    inset 0 2px 8px rgba(0, 0, 0, 0.6),
+    0 0 14px rgba(240, 187, 82, 0.35);
+}
+
+.cell img {
+  width: 94%;
+  height: 94%;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 7px rgba(0, 0, 0, 0.6));
+}
+
+.egg-wrap {
+  position: relative;
   width: 100%;
   height: 100%;
-  display: block;
+  display: grid;
+  place-items: center;
+  cursor: grab;
+  animation: eggPop 0.34s cubic-bezier(.34,1.56,.64,1);
 }
 
-.isle-front { pointer-events: none; z-index: 3; }
+.egg-wrap.dragging { opacity: 0.3; }
 
-/* Ejderha: iki canvas katmaninin arasinda duran DOM parcasi */
-.dragon-slot {
-  position: absolute;
-  z-index: 2;
-  width: var(--w, 38%);
-  aspect-ratio: 1;
-  /* JS ada uzerindeki karonun ekran konumunu buraya yaziyor */
-  left: var(--dx, 50%);
-  top: var(--dy, 55%);
-  /* --cx: govde merkezinin kadraj icindeki yatay orani (art.js belirliyor).
-     Sabit -50% oldugunda, govde kadrajda ortadan kaydirilinca ejderha ada
-     uzerinde de kayiyor ve onundeki karonun agaclarinin arkasinda kaliyor. */
-  transform: translate(calc(-1 * var(--cx, 50%)), -78%);
+.egg-wrap.ready { animation: eggReady 1.9s ease-in-out infinite; }
+
+@keyframes eggPop { from { transform: scale(0.35); opacity: 0; } to { transform: none; opacity: 1; } }
+
+@keyframes eggReady {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-4px) scale(1.05); }
+}
+
+.drag-ghost {
+  position: fixed;
+  z-index: 40;
+  width: 74px;
+  height: 74px;
+  margin: -37px 0 0 -37px;
   pointer-events: none;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.6));
+  transform: scale(1.12);
+}
+
+.merge-burst {
+  position: absolute;
+  inset: -20%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 226, 160, 0.75) 0%, rgba(255, 150, 60, 0.35) 40%, transparent 68%);
+  animation: burst 0.5s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes burst {
+  from { transform: scale(0.35); opacity: 1; }
+  to { transform: scale(1.9); opacity: 0; }
+}
+
+/* ---------- DUGMELER ---------- */
+
+.grid-actions { display: flex; gap: 10px; }
+
+.act-btn {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 15px;
+  background: linear-gradient(180deg, rgba(56, 63, 84, 0.95), rgba(28, 33, 47, 0.95));
+  box-shadow: var(--golge), inset 0 1px 0 rgba(255, 255, 255, 0.13);
+  color: var(--yazi);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+}
+
+.act-btn b:empty { display: none; }
+
+.act-btn b {
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--altin-acik);
+  font-variant-numeric: tabular-nums;
+}
+
+.act-btn.primary {
+  border-color: rgba(240, 187, 82, 0.55);
+  background: linear-gradient(180deg, #c8362f 0%, #8e1f28 55%, #6a141d 100%);
+  box-shadow:
+    var(--golge),
+    inset 0 1px 0 rgba(255, 210, 160, 0.35),
+    0 0 18px rgba(200, 54, 47, 0.25);
+  color: #fff2dc;
+}
+
+.act-btn img { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)); }
+
+.act-btn:disabled { opacity: 0.42; cursor: default; box-shadow: none; }
+
+.act-btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+/* ---------- EJDERHA EKRANI ---------- */
+
+.slot-strip {
+  display: flex;
+  gap: 9px;
+  justify-content: center;
+  padding-bottom: 2px;
+}
+
+.slot {
+  position: relative;
+  flex: none;
+  width: 70px;
+  height: 70px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(38, 44, 62, 0.8), rgba(16, 20, 30, 0.8));
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.55);
+  cursor: pointer;
+}
+
+.slot.is-on {
+  border-color: var(--altin);
+  box-shadow: 0 0 16px rgba(240, 187, 82, 0.35), inset 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.slot .mini { width: 84%; height: 84%; }
+
+.slot.empty {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.22);
+  color: var(--soluk);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.slot.locked {
+  color: var(--soluk);
+  border-style: dashed;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.slot svg { width: 22px; height: 22px; }
+
+.stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 260px;
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+/* Ejderhanin altindaki isikli tas zemin */
+.stage-glow {
+  position: absolute;
+  bottom: 26px;
+  width: 62%;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 150, 60, 0.28) 0%, rgba(0, 0, 0, 0.55) 55%, transparent 72%);
+  filter: blur(2px);
 }
 
 .dragon-art {
   position: relative;
-  z-index: 1;
-  width: 100%;
-  animation: idle-bob 3.4s ease-in-out infinite;
+  width: 232px;
+  height: 232px;
+  filter: drop-shadow(0 16px 22px rgba(0, 0, 0, 0.55));
+  animation: idle 3.6s ease-in-out infinite;
 }
 
-.dragon-art svg { width: 100%; height: auto; display: block; overflow: visible; }
+.dragon-art svg { width: 100%; height: 100%; }
 
-@keyframes idle-bob { 50% { transform: translateY(-6px); } }
-
-/* Dokununca / oynayinca / beslenince */
-.island.poked .dragon-art { animation: poke 0.5s ease-out; }
-
-@keyframes poke {
-  0%   { transform: translateY(0) scale(1) rotate(0deg); }
-  30%  { transform: translateY(-13px) scale(1.04) rotate(-3deg); }
-  65%  { transform: translateY(0) scale(0.98) rotate(2deg); }
-  100% { transform: translateY(0) scale(1) rotate(0deg); }
+@keyframes idle {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.012); }
 }
 
-.island.fed { animation: fed-glow 0.6s ease-out; }
-@keyframes fed-glow { 40% { box-shadow: inset 0 0 52px 0 rgba(245, 185, 66, 0.40); } }
+.dragon-art.eating { animation: chew 0.4s ease 3; }
 
-.island.levelup { animation: levelup-flash 0.9s ease-out; }
-@keyframes levelup-flash { 30% { box-shadow: inset 0 0 72px 0 rgba(110, 231, 168, 0.5); } }
-
-.island.playing .dragon-art { animation: play-hop 0.9s ease-out; }
-
-@keyframes play-hop {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  20% { transform: translateY(-22px) rotate(-6deg); }
-  45% { transform: translateY(0) rotate(4deg); }
-  70% { transform: translateY(-12px) rotate(-3deg); }
+@keyframes chew {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06, 0.94); }
 }
 
-/* --- Satin alinan animasyon efektleri --- */
+.fly-food { position: absolute; width: 50px; height: 50px; z-index: 3; pointer-events: none; }
 
-/* Efekt katmani ejderhanin ONUNDE duruyor. Arkada oldugunda parcaciklarin
-   cogu govdenin arkasinda kayboluyordu; onde olunca alev govdeyi yalayip
-   geciyor ve satin alinan sey gercekten goruluyor. */
-.fx { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: visible; }
+.floaters { position: absolute; inset: 0; pointer-events: none; }
 
-/* Her parcacik bir SVG kabi. Renk 'color' ile geliyor, sekiller
-   currentColor kullaniyor - tek yerden renklendirmek icin. */
-.fx .p {
-  position: absolute;
-  display: block;
-  opacity: 0;
-  animation-duration: var(--dur, 3s);
-  animation-delay: var(--delay, 0s);
-  animation-iteration-count: infinite;
-  will-change: transform, opacity;
-}
-
-.fx .p svg { width: 100%; height: auto; display: block; }
-
-/* Kor: hafifce savrularak yukselir ve titrer */
-.fx .p.ember {
-  animation-name: kor-yuksel;
-  animation-timing-function: linear;
-  filter: drop-shadow(0 0 4px currentColor);
-}
-
-@keyframes kor-yuksel {
-  0%   { opacity: 0; transform: translate(0, 0) scale(0.5); }
-  12%  { opacity: 1; }
-  55%  { opacity: 0.85; }
-  100% { opacity: 0; transform: translate(var(--dx, 0), -105px) scale(0.25); }
-}
-
-/* Alev dili: yukselirken uzayip incelir */
-.fx .p.flame {
-  animation-name: alev-yuksel;
-  animation-timing-function: ease-out;
-  transform-origin: 50% 100%;
-  filter: drop-shadow(0 0 6px currentColor);
-}
-
-@keyframes alev-yuksel {
-  0%   { opacity: 0; transform: translate(0, 0) scale(0.5, 0.4); }
-  18%  { opacity: 0.95; transform: translate(0, -14px) scale(1, 1); }
-  60%  { opacity: 0.8; transform: translate(calc(var(--dx, 0px) * 0.5), -48px) scale(0.8, 1.25); }
-  100% { opacity: 0; transform: translate(var(--dx, 0), -86px) scale(0.3, 0.6); }
-}
-
-/* Simsek: yerinde carpar, iki kez cakip soner */
-.fx .p.bolt {
-  animation-name: simsek-cak;
-  animation-timing-function: steps(1, end);
-  filter: drop-shadow(0 0 7px currentColor);
-}
-
-@keyframes simsek-cak {
-  0%, 100% { opacity: 0; transform: scale(0.9); }
-  3%       { opacity: 1; transform: scale(1.1); }
-  7%       { opacity: 0.15; }
-  11%      { opacity: 0.95; transform: scale(1); }
-  16%      { opacity: 0; }
-}
-
-/* Yildiz: donerek parildar ve soner */
-.fx .p.star {
-  animation-name: yildiz-parilda;
-  animation-timing-function: ease-in-out;
-  filter: drop-shadow(0 0 5px currentColor);
-}
-
-@keyframes yildiz-parilda {
-  0%, 100% { opacity: 0; transform: scale(0.2) rotate(0deg); }
-  50%      { opacity: 1; transform: scale(1) rotate(80deg); }
-}
-
-/* Hale (celestial, mythic seviye): ejderhanin ust govdesini saran yumusak
-   isik + onun cevresinde yavasca yorungede donen yildizlar. Eskiden
-   ayaklarin altinda yassi, donen bir buyu cemberiydi - "havada suzulen"
-   yerine "yerde takili duran bir cember" gibi durup ucuz gorunuyordu.
-   Simdi isik govdenin ustunde, yildizlar govdenin cevresinde 3D bir
-   yorungedeymis hissi verecek sekilde donuyor (ayni aci/zamanlamada
-   donen scale+opacity ikilisi "onden geciyor / arkaya gidiyor" hissini
-   veriyor - gercek 3D degil ama goze oyle okunuyor). */
-.fx.halo::before {
-  content: '';
+.floaters span {
   position: absolute;
   left: 50%;
-  top: 38%;
-  width: 92%;
-  aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--aura, #ffe9a8) 0%, transparent 62%);
-  opacity: 0.22;
-  animation: hale-nabiz 3.2s ease-in-out infinite;
+  bottom: 44%;
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--altin-acik);
+  text-shadow: 0 2px 8px #000;
+  animation: floatUp 1.2s ease-out forwards;
 }
 
-@keyframes hale-nabiz {
-  50% { opacity: 0.38; transform: translate(-50%, -50%) scale(1.08); }
+@keyframes floatUp {
+  from { transform: translate(-50%, 0) scale(0.9); opacity: 1; }
+  to { transform: translate(-50%, -62px) scale(1.1); opacity: 0; }
 }
 
-.fx .halo-glow {
-  position: absolute;
-  left: 50%;
-  top: 30%;
-  width: 60%;
-  aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--aura, #ffe9a8) 0%, transparent 70%);
-  opacity: 0.4;
-  animation: hale-nabiz 3.2s ease-in-out infinite reverse;
+/* Cam panel: kart zeminleri */
+.dragon-card,
+.task,
+.empty-note {
+  border: 1px solid var(--kenar);
+  border-radius: 18px;
+  background: var(--kart);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--golge), inset 0 1px 0 var(--kart-ust);
 }
 
-/* Yorungedeki yildizlar: her biri kendi yaricapinda tam tur atiyor, ayni
-   sure/gecikmeyle esleşen opaklik dongusu "onde parlak / arkada sonuk"
-   hissini veriyor. scale(1, .4) yorungeyi govdeyi saran bir elipse
-   yassiltiyor, ic scale(1, 2.5) yildizin kendisini geri sikistirmadan
-   duz tutuyor. */
-.fx .halo-orbit {
-  position: absolute;
-  left: 50%;
-  top: 42%;
-  width: 0;
-  height: 0;
-}
+.dragon-card { padding: 13px 15px; }
 
-.fx .halo-orbit .halo-star {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 9px;
-  height: 9px;
-  margin: -4.5px 0 0 -4.5px;
-  color: var(--aura, #ffe9a8);
-  filter: drop-shadow(0 0 5px var(--aura, #ffe9a8));
-  animation-name: halo-orbit-don, halo-orbit-parilda;
-  animation-timing-function: linear, linear;
-  animation-iteration-count: infinite, infinite;
-  animation-duration: var(--orbit-dur, 9s);
-  animation-delay: var(--orbit-delay, 0s);
-}
+.dragon-line { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 
-.fx .halo-orbit .halo-star svg { width: 100%; height: 100%; display: block; }
+.dragon-name { font-size: 16.5px; font-weight: 800; letter-spacing: 0.2px; }
 
-@keyframes halo-orbit-don {
-  from { transform: rotate(0deg) translateX(var(--orbit-r, 60px)) rotate(0deg) scale(1, 0.4); }
-  to   { transform: rotate(360deg) translateX(var(--orbit-r, 60px)) rotate(-360deg) scale(1, 0.4); }
-}
-
-@keyframes halo-orbit-parilda {
-  0%, 100% { opacity: 0.32; }
-  50%      { opacity: 1; }
-}
-
-/* Ucusan yazilar (+1 XP, Seviye 12!) */
-.floaters { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
-
-.floater {
-  position: absolute;
-  left: 50%;
-  top: 42%;
+.dragon-lv {
+  padding: 2px 9px;
+  border: 1px solid rgba(240, 187, 82, 0.35);
+  border-radius: 99px;
+  background: rgba(240, 187, 82, 0.12);
+  font-size: 12px;
   font-weight: 800;
-  font-size: 19px;
-  color: #fff;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
-  white-space: nowrap;
-  animation: floater-up 0.9s ease-out forwards;
+  color: var(--altin-acik);
 }
 
-@keyframes floater-up {
-  from { opacity: 1; transform: translate(-50%, -50%); }
-  to { opacity: 0; transform: translate(-50%, -170%); }
+.xp-row { display: flex; align-items: center; gap: 9px; margin-top: 11px; }
+
+.bar {
+  flex: 1;
+  height: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.45);
+  overflow: hidden;
 }
-
-/* --- EJDERHA KUNYESI --- */
-
-.dragon-card { width: 100%; max-width: 380px; margin: 0 auto; }
-
-.dragon-line {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 7px;
-}
-
-.dragon-name { font-size: 15px; }
-.dragon-lv { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
-
-.xp-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 10px; }
-
-.bar { height: 9px; border-radius: 999px; background: rgba(255, 255, 255, 0.09); overflow: hidden; }
 
 .bar i {
   display: block;
   height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #6ee7a8, #2fa06a);
+  border-radius: 99px;
+  background: linear-gradient(90deg, #8a5f18, var(--altin) 55%, var(--altin-acik));
+  box-shadow: 0 0 10px rgba(240, 187, 82, 0.45);
   transition: width 0.35s ease;
 }
 
-.bar-value { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 40px; text-align: right; }
+.bar-value { font-size: 11.5px; color: var(--soluk); font-variant-numeric: tabular-nums; }
 
-.stat-row { display: flex; gap: 16px; margin-top: 7px; font-size: 12px; color: var(--muted); }
-.stat b { color: var(--text); font-variant-numeric: tabular-nums; }
-.stat b.low { color: #e2685e; }
+.stat-row { display: flex; gap: 18px; margin-top: 10px; font-size: 12.5px; color: var(--soluk); }
 
-.dragon-card .hint { margin-top: 8px; }
-.hint.warn { color: #e2685e; }
+.stat b { color: var(--yazi); }
+.stat b.low { color: var(--kirmizi-acik); }
 
-/* --- Butonlar --- */
-
-.controls[hidden] { display: none; }
-.btn.feed { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
-/* Onceden '◆' karakteriydi - artik Scenario'da uretilmis $MH coin gorseli.
-   content:url() cogu tarayicida boyutu yok sayip gorseli kendi cozunurlugunde
-   basiyor; boyle bir olcekli, gormezden gelinemeyen ikon icin arka plan
-   gorseli olan bos bir kutu daha guvenilir. */
-.btn.feed b::before {
-  content: '';
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  margin-right: 4px;
-  vertical-align: -2px;
-  background: url('../../assets/coin.png') center/contain no-repeat;
-  opacity: 0.9;
-}
-
-/* Fiyat etiketlerinin (dukkan/deneme cubugu) onundeki coin - artik <img> */
-.coin-ic {
-  width: 13px;
-  height: 13px;
-  vertical-align: -1px;
-  margin-right: 1px;
-}
-.btn:disabled { opacity: 0.45; }
-
-/* game.css'teki .btn flex:1 aliyor - kolon yerlesiminde bu onu dikey olarak
-   buyutuyordu, o yuzden burada sabitleniyor. */
-.back-link {
-  flex: none;
-  display: block;
+.empty-note {
+  margin: 0;
+  padding: 18px;
   text-align: center;
-  margin-top: 8px;
-  font-size: 13px;
-  padding: 9px;
+  font-size: 13.5px;
+  color: var(--soluk);
 }
 
-/* --- KOZMETIK PANELI --- */
+/* ---------- GOREVLER ---------- */
 
-.panel { width: 100%; max-width: 380px; margin: 0 auto; flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: none; }
-.panel[hidden] { display: none; }
-.panel::-webkit-scrollbar { display: none; }
+.task-list { display: flex; flex-direction: column; gap: 10px; }
 
-/* MARKET ONIZLEMESI
+.task { display: flex; align-items: center; gap: 12px; padding: 12px; }
 
-   Dukkan aciktken sahne degil EJDERHA one cikar: ada katmanlari gizlenir,
-   ejderha kutunun ortasinda buyuk durur. Boylece kanat, tac ve yuz
-   detaylari satin almadan once gercekten gorulebiliyor. Idle animasyonu
-   devam eder. */
-body.shop-open .island {
-  max-width: 260px;
-  aspect-ratio: 1 / 0.78;
-  background:
-    radial-gradient(62% 52% at 50% 46%, rgba(255, 255, 255, 0.08), transparent 72%),
-    linear-gradient(180deg, #1b1733 0%, #120f22 100%);
-}
-
-/* Ada onizlemesinde gercek sahne gorunuyor: kutuyu oyundakiyle ayni en/boy
-   oranina dondur, yoksa fotograf gerilip bozuk gorunuyor. */
-body.shop-open.island-preview .island {
-  aspect-ratio: 1 / 0.92;
-}
-
-body.shop-open .isle-layer { display: none; }
-body.shop-open .dragon-card { display: none; }
-
-/* Konumlandirmayi JS degil CSS devralir: tam ortada ve buyuk.
-   SVG'nin overflow'u gorunur oldugu icin cizim cercevenin disina cikabiliyor.
-   En yuksek tac (Semavi/celestial) hala ustten tasiyordu (top:52%,
-   width:75%'te bile) - ejderha biraz daha kucultulup asagi indirildi. */
-body.shop-open .dragon-slot {
-  left: 50% !important;
-  top: 60% !important;
-  width: 64% !important;
-  transform: translate(-50%, -50%);
-}
-
-/* ADA ONIZLEMESI
-
-   Ada denenirken tersi gerekiyor: sahne gorunmeli, ejderha kendi karosunda
-   normal boyutunda durmali. Yoksa ada secildiginde ekranda hicbir sey
-   degismiyor. */
-body.shop-open.island-preview .isle-layer { display: block; }
-
-body.shop-open.island-preview .dragon-slot {
-  left: var(--dx, 50%) !important;
-  top: var(--dy, 55%) !important;
-  width: var(--w, 38%) !important;
-  transform: translate(calc(-1 * var(--cx, 50%)), -78%);
-}
-
-.shop-msg { margin: 0 0 10px; }
-.shop-msg[hidden] { display: none; }
-
-.shop-group { margin-bottom: 13px; }
-
-.shop-title {
-  margin: 0 0 7px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.6px;
-  color: var(--muted);
-}
-
-.shop-row {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  scrollbar-width: none;
-}
-
-.shop-row::-webkit-scrollbar { display: none; }
-
-.shop-item {
+.task-icon {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
   flex: none;
-  width: 82px;
-  padding: 8px 6px 7px;
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 14px;
-  background: var(--bg-soft);
-  color: var(--text);
-  font: inherit;
+  background: radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.10), rgba(0, 0, 0, 0.45));
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.task-icon img { width: 32px; height: 32px; object-fit: contain; filter: drop-shadow(0 3px 5px rgba(0,0,0,.5)); }
+
+.task-body { flex: 1; min-width: 0; }
+
+.task-title { font-size: 14px; font-weight: 800; }
+
+.task-prog { display: flex; align-items: center; gap: 9px; margin-top: 7px; }
+.task-prog .bar { height: 7px; }
+.task-prog span { font-size: 11px; color: var(--soluk); font-variant-numeric: tabular-nums; }
+
+.task-prog .odul { display: inline-flex; align-items: center; gap: 3px; color: var(--altin-acik); font-weight: 800; }
+.task-prog .odul img { width: 14px; height: 14px; object-fit: contain; }
+
+.task-claim {
+  flex: none;
+  min-height: 38px;
+  padding: 0 15px;
+  border: 1px solid rgba(240, 187, 82, 0.5);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #c8362f, #7e1a23);
+  box-shadow: inset 0 1px 0 rgba(255, 210, 160, 0.3);
+  color: #fff2dc;
+  font-size: 13px;
+  font-weight: 900;
   cursor: pointer;
+}
+
+.task-claim:not(:disabled) { animation: claimPulse 1.8s ease-in-out infinite; }
+
+@keyframes claimPulse {
+  0%, 100% { box-shadow: inset 0 1px 0 rgba(255,210,160,.3), 0 0 0 rgba(240,187,82,0); }
+  50% { box-shadow: inset 0 1px 0 rgba(255,210,160,.3), 0 0 16px rgba(240,187,82,.45); }
+}
+
+.task-claim:disabled {
+  border-color: var(--kenar);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: none;
+  color: var(--soluk);
+  cursor: default;
+  animation: none;
+}
+
+.task.done { opacity: 0.5; }
+
+/* ---------- ALT SEKME CUBUGU ---------- */
+
+.tabbar {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px calc(9px + env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(20, 24, 36, 0.92), rgba(9, 11, 17, 0.98));
+  backdrop-filter: blur(12px);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.tab {
+  position: relative;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  transition: transform 0.12s ease, border-color 0.15s ease;
+  gap: 4px;
+  padding: 8px 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 15px;
+  background: none;
+  color: var(--soluk);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: transform 0.18s ease, color 0.18s ease;
 }
 
-.shop-item:active { transform: scale(0.96); }
-.shop-item.on { border-color: rgba(245, 185, 66, 0.75); box-shadow: 0 0 0 1px rgba(245, 185, 66, 0.35) inset; }
-.shop-item.trying { border-color: rgba(245, 185, 66, 0.9); border-style: dashed; }
-.shop-item.locked { opacity: 0.5; }
+.tab svg { width: 23px; height: 23px; fill: currentColor; }
+.tab img { width: 25px; height: 25px; opacity: 0.45; filter: grayscale(0.8); transition: 0.18s ease; }
 
-/* Nadirlik noktasi: fiyat kademesi bir bakista anlasilsin */
-.rar-dot {
+.tab.is-on {
+  color: var(--altin-acik);
+  border-color: rgba(240, 187, 82, 0.35);
+  background: linear-gradient(180deg, rgba(240, 187, 82, 0.18), rgba(240, 187, 82, 0.05));
+  box-shadow: 0 0 18px rgba(240, 187, 82, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  transform: translateY(-3px);
+}
+
+.tab.is-on img { opacity: 1; filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.6)); }
+
+.tab-dot {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 7px;
-  height: 7px;
+  top: 5px;
+  right: 20%;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
-  background: var(--rar, #9aa2b5);
-  box-shadow: 0 0 5px var(--rar, #9aa2b5);
+  background: var(--kirmizi-acik);
+  box-shadow: 0 0 0 2px #0d1018, 0 0 10px rgba(226, 96, 108, 0.8);
 }
 
-.shop-item { position: relative; }
+/* ---------- TUTORIAL ---------- */
 
-/* Kanat/kolye kutucugu: ejderhanin tamami degil, o parcanin bulundugu
-   bolge buyutulup kirpiliyor. 200 birimlik kadrajdan ilgili pencereyi
-   gostermek icin svg buyutulup kaydiriliyor. */
-.swatch.zoom { width: 46px; height: 42px; background: rgba(255, 255, 255, 0.05); }
-.swatch.zoom svg { position: absolute; display: block; }
+.tut {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 12px calc(16px + env(safe-area-inset-bottom));
+  pointer-events: none;
+}
 
-/* Onden bakan poza gore yeniden olculdu (kanat artik iki omuzdan simetrik
-   aciliyor, sag omuzdaki kopya gosteriliyor). Pencere = [x0,x1]x[y0,y1]
-   viewbox birimi, zoom = 46 / (x1-x0), svg boyu = 200*zoom, left/top = -x0*zoom / -y0*zoom. */
-.swatch.zoom.wings svg { width: 80px; height: 80px; left: -34px; top: -22px; }
+.tut-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 8, 13, 0.72);
+  pointer-events: auto;
+  transition: clip-path 0.3s ease;
+}
 
-/* Kolye: boyunda, cenenin hemen altinda. */
-.swatch.zoom.necklace svg { width: 108px; height: 108px; left: -27px; top: -49px; }
+.tut-mask.has-hole {
+  clip-path: polygon(
+    0 0, 100% 0, 100% 100%, 0 100%, 0 0,
+    var(--hx1) var(--hy1), var(--hx1) var(--hy2),
+    var(--hx2) var(--hy2), var(--hx2) var(--hy1), var(--hx1) var(--hy1)
+  );
+}
 
-/* Tac: kafanin tepesi, boynuzlarin arasi. */
-.swatch.zoom.head svg { width: 123px; height: 123px; left: -34px; top: -6px; }
-
-/* Yuz: gozlerin ve yanaklarin oldugu dar bant. */
-.swatch.zoom.face svg { width: 200px; height: 200px; left: -68px; top: -52px; }
-
-.swatch {
+.tut-row {
   position: relative;
-  width: 40px;
-  height: 40px;
-  border-radius: 11px;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: auto;
+  animation: tutIn 0.32s cubic-bezier(.34,1.3,.64,1);
+}
+
+@keyframes tutIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
+.tut-wizard {
+  width: 138px;
+  height: 138px;
+  flex: none;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.75));
+  animation: wizBob 3s ease-in-out infinite;
+}
+
+@keyframes wizBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+.tut-bubble {
+  position: relative;
+  flex: 1;
+  padding: 14px 15px;
+  border: 1px solid rgba(240, 187, 82, 0.45);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(44, 51, 72, 0.97), rgba(26, 31, 45, 0.97));
+  box-shadow: var(--golge), inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+.tut-bubble::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  bottom: 28px;
+  width: 15px;
+  height: 15px;
+  transform: rotate(45deg);
+  border-left: 1px solid rgba(240, 187, 82, 0.45);
+  border-bottom: 1px solid rgba(240, 187, 82, 0.45);
+  background: rgba(38, 44, 64, 0.97);
+}
+
+.tut-bubble p { margin: 0; font-size: 14px; line-height: 1.5; }
+
+.tut-next {
+  margin-top: 11px;
+  min-height: 38px;
+  padding: 0 18px;
+  border: 1px solid rgba(240, 187, 82, 0.5);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #c8362f, #7e1a23);
+  box-shadow: inset 0 1px 0 rgba(255, 210, 160, 0.3);
+  color: #fff2dc;
+  font-size: 13.5px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+/* ---------- YUMURTA ACILMA ---------- */
+
+.hatch {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
   display: grid;
   place-items: center;
-  overflow: hidden;
+  background: radial-gradient(60% 45% at 50% 45%, rgba(255, 150, 60, 0.16), transparent 70%),
+              rgba(6, 8, 13, 0.85);
 }
 
-.swatch svg { position: relative; width: 30px; height: 30px; display: block; }
-
-.island-swatch img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-.shop-name { font-size: 10.5px; line-height: 1.2; text-align: center; }
-.shop-price { font-size: 10.5px; font-weight: 800; color: var(--gold-yazi); font-variant-numeric: tabular-nums; }
-.shop-price.owned { color: var(--muted); font-weight: 600; }
-.shop-need { font-size: 10px; color: var(--muted); }
-
-/* --- Deneme cubugu --- */
-
-.try-bar {
+.hatch-box {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 7px;
-  margin: 8px 0 2px;
-  padding: 8px 9px;
-  border-radius: 14px;
-  border: 1px solid rgba(245, 185, 66, 0.4);
-  background: rgba(245, 185, 66, 0.08);
+  gap: 12px;
+  padding: 24px 28px;
+  border: 1px solid rgba(240, 187, 82, 0.45);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(44, 51, 72, 0.98), rgba(22, 27, 40, 0.98));
+  box-shadow: var(--golge), 0 0 40px rgba(240, 187, 82, 0.15);
+  animation: hatchIn 0.4s cubic-bezier(.34,1.4,.64,1);
 }
 
-.try-bar[hidden] { display: none; }
-.try-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.try-line { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
-
-.try-rar {
-  flex: none;
-  font-size: 9.5px;
-  font-weight: 800;
-  letter-spacing: .4px;
-  text-transform: uppercase;
-  color: var(--rar, #9aa2b5);
+@keyframes hatchIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: none; opacity: 1; }
 }
 
-.try-bar { border-color: rgba(245, 185, 66, 0.55); }
-.try-bar { border-color: color-mix(in srgb, var(--rar, #f5b942) 55%, transparent); }
-
-.try-name {
-  font-size: 12.5px;
-  font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.hatch-art {
+  width: 186px;
+  height: 186px;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
+  animation: idle 3.4s ease-in-out infinite;
 }
 
-.try-note { font-size: 11px; color: var(--muted); }
-.try-note.warn { color: #e2685e; }
+.hatch-art svg { width: 100%; height: 100%; }
 
-.try-btn {
-  flex: none;
-  padding: 8px 11px;
-  border: 0;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.10);
-  color: var(--text);
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
+.hatch-box h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.6px;
+  background: linear-gradient(180deg, #fff3d4, var(--altin));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
-.try-btn.buy { background: var(--gold, #f5b942); color: #221a06; }
-.try-btn.buy:disabled { background: rgba(255, 255, 255, 0.08); color: var(--muted); cursor: default; }
-.try-btn:active { transform: scale(0.96); }
+.hatch-box p { margin: 0; font-size: 13.5px; color: var(--soluk); text-align: center; }
 
+/* ---------- BAKIM ---------- */
 
-/* --- BESLEME ANIMASYONU ---
+.maint {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 14px;
+  height: 100dvh;
+  padding: 24px;
+  text-align: center;
+  background: #0d1018;
+  color: #f2f4fb;
+}
 
-   Yem butonun oldugu alttan cikip ejderhaya ucuyor, ejderha onu yiyor.
-   Tum dizi ~0.9 saniye: geri bildirim aninda hissedilsin ama oyuncuyu
-   bekletmesin. */
+.maint img { width: 100px; height: 100px; opacity: 0.9; }
+.maint p { margin: 0; font-size: 14px; color: #97a0bb; }
 
-.food {
+/* ---------- KUCUK EKRAN ---------- */
+
+@media (max-height: 720px) {
+  .stage { min-height: 208px; }
+  .dragon-art { width: 190px; height: 190px; }
+  .board { --hucre: 64px; }
+  .tut-wizard { width: 112px; height: 112px; }
+  .screen-head h2 { font-size: 20px; }
+}
+
+/* ---------- KILITLI HUCRE ---------- */
+
+.cell.locked {
+  background:
+    repeating-linear-gradient(135deg, rgba(255,255,255,.03) 0 7px, rgba(0,0,0,.14) 7px 14px),
+    rgba(8, 10, 16, 0.7);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07), inset 0 2px 8px rgba(0,0,0,.7);
+}
+
+/* Icindeki odul silik gorunuyor: "ne aldigini" gosterip merak uyandiriyor */
+.cell.locked .peek {
+  width: 74%;
+  height: 74%;
+  object-fit: contain;
+  opacity: 0.3;
+  filter: grayscale(0.55) brightness(0.8);
+}
+
+.cell.locked .lock {
   position: absolute;
-  z-index: 5;
-  left: 50%;
-  bottom: 4%;
-  width: 17%;
-  max-width: 62px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  color: rgba(240, 187, 82, 0.85);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.8));
+}
+
+.cell.locked .lock svg { width: 20px; height: 20px; }
+
+/* ---------- DOLU YUMURTA ISARETI ---------- */
+
+.piece {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  cursor: grab;
+}
+
+.piece.dragging { opacity: 0.3; }
+
+.piece img {
+  width: 94%;
+  height: 94%;
+  object-fit: contain;
   pointer-events: none;
-  transform: translate(-50%, 0) scale(0.7);
-  animation: yem-ucus 0.62s cubic-bezier(0.4, 0, 0.5, 1) forwards;
+  filter: drop-shadow(0 4px 7px rgba(0, 0, 0, 0.6));
 }
 
-.food[hidden] { display: none; }
-.food svg { width: 100%; height: auto; display: block; }
-
-@keyframes yem-ucus {
-  0%   { opacity: 0; transform: translate(-50%, 0) scale(0.55) rotate(-18deg); }
-  15%  { opacity: 1; }
-  70%  { opacity: 1; transform: translate(-50%, calc(var(--ucus, -120px) * 0.8)) scale(1) rotate(10deg); }
-  100% { opacity: 0; transform: translate(-50%, var(--ucus, -120px)) scale(0.35) rotate(24deg); }
-}
-
-/* Ejderha yemi yiyor: one egilip agzini kapatiyor */
-.island.eating .dragon-art { animation: yeme 0.5s ease-out; }
-
-@keyframes yeme {
-  0%   { transform: translateY(0) scaleY(1); }
-  25%  { transform: translateY(3px) scaleY(0.94) scaleX(1.03); }
-  55%  { transform: translateY(-4px) scaleY(1.05) scaleX(0.98); }
-  100% { transform: translateY(0) scaleY(1); }
-}
-
-/* Yeme aninda agizdan cikan kucuk kirinti parcaciklari */
-.crumbs {
+.ready-dot {
   position: absolute;
-  z-index: 5;
-  left: 50%;
-  top: 46%;
-  pointer-events: none;
-}
-
-.crumbs i {
-  position: absolute;
-  width: 5px;
-  height: 5px;
+  top: 2px;
+  right: 2px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
-  background: #e07a44;
-  animation: kirinti 0.5s ease-out forwards;
+  background: radial-gradient(circle at 35% 30%, #fff6d8, var(--altin));
+  box-shadow: 0 0 10px rgba(240, 187, 82, 0.9);
+  animation: dotPulse 1.4s ease-in-out infinite;
 }
 
-@keyframes kirinti {
-  0%   { opacity: 1; transform: translate(0, 0) scale(1); }
-  100% { opacity: 0; transform: translate(var(--kx), var(--ky)) scale(0.3); }
+@keyframes dotPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 0.75; }
 }
 
-/* Buz nefesi: yavasca suzulup erir */
-.fx .p.frost {
-  animation-name: buz-suzul;
-  animation-timing-function: linear;
-  filter: drop-shadow(0 0 4px currentColor);
+/* ---------- ALT PENCERE ---------- */
+
+.sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 56;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px 14px calc(16px + env(safe-area-inset-bottom));
+  background: rgba(6, 8, 13, 0.7);
+  animation: fadeIn 0.2s ease;
 }
 
-@keyframes buz-suzul {
-  0%   { opacity: 0; transform: translate(0, 0) scale(0.4) rotate(0deg); }
-  15%  { opacity: 0.95; }
-  100% { opacity: 0; transform: translate(var(--dx, 0), -78px) scale(0.9) rotate(160deg); }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.sheet-box {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 18px 16px;
+  border: 1px solid rgba(240, 187, 82, 0.35);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(44, 51, 72, 0.98), rgba(22, 27, 40, 0.98));
+  box-shadow: var(--golge), 0 0 36px rgba(240, 187, 82, 0.12);
+  animation: sheetIn 0.28s cubic-bezier(.34,1.3,.64,1);
 }
 
-/* Golge sisi: ayaklarin dibinde yatay suzulur, yukselmez */
-.fx .p.mist {
-  animation-name: sis-kay;
-  animation-timing-function: ease-in-out;
-  filter: blur(2px);
+@keyframes sheetIn {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: none; opacity: 1; }
 }
 
-@keyframes sis-kay {
-  0%, 100% { opacity: 0; transform: translate(0, 0) scaleX(0.6); }
-  30%      { opacity: 0.55; }
-  70%      { opacity: 0.4; transform: translate(var(--dx, 0), -6px) scaleX(1.15); }
+.sheet-icon {
+  width: 92px;
+  height: 92px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.55));
 }
 
-/* Kozmik zerre: yavas yukselirken nabiz gibi parlar */
-.fx .p.cosmic {
-  animation-name: kozmik-suzul;
-  animation-timing-function: ease-in-out;
-  filter: drop-shadow(0 0 6px currentColor);
+.sheet-box h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  background: linear-gradient(180deg, #fff3d4, var(--altin));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
-@keyframes kozmik-suzul {
-  0%   { opacity: 0; transform: translate(0, 0) scale(0.4); }
-  20%  { opacity: 0.9; transform: scale(1); }
-  60%  { opacity: 0.6; transform: translate(calc(var(--dx, 0px) * 0.6), -46px) scale(0.8); }
-  100% { opacity: 0; transform: translate(var(--dx, 0), -88px) scale(0.3); }
+.sheet-rows { text-align: center; }
+.sheet-rows p { margin: 3px 0; font-size: 13.5px; color: var(--yazi); }
+.sheet-rows .odul-satir { color: var(--altin-acik); }
+
+.sheet-hint {
+  margin: 2px 0 0;
+  padding: 7px 12px;
+  border: 1px dashed rgba(240, 187, 82, 0.35);
+  border-radius: 12px;
+  font-size: 12.5px;
+  color: var(--altin-acik);
+  text-align: center;
 }
+
+.sheet-actions { display: flex; gap: 10px; width: 100%; margin-top: 6px; }
+
+.odul { display: inline-flex; align-items: center; gap: 4px; font-weight: 800; }
+.odul img { width: 16px; height: 16px; object-fit: contain; vertical-align: middle; }
+
+/* ---------- BILDIRIMLER ---------- */
+
+.prize {
+  position: fixed;
+  left: 50%;
+  top: 42%;
+  z-index: 58;
+  padding: 10px 20px;
+  border: 1px solid rgba(240, 187, 82, 0.5);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(48, 40, 20, 0.96), rgba(26, 20, 10, 0.96));
+  color: var(--altin-acik);
+  font-size: 16px;
+  font-weight: 900;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: prizeIn 1.6s ease forwards;
+}
+
+.prize.big {
+  font-size: 20px;
+  box-shadow: 0 0 40px rgba(240, 187, 82, 0.45);
+}
+
+@keyframes prizeIn {
+  0% { transform: translate(-50%, -30%) scale(0.7); opacity: 0; }
+  18% { transform: translate(-50%, -50%) scale(1.06); opacity: 1; }
+  75% { transform: translate(-50%, -54%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -76%) scale(0.98); opacity: 0; }
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + env(safe-area-inset-bottom));
+  z-index: 57;
+  max-width: 82vw;
+  padding: 10px 16px;
+  border: 1px solid var(--kenar);
+  border-radius: 14px;
+  background: rgba(20, 24, 36, 0.96);
+  box-shadow: var(--golge);
+  color: var(--yazi);
+  font-size: 13px;
+  text-align: center;
+  transform: translateX(-50%);
+  animation: toastIn 0.25s ease;
+}
+
+@keyframes toastIn {
+  from { transform: translate(-50%, 12px); opacity: 0; }
+  to { transform: translateX(-50%); opacity: 1; }
+}
+
+/* ---------- YUVA EKLERI ---------- */
+
+.slot.locked .mini { opacity: 0.35; filter: grayscale(0.7); }
+
+.slot-lock {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  color: rgba(240, 187, 82, 0.9);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.8));
+}
+
+.slot-lock svg { width: 22px; height: 22px; }
+
+.slot-buy {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--altin-acik);
+}
+
+.slot-buy img { width: 15px; height: 15px; object-fit: contain; }
+
+.dragon-art.dim { opacity: 0.45; filter: grayscale(0.6); }

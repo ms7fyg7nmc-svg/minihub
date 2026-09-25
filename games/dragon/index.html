@@ -12,121 +12,145 @@
       if (sessionStorage.getItem('mh_hub_open') !== '1') location.replace('../../index.html');
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="../../css/style.css?v113">
-  <link rel="stylesheet" href="../../css/game.css?v113">
-  <link rel="stylesheet" href="dragon.css?v113">
+  <link rel="stylesheet" href="../../css/style.css?v117">
+  <link rel="stylesheet" href="../../css/game.css?v117">
+  <link rel="stylesheet" href="dragon.css?v117">
 </head>
-<body class="game" data-i18n-title="title">
-  <div class="boot-loader" id="boot-loader">
-    <div class="boot-egg"></div>
-    <p class="boot-text" data-i18n="loading">Ejderha Adası yükleniyor</p>
-  </div>
-  <div class="app game-app">
+<body class="game dragon-app" data-i18n-title="title">
 
-    <header class="game-head">
-      <div>
-        <h1 class="game-title" data-i18n="title">Dragon Island</h1>
-        <p class="game-sub" id="stage-name">—</p>
-      </div>
-      <div class="scores">
-        <div class="score-box">
-          <span data-i18n="level">LEVEL</span>
-          <strong id="level">1</strong>
+  <!-- ACILIS EKRANI
+       Varliklar yuklenene kadar burada bekleniyor; boylece oyun yarim
+       cizilmis halde gorunmuyor. Yuzde, gercek yukleme ilerlemesi. -->
+  <div class="boot" id="boot">
+    <div class="boot-glow"></div>
+    <img class="boot-logo" src="../../assets/currency/mh-logo-256.webp" alt="" width="128" height="128">
+    <h1 class="boot-title" data-i18n="title">Dragon Island</h1>
+    <div class="boot-bar"><i id="boot-fill"></i></div>
+    <p class="boot-text" id="boot-text" data-i18n="loading">Yükleniyor</p>
+  </div>
+
+  <!-- Atmosfer: sahne arka plani + yukari suzulen korlar -->
+  <div class="sky" id="sky"></div>
+  <div class="embers"></div>
+
+  <div class="dragon-shell" id="shell" hidden>
+
+    <!-- UST BAR: kaynaklar -->
+    <header class="top-bar">
+      <button class="top-back" id="back-link" aria-label="Hub">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="res-row">
+        <div class="res" id="res-food">
+          <img src="../../assets/food/meat-64.webp" alt="" width="22" height="22">
+          <b id="food-value">0</b>
         </div>
-        <div class="score-box">
-          <span data-i18n="coins">$MH</span>
-          <strong id="coins">0</strong>
+        <div class="res" id="res-star">
+          <img src="../../assets/currency/star-64.webp" alt="" width="22" height="22">
+          <b id="star-value">0</b>
         </div>
       </div>
     </header>
 
-    <div class="game-mid">
+    <main class="screens" id="screens">
 
-      <!-- ADA SAHNESI
-           arka canvas -> ejderhanin arkasi, sonra ejderha, sonra on canvas.
-           Boylece ondeki agac gercekten ejderhanin onunden gecer. -->
-      <div class="island" id="island">
-        <canvas class="isle-layer" id="isle-back"></canvas>
-        <div class="dragon-slot" id="dragon-slot">
-          <div class="fx" id="fx"></div>
+      <!-- EKRAN 1: BIRLESTIRME IZGARASI -->
+      <section class="screen" id="screen-grid" data-screen="grid">
+        <div class="screen-head">
+          <h2 data-i18n="gridTitle">Yumurta Ocağı</h2>
+          <p data-i18n="gridHint">Aynı iki yumurtayı üst üste sürükle.</p>
+        </div>
+
+        <div class="board-wrap">
+          <div class="board" id="board"></div>
+        </div>
+
+      </section>
+
+      <!-- EKRAN 2: EJDERHA VE BESLEME -->
+      <section class="screen" id="screen-dragon" data-screen="dragon" hidden>
+        <div class="screen-head">
+          <h2 data-i18n="dragonTitle">Ejderhaların</h2>
+          <p data-i18n="dragonHint">Besledikçe bağın güçlenir.</p>
+        </div>
+
+        <div class="slot-strip" id="slot-strip"></div>
+
+        <div class="stage" id="stage">
+          <div class="stage-glow"></div>
           <div class="dragon-art" id="dragon-art"></div>
+          <div class="floaters" id="floaters"></div>
+          <img class="fly-food" id="fly-food" src="../../assets/food/meat-128.webp" alt="" hidden>
         </div>
-        <canvas class="isle-layer isle-front" id="isle-front"></canvas>
-        <div class="floaters" id="floaters"></div>
-        <!-- Besleme animasyonunda ejderhaya ucan yem -->
-        <div class="food" id="food" hidden>
-          <svg viewBox="0 0 40 32" aria-hidden="true">
-            <path d="M6 20 C2 16 4 9 10 8 C13 3 22 2 26 7 C33 6 38 12 35 18
-                     C33 23 26 26 18 25 C12 24 8 23 6 20 Z" fill="#c0562e"/>
-            <path d="M9 17 C7 14 9 10 13 10 C15 6 22 6 24 10 C30 9 33 13 31 17
-                     C29 20 23 22 17 21 C13 20 10 19 9 17 Z" fill="#e07a44"/>
-            <path d="M13 13 C15 11 19 11 21 13 C19 15 15 15 13 13 Z" fill="#f2a06a"/>
-            <path d="M30 20 L38 26 L34 30 L27 24 Z" fill="#e8e2d0"/>
-            <path d="M34 30 L38 26 L40 29 L36 32 Z" fill="#b9b09a"/>
-          </svg>
-        </div>
-      </div>
 
-      <!-- EJDERHA KUNYESI -->
-      <section class="dragon-card">
-        <div class="dragon-line">
-          <strong class="dragon-name" id="dragon-name">Dragon</strong>
-          <span class="dragon-lv" id="dragon-lv">Lv. 1</span>
-        </div>
-        <div class="xp-row">
-          <div class="bar xp"><i id="xp-fill"></i></div>
-          <span class="bar-value" id="xp-value">0/2</span>
-        </div>
-        <div class="stat-row">
-          <span class="stat"><span data-i18n="fullness">Fullness</span> <b id="hunger-value">100%</b></span>
-          <span class="stat"><span data-i18n="happiness">Mood</span> <b id="happy-value">100%</b></span>
-        </div>
-        <p class="hint" id="hint" data-i18n="hint">Earn $MH in the other games, then feed your dragon.</p>
-      </section>
-
-      <!-- KOZMETIK PANELI -->
-      <section class="panel" id="panel-shop" hidden>
-        <p class="hint shop-msg" id="shop-msg" hidden></p>
-
-        <!-- Deneme cubugu. Baslangicta burada durur ama dukkan cizilirken
-             JS onu DENENEN kategorinin altina tasir: fiyat ve "Satin al"
-             hep denenen parcanin yaninda kalsin diye. -->
-        <div class="try-bar" id="try-bar" hidden>
-          <div class="try-info">
-            <span class="try-line">
-              <span class="try-name" id="try-name"></span>
-              <span class="try-rar" id="try-rar"></span>
-            </span>
-            <span class="try-note" id="try-note"></span>
+        <div class="dragon-card" id="dragon-card">
+          <div class="dragon-line">
+            <strong class="dragon-name" id="dragon-name">Dragon</strong>
+            <span class="dragon-lv" id="dragon-lv">Lv. 1</span>
           </div>
-          <button class="try-btn buy" id="try-buy"></button>
-          <button class="try-btn" id="try-cancel" data-i18n="tryCancel">Cancel</button>
+          <div class="xp-row">
+            <div class="bar xp"><i id="xp-fill"></i></div>
+            <span class="bar-value" id="xp-value">0/2</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat"><span data-i18n="fullness">Doyum</span> <b id="hunger-value">100%</b></span>
+            <span class="stat"><span data-i18n="happiness">Keyif</span> <b id="happy-value">100%</b></span>
+          </div>
         </div>
 
-        <div id="shop"></div>
+        <div class="grid-actions">
+          <button class="act-btn primary" id="feed-btn">
+            <img src="../../assets/food/meat-64.webp" alt="" width="20" height="20">
+            <span data-i18n="feed">Besle</span>
+            <b id="feed-cost">1</b>
+          </button>
+          <button class="act-btn" id="play-btn" data-i18n="play">Oyna</button>
+        </div>
+
       </section>
 
-    </div>
+      <!-- EKRAN 3: GOREVLER -->
+      <section class="screen" id="screen-tasks" data-screen="tasks" hidden>
+        <div class="screen-head">
+          <h2 data-i18n="tasksTitle">Görevler</h2>
+          <p data-i18n="tasksHint">Tamamla, ödülü al.</p>
+        </div>
+        <div class="task-list" id="task-list"></div>
+      </section>
 
-    <div class="controls" id="controls">
-      <button class="btn primary feed" id="feed">
-        <span data-i18n="feed">Feed</span>
-        <b id="feed-cost">10</b>
+    </main>
+
+    <!-- ALT MENU -->
+    <nav class="tabbar" id="tabbar">
+      <button class="tab is-on" data-go="grid">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/></svg>
+        <span data-i18n="tabGrid">Ocak</span>
       </button>
-      <button class="btn" id="play" data-i18n="play">Play</button>
-      <button class="btn" id="customize" data-i18n="customize">Customize</button>
-    </div>
-
-    <div class="controls" id="shop-controls" hidden>
-      <button class="btn primary" id="shop-done" data-i18n="done">Done</button>
-    </div>
-
-    <a class="btn back-link" href="../../index.html" id="back-link" data-i18n="backToHub">Back to Hub</a>
-
-    <footer class="foot"><span data-i18n="hub.version">Version 0.1</span></footer>
+      <button class="tab" data-go="dragon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l4-3 2 4 3-3 3 3 2-4 4 3-3 3 2 5-6-2-2 3-2-3-6 2 2-5z"/></svg>
+        <span data-i18n="tabDragon">Ejderha</span>
+      </button>
+      <button class="tab" data-go="tasks">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 11h7M9 15h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span data-i18n="tabTasks">Görevler</span>
+        <i class="tab-dot" id="task-dot" hidden></i>
+      </button>
+    </nav>
 
   </div>
 
-  <script type="module" src="dragon.js?v113"></script>
+  <!-- TUTORIAL KATMANI -->
+  <div class="tut" id="tut" hidden>
+    <div class="tut-mask" id="tut-mask"></div>
+    <div class="tut-row">
+      <img class="tut-wizard" id="tut-wizard" src="../../assets/tutorial/wizard-greet-384.webp" alt="" width="150" height="150">
+      <div class="tut-bubble">
+        <p id="tut-text">...</p>
+        <button class="tut-next" id="tut-next" data-i18n="tutNext">Devam</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="dragon.js?v117"></script>
 </body>
 </html>

@@ -11,6 +11,9 @@ if (!surum) {
 function dosyalariTara(dizin, uzantilar, sonuc = []) {
   for (const ad of readdirSync(dizin)) {
     if (ad.startsWith('.') || ad === 'node_modules') continue;
+    /* bot/: Cloudflare Worker esbuild ile derleniyor, ?vNN import'u bozar.
+       standalone-apps/: ayri paketlenen kopyalar, hub surumunden bagimsiz. */
+    if (dizin === '.' && (ad === 'bot' || ad === 'standalone-apps')) continue;
     const yol = join(dizin, ad);
     if (statSync(yol).isDirectory()) dosyalariTara(yol, uzantilar, sonuc);
     else if (uzantilar.some((u) => ad.endsWith(u))) sonuc.push(yol);
