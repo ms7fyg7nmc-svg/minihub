@@ -1,17 +1,23 @@
 
-import { loadState, saveState } from '../../js/store.js?v120';
-import { SLOTS, VARSAYILAN_GORUNUM } from './data.js?v120';
-import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_FIYATLARI } from './ekonomi.js?v120';
-import { CONFIG, eskiToplamHarcama } from './config.js?v120';
+import { loadState, saveState } from '../../js/store.js?v126';
+import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_FIYATLARI,
+         SIRA_KAPASITESI } from './ekonomi.js?v126';
+import { CONFIG, eskiToplamHarcama } from './config.js?v126';
 
 const OYUN_ID = 'dragon';
-const SURUM = 5;
+const SURUM = 6;
 
 export const IZGARA_N = 4;
 export const EN_COK_YUVA = YUVA_FIYATLARI.length;
 
-/* Baslangic izgarasi: 3x3 acik, en sag sutun ve en alt satir kilitli.
-   Kilitli hucrelerin her biri icindeki odulu de satiyor. */
+/* Ejderha artik aksesuarsiz: tac, kolye, yuz isareti ve aura yok.
+   Kanat govdenin parcasi oldugu icin duruyor (art.js zaten kanatsiz
+   ejderha cizmiyor, varsayilana dusuyor). */
+export const SADE_GORUNUM = {
+  color: 'ember', skin: 'none', wings: 'leather',
+  necklace: 'none', head: 'none', face: 'none', aura: 'none',
+};
+
 export function baslangicIzgarasi(n = IZGARA_N) {
   const cells = Array.from({ length: n * n }, (_, i) => {
     const k = KILITLI_HUCRELER[i];
@@ -20,12 +26,10 @@ export function baslangicIzgarasi(n = IZGARA_N) {
   return { n, cells };
 }
 
-export function bugun() {
-  return new Date().toISOString().slice(0, 10);
-}
+export const bugun = () => new Date().toISOString().slice(0, 10);
 
-function yeniGorevler() {
-  return { day: bugun(), merges: 0, feeds: 0, collects: 0, claimed: [] };
+function yeniSayaclar() {
+  return { merges: 0, feeds: 0, collects: 0, maxEggLv: 1 };
 }
 
 export function yeniEjderha(id) {
@@ -33,32 +37,31 @@ export function yeniEjderha(id) {
   return {
     id,
     name: null,
-    species: 'ember',
-    element: 'fire',
     level: 1,
-    xp: 0,
+    feeds: 0,               /* bu seviyede verilen toplam besleme */
     lastFed: 0,
-    lastPlayed: 0,
+    pencereBas: 0,          /* 4 saatlik istah penceresinin baslangici */
+    pencereSayi: 0,         /* pencere icinde kacinci besleme */
     happiness: 100,
-    look: { ...VARSAYILAN_GORUNUM },
+    look: { ...SADE_GORUNUM },
     createdAt: simdi,
     updatedAt: simdi,
   };
 }
 
-/* Oyuncu ilk ejderhasiyla basliyor: yumurta artik ejderhanin beslenmesiyle
-   geldigi icin ortada bir ejderha olmadan dongu baslamiyor. */
 function yeniOyuncu() {
   return {
     v: SURUM,
     dragons: [yeniEjderha('d1')],
     activeId: 'd1',
     unlockedSlots: 1,
-    owned: Object.fromEntries(SLOTS.map((s) => [s.key, [VARSAYILAN_GORUNUM[s.key]]])),
     grid: baslangicIzgarasi(IZGARA_N),
+    sira: [],                                  /* izgara doluyken bekleyen oduller */
     food: 3,
     stars: 0,
-    tasks: yeniGorevler(),
+    sayaclar: yeniSayaclar(),
+    gorevler: { bitti: [] },
+    gunluk: { sonGun: '', seri: 0 },
     tutorial: 0,
   };
 }
@@ -78,8 +81,6 @@ function hucreDuzelt(c) {
   return t === 'egg' ? { t, lv, r: Number(c.r) || 0 } : { t, lv };
 }
 
-/* v3 -> v4: eski izgarada kilitli hucre yoktu; eldeki nesneler korunup
-   acik alana tasiniyor, kilitli hucreler yeniden kuruluyor. */
 function v3Tasi(kayit) {
   const eskiler = (kayit.grid?.cells || []).map(hucreDuzelt).filter(Boolean);
   const izgara = baslangicIzgarasi(IZGARA_N);
@@ -90,10 +91,6 @@ function v3Tasi(kayit) {
   }
   kayit.grid = izgara;
   delete kayit.eggReadyAt;
-  if (!kayit.dragons?.length) {
-    kayit.dragons = [yeniEjderha('d1')];
-    kayit.activeId = 'd1';
-  }
   return kayit;
 }
 
@@ -102,20 +99,13 @@ function v2Tasi(kayit) {
   delete kayit.ownedIslands;
   kayit.food = Number.isFinite(kayit.food) ? kayit.food : 5;
   kayit.stars = Number(kayit.stars) || 0;
-  kayit.tasks = yeniGorevler();
   kayit.unlockedSlots = 1;
   kayit.tutorial = (kayit.dragons || []).length ? 99 : 0;
   return v3Tasi(kayit);
 }
 
-/* v4 -> v5: seviye tavani 99'dan 3'e indi ve besleme $MH yerine yemle
-   yapiliyor. Eskiden $MH ile beslenmis ejderhalarin o donemde harcadigi
-   $MH, ayni formulle hesaplanip oyuncuya yem olarak geri veriliyor;
-   seviyeler 1'e cekiliyor. */
+/* v4: seviye tavani 99'dan 3'e indi, eski $MH harcamasi yem olarak iade edildi. */
 function v4Tasi(kayit) {
-  /* Guvenlik agi: kilitli hucreleri kaybetmis kayitlarda bos duran
-     hucreler yeniden kilitleniyor; oyuncunun uzerinde nesne olan
-     hucrelerine dokunulmuyor. */
   const cells = kayit.grid?.cells;
   if (Array.isArray(cells)) {
     for (const [i, k] of Object.entries(KILITLI_HUCRELER)) {
@@ -124,7 +114,6 @@ function v4Tasi(kayit) {
       }
     }
   }
-
   let iade = 0;
   for (const d of kayit.dragons || []) {
     const eskiSeviye = Math.max(1, Number(d.level) || 1);
@@ -134,7 +123,28 @@ function v4Tasi(kayit) {
   }
   if (iade > 0) {
     kayit.food = (Number(kayit.food) || 0) + iade;
-    kayit.iadeEdilenYem = iade;      /* oyuna girince bir kez bildiriliyor */
+    kayit.iadeEdilenYem = iade;
+  }
+  return kayit;
+}
+
+/* v5 -> v6: gunluk odul, gorev haritasi, bekleme sirasi, sade gorunum. */
+function v5Tasi(kayit) {
+  kayit.sira = [];
+  kayit.sayaclar = yeniSayaclar();
+  kayit.gorevler = { bitti: [] };
+  kayit.gunluk = { sonGun: '', seri: 0 };
+  delete kayit.tasks;
+  delete kayit.owned;
+  for (const d of kayit.dragons || []) {
+    d.look = { ...SADE_GORUNUM };
+    d.feeds = 0;
+    d.pencereBas = 0;
+    d.pencereSayi = 0;
+    delete d.xp;
+    delete d.lastPlayed;
+    delete d.species;
+    delete d.element;
   }
   return kayit;
 }
@@ -144,33 +154,32 @@ function duzelt(o) {
   o.dragons = Array.isArray(o.dragons) ? o.dragons : [];
   if (!o.dragons.length) { o.dragons = [yeniEjderha('d1')]; o.activeId = 'd1'; }
 
-  o.owned = o.owned || {};
-  for (const s of SLOTS) {
-    if (!Array.isArray(o.owned[s.key])) o.owned[s.key] = [VARSAYILAN_GORUNUM[s.key]];
-  }
-
   const n = o.grid?.n || IZGARA_N;
   if (!o.grid || !Array.isArray(o.grid.cells) || o.grid.cells.length !== n * n) {
     o.grid = baslangicIzgarasi(n);
   }
   o.grid.cells = o.grid.cells.map(hucreDuzelt);
 
+  o.sira = Array.isArray(o.sira)
+    ? o.sira.map(hucreDuzelt).filter(Boolean).slice(0, SIRA_KAPASITESI) : [];
   o.food = Math.max(0, Math.round(Number(o.food) || 0));
   o.stars = Math.max(0, Math.round(Number(o.stars) || 0));
   o.unlockedSlots = Math.min(EN_COK_YUVA, Math.max(1, Number(o.unlockedSlots) || 1));
   o.tutorial = Number(o.tutorial) || 0;
 
-  if (!o.tasks || o.tasks.day !== bugun()) o.tasks = yeniGorevler();
-  if (!Array.isArray(o.tasks.claimed)) o.tasks.claimed = [];
-  o.tasks.collects = Number(o.tasks.collects) || 0;
+  o.sayaclar = { ...yeniSayaclar(), ...(o.sayaclar || {}) };
+  o.gorevler = o.gorevler || { bitti: [] };
+  if (!Array.isArray(o.gorevler.bitti)) o.gorevler.bitti = [];
+  o.gunluk = o.gunluk || { sonGun: '', seri: 0 };
 
   for (const d of o.dragons) {
-    d.look = { ...VARSAYILAN_GORUNUM, ...(d.look || {}) };
-    d.happiness = Number.isFinite(d.happiness) ? d.happiness : 100;
-    d.lastPlayed = Number(d.lastPlayed) || 0;
-    d.lastFed = Number(d.lastFed) || 0;
+    d.look = { ...SADE_GORUNUM };
     d.level = Math.min(CONFIG.MAX_LEVEL, Math.max(1, Number(d.level) || 1));
-    d.xp = Math.max(0, Number(d.xp) || 0);
+    d.feeds = Math.max(0, Number(d.feeds) || 0);
+    d.lastFed = Number(d.lastFed) || 0;
+    d.pencereBas = Number(d.pencereBas) || 0;
+    d.pencereSayi = Math.max(0, Number(d.pencereSayi) || 0);
+    d.happiness = Number.isFinite(d.happiness) ? d.happiness : 100;
   }
   if (!o.dragons.some((d) => d.id === o.activeId)) o.activeId = o.dragons[0].id;
   return o;
@@ -184,6 +193,7 @@ export async function oyuncuyuYukle() {
     if (surum < 3) hazir = v2Tasi(kayit);
     else if (surum < 4) hazir = v3Tasi(kayit);
     if (surum < 5) hazir = v4Tasi(hazir);
+    if (surum < 6) hazir = v5Tasi(hazir);
     const son = duzelt(hazir);
     saveState(OYUN_ID, son);
     return son;
@@ -204,8 +214,7 @@ export function aktifEjderha(oyuncu) {
   return oyuncu.dragons.find((d) => d.id === oyuncu.activeId) || oyuncu.dragons[0];
 }
 
-/* Oyuncu sinirsiz ejderha tutabilir ama sadece acik yuvadakiler beslenebilir;
-   gerisi kilitli onizleme olarak duruyor ve yuva almaya tesvik ediyor. */
+/* Sinirsiz ejderha tutulabilir ama sadece acik yuvadakiler beslenebilir. */
 export function yuvaAcikMi(oyuncu, ejderha) {
   const sira = oyuncu.dragons.findIndex((d) => d.id === ejderha?.id);
   return sira >= 0 && sira < oyuncu.unlockedSlots;
@@ -216,13 +225,4 @@ export function ejderhaEkle(oyuncu) {
   const yeni = yeniEjderha(id);
   oyuncu.dragons.push(yeni);
   return yeni;
-}
-
-export function sahipMi(oyuncu, slot, id) {
-  return (oyuncu.owned[slot] || []).includes(id);
-}
-
-export function dolabaEkle(oyuncu, slot, id) {
-  if (!oyuncu.owned[slot]) oyuncu.owned[slot] = [];
-  if (!oyuncu.owned[slot].includes(id)) oyuncu.owned[slot].push(id);
 }

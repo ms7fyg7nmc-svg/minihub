@@ -4,7 +4,7 @@
    seviye oluyor. Kilitli hucreler yildizla aciliyor ve icindeki odulu
    dogrudan oyuncuya veriyor. */
 
-import { EN_UST_YUMURTA, EN_UST_SANDIK } from './ekonomi.js?v120';
+import { EN_UST_YUMURTA, EN_UST_SANDIK } from './ekonomi.js?v126';
 
 const SANDIK_ADI = { 1: 'pouch', 2: 'basket', 3: 'chest', 4: 'chest-premium' };
 
@@ -47,6 +47,7 @@ export function nesneKoy(grid, nesne) {
 export function createBoard(el, { onMerge, onPick, onChange } = {}) {
   let grid = null;
   let surukle = null;
+  let secili = -1;   /* bilgi paneli icin secili hucre */
 
   function ciz() {
     if (!grid) return;
@@ -59,6 +60,7 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
       const cell = document.createElement('div');
       cell.className = `cell${(satir + sutun) % 2 ? ' alt' : ''}`;
       cell.dataset.i = String(i);
+      if (i === secili) cell.classList.add('sel');
 
       if (kilitliMi(hucre)) {
         cell.classList.add('locked');
@@ -234,6 +236,11 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
 
   return {
     bagla(yeniGrid) { grid = yeniGrid; ciz(); },
+    sec(i) {
+      secili = Number.isInteger(i) ? i : -1;
+      el.querySelectorAll('.cell.sel').forEach((c) => c.classList.remove('sel'));
+      if (secili >= 0) el.querySelector(`.cell[data-i="${secili}"]`)?.classList.add('sel');
+    },
     ciz,
     hucreKutusu: (i) => el.querySelector(`.cell[data-i="${i}"]`)?.getBoundingClientRect() || null,
     get grid() { return grid; },

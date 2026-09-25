@@ -1194,3 +1194,11 @@ body.hub::before {
 /* Ilk 50'de degilse kendi sirasi altta ayri durur */
 .lider-kendi { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--cizgi); }
 .lider-kendi[hidden] { display: none; }
+
+/* Oyun kartinda gercek gorsel kullanan ikonlar (ornegin Ejderha Adasi) */
+.game-icon .game-img {
+   width: 34px;
+   height: 34px;
+   object-fit: contain;
+   filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.45));
+}

@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v120';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v126';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi, bakimListesi,
-} from './store.js?v120';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v120';
+} from './store.js?v126';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v126';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -83,17 +83,9 @@ const ICONS = {
       <path d="M14.4 8.2 13 8.8l1.4.6z" fill="#3a2a4d"/>
    </svg>`,
 
-   dragon: `<svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 14 2.6 9.6 12 5.2l9.4 4.4z" fill="#fff" opacity=".45"/>
-      <path d="M2.6 9.6 12 14v2.4L2.6 12z" fill="#fff" opacity=".25"/>
-      <path d="M21.4 9.6 12 14v2.4L21.4 12z" fill="#fff" opacity=".18"/>
-      <path d="M7.6 15.4 12 17.4l4.4-2-2 4.2L12 22l-2.4-2.4z" fill="#fff" opacity=".3"/>
-      <path d="M9 8.4 4.4 4.6q-1.2 3 .6 5.4l1.4-1.6 1 1.8 1.4-1.8z" fill="#fff"/>
-      <path d="M15 8.4 19.6 4.6q1.2 3-.6 5.4l-1.4-1.6-1 1.8-1.4-1.8z" fill="#fff"/>
-      <path d="M12 6.6q2.8 0 3.4 2.2Q16 11.6 12 11.6T8.6 8.8Q9.2 6.6 12 6.6z" fill="#fff"/>
-      <path d="M9.6 5.4 9.2 2.2l2 2.4z" fill="#fff"/>
-      <path d="M14.4 5.4 14.8 2.2l-2 2.4z" fill="#fff"/>
-   </svg>`,
+   /* Ejderha karti kendi sanat eserini kullaniyor: oyundaki ejderhanin
+      kafasi, diger oyunlarin soyut ikonlari arasinda one cikiyor. */
+   dragon: `<img class="game-img" src="assets/icons/dragon-128.webp" alt="" width="34" height="34">`,
 
    coindrop: `<svg viewBox="0 0 24 24" aria-hidden="true">
       <circle cx="9" cy="8" r="5.4" fill="#fff" opacity=".45"/>

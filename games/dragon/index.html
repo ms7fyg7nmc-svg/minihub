@@ -6,39 +6,40 @@
   <title>Dragon Island</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
-    /* Uygulama dogrudan bu oyun sayfasinda acildiysa once hub'i goster.
-       Isaret hub acildiginda birakilir; yoksa buraya hub'dan gelinmemistir. */
+    /* Uygulama dogrudan bu oyun sayfasinda acildiysa once hub'i goster. */
     try {
       if (sessionStorage.getItem('mh_hub_open') !== '1') location.replace('../../index.html');
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="../../css/style.css?v120">
-  <link rel="stylesheet" href="../../css/game.css?v120">
-  <link rel="stylesheet" href="dragon.css?v120">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap">
+  <link rel="stylesheet" href="../../css/style.css?v126">
+  <link rel="stylesheet" href="../../css/game.css?v126">
+  <link rel="stylesheet" href="dragon.css?v126">
 </head>
 <body class="game dragon-app" data-i18n-title="title">
 
-  <!-- ACILIS EKRANI
-       Varliklar yuklenene kadar burada bekleniyor; boylece oyun yarim
-       cizilmis halde gorunmuyor. Yuzde, gercek yukleme ilerlemesi. -->
+  <!-- ACILIS EKRANI -->
   <div class="boot" id="boot">
     <div class="boot-glow"></div>
     <img class="boot-logo" src="../../assets/currency/mh-logo-256.webp" alt="" width="128" height="128">
     <h1 class="boot-title" data-i18n="title">Dragon Island</h1>
     <div class="boot-bar"><i id="boot-fill"></i></div>
-    <p class="boot-text" id="boot-text" data-i18n="loading">Yükleniyor</p>
+    <p class="boot-text" id="boot-text" data-i18n="loading">Yukleniyor</p>
   </div>
 
-  <!-- Atmosfer: sahne arka plani + yukari suzulen korlar -->
+  <!-- Atmosfer -->
   <div class="sky" id="sky"></div>
   <div class="embers"></div>
 
   <div class="dragon-shell" id="shell" hidden>
 
-    <!-- UST BAR: kaynaklar -->
+    <!-- UST BAR: kullanici + kaynaklar -->
     <header class="top-bar">
-      <button class="top-back" id="back-link" aria-label="Hub">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <button class="user-chip" id="user-chip">
+        <span class="avatar" id="avatar"></span>
+        <span class="user-name" id="user-name">-</span>
       </button>
       <div class="res-row">
         <div class="res" id="res-food">
@@ -54,28 +55,34 @@
 
     <main class="screens" id="screens">
 
-      <!-- EKRAN 1: BIRLESTIRME IZGARASI -->
+      <!-- EKRAN 1: OCAK -->
       <section class="screen" id="screen-grid" data-screen="grid">
-        <div class="screen-head">
-          <h2 data-i18n="gridTitle">Yumurta Ocağı</h2>
-          <p data-i18n="gridHint">Aynı iki yumurtayı üst üste sürükle.</p>
-        </div>
-
         <div class="board-wrap">
           <div class="board" id="board"></div>
         </div>
 
-      </section>
-
-      <!-- EKRAN 2: EJDERHA VE BESLEME -->
-      <section class="screen" id="screen-dragon" data-screen="dragon" hidden>
-        <div class="screen-head">
-          <h2 data-i18n="dragonTitle">Ejderhaların</h2>
-          <p data-i18n="dragonHint">Besledikçe bağın güçlenir.</p>
+        <!-- SIRADAKILER: izgara doluyken kazanilan oduller burada bekler -->
+        <div class="queue-row" id="queue-row" hidden>
+          <span class="queue-label" data-i18n="upNext">Sirada</span>
+          <div class="queue" id="queue"></div>
         </div>
 
-        <div class="slot-strip" id="slot-strip"></div>
+        <!-- BILGI PANELI: secilen ogenin ne verecegi -->
+        <div class="info-panel" id="info-panel">
+          <p class="info-empty" id="info-empty" data-i18n="tapHint">Bir ogeye dokun.</p>
+          <div class="info-body" id="info-body" hidden>
+            <div class="info-head">
+              <strong id="info-name">-</strong>
+              <span class="info-tag" id="info-tag"></span>
+            </div>
+            <p class="info-line" id="info-line">-</p>
+            <button class="act-btn primary" id="info-action">-</button>
+          </div>
+        </div>
+      </section>
 
+      <!-- EKRAN 2: EJDERHA -->
+      <section class="screen" id="screen-dragon" data-screen="dragon" hidden>
         <div class="stage" id="stage">
           <div class="stage-glow"></div>
           <div class="dragon-art" id="dragon-art"></div>
@@ -88,33 +95,38 @@
             <strong class="dragon-name" id="dragon-name">Dragon</strong>
             <span class="dragon-lv" id="dragon-lv">Lv. 1</span>
           </div>
-          <div class="xp-row">
-            <div class="bar xp"><i id="xp-fill"></i></div>
-            <span class="bar-value" id="xp-value">0/2</span>
-          </div>
-          <div class="stat-row">
-            <span class="stat"><span data-i18n="fullness">Doyum</span> <b id="hunger-value">100%</b></span>
-            <span class="stat"><span data-i18n="happiness">Keyif</span> <b id="happy-value">100%</b></span>
-          </div>
+          <div class="bar xp"><i id="xp-fill"></i></div>
+          <p class="appetite" id="appetite"></p>
         </div>
 
-        <div class="grid-actions">
-          <button class="act-btn primary" id="feed-btn">
-            <img src="../../assets/food/meat-64.webp" alt="" width="20" height="20">
-            <span data-i18n="feed">Besle</span>
-            <b id="feed-cost">1</b>
-          </button>
-        </div>
+        <button class="act-btn primary feed-big" id="feed-btn">
+          <img src="../../assets/food/meat-64.webp" alt="" width="22" height="22">
+          <span data-i18n="feed">Besle</span>
+          <b id="feed-cost">1</b>
+        </button>
 
+        <!-- EJDERHA YUVALARI -->
+        <section class="slots-card">
+          <h3 class="card-title" data-i18n="slotsTitle">Yuvalar</h3>
+          <div class="slot-strip" id="slot-strip"></div>
+        </section>
       </section>
 
       <!-- EKRAN 3: GOREVLER -->
       <section class="screen" id="screen-tasks" data-screen="tasks" hidden>
-        <div class="screen-head">
-          <h2 data-i18n="tasksTitle">Görevler</h2>
-          <p data-i18n="tasksHint">Tamamla, ödülü al.</p>
-        </div>
-        <div class="task-list" id="task-list"></div>
+        <section class="daily-card">
+          <div class="card-head">
+            <h3 class="card-title" data-i18n="dailyTitle">Gunluk odul</h3>
+            <span class="card-note" id="daily-note"></span>
+          </div>
+          <div class="daily-row" id="daily-row"></div>
+          <button class="act-btn primary" id="daily-claim" data-i18n="dailyClaim">Odulu al</button>
+        </section>
+
+        <section class="quest-card">
+          <h3 class="card-title" data-i18n="questTitle">Gorev haritasi</h3>
+          <div class="quest-path" id="quest-path"></div>
+        </section>
       </section>
 
     </main>
@@ -126,19 +138,19 @@
         <span data-i18n="tabGrid">Ocak</span>
       </button>
       <button class="tab" data-go="dragon">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l4-3 2 4 3-3 3 3 2-4 4 3-3 3 2 5-6-2-2 3-2-3-6 2 2-5z"/></svg>
+        <img src="../../assets/icons/dragon-64.webp" alt="" width="26" height="26">
         <span data-i18n="tabDragon">Ejderha</span>
       </button>
       <button class="tab" data-go="tasks">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 11h7M9 15h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <span data-i18n="tabTasks">Görevler</span>
+        <span data-i18n="tabTasks">Gorevler</span>
         <i class="tab-dot" id="task-dot" hidden></i>
       </button>
     </nav>
 
   </div>
 
-  <!-- TUTORIAL KATMANI -->
+  <!-- TUTORIAL -->
   <div class="tut" id="tut" hidden>
     <div class="tut-mask" id="tut-mask"></div>
     <div class="tut-row">
@@ -150,6 +162,6 @@
     </div>
   </div>
 
-  <script type="module" src="dragon.js?v120"></script>
+  <script type="module" src="dragon.js?v126"></script>
 </body>
 </html>

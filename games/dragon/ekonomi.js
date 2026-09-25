@@ -1,10 +1,13 @@
 /* EKONOMI TABLOLARI
-   Tek yerde toplandi ki dengeyi degistirirken kodu kurcalamak gerekmesin.
+   Dengeyi degistirmek icin kodu kurcalamak gerekmesin diye hepsi burada.
 
-   Tasarim mantigi: birlestirmek her zaman beklemekten karli olmali.
-   Iki Lv(n) yumurtanin toplami 2 birim getiri verirken, birlestirilmis
-   Lv(n+1) yumurta yaklasik 3 birim veriyor. Oyuncu bunu yumurtanin
-   bilgi penceresinde gorebildigi icin birlestirmeye tesvik ediliyor. */
+   Tasarim mantigi (Duck My Duck'tan alinan dersler):
+   - Birlestirmek her zaman beklemekten karli: iki Lv(n) yumurta 2 birim
+     getiri verirken birlesmis Lv(n+1) yaklasik 3 birim veriyor.
+   - Ejderhanin istahi besledikce buyuyor, ama 4 saatlik pencere dolunca
+     sifirlaniyor; boylece oyuncu gun icinde birkac kez geri geliyor.
+   - Odul veren her sey izgarada yer istiyor. Yer yoksa odul "sirada"
+     bekliyor, yani oyuncu birlestirip yer acmaya zorlaniyor. */
 
 export const TOPLAMA_SURESI = 15 * 60 * 1000;   /* yumurta bu kadarda bir dolar */
 
@@ -23,8 +26,7 @@ export const YUMURTA = {
 export const EN_UST_YUMURTA = 8;
 export const EN_UST_SANDIK = 4;
 
-/* Sandiklar tek kullanimlik: acilinca tukenir, icindekini verir.
-   Birlestirildikce degeri katlanir, boylece onlar da merge'e tesvik eder. */
+/* Sandiklar tek kullanimlik: acilinca tukenir. Birlestirildikce katlaniyor. */
 export const SANDIK = {
   food: { 1: 50, 2: 150, 3: 450, 4: 1200 },
   star: { 1: 1,  2: 3,   3: 8,   4: 20 },
@@ -36,24 +38,35 @@ export const BESLEME_YUMURTA = [
   { lv: 2, sans: 0.20 },
 ];
 
-/* Besleme maliyeti: ejderha buyudukce daha cok yem istiyor.
-   Seviye icinde de her beslemede biraz artiyor, boylece oyuncu izgarada
-   daha yuksek seviyeli yumurtalara gecmeye zorlaniyor. Ust sinir var ki
-   dongü tikanmasin: son seviyede sabit kaliyor. */
-export const YEM_MALIYETI = {
-  1: { taban: 2,  artis: 1 },
-  2: { taban: 12, artis: 3 },
-  3: { taban: 60, artis: 0 },
+/* ---------- BESLEME ---------- */
+
+/* Ilk beslemeyle 4 saatlik pencere aciliyor. Pencere icinde her besleme
+   bir oncekinden pahali; pencere dolunca istah sifirdan basliyor. */
+export const BESLEME_PENCERESI = 4 * 60 * 60 * 1000;
+
+export const BESLEME_EGRISI = {
+  1: { taban: 2,  artis: 2 },
+  2: { taban: 8,  artis: 4 },
+  3: { taban: 20, artis: 6 },
 };
 
-export function yemMaliyeti(level, xp = 0) {
-  const a = YEM_MALIYETI[Math.min(3, Math.max(1, level))] || YEM_MALIYETI[3];
-  return a.taban + a.artis * Math.max(0, xp);
+export function yemMaliyeti(level, penceredekiBesleme = 0) {
+  const a = BESLEME_EGRISI[Math.min(3, Math.max(1, level))] || BESLEME_EGRISI[3];
+  return a.taban + a.artis * Math.max(0, penceredekiBesleme);
 }
 
+/* Seviye atlamak icin gereken toplam besleme sayisi.
+   3. seviyeden sonra "tok ejderha" rozeti icin 175 besleme daha gerekiyor. */
+export const SEVIYE_BESLEME = { 1: 100, 2: 150, 3: 175 };
+
+export function seviyeIcinBesleme(level) {
+  return SEVIYE_BESLEME[level] ?? SEVIYE_BESLEME[3];
+}
+
+/* ---------- IZGARA ---------- */
+
 /* 4x4 izgarada ucretsiz alan 3x3; en sag sutun ve en alt satir kilitli.
-   Her kilitli hucre hem slotu hem icindeki odulu satiyor: oyuncu "sadece
-   yer degil, odul de aliyorum" hissi yasasin diye. */
+   Her kilitli hucre hem yeri hem icindeki odulu satiyor. */
 export const KILITLI_HUCRELER = {
   3:  { fiyat: 25,  odul: { t: 'egg',  lv: 7 } },
   7:  { fiyat: 40,  odul: { t: 'egg',  lv: 7 } },
@@ -64,13 +77,52 @@ export const KILITLI_HUCRELER = {
   15: { fiyat: 220, odul: { t: 'star', lv: 4 } },
 };
 
-/* Ejderha yuvalari: ilki bedava, sonrakiler yildizla aciliyor.
-   Kilitli yuvadaki ejderha beslenemez, sadece onizleme olarak durur. */
+/* Izgara doluyken kazanilan oduller burada bekliyor, yer acilinca
+   otomatik iniyor. Duck My Duck'in "up next" seridi ile ayni fikir. */
+export const SIRA_KAPASITESI = 5;
+
+/* ---------- YUVALAR ---------- */
+
 export const YUVA_FIYATLARI = [0, 50, 150, 400, 900, 2000];
 
 export function yuvaFiyati(sira) {
   return YUVA_FIYATLARI[sira] ?? YUVA_FIYATLARI[YUVA_FIYATLARI.length - 1];
 }
+
+/* ---------- GUNLUK ODUL ---------- */
+
+/* Yedi gunluk seri. Gun atlanirsa seri basa doner; yedinci gunden sonra
+   yeniden birinci gunden basliyor. */
+export const GUNLUK_ODULLER = [
+  { food: 20 },
+  { stars: 1 },
+  { food: 60 },
+  { item: { t: 'food', lv: 2 } },
+  { stars: 3 },
+  { item: { t: 'egg', lv: 3 } },
+  { item: { t: 'star', lv: 3 } },
+];
+
+/* ---------- GOREV HARITASI ---------- */
+
+/* Sirayla acilan gorevler: biri bitmeden sonraki gorunmuyor, boylece
+   oyuncunun onunde tek bir sonraki hedef duruyor. Odullerin cogu izgaraya
+   inen nesne; yer yoksa siraya giriyor ve oyuncu yer acmak zorunda kaliyor. */
+export const GOREV_HARITASI = [
+  { id: 'm1',  tip: 'merge',   hedef: 5,   odul: { food: 30 } },
+  { id: 'f1',  tip: 'feed',    hedef: 10,  odul: { item: { t: 'egg', lv: 2 } } },
+  { id: 'c1',  tip: 'collect', hedef: 15,  odul: { stars: 1 } },
+  { id: 'm2',  tip: 'merge',   hedef: 20,  odul: { item: { t: 'food', lv: 1 } } },
+  { id: 'e4',  tip: 'egglv',   hedef: 4,   odul: { item: { t: 'egg', lv: 3 } } },
+  { id: 'f2',  tip: 'feed',    hedef: 20,  odul: { item: { t: 'star', lv: 2 } } },
+  { id: 'm3',  tip: 'merge',   hedef: 50,  odul: { item: { t: 'egg', lv: 5 } } },
+  { id: 'c2',  tip: 'collect', hedef: 60,  odul: { item: { t: 'food', lv: 3 } } },
+  { id: 'e6',  tip: 'egglv',   hedef: 6,   odul: { stars: 5 } },
+  { id: 'd2',  tip: 'draglv',  hedef: 2,   odul: { item: { t: 'star', lv: 3 } } },
+  { id: 'm4',  tip: 'merge',   hedef: 120, odul: { item: { t: 'egg', lv: 7 } } },
+  { id: 'c3',  tip: 'collect', hedef: 200, odul: { item: { t: 'star', lv: 4 } } },
+  { id: 'd3',  tip: 'draglv',  hedef: 3,   odul: { item: { t: 'egg', lv: 8 } } },
+];
 
 export function odulAraligi(hucre) {
   if (!hucre) return null;
@@ -82,8 +134,7 @@ export function odulAraligi(hucre) {
 export function toplamaSonucu(lv) {
   const a = YUMURTA[Math.min(EN_UST_YUMURTA, lv)];
   if (Math.random() < a.sans) return { miktar: a.jackpot, jackpot: true };
-  const miktar = a.az + Math.floor(Math.random() * (a.cok - a.az + 1));
-  return { miktar, jackpot: false };
+  return { miktar: a.az + Math.floor(Math.random() * (a.cok - a.az + 1)), jackpot: false };
 }
 
 export function sandikDegeri(tip, lv) {

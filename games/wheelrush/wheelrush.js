@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v120';
-import { submitScore, addPoints, getBest, oynanabilirMi } from '../../js/store.js?v120';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v120';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v120';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v126';
+import { submitScore, addPoints, getBest, oynanabilirMi } from '../../js/store.js?v126';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v126';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v126';
 
 const GAME_ID = 'wheelrush';
 /* Skor = mesafe/10 + coin*15 - iyi bir kosu ~150-450 arasi cikiyor.
