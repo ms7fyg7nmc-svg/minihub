@@ -1,16 +1,16 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v117';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v117';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v118';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v118';
 
-import { CONFIG, xpNeeded } from './config.js?v117';
-import { bakimdaMi } from '../../js/store.js?v117';
-import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, EN_COK_YUVA } from './model.js?v117';
-import { dragonSvg, dragonAssetUrls } from './art.js?v117';
-import { ITEM_TEXTS } from './i18n-items.js?v117';
+import { CONFIG, xpNeeded } from './config.js?v118';
+import { bakimdaMi } from '../../js/store.js?v118';
+import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, EN_COK_YUVA } from './model.js?v118';
+import { dragonSvg, dragonAssetUrls } from './art.js?v118';
+import { ITEM_TEXTS } from './i18n-items.js?v118';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi, hazirMi, enUstSeviye } from './grid.js?v117';
+         kilitliMi, nesneMi, hazirMi, enUstSeviye } from './grid.js?v118';
 import { YUMURTA, TOPLAMA_SURESI, BESLEME_BEKLEME, BESLEME_YEM,
-         toplamaSonucu, sandikDegeri, beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v117';
-import { createTutorial, pozListesi } from './tutorial.js?v117';
+         toplamaSonucu, sandikDegeri, beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v118';
+import { createTutorial, pozListesi } from './tutorial.js?v118';
 
 const GAME_ID = 'dragon';
 
@@ -183,7 +183,7 @@ async function basla() {
   await onYukle([
     ...onYukleListesi(),
     ...pozListesi(),
-    '../../assets/board/frame.png',
+    '../../assets/board/frame-512.webp',
     '../../assets/food/meat-128.webp',
     '../../assets/currency/star-128.webp',
     '../../assets/currency/mh-logo-256.webp',
