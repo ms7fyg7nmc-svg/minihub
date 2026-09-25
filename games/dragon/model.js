@@ -1,10 +1,11 @@
 
-import { loadState, saveState } from '../../js/store.js?v118';
-import { SLOTS, VARSAYILAN_GORUNUM } from './data.js?v118';
-import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_FIYATLARI } from './ekonomi.js?v118';
+import { loadState, saveState } from '../../js/store.js?v120';
+import { SLOTS, VARSAYILAN_GORUNUM } from './data.js?v120';
+import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_FIYATLARI } from './ekonomi.js?v120';
+import { CONFIG, eskiToplamHarcama } from './config.js?v120';
 
 const OYUN_ID = 'dragon';
-const SURUM = 4;
+const SURUM = 5;
 
 export const IZGARA_N = 4;
 export const EN_COK_YUVA = YUVA_FIYATLARI.length;
@@ -107,6 +108,37 @@ function v2Tasi(kayit) {
   return v3Tasi(kayit);
 }
 
+/* v4 -> v5: seviye tavani 99'dan 3'e indi ve besleme $MH yerine yemle
+   yapiliyor. Eskiden $MH ile beslenmis ejderhalarin o donemde harcadigi
+   $MH, ayni formulle hesaplanip oyuncuya yem olarak geri veriliyor;
+   seviyeler 1'e cekiliyor. */
+function v4Tasi(kayit) {
+  /* Guvenlik agi: kilitli hucreleri kaybetmis kayitlarda bos duran
+     hucreler yeniden kilitleniyor; oyuncunun uzerinde nesne olan
+     hucrelerine dokunulmuyor. */
+  const cells = kayit.grid?.cells;
+  if (Array.isArray(cells)) {
+    for (const [i, k] of Object.entries(KILITLI_HUCRELER)) {
+      if (cells[i] === null || cells[i] === undefined) {
+        cells[i] = { kilit: true, fiyat: k.fiyat, odul: { ...k.odul } };
+      }
+    }
+  }
+
+  let iade = 0;
+  for (const d of kayit.dragons || []) {
+    const eskiSeviye = Math.max(1, Number(d.level) || 1);
+    if (eskiSeviye > 1) iade += eskiToplamHarcama(eskiSeviye);
+    d.level = 1;
+    d.xp = 0;
+  }
+  if (iade > 0) {
+    kayit.food = (Number(kayit.food) || 0) + iade;
+    kayit.iadeEdilenYem = iade;      /* oyuna girince bir kez bildiriliyor */
+  }
+  return kayit;
+}
+
 function duzelt(o) {
   o.v = SURUM;
   o.dragons = Array.isArray(o.dragons) ? o.dragons : [];
@@ -137,7 +169,8 @@ function duzelt(o) {
     d.happiness = Number.isFinite(d.happiness) ? d.happiness : 100;
     d.lastPlayed = Number(d.lastPlayed) || 0;
     d.lastFed = Number(d.lastFed) || 0;
-    d.level = Math.max(1, Number(d.level) || 1);
+    d.level = Math.min(CONFIG.MAX_LEVEL, Math.max(1, Number(d.level) || 1));
+    d.xp = Math.max(0, Number(d.xp) || 0);
   }
   if (!o.dragons.some((d) => d.id === o.activeId)) o.activeId = o.dragons[0].id;
   return o;
@@ -150,6 +183,7 @@ export async function oyuncuyuYukle() {
     let hazir = kayit;
     if (surum < 3) hazir = v2Tasi(kayit);
     else if (surum < 4) hazir = v3Tasi(kayit);
+    if (surum < 5) hazir = v4Tasi(hazir);
     const son = duzelt(hazir);
     saveState(OYUN_ID, son);
     return son;

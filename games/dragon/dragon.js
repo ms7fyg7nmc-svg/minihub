@@ -1,16 +1,16 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v118';
-import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v118';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v120';
+import { registerTexts, registerItemTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v120';
 
-import { CONFIG, xpNeeded } from './config.js?v118';
-import { bakimdaMi } from '../../js/store.js?v118';
-import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, EN_COK_YUVA } from './model.js?v118';
-import { dragonSvg, dragonAssetUrls } from './art.js?v118';
-import { ITEM_TEXTS } from './i18n-items.js?v118';
+import { CONFIG, xpNeeded, gorselSeviye } from './config.js?v120';
+import { bakimdaMi } from '../../js/store.js?v120';
+import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, EN_COK_YUVA } from './model.js?v120';
+import { dragonSvg, dragonAssetUrls } from './art.js?v120';
+import { ITEM_TEXTS } from './i18n-items.js?v120';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi, hazirMi, enUstSeviye } from './grid.js?v118';
-import { YUMURTA, TOPLAMA_SURESI, BESLEME_BEKLEME, BESLEME_YEM,
-         toplamaSonucu, sandikDegeri, beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v118';
-import { createTutorial, pozListesi } from './tutorial.js?v118';
+         kilitliMi, nesneMi, hazirMi, enUstSeviye } from './grid.js?v120';
+import { YUMURTA, TOPLAMA_SURESI, yemMaliyeti,
+         toplamaSonucu, sandikDegeri, beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v120';
+import { createTutorial, pozListesi } from './tutorial.js?v120';
 
 const GAME_ID = 'dragon';
 
@@ -32,7 +32,9 @@ registerTexts(GAME_ID, {
   happiness: 'Keyif',
   feed: 'Besle',
   play: 'Oyna',
-  noFood: 'Yemin yok. Izgaradaki dolu yumurtalara dokun.',
+  noFood: 'Yemin yetmiyor. Izgaradaki dolu yumurtalardan topla.',
+  refundMsg: 'Eskiden ejderhana harcadığın $MH karşılığı {n} yem hesabına eklendi.',
+  maxLevel: 'EN ÜST',
   feedWait: '{time} sonra tekrar besleyebilirsin.',
   laidEgg: 'Ejderhan bir yumurta bıraktı!',
   gridFullEgg: 'Izgara dolu, yumurtayı koyacak yer yok.',
@@ -114,7 +116,6 @@ const hungerValue = document.getElementById('hunger-value');
 const happyValue = document.getElementById('happy-value');
 const feedBtn = document.getElementById('feed-btn');
 const feedCostEl = document.getElementById('feed-cost');
-const playBtn = document.getElementById('play-btn');
 const dragonActions = feedBtn.parentElement;
 
 const taskListEl = document.getElementById('task-list');
@@ -197,6 +198,14 @@ async function basla() {
   shellEl.hidden = false;
   bootEl.classList.add('is-gone');
   setTimeout(() => { bootEl.hidden = true; }, 400);
+
+  /* v5 gecisinde eski $MH harcamasi yem olarak iade edildiyse bir kez bildir */
+  if (oyuncu.iadeEdilenYem) {
+    const n = oyuncu.iadeEdilenYem;
+    delete oyuncu.iadeEdilenYem;
+    kaydet();
+    setTimeout(() => odulUcur(t('refundMsg', { n: bicim(n) }), true), 600);
+  }
 
   showBackButton(hubaDon);
   backToHubOnResume();
@@ -390,12 +399,11 @@ feedBtn.addEventListener('click', async () => {
   if (!d || busy) return;
   if (!yuvaAcikMi(oyuncu, d)) { uyar(t('slotLockedFeed')); return; }
 
-  const bekle = (d.lastFed || 0) + BESLEME_BEKLEME - simdi();
-  if (bekle > 0) { uyar(t('feedWait', { time: sureMetni(bekle) })); return; }
-  if (oyuncu.food < BESLEME_YEM) { uyar(t('noFood')); return; }
+  const fiyat = yemMaliyeti(d.level, d.xp);
+  if (oyuncu.food < fiyat) { uyar(t('noFood')); return; }
 
   busy = true;
-  oyuncu.food -= BESLEME_YEM;
+  oyuncu.food -= fiyat;
   oyuncu.tasks.feeds += 1;
   kaynakTazele(true);
 
@@ -421,22 +429,6 @@ function yumurtaBirak() {
   board.ciz();
   ucur(t('laidEgg'));
 }
-
-playBtn.addEventListener('click', () => {
-  const d = aktifEjderha(oyuncu);
-  if (!d) return;
-  if (!yuvaAcikMi(oyuncu, d)) { uyar(t('slotLockedFeed')); return; }
-  const hazir = (d.lastPlayed || 0) + CONFIG.PLAY_COOLDOWN_MS;
-  if (hazir > simdi()) { uyar(t('playSoon', { time: sureMetni(hazir - simdi()) })); return; }
-
-  d.lastPlayed = simdi();
-  d.happiness = Math.min(100, (d.happiness ?? 100) + CONFIG.PLAY_HAPPINESS);
-  xpVer(d, CONFIG.PLAY_XP);
-  kaydet();
-  haptic.tap('light');
-  ucur(t('playedHint'));
-  ejderhaCiz();
-});
 
 function xpVer(d, miktar) {
   d.xp += miktar;
@@ -484,7 +476,7 @@ function slotlariCiz() {
     const kilitli = sira >= oyuncu.unlockedSlots;
     const btn = document.createElement('button');
     btn.className = `slot${kilitli ? ' locked' : ''}${d.id === oyuncu.activeId ? ' is-on' : ''}`;
-    btn.innerHTML = `<div class="mini">${dragonSvg(CONFIG.EGG_UNTIL + 1, d.look, 'happy')}</div>`;
+    btn.innerHTML = `<div class="mini">${dragonSvg(gorselSeviye(d.level), d.look, 'happy')}</div>`;
     if (kilitli) {
       btn.innerHTML += '<span class="slot-lock"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0110 0v2" fill="none" stroke="currentColor" stroke-width="2.2"/><rect x="5" y="10" width="14" height="10" rx="2.5" fill="currentColor"/></svg></span>';
       btn.addEventListener('click', () => yuvaPenceresi(oyuncu.unlockedSlots));
@@ -535,16 +527,16 @@ function ejderhaCiz() {
   dragonCard.hidden = false;
   dragonActions.hidden = false;
 
-  artEl.innerHTML = dragonSvg(Math.max(CONFIG.EGG_UNTIL + 1, d.level), d.look,
+  artEl.innerHTML = dragonSvg(gorselSeviye(d.level), d.look,
     doyum(d) < CONFIG.HUNGRY_BELOW ? 'sad' : 'happy');
   artEl.classList.toggle('dim', !acik);
 
   const gereken = xpNeeded(d.level);
-  const son = d.level >= CONFIG.MAX_LEVEL;
+  const son = d.level >= CONFIG.MAX_LEVEL;   /* tavanda cubuk hep dolu */
   dragonNameEl.textContent = d.name || t('dragonName');
   dragonLvEl.textContent = t('lvShort', { level: bicim(d.level) });
   xpFill.style.width = son ? '100%' : `${(d.xp / gereken) * 100}%`;
-  xpValue.textContent = son ? `${CONFIG.MAX_LEVEL}` : `${d.xp}/${gereken}`;
+  xpValue.textContent = son ? t('maxLevel') : `${d.xp}/${gereken}`;
 
   const dy = doyum(d);
   const ky = keyif(d);
@@ -553,10 +545,9 @@ function ejderhaCiz() {
   happyValue.textContent = `${ky}%`;
   happyValue.classList.toggle('low', ky < CONFIG.HUNGRY_BELOW);
 
-  const bekle = (d.lastFed || 0) + BESLEME_BEKLEME - simdi();
-  feedCostEl.textContent = bekle > 0 ? sureMetni(bekle) : bicim(BESLEME_YEM);
-  feedBtn.disabled = busy || !acik || bekle > 0 || oyuncu.food < BESLEME_YEM;
-  playBtn.disabled = !acik || (d.lastPlayed || 0) + CONFIG.PLAY_COOLDOWN_MS > simdi();
+  const fiyat = yemMaliyeti(d.level, d.xp);
+  feedCostEl.textContent = bicim(fiyat);
+  feedBtn.disabled = busy || !acik || oyuncu.food < fiyat;
 }
 
 /* ---------- GOREVLER ---------- */

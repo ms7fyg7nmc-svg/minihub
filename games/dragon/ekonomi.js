@@ -36,8 +36,20 @@ export const BESLEME_YUMURTA = [
   { lv: 2, sans: 0.20 },
 ];
 
-export const BESLEME_BEKLEME = 10 * 60 * 1000;
-export const BESLEME_YEM = 1;
+/* Besleme maliyeti: ejderha buyudukce daha cok yem istiyor.
+   Seviye icinde de her beslemede biraz artiyor, boylece oyuncu izgarada
+   daha yuksek seviyeli yumurtalara gecmeye zorlaniyor. Ust sinir var ki
+   dongü tikanmasin: son seviyede sabit kaliyor. */
+export const YEM_MALIYETI = {
+  1: { taban: 2,  artis: 1 },
+  2: { taban: 12, artis: 3 },
+  3: { taban: 60, artis: 0 },
+};
+
+export function yemMaliyeti(level, xp = 0) {
+  const a = YEM_MALIYETI[Math.min(3, Math.max(1, level))] || YEM_MALIYETI[3];
+  return a.taban + a.artis * Math.max(0, xp);
+}
 
 /* 4x4 izgarada ucretsiz alan 3x3; en sag sutun ve en alt satir kilitli.
    Her kilitli hucre hem slotu hem icindeki odulu satiyor: oyuncu "sadece
