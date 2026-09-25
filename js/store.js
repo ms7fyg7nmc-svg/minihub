@@ -622,7 +622,7 @@ export async function bakimdaMi(game) {
   return (v.bakim || []).includes(game);
 }
 
-const BAKIM_VARSAYILAN = new Set(['dragon']);
+const BAKIM_VARSAYILAN = new Set();   /* sunucuya ulasilamazsa kapali sayilan oyunlar */
 
 export async function sunucuDurumu() {
   if (!isTelegramUser()) return 'misafir';

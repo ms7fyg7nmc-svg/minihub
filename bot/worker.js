@@ -874,9 +874,10 @@ const SAHIP_ID = '8100679296';
 /* Bakimdaki oyunlar: SAHIP_ID disindaki herkese kapali.
    Varsayilan kodda duruyor ama Cloudflare'deki BAKIM degiskeni onu eziyor,
    boylece bakim kod deploy etmeden acilip kapanabiliyor (bos deger = bakim yok).
-   Eksik/yanlis degiskende varsayilana dusuyoruz: kilit acik kalmasin diye
-   guvenli taraf kapali olmak. */
-const BAKIM_VARSAYILAN = 'dragon';
+   Dragon Island yeni merge surumuyle 2026-09-26'da herkese acildi; liste
+   simdilik bos, bir oyunu kapatmak gerekirse buraya ya da BAKIM degiskenine
+   yazmak yeterli. */
+const BAKIM_VARSAYILAN = '';
 
 function bakimdakiOyunlar(env) {
   const ham = env && env.BAKIM !== undefined && env.BAKIM !== null
