@@ -9,18 +9,18 @@
    - Odul veren her sey izgarada yer istiyor. Yer yoksa odul "sirada"
      bekliyor, yani oyuncu birlestirip yer acmaya zorlaniyor. */
 
-export const TOPLAMA_SURESI = 15 * 60 * 1000;   /* yumurta bu kadarda bir dolar */
-
-/* Yumurta getirileri: [en az yem, en cok yem, jackpot yemi, jackpot ihtimali] */
+/* Yumurta kirilinca tukenir: bekleme sayaci yok, tek seferde odulunu verir.
+   Her kademe bir oncekinin yaklasik uc kati; iki yumurtayi birlestirmek
+   ikisini ayri ayri kirmaktan her zaman karli. */
 export const YUMURTA = {
-  1: { az: 2,    cok: 6,    jackpot: 100,    sans: 0.03 },
-  2: { az: 8,    cok: 15,   jackpot: 500,    sans: 0.03 },
-  3: { az: 25,   cok: 45,   jackpot: 1500,   sans: 0.03 },
-  4: { az: 70,   cok: 120,  jackpot: 4000,   sans: 0.03 },
-  5: { az: 180,  cok: 300,  jackpot: 10000,  sans: 0.035 },
-  6: { az: 450,  cok: 750,  jackpot: 25000,  sans: 0.035 },
-  7: { az: 1100, cok: 1800, jackpot: 60000,  sans: 0.04 },
-  8: { az: 2600, cok: 4200, jackpot: 150000, sans: 0.04 },
+  1: { az: 8,     cok: 15,    jackpot: 150,    sans: 0.03 },
+  2: { az: 25,    cok: 45,    jackpot: 600,    sans: 0.03 },
+  3: { az: 80,    cok: 140,   jackpot: 2000,   sans: 0.03 },
+  4: { az: 240,   cok: 400,   jackpot: 6000,   sans: 0.03 },
+  5: { az: 700,   cok: 1200,  jackpot: 18000,  sans: 0.035 },
+  6: { az: 2000,  cok: 3400,  jackpot: 50000,  sans: 0.035 },
+  7: { az: 6000,  cok: 9000,  jackpot: 140000, sans: 0.04 },
+  8: { az: 18000, cok: 28000, jackpot: 400000, sans: 0.04 },
 };
 
 export const EN_UST_YUMURTA = 8;
@@ -28,7 +28,7 @@ export const EN_UST_SANDIK = 4;
 
 /* Sandiklar tek kullanimlik: acilinca tukenir. Birlestirildikce katlaniyor. */
 export const SANDIK = {
-  food: { 1: 50, 2: 150, 3: 450, 4: 1200 },
+  food: { 1: 150, 2: 500, 3: 1600, 4: 5000 },
   star: { 1: 1,  2: 3,   3: 8,   4: 20 },
 };
 
@@ -78,8 +78,9 @@ export const KILITLI_HUCRELER = {
 };
 
 /* Izgara doluyken kazanilan oduller burada bekliyor, yer acilinca
-   otomatik iniyor. Duck My Duck'in "up next" seridi ile ayni fikir. */
-export const SIRA_KAPASITESI = 5;
+   otomatik iniyor. Sinirsiz: oyuncunun kazandigi hicbir sey cope gitmez,
+   seritte sadece ilk birkaci gosterilip gerisi sayi olarak yaziliyor. */
+export const SIRA_GOSTERILEN = 4;
 
 /* ---------- YUVALAR ---------- */
 
@@ -94,12 +95,12 @@ export function yuvaFiyati(sira) {
 /* Yedi gunluk seri. Gun atlanirsa seri basa doner; yedinci gunden sonra
    yeniden birinci gunden basliyor. */
 export const GUNLUK_ODULLER = [
-  { food: 20 },
+  { food: 200 },
   { stars: 1 },
-  { food: 60 },
+  { food: 600 },
   { item: { t: 'food', lv: 2 } },
   { stars: 3 },
-  { item: { t: 'egg', lv: 3 } },
+  { item: { t: 'egg', lv: 4 } },
   { item: { t: 'star', lv: 3 } },
 ];
 
@@ -109,15 +110,15 @@ export const GUNLUK_ODULLER = [
    oyuncunun onunde tek bir sonraki hedef duruyor. Odullerin cogu izgaraya
    inen nesne; yer yoksa siraya giriyor ve oyuncu yer acmak zorunda kaliyor. */
 export const GOREV_HARITASI = [
-  { id: 'm1',  tip: 'merge',   hedef: 5,   odul: { food: 30 } },
+  { id: 'm1',  tip: 'merge',   hedef: 5,   odul: { food: 150 } },
   { id: 'f1',  tip: 'feed',    hedef: 10,  odul: { item: { t: 'egg', lv: 2 } } },
-  { id: 'c1',  tip: 'collect', hedef: 15,  odul: { stars: 1 } },
-  { id: 'm2',  tip: 'merge',   hedef: 20,  odul: { item: { t: 'food', lv: 1 } } },
+  { id: 'c1',  tip: 'collect', hedef: 15,  odul: { food: 400 } },
+  { id: 'm2',  tip: 'merge',   hedef: 20,  odul: { item: { t: 'food', lv: 2 } } },
   { id: 'e4',  tip: 'egglv',   hedef: 4,   odul: { item: { t: 'egg', lv: 3 } } },
   { id: 'f2',  tip: 'feed',    hedef: 20,  odul: { item: { t: 'star', lv: 2 } } },
   { id: 'm3',  tip: 'merge',   hedef: 50,  odul: { item: { t: 'egg', lv: 5 } } },
   { id: 'c2',  tip: 'collect', hedef: 60,  odul: { item: { t: 'food', lv: 3 } } },
-  { id: 'e6',  tip: 'egglv',   hedef: 6,   odul: { stars: 5 } },
+  { id: 'e6',  tip: 'egglv',   hedef: 6,   odul: { stars: 5, food: 3000 } },
   { id: 'd2',  tip: 'draglv',  hedef: 2,   odul: { item: { t: 'star', lv: 3 } } },
   { id: 'm4',  tip: 'merge',   hedef: 120, odul: { item: { t: 'egg', lv: 7 } } },
   { id: 'c3',  tip: 'collect', hedef: 200, odul: { item: { t: 'star', lv: 4 } } },

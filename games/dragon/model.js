@@ -1,8 +1,7 @@
 
-import { loadState, saveState } from '../../js/store.js?v126';
-import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_FIYATLARI,
-         SIRA_KAPASITESI } from './ekonomi.js?v126';
-import { CONFIG, eskiToplamHarcama } from './config.js?v126';
+import { loadState, saveState } from '../../js/store.js?v130';
+import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_FIYATLARI } from './ekonomi.js?v130';
+import { CONFIG, eskiToplamHarcama } from './config.js?v130';
 
 const OYUN_ID = 'dragon';
 const SURUM = 6;
@@ -78,7 +77,7 @@ function hucreDuzelt(c) {
   const t = ['egg', 'food', 'star'].includes(c.t) ? c.t : 'egg';
   const enUst = t === 'egg' ? EN_UST_YUMURTA : EN_UST_SANDIK;
   const lv = Math.min(enUst, Math.max(1, Math.round(Number(c.lv) || 1)));
-  return t === 'egg' ? { t, lv, r: Number(c.r) || 0 } : { t, lv };
+  return { t, lv };
 }
 
 function v3Tasi(kayit) {
@@ -160,8 +159,8 @@ function duzelt(o) {
   }
   o.grid.cells = o.grid.cells.map(hucreDuzelt);
 
-  o.sira = Array.isArray(o.sira)
-    ? o.sira.map(hucreDuzelt).filter(Boolean).slice(0, SIRA_KAPASITESI) : [];
+  /* Sira sinirsiz: kazanilan hicbir odul kaybolmuyor. */
+  o.sira = Array.isArray(o.sira) ? o.sira.map(hucreDuzelt).filter(Boolean) : [];
   o.food = Math.max(0, Math.round(Number(o.food) || 0));
   o.stars = Math.max(0, Math.round(Number(o.stars) || 0));
   o.unlockedSlots = Math.min(EN_COK_YUVA, Math.max(1, Number(o.unlockedSlots) || 1));

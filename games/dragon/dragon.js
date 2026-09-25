@@ -1,17 +1,17 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v126';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v126';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v130';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v130';
 
-import { CONFIG, gorselSeviye } from './config.js?v126';
-import { bakimdaMi } from '../../js/store.js?v126';
+import { CONFIG, gorselSeviye } from './config.js?v130';
+import { bakimdaMi } from '../../js/store.js?v130';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         EN_COK_YUVA } from './model.js?v126';
-import { dragonSvg, dragonAssetUrls } from './art.js?v126';
+         EN_COK_YUVA } from './model.js?v130';
+import { dragonSvg, dragonAssetUrls } from './art.js?v130';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi, hazirMi } from './grid.js?v126';
-import { YUMURTA, TOPLAMA_SURESI, BESLEME_PENCERESI, SIRA_KAPASITESI,
+         kilitliMi, nesneMi } from './grid.js?v130';
+import { YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, GOREV_HARITASI, yemMaliyeti, seviyeIcinBesleme,
-         toplamaSonucu, sandikDegeri, beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v126';
-import { createTutorial, pozListesi } from './tutorial.js?v126';
+         toplamaSonucu, sandikDegeri, beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v130';
+import { createTutorial, pozListesi } from './tutorial.js?v130';
 
 const GAME_ID = 'dragon';
 
@@ -26,7 +26,7 @@ registerTexts(GAME_ID, {
 
   upNext: 'Sırada',
   tapHint: 'Bir öğeye dokun, ne vereceğini gör.',
-  queueFull: 'Sıra dolu. Önce izgarada yer aç.',
+  queueMore: '+{n} tane daha',
   queuedMsg: 'Ödül sırada bekliyor, izgarada yer aç.',
 
   eggName: 'Sv. {lv} yumurta',
@@ -36,14 +36,11 @@ registerTexts(GAME_ID, {
   chestGivesFood: '{n} yem verir',
   chestGivesStar: '{n} yıldız verir',
   crack: 'Kır',
-  crackIn: '{time}',
   chestOpen: 'Aç',
   lockedName: 'Kilitli hücre',
   lockedLine: 'İçinde {name} var',
   unlock: 'Aç · {n} yıldız',
   needStars: 'Yeterli yıldızın yok.',
-  ready: 'Hazır',
-  filling: 'Doluyor',
 
   feed: 'Besle',
   noFood: 'Yemin yetmiyor. Izgaradaki dolu yumurtaları kır.',
@@ -100,7 +97,7 @@ const foodValue = $('food-value'); const starValue = $('star-value');
 const resFood = $('res-food'); const resStar = $('res-star');
 
 const boardEl = $('board');
-const queueRow = $('queue-row'); const queueEl = $('queue');
+const queueRow = $('queue-row'); const queueEl = $('queue'); const queueMore = $('queue-more');
 const infoEmpty = $('info-empty'); const infoBody = $('info-body');
 const infoName = $('info-name'); const infoTag = $('info-tag');
 const infoLine = $('info-line'); const infoAction = $('info-action');
@@ -184,6 +181,7 @@ async function basla() {
     bootText.textContent = `${t('loading')} ${Math.round(oran * 100)}%`;
   });
 
+  siradanDoldur();      /* acilista bekleyen oduller izgaraya insin */
   cizHepsi();
   shellEl.hidden = false;
   bootEl.classList.add('is-gone');
@@ -238,12 +236,10 @@ function nesneVer(nesne) {
     board.ciz(); board.sec(seciliHucre);
     return 'izgara';
   }
-  if (oyuncu.sira.length < SIRA_KAPASITESI) {
-    oyuncu.sira.push(nesne.t === 'egg' ? { ...nesne, r: simdi() } : { ...nesne });
-    siraCiz();
-    return 'sira';
-  }
-  return 'dolu';
+  /* Sira sinirsiz: kazanilan odul asla kaybolmuyor. */
+  oyuncu.sira.push({ ...nesne });
+  siraCiz();
+  return 'sira';
 }
 
 function odulVer(odul) {
@@ -251,8 +247,7 @@ function odulVer(odul) {
   if (odul.stars) { oyuncu.stars += odul.stars; odulUcur(t('gotStars', { n: bicim(odul.stars) }), true); }
   if (odul.item) {
     const yer = nesneVer({ ...odul.item });
-    if (yer === 'dolu') uyar(t('queueFull'));
-    else if (yer === 'sira') uyar(t('queuedMsg'));
+    if (yer === 'sira') uyar(t('queuedMsg'));
     else odulUcur(t('gotItem', { name: nesneAdi(odul.item) }), true);
   }
   kaynakTazele(true);
@@ -271,17 +266,15 @@ function siradanDoldur() {
 function siraCiz() {
   queueRow.hidden = oyuncu.sira.length === 0;
   queueEl.innerHTML = '';
-  for (const n of oyuncu.sira) {
+  oyuncu.sira.slice(0, SIRA_GOSTERILEN).forEach((n) => {
     const el = document.createElement('div');
     el.className = 'queue-item';
     el.innerHTML = `<img src="${gorselYolu(n)}" alt="">`;
     queueEl.appendChild(el);
-  }
-  for (let i = oyuncu.sira.length; i < SIRA_KAPASITESI; i += 1) {
-    const el = document.createElement('div');
-    el.className = 'queue-item empty';
-    queueEl.appendChild(el);
-  }
+  });
+  const kalan = oyuncu.sira.length - SIRA_GOSTERILEN;
+  queueMore.textContent = kalan > 0 ? t('queueMore', { n: kalan }) : '';
+  queueMore.hidden = kalan <= 0;
 }
 
 /* ---------- IZGARA ---------- */
@@ -326,15 +319,12 @@ function bilgiPaneliCiz() {
 
   if (hucre.t === 'egg') {
     const a = YUMURTA[hucre.lv];
-    const kalan = (hucre.r || 0) - simdi();
-    const hazir = kalan <= 0;
-    infoTag.textContent = hazir ? t('ready') : t('filling');
-    infoTag.className = `info-tag${hazir ? ' ok' : ''}`;
+    infoTag.textContent = ''; infoTag.className = 'info-tag';
     infoLine.textContent = t('eggYield', {
       a: bicim(a.az), b: bicim(a.cok), p: Math.round(a.sans * 100), n: bicim(a.jackpot),
     });
-    infoAction.textContent = hazir ? t('crack') : t('crackIn', { time: sureMetni(kalan) });
-    infoAction.disabled = !hazir;
+    infoAction.textContent = t('crack');
+    infoAction.disabled = false;
     infoAction.onclick = () => yumurtaKir(seciliHucre);
     return;
   }
@@ -347,15 +337,18 @@ function bilgiPaneliCiz() {
   infoAction.onclick = () => sandikAc(seciliHucre);
 }
 
+/* Yumurta kirilinca tukeniyor: sayac yok, hucre bosaliyor ve siradaki iniyor. */
 function yumurtaKir(i) {
   const hucre = oyuncu.grid.cells[i];
-  if (!hazirMi(hucre)) return;
+  if (!nesneMi(hucre) || hucre.t !== 'egg') return;
   const { miktar, jackpot } = toplamaSonucu(hucre.lv);
   oyuncu.food += miktar;
-  hucre.r = simdi() + TOPLAMA_SURESI;
+  oyuncu.grid.cells[i] = null;
+  seciliHucre = -1;
   oyuncu.sayaclar.collects += 1;
   kaydet();
-  board.ciz(); board.sec(i);
+  board.ciz(); board.sec(-1);
+  siradanDoldur();
   kaynakTazele(true);
   gorevNoktasi();
   bilgiPaneliCiz();
@@ -389,8 +382,7 @@ function kilidiAc(i) {
   if (oyuncu.stars < hucre.fiyat) { uyar(t('needStars')); return; }
   oyuncu.stars -= hucre.fiyat;
   const odul = hucre.odul;
-  oyuncu.grid.cells[i] = odul.t === 'egg'
-    ? { t: 'egg', lv: odul.lv, r: simdi() } : { t: odul.t, lv: odul.lv };
+  oyuncu.grid.cells[i] = { t: odul.t, lv: odul.lv };
   if (odul.t === 'egg') oyuncu.sayaclar.maxEggLv = Math.max(oyuncu.sayaclar.maxEggLv, odul.lv);
   kaydet();
   board.ciz(); board.sec(i);
@@ -457,8 +449,7 @@ function yumurtaBirak() {
   const lv = oyuncu.tutorial < 99 ? 1 : beslemeYumurtaSeviyesi();
   const yer = nesneVer({ t: 'egg', lv });
   if (yer === 'izgara') ucur(t('laidEgg'));
-  else if (yer === 'sira') uyar(t('gridFullEgg'));
-  else uyar(t('queueFull'));
+  else uyar(t('gridFullEgg'));
 }
 
 function yemAnimasyonu() {
@@ -678,15 +669,8 @@ function cizHepsi() {
   tazele();
 }
 
-let sonCizim = 0;
 function tazele() {
   if (!$('screen-dragon').hidden) ejderhaCiz();
-  if (!$('screen-grid').hidden) {
-    const dolan = oyuncu.grid.cells.some((c) => c?.t === 'egg' && c.r > sonCizim && c.r <= simdi());
-    if (dolan) { board.ciz(); board.sec(seciliHucre); }
-    if (seciliHucre >= 0) bilgiPaneliCiz();
-  }
-  sonCizim = simdi();
 }
 
 /* Sure birimleri de dile bagli: arayuz Ingilizce'yken "3sa 56dk" gorunmesin. */

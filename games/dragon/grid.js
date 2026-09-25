@@ -4,7 +4,7 @@
    seviye oluyor. Kilitli hucreler yildizla aciliyor ve icindeki odulu
    dogrudan oyuncuya veriyor. */
 
-import { EN_UST_YUMURTA, EN_UST_SANDIK } from './ekonomi.js?v126';
+import { EN_UST_YUMURTA, EN_UST_SANDIK } from './ekonomi.js?v130';
 
 const SANDIK_ADI = { 1: 'pouch', 2: 'basket', 3: 'chest', 4: 'chest-premium' };
 
@@ -27,7 +27,6 @@ export function onYukleListesi() {
 
 export const kilitliMi = (h) => !!h && h.kilit === true;
 export const nesneMi = (h) => !!h && !h.kilit;
-export const hazirMi = (h) => h?.t === 'egg' && (h.r || 0) <= Date.now();
 
 export const enUstSeviye = (tip) => (tip === 'egg' ? EN_UST_YUMURTA : EN_UST_SANDIK);
 
@@ -40,7 +39,7 @@ export function nesneKoy(grid, nesne) {
   const bos = grid.cells.map((c, i) => (c === null ? i : -1)).filter((i) => i >= 0);
   if (!bos.length) return -1;
   const i = bos[Math.floor(Math.random() * bos.length)];
-  grid.cells[i] = nesne.t === 'egg' ? { ...nesne, r: Date.now() } : { ...nesne };
+  grid.cells[i] = { ...nesne };
   return i;
 }
 
@@ -80,7 +79,7 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
         cell.dataset.t = hucre.t;
 
         const wrap = document.createElement('div');
-        wrap.className = `piece${hazirMi(hucre) ? ' full' : ''}`;
+        wrap.className = 'piece';
         wrap.dataset.i = String(i);
 
         const img = document.createElement('img');
@@ -89,12 +88,6 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
         img.draggable = false;
         wrap.appendChild(img);
 
-        /* Dolan yumurtanin uzerinde kucuk toplama isareti */
-        if (hazirMi(hucre)) {
-          const rozet = document.createElement('span');
-          rozet.className = 'ready-dot';
-          wrap.appendChild(rozet);
-        }
         cell.appendChild(wrap);
       }
 
@@ -216,7 +209,6 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
 
     if (birlesebilir(hucre, hedefHucre)) {
       const yeni = { t: hucre.t, lv: hucre.lv + 1 };
-      if (yeni.t === 'egg') yeni.r = Date.now();      /* birlesen yumurta hemen dolu gelir */
       grid.cells[hedef] = yeni;
       grid.cells[i] = null;
       ciz();

@@ -435,46 +435,51 @@ body[data-screen="tasks"] .sky::after {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 52px;
-  padding: 0 16px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 15px;
-  background: linear-gradient(180deg, rgba(56, 63, 84, 0.95), rgba(28, 33, 47, 0.95));
-  box-shadow: var(--golge), inset 0 1px 0 rgba(255, 255, 255, 0.13);
+  min-height: 56px;
+  padding: 0 18px;
+  border: 0;
+  border-style: solid;
+  border-width: 16px 26px 18px 26px;
+  border-image: url('../../assets/ui/btn-grey.webp') 30 43 32 43 fill stretch;
+  background: none;
   color: var(--yazi);
+  font-family: var(--baslik);
   font-size: 15px;
   font-weight: 800;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.6px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.75);
   cursor: pointer;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.45));
+  transition: transform 0.12s ease, filter 0.12s ease;
 }
 
-.act-btn b:empty { display: none; }
+/* Yazi ve ikonlar plakanin orta bandinda kalsin */
+.act-btn > * { position: relative; z-index: 1; }
 
 .act-btn b {
-  padding: 2px 8px;
+  padding: 1px 9px;
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.35);
-  color: var(--altin-acik);
+  color: #ffe6ad;
   font-variant-numeric: tabular-nums;
 }
 
 .act-btn.primary {
-  border-color: rgba(240, 187, 82, 0.55);
-  background: linear-gradient(180deg, #c8362f 0%, #8e1f28 55%, #6a141d 100%);
-  box-shadow:
-    var(--golge),
-    inset 0 1px 0 rgba(255, 210, 160, 0.35),
-    0 0 18px rgba(200, 54, 47, 0.25);
-  color: #fff2dc;
+  border-image: url('../../assets/ui/btn-red.webp') 30 43 32 43 fill stretch;
+  color: #fff1d8;
 }
 
-.act-btn img { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5)); }
+.act-btn.gold {
+  border-image: url('../../assets/ui/btn-green.webp') 30 43 32 43 fill stretch;
+}
 
-.act-btn:disabled { opacity: 0.42; cursor: default; box-shadow: none; }
+.act-btn img { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.6)); }
+
+.act-btn:disabled { opacity: 0.4; cursor: default; filter: none; }
 
 .act-btn:active:not(:disabled) {
-  transform: translateY(2px);
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+  transform: translateY(2px) scale(0.985);
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5)) brightness(0.92);
 }
 
 /* ---------- EJDERHA EKRANI ---------- */
@@ -1149,17 +1154,30 @@ body[data-screen="tasks"] .sky::after {
 
 .slot.locked .mini { opacity: 0.35; filter: grayscale(0.7); }
 
-.slot-lock {
+/* Kilitli yuva: ejderha silik, uzerinde net bir kilit rozeti */
+.slot.locked::after {
+  content: '';
   position: absolute;
-  display: grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  color: rgba(240, 187, 82, 0.9);
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,.8));
+  inset: 0;
+  border-radius: 17px;
+  background: rgba(8, 10, 16, 0.55);
 }
 
-.slot-lock svg { width: 22px; height: 22px; }
+.slot-lock {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(240, 187, 82, 0.45);
+  border-radius: 50%;
+  background: rgba(16, 19, 28, 0.9);
+  color: #ffd98a;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+}
+
+.slot-lock svg { width: 19px; height: 19px; }
 
 .slot-buy {
   display: inline-flex;
@@ -1235,7 +1253,7 @@ body[data-screen="tasks"] .sky::after {
   color: var(--soluk);
 }
 
-.queue { display: flex; gap: 6px; margin-left: auto; }
+.queue { display: flex; gap: 6px; }
 
 .queue-item {
   width: 38px;
@@ -1250,7 +1268,12 @@ body[data-screen="tasks"] .sky::after {
 
 .queue-item img { width: 82%; height: 82%; object-fit: contain; }
 
-.queue-item.empty { border-style: dashed; border-color: rgba(255, 255, 255, 0.14); }
+.queue-more {
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--altin-acik);
+}
 
 /* ---------- BILGI PANELI ---------- */
 
@@ -1313,12 +1336,12 @@ body[data-screen="tasks"] .sky::after {
 
 .slots-card .slot-strip { margin-top: 11px; justify-content: flex-start; overflow-x: auto; }
 
-.slot { flex-direction: column; gap: 2px; width: 74px; height: 82px; }
+.slot { flex-direction: column; gap: 3px; width: 98px; height: 112px; border-radius: 18px; }
 
-.slot .mini { width: 52px; height: 52px; }
+.slot .mini { width: 74px; height: 74px; }
 
 .slot-lv {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
   color: var(--soluk);
   letter-spacing: 0.3px;
@@ -1326,9 +1349,26 @@ body[data-screen="tasks"] .sky::after {
 
 .slot.is-on .slot-lv { color: var(--altin-acik); }
 
-.slot-plus { font-size: 22px; font-weight: 300; color: var(--soluk); line-height: 1; }
+.slot-plus {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  font-size: 24px;
+  font-weight: 300;
+  color: var(--soluk);
+  line-height: 1;
+}
 
-.feed-big { min-height: 56px; font-size: 16px; }
+.feed-big {
+  flex: none;
+  align-self: center;
+  min-width: 200px;
+  min-height: 54px;
+  font-size: 14.5px;
+}
 
 .appetite { margin: 9px 0 0; font-size: 11.5px; color: var(--soluk); }
 
@@ -1454,24 +1494,35 @@ body[data-screen="tasks"] .sky::after {
 
 .quest-odul img { width: 17px; height: 17px; object-fit: contain; }
 
+/* Kucuk plaka: gorev odulu dugmeleri de ayni metal dili kullaniyor */
 .quest-claim {
   flex: none;
-  min-height: 32px;
-  padding: 0 12px;
-  border: 1px solid rgba(240, 187, 82, 0.5);
-  border-radius: 11px;
-  background: linear-gradient(180deg, #c8362f, #7e1a23);
-  color: #fff2dc;
+  min-width: 78px;
+  min-height: 44px;
+  padding: 0 6px;
+  border: 0;
+  border-style: solid;
+  border-width: 13px 20px 14px 20px;
+  border-image: url('../../assets/ui/btn-green.webp') 30 43 32 43 fill stretch;
+  background: none;
+  color: #eafff0;
+  font-family: var(--baslik);
   font-size: 12px;
   font-weight: 800;
+  letter-spacing: 0.4px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
   cursor: pointer;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
 }
 
+.quest-claim:active:not(:disabled) { transform: translateY(2px); filter: brightness(0.92); }
+
 .quest-claim:disabled {
-  border-color: var(--kenar);
-  background: rgba(255, 255, 255, 0.05);
+  border-image: url('../../assets/ui/btn-grey.webp') 30 43 32 43 fill stretch;
   color: var(--soluk);
   cursor: default;
+  opacity: 0.5;
+  filter: none;
 }
 
 #daily-claim { width: 100%; }
