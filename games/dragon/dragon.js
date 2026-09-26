@@ -1,18 +1,18 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v132';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v132';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v133';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v133';
 
-import { CONFIG, gorselSeviye } from './config.js?v132';
-import { bakimdaMi } from '../../js/store.js?v132';
+import { CONFIG, gorselSeviye } from './config.js?v133';
+import { bakimdaMi } from '../../js/store.js?v133';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         EN_COK_YUVA } from './model.js?v132';
-import { dragonSvg, dragonAssetUrls } from './art.js?v132';
+         EN_COK_YUVA } from './model.js?v133';
+import { dragonSvg, dragonAssetUrls } from './art.js?v133';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi } from './grid.js?v132';
+         kilitliMi, nesneMi } from './grid.js?v133';
 import { YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, GOREV_HARITASI, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi,
-         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v132';
-import { createTutorial, pozListesi } from './tutorial.js?v132';
+         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v133';
+import { createTutorial, pozListesi } from './tutorial.js?v133';
 
 const GAME_ID = 'dragon';
 
@@ -226,6 +226,7 @@ function ekranGoster(ad) {
   document.querySelectorAll('.screen').forEach((s) => { s.hidden = s.dataset.screen !== ad; });
   tabbar.querySelectorAll('.tab').forEach((b) => b.classList.toggle('is-on', b.dataset.go === ad));
   if (ad === 'grid') { board.ciz(); board.sec(seciliHucre); }
+  if (ad === 'dragon') ejderhaCiz();
   if (ad === 'tasks') { gunlukCiz(); gorevleriCiz(); }
   tut?.yenidenKonumla();
 }
@@ -690,8 +691,20 @@ function cizHepsi() {
   tazele();
 }
 
+/* Saniyede bir donen tik eskiden ejderha gorselini ve tum yuva seridini
+   innerHTML ile bastan kuruyordu; degisen tek sey geri sayim yazisiydi.
+   Artik sadece o yazi guncelleniyor. Istah penceresi doldugu an besleme
+   fiyati sifirlandigi icin orada bir kez tam cizim yapiliyor. */
 function tazele() {
-  if (!$('screen-dragon').hidden) ejderhaCiz();
+  if ($('screen-dragon').hidden) return;
+  const d = aktifEjderha(oyuncu);
+  if (!d) return;
+
+  if (d.pencereBas && simdi() - d.pencereBas >= BESLEME_PENCERESI) { ejderhaCiz(); return; }
+
+  appetiteEl.textContent = d.pencereBas
+    ? t('appetite', { time: sureMetni(d.pencereBas + BESLEME_PENCERESI - simdi()) })
+    : t('appetiteFresh');
 }
 
 /* Sure birimleri de dile bagli: arayuz Ingilizce'yken "3sa 56dk" gorunmesin. */

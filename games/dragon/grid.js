@@ -4,15 +4,18 @@
    seviye oluyor. Kilitli hucreler yildizla aciliyor ve icindeki odulu
    dogrudan oyuncuya veriyor. */
 
-import { EN_UST_YUMURTA, EN_UST_SANDIK } from './ekonomi.js?v132';
+import { EN_UST_YUMURTA, EN_UST_SANDIK } from './ekonomi.js?v133';
 
 const SANDIK_ADI = { 1: 'pouch', 2: 'basket', 3: 'chest', 4: 'chest-premium' };
 
+/* Izgarada bir oge en fazla ~64 CSS px ciziliyor; DPR 3'te 192 gercek
+   piksel yetiyor. 256'lik kaynaklar duruyor ama sayfa 192'likleri cekiyor:
+   ayni netlik, 1.8 kat az cozme isi. */
 export function gorselYolu(hucre) {
   if (!hucre) return '';
-  if (hucre.t === 'egg') return `assets/eggs/egg-${Math.min(EN_UST_YUMURTA, hucre.lv)}.webp`;
+  if (hucre.t === 'egg') return `assets/eggs/egg-${Math.min(EN_UST_YUMURTA, hucre.lv)}-192.webp`;
   const onek = hucre.t === 'star' ? 'star' : 'meat';
-  return `../../assets/packs/${onek}-${SANDIK_ADI[Math.min(EN_UST_SANDIK, hucre.lv)]}-256.webp`;
+  return `../../assets/packs/${onek}-${SANDIK_ADI[Math.min(EN_UST_SANDIK, hucre.lv)]}-192.webp`;
 }
 
 export function onYukleListesi() {
