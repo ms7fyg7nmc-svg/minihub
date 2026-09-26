@@ -4,7 +4,8 @@
    seviye oluyor. Kilitli hucreler yildizla aciliyor ve icindeki odulu
    dogrudan oyuncuya veriyor. */
 
-import { EN_UST_YUMURTA, EN_UST_SANDIK } from './ekonomi.js?v134';
+import { EN_UST_YUMURTA, EN_UST_SANDIK } from './ekonomi.js?v135';
+import { belir, zipla, AKIS } from './canlandir.js?v135';
 
 const SANDIK_ADI = { 1: 'pouch', 2: 'basket', 3: 'chest', 4: 'chest-premium' };
 
@@ -180,6 +181,25 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
     }
   }
 
+  /* Hayaleti hedef hucrenin ortasina suzdurup bitince haber veriyor.
+     Hayaletin transform'u zaten goruntu koordinatinda oldugu icin hedef
+     merkezi dogrudan yazilabiliyor. */
+  function suzul(ghost, hedef, bitince) {
+    const kutu = el.querySelector(`.cell[data-i="${hedef}"]`)?.getBoundingClientRect();
+    if (!kutu || !ghost.animate) { ghost.remove(); bitince(); return; }
+
+    const an = ghost.animate([
+      { transform: ghost.style.transform },
+      { transform: `translate3d(${kutu.left + kutu.width / 2}px, ${kutu.top + kutu.height / 2}px, 0) scale(.85)` },
+    ], { duration: 170, easing: AKIS, fill: 'forwards' });
+
+    const tamam = () => { ghost.remove(); bitince(); };
+    an.onfinish = tamam;
+    an.oncancel = tamam;
+  }
+
+  const parca = (i) => el.querySelector(`.cell[data-i="${i}"] .piece`);
+
   function bitir(e) {
     if (!surukle) return;
 
@@ -191,7 +211,6 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
     }
 
     const { i, hucre, ghost, tasidi } = surukle;
-    ghost.remove();
     vurguTemizle();
     surukle = null;
 
@@ -199,33 +218,46 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
 
     /* Kisa dokunus: bilgi penceresi acilsin */
     if (!tasidi || hedef === i) {
+      ghost.remove();
       ciz();
       onPick?.(i, grid.cells[i]);
       return;
     }
-    if (hedef < 0) { ciz(); return; }
+    if (hedef < 0) { ghost.remove(); ciz(); return; }
 
     const hedefHucre = grid.cells[hedef];
 
+    /* Bos hucreye tasima: parca yerine suzuluyor */
     if (hedefHucre === null) {
-      grid.cells[hedef] = hucre;
       grid.cells[i] = null;
       ciz();
-      onChange?.();
+      suzul(ghost, hedef, () => {
+        grid.cells[hedef] = hucre;
+        ciz();
+        belir(parca(hedef), 300);
+        onChange?.();
+      });
       return;
     }
 
+    /* Birlestirme: once kaynak hucre bosaliyor, parca hedefe suzuluyor,
+       sonra ust seviye taskinli bir sekilde yerine oturuyor. */
     if (birlesebilir(hucre, hedefHucre)) {
-      const yeni = { t: hucre.t, lv: hucre.lv + 1 };
-      grid.cells[hedef] = yeni;
       grid.cells[i] = null;
       ciz();
-      patlat(hedef);
-      onChange?.();
-      onMerge?.(yeni, hedef);
+      suzul(ghost, hedef, () => {
+        const yeni = { t: hucre.t, lv: hucre.lv + 1 };
+        grid.cells[hedef] = yeni;
+        ciz();
+        patlat(hedef);
+        zipla(parca(hedef), 1.32, 480);
+        onChange?.();
+        onMerge?.(yeni, hedef);
+      });
       return;
     }
 
+    ghost.remove();
     ciz();
   }
 
@@ -243,6 +275,7 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
     },
     ciz,
     hucreKutusu: (i) => el.querySelector(`.cell[data-i="${i}"]`)?.getBoundingClientRect() || null,
+    parcaBul: (i) => parca(i),
     get grid() { return grid; },
   };
 }

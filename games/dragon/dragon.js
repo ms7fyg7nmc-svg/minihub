@@ -1,18 +1,19 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v134';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v134';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v135';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v135';
 
-import { CONFIG, gorselSeviye } from './config.js?v134';
-import { bakimdaMi } from '../../js/store.js?v134';
+import { CONFIG, gorselSeviye } from './config.js?v135';
+import { bakimdaMi } from '../../js/store.js?v135';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         EN_COK_YUVA } from './model.js?v134';
-import { dragonSvg, dragonAssetUrls } from './art.js?v134';
+         EN_COK_YUVA } from './model.js?v135';
+import { dragonSvg, dragonAssetUrls } from './art.js?v135';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v135';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi } from './grid.js?v134';
+         kilitliMi, nesneMi } from './grid.js?v135';
 import { YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, GOREV_HARITASI, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi,
-         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v134';
-import { createTutorial, pozListesi } from './tutorial.js?v134';
+         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v135';
+import { createTutorial, pozListesi } from './tutorial.js?v135';
 
 const GAME_ID = 'dragon';
 
@@ -246,8 +247,9 @@ $('user-chip').addEventListener('click', hubaDon);
    uyarilir: birlestirip yer acmasi gerekir. */
 function nesneVer(nesne) {
   if (bosHucreVarMi(oyuncu.grid)) {
-    nesneKoy(oyuncu.grid, nesne);
+    const yer = nesneKoy(oyuncu.grid, nesne);
     board.ciz(); board.sec(seciliHucre);
+    sonKonan = yer;
     return 'izgara';
   }
   /* Sira sinirsiz: kazanilan odul asla kaybolmuyor. */
@@ -256,15 +258,39 @@ function nesneVer(nesne) {
   return 'sira';
 }
 
-function odulVer(odul) {
-  if (odul.food) { oyuncu.food += odul.food; odulUcur(t('gotFood', { n: bicim(odul.food) }), true); }
-  if (odul.stars) { oyuncu.stars += odul.stars; odulUcur(t('gotStars', { n: bicim(odul.stars) }), true); }
-  if (odul.item) {
-    const yer = nesneVer({ ...odul.item });
-    if (yer === 'sira') uyar(t('queuedMsg'));
-    else odulUcur(t('gotItem', { name: nesneAdi(odul.item) }), true);
+let sonKonan = -1;   /* nesneVer'in izgarada kullandigi hucre */
+
+/* Odul, alindigi dugmeden cikip gidecegi yere ucuyor: yem ve yildiz
+   ust bardaki sayacina, nesne ise indigi izgara hucresine ya da siraya. */
+function odulVer(odul, kaynak) {
+  const yer = kaynak || resFood;
+
+  if (odul.food) {
+    oyuncu.food += odul.food;
+    kazanimUcur(yer, 'food', 5);
+    odulUcur(t('gotFood', { n: bicim(odul.food) }), true);
   }
-  kaynakTazele(true);
+  if (odul.stars) {
+    oyuncu.stars += odul.stars;
+    kazanimUcur(yer, 'star', 4);
+    odulUcur(t('gotStars', { n: bicim(odul.stars) }), true);
+  }
+  if (odul.item) {
+    sonKonan = -1;
+    const nereye = nesneVer({ ...odul.item });
+    if (nereye === 'sira') {
+      ucur({ kaynak: yer, hedef: queueRow, gorsel: gorselYolu(odul.item), boy: 34,
+             bitince: () => { zipla(queueRow, 1.1); uyar(t('queuedMsg')); } });
+    } else {
+      const kutu = board.hucreKutusu(sonKonan);
+      ucur({ kaynak: yer, hedef: kutu || queueRow, gorsel: gorselYolu(odul.item), boy: 34,
+             bitince: () => {
+               belir(board.parcaBul?.(sonKonan));
+               odulUcur(t('gotItem', { name: nesneAdi(odul.item) }), true);
+             } });
+    }
+  }
+  if (!odul.food && !odul.stars) kaynakTazele(true);
 }
 
 /* Izgarada yer acildiginda siradakiler otomatik iniyor. */
@@ -361,6 +387,7 @@ function bilgiPaneliCiz() {
 function yumurtaKir(i) {
   const hucre = oyuncu.grid.cells[i];
   if (!nesneMi(hucre) || hucre.t !== 'egg') return;
+  const kutu = board.hucreKutusu(i);          /* hucre bosalmadan once olculuyor */
   const { miktar, jackpot } = toplamaSonucu(hucre.lv);
   oyuncu.food += miktar;
   oyuncu.grid.cells[i] = null;
@@ -369,10 +396,10 @@ function yumurtaKir(i) {
   kaydet();
   board.ciz(); board.sec(-1);
   siradanDoldur();
-  kaynakTazele(true);
   gorevNoktasi();
   bilgiPaneliCiz();
   haptic.success();
+  kazanimUcur(kutu, 'food', jackpot ? 7 : 4);
   odulUcur(jackpot ? `${t('jackpotMsg')} ${t('gotFood', { n: bicim(miktar) })}`
                    : t('gotFood', { n: bicim(miktar) }), jackpot);
   tut?.olay('collect');
@@ -381,6 +408,7 @@ function yumurtaKir(i) {
 function sandikAc(i) {
   const hucre = oyuncu.grid.cells[i];
   if (!nesneMi(hucre) || hucre.t === 'egg') return;
+  const kutu = board.hucreKutusu(i);
   const deger = sandikDegeri(hucre.t, hucre.lv);
   if (hucre.t === 'star') oyuncu.stars += deger;
   else oyuncu.food += deger;
@@ -389,9 +417,9 @@ function sandikAc(i) {
   kaydet();
   board.ciz(); board.sec(-1);
   siradanDoldur();
-  kaynakTazele(true);
   bilgiPaneliCiz();
   haptic.success();
+  kazanimUcur(kutu, hucre.t === 'star' ? 'star' : 'food', hucre.lv >= 3 ? 7 : 5);
   const ust = ustBasamakMi(hucre.t, hucre.lv, deger);
   const mesaj = hucre.t === 'star' ? t('gotStars', { n: bicim(deger) })
                                    : t('gotFood', { n: bicim(deger) });
@@ -470,7 +498,7 @@ function seviyeKontrol(d) {
 function yumurtaBirak() {
   const lv = oyuncu.tutorial < 99 ? 1 : beslemeYumurtaSeviyesi();
   const yer = nesneVer({ t: 'egg', lv });
-  if (yer === 'izgara') ucur(t('laidEgg'));
+  if (yer === 'izgara') yaziUcur(t('laidEgg'));
   else uyar(t('gridFullEgg'));
 }
 
@@ -599,7 +627,7 @@ function gunlukCiz() {
 dailyClaim.addEventListener('click', () => {
   if (!gunlukAlinabilirMi()) return;
   const gun = gunlukSiradakiGun();
-  odulVer(GUNLUK_ODULLER[gun - 1]);
+  odulVer(GUNLUK_ODULLER[gun - 1], dailyClaim);
   oyuncu.gunluk.seri = gun;
   oyuncu.gunluk.sonGun = bugun();
   kaydet();
@@ -653,7 +681,7 @@ function gorevleriCiz() {
     el.querySelector('button').addEventListener('click', () => {
       if (bitti.includes(g.id) || gorevIlerleme(g) < g.hedef) return;
       bitti.push(g.id);
-      odulVer(g.odul);
+      odulVer(g.odul, el.querySelector('button'));
       kaydet();
       haptic.success();
       gorevleriCiz();
@@ -671,13 +699,33 @@ function gorevNoktasi() {
 
 /* ---------- ORTAK ---------- */
 
-function kaynakTazele(zipla = false) {
-  foodValue.textContent = bicim(oyuncu.food);
-  starValue.textContent = bicim(oyuncu.stars);
-  if (!zipla) return;
-  for (const el of [resFood, resStar]) {
-    el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+/* Son gosterilen degerler: sayac oraya degil, oradan akiyor. */
+let gosterilen = { food: null, stars: null };
+
+function kaynakTazele(canlandir = false) {
+  const oncekiYem = gosterilen.food;
+  const oncekiYildiz = gosterilen.stars;
+  gosterilen = { food: oyuncu.food, stars: oyuncu.stars };
+
+  if (!canlandir || oncekiYem === null) {
+    foodValue.textContent = bicim(oyuncu.food);
+    starValue.textContent = bicim(oyuncu.stars);
+    return;
   }
+  sayacAkit(foodValue, oncekiYem, oyuncu.food, bicim);
+  sayacAkit(starValue, oncekiYildiz, oyuncu.stars, bicim);
+}
+
+/* Kazanilan sey once sayacina ucuyor, sayac varista zipliyor. */
+function kazanimUcur(kaynak, tip, adet = 4) {
+  const yildiz = tip === 'star';
+  ucur({
+    kaynak,
+    hedef: yildiz ? resStar : resFood,
+    gorsel: yildiz ? '../../assets/currency/star-64.webp' : '../../assets/food/meat-64.webp',
+    adet,
+    bitince: () => { kaynakTazele(true); zipla(yildiz ? resStar : resFood, 1.22); },
+  });
 }
 
 function cizHepsi() {
@@ -717,7 +765,8 @@ function sureMetni(ms) {
   return dk % 60 ? `${sa}${t('unitH')} ${dk % 60}${t('unitM')}` : `${sa}${t('unitH')}`;
 }
 
-function ucur(metin) {
+/* Kucuk yazi baloncugu (ucur() artik canlandir.js'teki nesne ucusu). */
+function yaziUcur(metin) {
   const el = document.createElement('span');
   el.textContent = metin;
   floatersEl.appendChild(el);

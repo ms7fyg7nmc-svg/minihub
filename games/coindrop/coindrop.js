@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v134';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v134';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v134';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v134';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v135';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v135';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v135';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v135';
 
 const GAME_ID = 'coindrop';
 

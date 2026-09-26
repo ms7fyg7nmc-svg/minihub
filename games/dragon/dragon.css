@@ -1249,6 +1249,19 @@ body[data-screen="tasks"] .sky::after {
   white-space: nowrap;
 }
 
+/* Kazanilan seyin ekranda kat ettigi yol. Sadece transform ve opacity
+   degistigi icin tamami compositor'da isleniyor. */
+.ucus {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  pointer-events: none;
+  object-fit: contain;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.55));
+}
+
 /* ---------- SIRADAKILER ---------- */
 
 .queue-row {
