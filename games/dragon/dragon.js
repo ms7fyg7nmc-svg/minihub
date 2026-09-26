@@ -1,20 +1,20 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v148';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v148';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v149';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v149';
 
-import { CONFIG, gorselSeviye } from './config.js?v148';
-import { bakimdaMi } from '../../js/store.js?v148';
+import { CONFIG, gorselSeviye } from './config.js?v149';
+import { bakimdaMi } from '../../js/store.js?v149';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         EN_COK_YUVA } from './model.js?v148';
-import { dragonSvg, dragonAssetUrls } from './art.js?v148';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v148';
-import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v148';
+         EN_COK_YUVA } from './model.js?v149';
+import { dragonSvg, dragonAssetUrls } from './art.js?v149';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v149';
+import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v149';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi } from './grid.js?v148';
+         kilitliMi, nesneMi } from './grid.js?v149';
 import { YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, GOREV_HARITASI, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi,
-         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v148';
-import { createTutorial, pozListesi } from './tutorial.js?v148';
+         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v149';
+import { createTutorial, pozListesi } from './tutorial.js?v149';
 
 const GAME_ID = 'dragon';
 
@@ -660,10 +660,18 @@ function gunlukSiradakiGun() {
   return 1;
 }
 
+/* Odul her zaman bir sayi ya da seviye ile birlikte gosteriliyor.
+   Eskiden nesne odullerinde sadece kucuk bir resim vardi ve oyuncu ne
+   kazanacagini anlayamiyordu. */
+/* Madalyonun uzerindeki durum isareti. Sayi degil isaret: sayinin
+   yerlesimi ve yazi karakteri madalyona oturmuyordu. */
+const TIK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12.5l4.2 4.2 8.8-9.4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const UNLEM_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.5v8.2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/><circle cx="12" cy="18.4" r="1.9" fill="currentColor"/></svg>';
+
 function odulRozeti(odul) {
-  if (odul.food) return `<img src="../../assets/food/meat-64.webp" alt=""><b>${odul.food}</b>`;
-  if (odul.stars) return `<img src="../../assets/currency/star-64.webp" alt=""><b>${odul.stars}</b>`;
-  if (odul.item) return `<img src="${gorselYolu(odul.item)}" alt="">`;
+  if (odul.food) return `<img src="../../assets/food/meat-64.webp" alt=""><b>${bicim(odul.food)}</b>`;
+  if (odul.stars) return `<img src="../../assets/currency/star-64.webp" alt=""><b>${bicim(odul.stars)}</b>`;
+  if (odul.item) return `<img src="${gorselYolu(odul.item)}" alt=""><b>${t('lvShort', { level: odul.item.lv })}</b>`;
   return '';
 }
 
@@ -718,19 +726,20 @@ const gorevBaslik = (g) => t(`quest${g.tip.charAt(0).toUpperCase()}${g.tip.slice
 function gorevleriCiz() {
   questPath.innerHTML = '';
   const bitti = oyuncu.gorevler.bitti;
-  let aktifBulundu = false;
 
-  GOREV_HARITASI.forEach((g, i) => {
+  /* Madalyonun rengi artik oyuncunun yapabilecegi seyi anlatiyor:
+     yesil = alinmis, altin = odulu hazir bekliyor, demir = devam ediyor.
+     Once "siradaki bitmemis gorev" altin oluyordu, ama gorevler sirali
+     kilitli olmadigi icin o renk hicbir sey ifade etmiyordu. */
+  GOREV_HARITASI.forEach((g) => {
     const tamamlandi = bitti.includes(g.id);
     const sayi = gorevIlerleme(g);
     const hazir = !tamamlandi && sayi >= g.hedef;
-    const aktif = !tamamlandi && !aktifBulundu;
-    if (aktif) aktifBulundu = true;
 
     const el = document.createElement('div');
-    el.className = `quest${tamamlandi ? ' done' : ''}${aktif ? ' active' : ''}`;
+    el.className = `quest${tamamlandi ? ' done' : ''}${hazir ? ' active' : ''}`;
     el.innerHTML = `
-      <span class="quest-dot">${tamamlandi ? '✓' : i + 1}</span>
+      <span class="quest-dot">${tamamlandi ? TIK_SVG : (hazir ? UNLEM_SVG : '')}</span>
       <div class="quest-body">
         <div class="quest-title">${gorevBaslik(g)}</div>
         <div class="quest-prog">

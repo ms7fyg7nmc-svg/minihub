@@ -1496,7 +1496,7 @@ body[data-screen="tasks"] .sky::after {
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  padding: 7px 2px 6px;
+  padding: 8px 2px 7px;
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.3);
@@ -1508,13 +1508,15 @@ body[data-screen="tasks"] .sky::after {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
-  font-size: 10px;
+  gap: 2px;
+  font-size: 10.5px;
   font-weight: 800;
+  line-height: 1;
   color: var(--altin-acik);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
-.daily-odul img { width: 22px; height: 22px; object-fit: contain; }
+.daily-odul img { width: 26px; height: 26px; object-fit: contain; }
 
 .daily.done { opacity: 0.4; }
 
@@ -1591,6 +1593,19 @@ body[data-screen="tasks"] .sky::after {
   background: url('../../assets/ui/node-locked.webp') center / contain no-repeat;
 }
 
+/* Durum isareti madalyonun uzerinde duruyor. */
+.quest-dot svg {
+  position: relative;
+  z-index: 1;
+  width: 20px;
+  height: 20px;
+  margin: 11px;
+  display: block;
+}
+
+.quest.done .quest-dot svg { color: #d8fff0; filter: drop-shadow(0 1px 2px rgba(0, 40, 25, 0.9)); }
+.quest.active .quest-dot svg { color: #4a3208; }
+
 .quest.active {
   border-color: rgba(240, 187, 82, 0.35);
   background: rgba(240, 187, 82, 0.07);
@@ -1602,7 +1617,11 @@ body[data-screen="tasks"] .sky::after {
 
 .quest.active .quest-dot::after { background-image: url('../../assets/ui/node-active.webp'); }
 
-.quest.done { opacity: 0.6; }
+/* Bitmis gorev soluyor ama madalyon tam opak kaliyor: satirin tamamina
+   opacity verilince madalyon da saydamlasiyor ve arkasindaki zincir
+   icinden goruluyordu. */
+.quest.done .quest-body,
+.quest.done .quest-claim { opacity: 0.45; }
 
 .quest.done .quest-dot::after { background-image: url('../../assets/ui/node-done.webp'); }
 
@@ -1613,6 +1632,11 @@ body[data-screen="tasks"] .sky::after {
 .quest-prog .bar { height: 6px; }
 
 .quest-odul {
+  flex: none;
+  padding: 3px 9px 3px 4px;
+  border: 1px solid rgba(240, 187, 82, 0.28);
+  border-radius: 999px;
+  background: rgba(240, 187, 82, 0.1);
   display: inline-flex;
   align-items: center;
   gap: 3px;
@@ -1621,7 +1645,8 @@ body[data-screen="tasks"] .sky::after {
   color: var(--altin-acik);
 }
 
-.quest-odul img { width: 17px; height: 17px; object-fit: contain; }
+.quest-odul img { width: 22px; height: 22px; object-fit: contain; }
+.quest-odul b { font-size: 12.5px; font-weight: 800; color: var(--altin-acik); }
 
 /* Kucuk plaka: gorev odulu dugmeleri de ayni metal dili kullaniyor */
 .quest-claim {
