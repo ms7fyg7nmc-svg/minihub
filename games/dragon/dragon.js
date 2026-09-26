@@ -1,20 +1,20 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v143';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v143';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v146';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v146';
 
-import { CONFIG, gorselSeviye } from './config.js?v143';
-import { bakimdaMi } from '../../js/store.js?v143';
+import { CONFIG, gorselSeviye } from './config.js?v146';
+import { bakimdaMi } from '../../js/store.js?v146';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         EN_COK_YUVA } from './model.js?v143';
-import { dragonSvg, dragonAssetUrls } from './art.js?v143';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v143';
-import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v143';
+         EN_COK_YUVA } from './model.js?v146';
+import { dragonSvg, dragonAssetUrls } from './art.js?v146';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v146';
+import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v146';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi } from './grid.js?v143';
+         kilitliMi, nesneMi } from './grid.js?v146';
 import { YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, GOREV_HARITASI, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi,
-         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v143';
-import { createTutorial, pozListesi } from './tutorial.js?v143';
+         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v146';
+import { createTutorial, pozListesi } from './tutorial.js?v146';
 
 const GAME_ID = 'dragon';
 
@@ -556,8 +556,9 @@ function yumurtaBirak() {
     bitince: () => {
       zipla(ocakSekmesi, 1.16);
       cal('egglay');
+      /* Izgara doluysa yumurta siraya giriyor; oyuncu Ocak'a gecince
+         zaten goruyor, ayrica uyari cikarmaya gerek yok. */
       if (yer === 'izgara') yaziUcur(t('laidEgg'));
-      else uyar(t('gridFullEgg'));
     },
   });
 }
