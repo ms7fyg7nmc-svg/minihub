@@ -1,17 +1,17 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v130';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v130';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v131';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v131';
 
-import { CONFIG, gorselSeviye } from './config.js?v130';
-import { bakimdaMi } from '../../js/store.js?v130';
+import { CONFIG, gorselSeviye } from './config.js?v131';
+import { bakimdaMi } from '../../js/store.js?v131';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         EN_COK_YUVA } from './model.js?v130';
-import { dragonSvg, dragonAssetUrls } from './art.js?v130';
+         EN_COK_YUVA } from './model.js?v131';
+import { dragonSvg, dragonAssetUrls } from './art.js?v131';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi } from './grid.js?v130';
+         kilitliMi, nesneMi } from './grid.js?v131';
 import { YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, GOREV_HARITASI, yemMaliyeti, seviyeIcinBesleme,
-         toplamaSonucu, sandikDegeri, beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v130';
-import { createTutorial, pozListesi } from './tutorial.js?v130';
+         toplamaSonucu, sandikDegeri, beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v131';
+import { createTutorial, pozListesi } from './tutorial.js?v131';
 
 const GAME_ID = 'dragon';
 
