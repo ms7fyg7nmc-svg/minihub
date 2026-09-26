@@ -38,6 +38,25 @@
 .dragon-app input,
 .dragon-app select { font-family: inherit; }
 
+/* Ses acma/kapama: ust barda kucuk, dikkat cekmeyen bir dugme. */
+.ses-btn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--kenar);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--soluk);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ses-btn.kapali { color: #5d6478; }
+
 /* ---------- ATMOSFER ---------- */
 
 /* Sahne arka plani: ekrana gore degisen tek gorsel + uzerine okunabilirlik

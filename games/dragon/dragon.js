@@ -1,19 +1,20 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v139';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v139';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v140';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v140';
 
-import { CONFIG, gorselSeviye } from './config.js?v139';
-import { bakimdaMi } from '../../js/store.js?v139';
+import { CONFIG, gorselSeviye } from './config.js?v140';
+import { bakimdaMi } from '../../js/store.js?v140';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         EN_COK_YUVA } from './model.js?v139';
-import { dragonSvg, dragonAssetUrls } from './art.js?v139';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v139';
+         EN_COK_YUVA } from './model.js?v140';
+import { dragonSvg, dragonAssetUrls } from './art.js?v140';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v140';
+import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v140';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi } from './grid.js?v139';
+         kilitliMi, nesneMi } from './grid.js?v140';
 import { YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, GOREV_HARITASI, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi,
-         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v139';
-import { createTutorial, pozListesi } from './tutorial.js?v139';
+         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v140';
+import { createTutorial, pozListesi } from './tutorial.js?v140';
 
 const GAME_ID = 'dragon';
 
@@ -124,6 +125,7 @@ const slotStrip = $('slot-strip');
 const dailyRow = $('daily-row'); const dailyNote = $('daily-note'); const dailyClaim = $('daily-claim');
 const questPath = $('quest-path');
 const taskDot = $('task-dot'); const tabbar = $('tabbar');
+const sesBtn = $('ses-btn');
 
 /* ---------- DURUM ---------- */
 
@@ -211,6 +213,15 @@ async function basla() {
   showBackButton(hubaDon);
   backToHubOnResume();
   window.addEventListener('resize', () => tut?.yenidenKonumla());
+  /* Ses dugmesi: tercih hatirlaniyor. */
+  const sesYuzu = () => {
+    const a = sesAcikMi();
+    sesBtn.textContent = a ? '\u266A' : '\u2715';
+    sesBtn.classList.toggle('kapali', !a);
+  };
+  sesBtn.addEventListener('click', () => { sesiAyarla(!sesAcikMi()); sesYuzu(); cal('tap'); });
+  sesBaslat();
+  sesYuzu();
   setInterval(tazele, 1000);
 
   tutorialKur();
@@ -236,6 +247,7 @@ tabbar.addEventListener('click', (e) => {
   const btn = e.target.closest('.tab');
   if (!btn) return;
   haptic.tap('light');
+  cal('tap');
   ekranGoster(btn.dataset.go);
 });
 
@@ -326,6 +338,7 @@ function birlesti(yeni) {
   }
   kaydet();
   haptic.tap('medium');
+  cal('merge');
   siradanDoldur();
   gorevNoktasi();
   bilgiPaneliCiz();
@@ -411,6 +424,8 @@ function yumurtaKir(i) {
   gorevNoktasi();
   bilgiPaneliCiz();
   haptic.success();
+  cal(jackpot ? 'jackpot' : 'crack');
+  cal(jackpot ? 'jackpot' : 'crack');
   kazanimUcur(kutu, 'food', jackpot ? 7 : 4);
   odulUcur(jackpot ? `${t('jackpotMsg')} ${t('gotFood', { n: bicim(miktar) })}`
                    : t('gotFood', { n: bicim(miktar) }), jackpot);
@@ -431,6 +446,7 @@ function sandikAc(i) {
   siradanDoldur();
   bilgiPaneliCiz();
   haptic.success();
+  cal('chest');
   kazanimUcur(kutu, hucre.t === 'star' ? 'star' : 'food', hucre.lv >= 3 ? 7 : 5);
   const ust = ustBasamakMi(hucre.t, hucre.lv, deger);
   const mesaj = hucre.t === 'star' ? t('gotStars', { n: bicim(deger) })
@@ -452,6 +468,7 @@ function kilidiAc(i) {
   bilgiPaneliCiz();
   gorevNoktasi();
   haptic.success();
+  cal('unlock');
 }
 
 /* ---------- EJDERHA ---------- */
@@ -484,6 +501,7 @@ feedBtn.addEventListener('click', async () => {
   d.pencereSayi += 1;
   kaynakTazele(true);
 
+  cal('feed');
   await yemAnimasyonu();
 
   d.lastFed = simdi();
@@ -503,6 +521,7 @@ function seviyeKontrol(d) {
     d.level += 1;
     d.feeds = 0;
     haptic.success();
+    cal('levelup');
     odulUcur(t('levelUp', { level: d.level }), true);
   }
 }
@@ -524,6 +543,7 @@ function yumurtaBirak() {
     sure: 720,
     bitince: () => {
       zipla(ocakSekmesi, 1.16);
+      cal('egglay');
       if (yer === 'izgara') yaziUcur(t('laidEgg'));
       else uyar(t('gridFullEgg'));
     },
@@ -655,6 +675,7 @@ function gunlukCiz() {
 dailyClaim.addEventListener('click', () => {
   if (!gunlukAlinabilirMi()) return;
   const gun = gunlukSiradakiGun();
+  cal('claim');
   odulVer(GUNLUK_ODULLER[gun - 1], dailyClaim);
   oyuncu.gunluk.seri = gun;
   oyuncu.gunluk.sonGun = bugun();
@@ -709,6 +730,7 @@ function gorevleriCiz() {
     el.querySelector('button').addEventListener('click', () => {
       if (bitti.includes(g.id) || gorevIlerleme(g) < g.hedef) return;
       bitti.push(g.id);
+      cal('claim');
       odulVer(g.odul, el.querySelector('button'));
       kaydet();
       haptic.success();
@@ -752,7 +774,7 @@ function kazanimUcur(kaynak, tip, adet = 4) {
     hedef: yildiz ? resStar : resFood,
     gorsel: yildiz ? '../../assets/currency/star-64.webp' : '../../assets/food/meat-64.webp',
     adet,
-    bitince: () => { kaynakTazele(true); zipla(yildiz ? resStar : resFood, 1.22); },
+    bitince: () => { kaynakTazele(true); zipla(yildiz ? resStar : resFood, 1.22); cal('collect'); },
   });
 }
 
@@ -810,6 +832,7 @@ function odulUcur(metin, buyuk = false) {
 }
 
 function uyar(metin) {
+  cal('deny');
   const el = document.createElement('div');
   el.className = 'toast';
   el.textContent = metin;
