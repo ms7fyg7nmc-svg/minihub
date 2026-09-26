@@ -1,20 +1,20 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v149';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v149';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v152';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v152';
 
-import { CONFIG, gorselSeviye } from './config.js?v149';
-import { bakimdaMi } from '../../js/store.js?v149';
+import { CONFIG, gorselSeviye } from './config.js?v152';
+import { bakimdaMi } from '../../js/store.js?v152';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         EN_COK_YUVA } from './model.js?v149';
-import { dragonSvg, dragonAssetUrls } from './art.js?v149';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v149';
-import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v149';
+         EN_COK_YUVA } from './model.js?v152';
+import { dragonSvg, dragonAssetUrls } from './art.js?v152';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v152';
+import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v152';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi } from './grid.js?v149';
+         kilitliMi, nesneMi } from './grid.js?v152';
 import { YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, GOREV_HARITASI, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi,
-         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v149';
-import { createTutorial, pozListesi } from './tutorial.js?v149';
+         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v152';
+import { createTutorial, pozListesi } from './tutorial.js?v152';
 
 const GAME_ID = 'dragon';
 
@@ -44,7 +44,7 @@ registerTexts(GAME_ID, {
   packStar4: 'Usta yıldız sandığı',
   chestGivesFood: '{a} - {b} yem verir',
   chestGivesStar: '{a} - {b} yıldız verir',
-  mergeNote: 'Aynı seviyeden biriyle birleştir, ödül büyür.',
+  mergeNote: 'Eşiyle birleştir, ödül büyür',
   topPackNote: 'En üst kademe. Aç ve ödülü al.',
   crack: 'Kır',
   chestOpen: 'Aç',
