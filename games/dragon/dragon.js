@@ -1,19 +1,19 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v135';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v135';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v136';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v136';
 
-import { CONFIG, gorselSeviye } from './config.js?v135';
-import { bakimdaMi } from '../../js/store.js?v135';
+import { CONFIG, gorselSeviye } from './config.js?v136';
+import { bakimdaMi } from '../../js/store.js?v136';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         EN_COK_YUVA } from './model.js?v135';
-import { dragonSvg, dragonAssetUrls } from './art.js?v135';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v135';
+         EN_COK_YUVA } from './model.js?v136';
+import { dragonSvg, dragonAssetUrls } from './art.js?v136';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v136';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi } from './grid.js?v135';
+         kilitliMi, nesneMi } from './grid.js?v136';
 import { YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, GOREV_HARITASI, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi,
-         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v135';
-import { createTutorial, pozListesi } from './tutorial.js?v135';
+         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v136';
+import { createTutorial, pozListesi } from './tutorial.js?v136';
 
 const GAME_ID = 'dragon';
 
@@ -495,11 +495,27 @@ function seviyeKontrol(d) {
   }
 }
 
+/* Yumurta ejderhanin oldugu yerden cikip gittigi yere ucuyor. Besleme
+   ejderha ekraninda oluyor, yumurtanin indigi izgara ise gorunmuyor;
+   o yuzden hedef, izgaranin temsilcisi olan Ocak sekmesi. Sekme varista
+   zipliyor ki oyuncu nereye gittigini gorsun. */
 function yumurtaBirak() {
   const lv = oyuncu.tutorial < 99 ? 1 : beslemeYumurtaSeviyesi();
   const yer = nesneVer({ t: 'egg', lv });
-  if (yer === 'izgara') yaziUcur(t('laidEgg'));
-  else uyar(t('gridFullEgg'));
+  const ocakSekmesi = tabbar.querySelector('.tab[data-go="grid"]');
+
+  ucur({
+    kaynak: artEl,
+    hedef: ocakSekmesi || resFood,
+    gorsel: gorselYolu({ t: 'egg', lv }),
+    boy: 38,
+    sure: 720,
+    bitince: () => {
+      zipla(ocakSekmesi, 1.16);
+      if (yer === 'izgara') yaziUcur(t('laidEgg'));
+      else uyar(t('gridFullEgg'));
+    },
+  });
 }
 
 function yemAnimasyonu() {

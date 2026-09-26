@@ -1,6 +1,6 @@
 
-import { initLang, t as coreT, getLang } from './i18n.js?v135';
-export { locale } from './i18n.js?v135';
+import { initLang, t as coreT, getLang } from './i18n.js?v136';
+export { locale } from './i18n.js?v136';
 
 let gameId = '';
 let fallbackTexts = {};
