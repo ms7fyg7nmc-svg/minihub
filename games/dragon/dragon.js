@@ -1,20 +1,20 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v152';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v152';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v158';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v158';
 
-import { CONFIG, gorselSeviye } from './config.js?v152';
-import { bakimdaMi } from '../../js/store.js?v152';
+import { CONFIG, gorselSeviye } from './config.js?v158';
+import { bakimdaMi } from '../../js/store.js?v158';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         EN_COK_YUVA } from './model.js?v152';
-import { dragonSvg, dragonAssetUrls } from './art.js?v152';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v152';
-import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v152';
+         EN_COK_YUVA } from './model.js?v158';
+import { dragonSvg, dragonAssetUrls } from './art.js?v158';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v158';
+import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v158';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi } from './grid.js?v152';
+         kilitliMi, nesneMi } from './grid.js?v158';
 import { YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, GOREV_HARITASI, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi,
-         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v152';
-import { createTutorial, pozListesi } from './tutorial.js?v152';
+         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v158';
+import { createTutorial, pozListesi } from './tutorial.js?v158';
 
 const GAME_ID = 'dragon';
 
@@ -583,20 +583,42 @@ function yemAnimasyonu() {
   });
 }
 
+const KILIT_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0110 0v2" fill="none" stroke="currentColor" stroke-width="2.2"/><rect x="5" y="10" width="14" height="10" rx="2.5" fill="currentColor"/></svg>';
+
+/* Yuva serit. Her kart uc halden birinde olabiliyor:
+     acik    - ejderha kullanilabilir, seviyesi yaziyor
+     kilitli - ejderha var ama yuvasi acilmamis; orada seviye degil
+               ACMA BEDELI yazmali, yoksa oyuncu neye baktigini anlamiyor
+     bos     - satin alinabilecek yeni yuva
+   Onizleme portre olarak kirpiliyor: sahne icin cizilen tam boy poz
+   74 piksele sigdirilinca tanimsiz bir lekeye donusuyordu. */
 function slotlariCiz() {
   slotStrip.innerHTML = '';
+
   oyuncu.dragons.forEach((d, sira) => {
     const kilitli = sira >= oyuncu.unlockedSlots;
+    const aktif = !kilitli && d.id === oyuncu.activeId;
     const btn = document.createElement('button');
-    btn.className = `slot${kilitli ? ' locked' : ''}${d.id === oyuncu.activeId ? ' is-on' : ''}`;
-    btn.innerHTML = `<div class="mini">${dragonSvg(gorselSeviye(d.level), d.look, 'happy')}</div>
-      <span class="slot-lv">${t('lvShort', { level: d.level })}</span>`;
+    btn.className = `slot${kilitli ? ' locked' : ''}${aktif ? ' is-on' : ''}`;
+
+    const portre = `<div class="mini">${dragonSvg(gorselSeviye(d.level), d.look, 'happy')}</div>`;
+
     if (kilitli) {
-      btn.insertAdjacentHTML('beforeend',
-        '<span class="slot-lock"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0110 0v2" fill="none" stroke="currentColor" stroke-width="2.2"/><rect x="5" y="10" width="14" height="10" rx="2.5" fill="currentColor"/></svg></span>');
+      const fiyat = yuvaFiyati(oyuncu.unlockedSlots);
+      btn.innerHTML = `${portre}
+        <span class="slot-lock">${KILIT_SVG}</span>
+        <span class="slot-buy"><img src="../../assets/currency/star-64.webp" alt="">${bicim(fiyat)}</span>`;
       btn.addEventListener('click', () => yuvaAc(oyuncu.unlockedSlots));
     } else {
-      btn.addEventListener('click', () => { oyuncu.activeId = d.id; kaydet(); cizHepsi(); });
+      btn.innerHTML = `${portre}
+        <span class="slot-lv">${t('lvShort', { level: d.level })}</span>`;
+      btn.addEventListener('click', () => {
+        if (d.id === oyuncu.activeId) return;
+        oyuncu.activeId = d.id;
+        kaydet();
+        cal('tap');
+        cizHepsi();
+      });
     }
     slotStrip.appendChild(btn);
   });

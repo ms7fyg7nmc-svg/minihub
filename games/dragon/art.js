@@ -1,6 +1,6 @@
 
-import { palet } from './data.js?v152';
-import { CONFIG, growthRatio } from './config.js?v152';
+import { palet } from './data.js?v158';
+import { CONFIG, growthRatio } from './config.js?v158';
 
 let uidSayaci = 0;
 
