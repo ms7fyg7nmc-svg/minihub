@@ -414,14 +414,19 @@ body[data-screen="tasks"] .sky::after {
 
 .drag-ghost {
   position: fixed;
+  top: 0;
+  left: 0;
   z-index: 40;
   width: 74px;
   height: 74px;
   margin: -37px 0 0 -37px;
   pointer-events: none;
   object-fit: contain;
-  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.6));
-  transform: scale(1.12);
+  /* Hareket eden bir ogede drop-shadow her karede yeniden hesaplanir;
+     ayni golgeyi veren ucuz bir radyal zemin kullaniyoruz. */
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.45), transparent 78%) no-repeat center 62% / 86% 42%;
+  will-change: transform;
+  transform: translate3d(-100px, -100px, 0) scale(1.12);
 }
 
 .merge-burst {

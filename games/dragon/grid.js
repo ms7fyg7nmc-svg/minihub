@@ -4,7 +4,7 @@
    seviye oluyor. Kilitli hucreler yildizla aciliyor ve icindeki odulu
    dogrudan oyuncuya veriyor. */
 
-import { EN_UST_YUMURTA, EN_UST_SANDIK } from './ekonomi.js?v133';
+import { EN_UST_YUMURTA, EN_UST_SANDIK } from './ekonomi.js?v134';
 
 const SANDIK_ADI = { 1: 'pouch', 2: 'basket', 3: 'chest', 4: 'chest-premium' };
 
@@ -105,13 +105,19 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
     return Number(cell.dataset.i);
   }
 
+  /* Hayalet parmagi transform ile takip ediyor. left/top olsaydi her
+     pointermove'da yeniden yerlesim ve boyama gerekirdi; transform
+     dogrudan compositor'da isleniyor. */
+  const hayaletTasi = (img, x, y) => {
+    img.style.transform = `translate3d(${x}px, ${y}px, 0) scale(1.12)`;
+  };
+
   function hayalet(hucre, x, y) {
     const img = document.createElement('img');
     img.className = 'drag-ghost';
     img.src = gorselYolu(hucre);
     img.alt = '';
-    img.style.left = `${x}px`;
-    img.style.top = `${y}px`;
+    hayaletTasi(img, x, y);
     document.body.appendChild(img);
     return img;
   }
@@ -160,8 +166,7 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
 
   function hareket(e) {
     if (!surukle) return;
-    surukle.ghost.style.left = `${e.clientX}px`;
-    surukle.ghost.style.top = `${e.clientY}px`;
+    hayaletTasi(surukle.ghost, e.clientX, e.clientY);
     if (Math.abs(e.clientX - surukle.x0) > 6 || Math.abs(e.clientY - surukle.y0) > 6) {
       surukle.tasidi = true;
     }
