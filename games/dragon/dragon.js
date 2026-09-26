@@ -1,17 +1,18 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v131';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v131';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v132';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v132';
 
-import { CONFIG, gorselSeviye } from './config.js?v131';
-import { bakimdaMi } from '../../js/store.js?v131';
+import { CONFIG, gorselSeviye } from './config.js?v132';
+import { bakimdaMi } from '../../js/store.js?v132';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         EN_COK_YUVA } from './model.js?v131';
-import { dragonSvg, dragonAssetUrls } from './art.js?v131';
+         EN_COK_YUVA } from './model.js?v132';
+import { dragonSvg, dragonAssetUrls } from './art.js?v132';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi } from './grid.js?v131';
+         kilitliMi, nesneMi } from './grid.js?v132';
 import { YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, GOREV_HARITASI, yemMaliyeti, seviyeIcinBesleme,
-         toplamaSonucu, sandikDegeri, beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v131';
-import { createTutorial, pozListesi } from './tutorial.js?v131';
+         toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi,
+         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v132';
+import { createTutorial, pozListesi } from './tutorial.js?v132';
 
 const GAME_ID = 'dragon';
 
@@ -30,11 +31,19 @@ registerTexts(GAME_ID, {
   queuedMsg: 'Ödül sırada bekliyor, izgarada yer aç.',
 
   eggName: 'Sv. {lv} yumurta',
-  chestFood: 'Yem sandığı',
-  chestStar: 'Yıldız sandığı',
   eggYield: '{a} - {b} yem · %{p} ihtimalle {n} yem',
-  chestGivesFood: '{n} yem verir',
-  chestGivesStar: '{n} yıldız verir',
+  packFood1: 'Yem kesesi',
+  packFood2: 'Yem sepeti',
+  packFood3: 'Yem sandığı',
+  packFood4: 'Usta yem sandığı',
+  packStar1: 'Yıldız kesesi',
+  packStar2: 'Yıldız sepeti',
+  packStar3: 'Yıldız sandığı',
+  packStar4: 'Usta yıldız sandığı',
+  chestGivesFood: '{a} - {b} yem verir',
+  chestGivesStar: '{a} - {b} yıldız verir',
+  mergeNote: 'Aynı seviyeden biriyle birleştir, ödül büyür.',
+  topPackNote: 'En üst kademe. Aç ve ödülü al.',
   crack: 'Kır',
   chestOpen: 'Aç',
   lockedName: 'Kilitli hücre',
@@ -71,6 +80,7 @@ registerTexts(GAME_ID, {
   gotStars: '+{n} yıldız',
   gotItem: '{name} kazandın',
   jackpotMsg: 'JACKPOT!',
+  bigHitMsg: 'BÜYÜK VURUŞ!',
   refundMsg: 'Eskiden ejderhana harcadığın $MH karşılığı {n} yem hesabına eklendi.',
 
   unitS: 'sn',
@@ -100,7 +110,8 @@ const boardEl = $('board');
 const queueRow = $('queue-row'); const queueEl = $('queue'); const queueMore = $('queue-more');
 const infoEmpty = $('info-empty'); const infoBody = $('info-body');
 const infoName = $('info-name'); const infoTag = $('info-tag');
-const infoLine = $('info-line'); const infoAction = $('info-action');
+const infoLine = $('info-line'); const infoNote = $('info-note');
+const infoAction = $('info-action');
 
 const artEl = $('dragon-art');
 const floatersEl = $('floaters'); const flyFood = $('fly-food');
@@ -124,10 +135,12 @@ let seciliHucre = -1;
 const bicim = (n) => Number(n).toLocaleString(locale());
 const simdi = () => Date.now();
 
+/* Kap adi kademesine gore degisiyor: kese, sepet, sandik, usta sandigi. */
 function nesneAdi(h) {
   if (!h) return '';
   if (h.t === 'egg') return t('eggName', { lv: h.lv });
-  return t(h.t === 'star' ? 'chestStar' : 'chestFood');
+  const kademe = Math.min(4, Math.max(1, h.lv));
+  return t(`${h.t === 'star' ? 'packStar' : 'packFood'}${kademe}`);
 }
 
 /* ---------- ACILIS ---------- */
@@ -305,6 +318,8 @@ function bilgiPaneliCiz() {
   infoEmpty.hidden = true;
   infoBody.hidden = false;
 
+  infoNote.hidden = true;
+
   if (kilitliMi(hucre)) {
     infoName.textContent = t('lockedName');
     infoTag.textContent = ''; infoTag.className = 'info-tag';
@@ -329,9 +344,13 @@ function bilgiPaneliCiz() {
     return;
   }
 
-  const deger = sandikDegeri(hucre.t, hucre.lv);
+  /* Aralik gosteriliyor, tek bir sayi degil: acilista zar atiliyor. */
+  const { az, cok } = sandikAraligi(hucre.t, hucre.lv);
   infoTag.textContent = ''; infoTag.className = 'info-tag';
-  infoLine.textContent = t(hucre.t === 'star' ? 'chestGivesStar' : 'chestGivesFood', { n: bicim(deger) });
+  infoLine.textContent = t(hucre.t === 'star' ? 'chestGivesStar' : 'chestGivesFood',
+                           { a: bicim(az), b: bicim(cok) });
+  infoNote.textContent = hucre.lv < 4 ? t('mergeNote') : t('topPackNote');
+  infoNote.hidden = false;
   infoAction.textContent = t('chestOpen');
   infoAction.disabled = false;
   infoAction.onclick = () => sandikAc(seciliHucre);
@@ -372,8 +391,10 @@ function sandikAc(i) {
   kaynakTazele(true);
   bilgiPaneliCiz();
   haptic.success();
-  odulUcur(hucre.t === 'star' ? t('gotStars', { n: bicim(deger) })
-                              : t('gotFood', { n: bicim(deger) }), true);
+  const ust = ustBasamakMi(hucre.t, hucre.lv, deger);
+  const mesaj = hucre.t === 'star' ? t('gotStars', { n: bicim(deger) })
+                                   : t('gotFood', { n: bicim(deger) });
+  odulUcur(ust ? `${t('bigHitMsg')} ${mesaj}` : mesaj, true);
 }
 
 function kilidiAc(i) {
