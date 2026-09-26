@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v146';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v147';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi, bakimListesi,
-} from './store.js?v146';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v146';
+} from './store.js?v147';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v147';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -83,9 +83,9 @@ const ICONS = {
       <path d="M14.4 8.2 13 8.8l1.4.6z" fill="#3a2a4d"/>
    </svg>`,
 
-   /* Ejderha karti kendi sanat eserini kullaniyor: oyundaki ejderhanin
-      kafasi, diger oyunlarin soyut ikonlari arasinda one cikiyor. */
-   dragon: `<img class="game-img" src="assets/icons/dragon-128.webp" alt="" width="34" height="34">`,
+   /* Ejderha karti $MH armasini tasiyor: hub'in amblemi, aralikli olarak
+      madeni para gibi kendi ekseninde donuyor. */
+   dragon: `<img class="game-img spin" src="assets/currency/mh-logo-128.webp" alt="" width="34" height="34">`,
 
    coindrop: `<svg viewBox="0 0 24 24" aria-hidden="true">
       <circle cx="9" cy="8" r="5.4" fill="#fff" opacity=".45"/>

@@ -1196,6 +1196,24 @@ body.hub::before {
 .lider-kendi[hidden] { display: none; }
 
 /* Oyun kartinda gercek gorsel kullanan ikonlar (ornegin Ejderha Adasi) */
+/* Amblem madeni para gibi kendi ekseninde donuyor: surekli degil,
+   bir tur atip birkac saniye bekliyor - listede goz yormasin. */
+.game-icon .game-img.spin {
+  animation: armaDon 6s cubic-bezier(.45, 0, .2, 1) infinite;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+@keyframes armaDon {
+  0%   { transform: perspective(160px) rotateY(0deg); }
+  22%  { transform: perspective(160px) rotateY(360deg); }
+  100% { transform: perspective(160px) rotateY(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-icon .game-img.spin { animation: none; }
+}
+
 .game-icon .game-img {
    width: 34px;
    height: 34px;
