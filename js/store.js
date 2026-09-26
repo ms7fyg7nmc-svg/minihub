@@ -1,5 +1,10 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v147';
+import { isTelegramUser, getInitData } from './tg.js?v148';
+import { surumKontrol } from './guncel.js?v148';
+
+/* Hub ve 12 oyunun hepsi bu modulu yukluyor, o yuzden surum tazeleyici
+   buraya bagli: tek yerden hepsini kapsiyor. */
+surumKontrol();
 
 const API_BASE = 'https://minihub-bot.volkanturedi1.workers.dev';
 

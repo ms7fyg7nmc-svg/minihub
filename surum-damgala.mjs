@@ -27,6 +27,18 @@ for (const yol of dosyalariTara('.', ['.html'])) {
   const eski = readFileSync(yol, 'utf8');
   let yeni = eski.replace(/(src="(?!https?:)[^"]*?\.js)(\?v\d+)?"/g, `$1?v${surum}"`);
   yeni = yeni.replace(/(href="(?!https?:)[^"]*?\.css)(\?v\d+)?"/g, `$1?v${surum}"`);
+
+  /* Sayfa kendi surumunu tasiyor. js/guncel.js bunu sunucudaki
+     surum.json ile karsilastirip eskiyse sayfayi tazeliyor - yoksa
+     Telegram'in WebView'i eski HTML'i tutup eski ?vNN dosyalarini
+     cagirmaya devam ediyor ve guncellemeler oyuncuya hic ulasmiyor. */
+  const etiket = `<meta name="surum" content="${surum}">`;
+  if (/<meta name="surum" content="\d+">/.test(yeni)) {
+    yeni = yeni.replace(/<meta name="surum" content="\d+">/, etiket);
+  } else {
+    yeni = yeni.replace(/(<meta charset="[^"]*">)/i, `$1\n  ${etiket}`);
+  }
+
   if (yeni !== eski) { writeFileSync(yol, yeni); degisen++; }
 }
 
@@ -39,4 +51,6 @@ for (const yol of dosyalariTara('.', ['.js'])) {
   if (yeni !== eski) { writeFileSync(yol, yeni); degisen++; }
 }
 
-console.log(`${degisen} dosya v${surum} ile damgalandi`);
+writeFileSync('surum.json', `{ "v": ${surum} }\n`);
+
+console.log(`${degisen} dosya v${surum} ile damgalandi, surum.json yazildi`);
