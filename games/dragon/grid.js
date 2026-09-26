@@ -4,8 +4,8 @@
    seviye oluyor. Kilitli hucreler yildizla aciliyor ve icindeki odulu
    dogrudan oyuncuya veriyor. */
 
-import { EN_UST_YUMURTA, EN_UST_SANDIK } from './ekonomi.js?v136';
-import { belir, zipla, AKIS } from './canlandir.js?v136';
+import { EN_UST_YUMURTA, EN_UST_SANDIK } from './ekonomi.js?v139';
+import { belir, zipla, AKIS } from './canlandir.js?v139';
 
 const SANDIK_ADI = { 1: 'pouch', 2: 'basket', 3: 'chest', 4: 'chest-premium' };
 
@@ -99,13 +99,6 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
     });
   }
 
-  function hucreIndexi(x, y) {
-    const hedef = document.elementFromPoint(x, y);
-    const cell = hedef?.closest?.('.cell');
-    if (!cell || !el.contains(cell)) return -1;
-    return Number(cell.dataset.i);
-  }
-
   /* Hayalet parmagi transform ile takip ediyor. left/top olsaydi her
      pointermove'da yeniden yerlesim ve boyama gerekirdi; transform
      dogrudan compositor'da isleniyor. */
@@ -139,6 +132,37 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
     nesneMi(a) && nesneMi(b) && a.t === b.t && a.lv === b.lv && a.lv < enUstSeviye(a.t)
   );
 
+  /* Hucre kutulari surukleme baslarken bir kez olculuyor. Eskiden her
+     parmak hareketinde elementFromPoint cagriliyordu; o her seferinde
+     tarayiciyi yerlesim hesabi yapmaya zorluyordu ve telefonda saniyede
+     120 kez geliyordu. Artik 16 kutuluk bir listede aritmetik arama var. */
+  function kutulariTara() {
+    return [...el.querySelectorAll('.cell')].map((c) => {
+      const r = c.getBoundingClientRect();
+      return { i: Number(c.dataset.i), sol: r.left, ust: r.top, sag: r.right, alt: r.bottom };
+    });
+  }
+
+  function hizliIndex(x, y) {
+    for (const k of surukle?.kutular || []) {
+      if (x >= k.sol && x <= k.sag && y >= k.ust && y <= k.alt) return k.i;
+    }
+    return -1;
+  }
+
+  /* Suruklenen parcayla birlesebilecek hucreler altin cerceveyle
+     isaretleniyor: oyuncu neyin neyle birlestigini denemeden goruyor. */
+  function eslesenleriIsaretle(i, hucre) {
+    grid.cells.forEach((h, j) => {
+      if (j !== i && birlesebilir(hucre, h)) {
+        el.querySelector(`.cell[data-i="${j}"]`)?.classList.add('esles');
+      }
+    });
+  }
+
+  const eslesmeTemizle = () => el.querySelectorAll('.cell.esles')
+    .forEach((c) => c.classList.remove('esles'));
+
   function basla(e) {
     if (!grid) return;
 
@@ -159,20 +183,39 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
     if (!nesneMi(hucre)) return;
 
     surukle = { i, hucre, ghost: hayalet(hucre, e.clientX, e.clientY),
-                tasidi: false, x0: e.clientX, y0: e.clientY };
+                tasidi: false, x0: e.clientX, y0: e.clientY,
+                sonX: e.clientX, sonY: e.clientY,
+                kutular: kutulariTara(), vurgu: -2, kare: 0 };
     wrap.classList.add('dragging');
+    eslesenleriIsaretle(i, hucre);
     el.setPointerCapture?.(e.pointerId);
     e.preventDefault();
   }
 
+  /* Parmak hareketi sadece koordinati not ediyor; asil is kare basina
+     bir kez yapiliyor, boylece 120 Hz dokunmatik orneklemesi DOM'u
+     saniyede 120 kez dovmuyor. */
   function hareket(e) {
+    if (!surukle || surukle.kilitDokunus) return;
+    surukle.sonX = e.clientX;
+    surukle.sonY = e.clientY;
+    if (surukle.kare) return;
+    surukle.kare = requestAnimationFrame(kareIsle);
+  }
+
+  function kareIsle() {
     if (!surukle) return;
-    hayaletTasi(surukle.ghost, e.clientX, e.clientY);
-    if (Math.abs(e.clientX - surukle.x0) > 6 || Math.abs(e.clientY - surukle.y0) > 6) {
-      surukle.tasidi = true;
-    }
+    surukle.kare = 0;
+    const { sonX: x, sonY: y } = surukle;
+
+    hayaletTasi(surukle.ghost, x, y);
+    if (Math.abs(x - surukle.x0) > 6 || Math.abs(y - surukle.y0) > 6) surukle.tasidi = true;
+
+    /* Vurgu sadece hedef hucre degistiginde yaziliyor. */
+    const hedef = hizliIndex(x, y);
+    if (hedef === surukle.vurgu) return;
+    surukle.vurgu = hedef;
     vurguTemizle();
-    const hedef = hucreIndexi(e.clientX, e.clientY);
     if (hedef >= 0 && hedef !== surukle.i) {
       const h = grid.cells[hedef];
       if (h === null || birlesebilir(surukle.hucre, h)) {
@@ -211,10 +254,11 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
     }
 
     const { i, hucre, ghost, tasidi } = surukle;
+    if (surukle.kare) cancelAnimationFrame(surukle.kare);
     vurguTemizle();
+    eslesmeTemizle();
+    const hedef = hizliIndex(e.clientX, e.clientY);
     surukle = null;
-
-    const hedef = hucreIndexi(e.clientX, e.clientY);
 
     /* Kisa dokunus: bilgi penceresi acilsin */
     if (!tasidi || hedef === i) {

@@ -1,19 +1,19 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v136';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v136';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v139';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v139';
 
-import { CONFIG, gorselSeviye } from './config.js?v136';
-import { bakimdaMi } from '../../js/store.js?v136';
+import { CONFIG, gorselSeviye } from './config.js?v139';
+import { bakimdaMi } from '../../js/store.js?v139';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         EN_COK_YUVA } from './model.js?v136';
-import { dragonSvg, dragonAssetUrls } from './art.js?v136';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v136';
+         EN_COK_YUVA } from './model.js?v139';
+import { dragonSvg, dragonAssetUrls } from './art.js?v139';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v139';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi } from './grid.js?v136';
+         kilitliMi, nesneMi } from './grid.js?v139';
 import { YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, GOREV_HARITASI, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi,
-         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v136';
-import { createTutorial, pozListesi } from './tutorial.js?v136';
+         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v139';
+import { createTutorial, pozListesi } from './tutorial.js?v139';
 
 const GAME_ID = 'dragon';
 
@@ -179,7 +179,7 @@ async function basla() {
 
   oyuncu = await oyuncuyuYukle();
 
-  board = createBoard(boardEl, { onMerge: birlesti, onPick: hucreSecildi, onChange: kaydet });
+  board = createBoard(boardEl, { onMerge: birlesti, onPick: hucreSecildi, onChange: izgaraDegisti });
   board.bagla(oyuncu.grid);
 
   const ejderha = aktifEjderha(oyuncu);
@@ -330,6 +330,18 @@ function birlesti(yeni) {
   gorevNoktasi();
   bilgiPaneliCiz();
   tut?.olay('merge');
+}
+
+/* Izgara degisince kaydet ve panelin gecerliligini kontrol et: secili
+   parca birlesip yok olduysa panel onu anlatmaya devam etmemeli. */
+function izgaraDegisti() {
+  kaydet();
+  if (seciliHucre >= 0 && !nesneMi(oyuncu.grid.cells[seciliHucre])
+      && !kilitliMi(oyuncu.grid.cells[seciliHucre])) {
+    seciliHucre = -1;
+    board.sec(-1);
+  }
+  bilgiPaneliCiz();
 }
 
 function hucreSecildi(i, hucre) {

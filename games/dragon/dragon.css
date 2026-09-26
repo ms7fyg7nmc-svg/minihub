@@ -28,7 +28,15 @@
   color: var(--yazi);
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
+
+  /* Oyunun tamami tek tipografi kullaniyor: gorev haritasi ve gunluk
+     odul basliklarindaki yazi karakteri govde metnine de geciyor. */
+  font-family: var(--baslik);
 }
+
+.dragon-app button,
+.dragon-app input,
+.dragon-app select { font-family: inherit; }
 
 /* ---------- ATMOSFER ---------- */
 
@@ -1365,6 +1373,27 @@ body[data-screen="tasks"] .sky::after {
 
 #info-action { width: 100%; min-height: 46px; }
 
+/* Suruklenen parcayla birlesebilecek hucreler: DMD'deki gibi altin
+   cerceve yanip soner, oyuncu hamlesini denemeden gorur. */
+.cell.esles {
+  box-shadow:
+    inset 0 0 0 2px var(--altin),
+    inset 0 0 14px rgba(240, 187, 82, 0.35),
+    0 0 12px rgba(240, 187, 82, 0.25);
+  animation: eslesNabiz 1.1s ease-in-out infinite;
+}
+
+.cell.esles img { filter: drop-shadow(0 0 7px rgba(255, 214, 130, 0.55)); }
+
+@keyframes eslesNabiz {
+  0%, 100% { box-shadow: inset 0 0 0 2px rgba(240, 187, 82, 0.75),
+                         inset 0 0 12px rgba(240, 187, 82, 0.25),
+                         0 0 9px rgba(240, 187, 82, 0.2); }
+  50%      { box-shadow: inset 0 0 0 2.5px var(--altin-acik),
+                         inset 0 0 18px rgba(240, 187, 82, 0.45),
+                         0 0 16px rgba(240, 187, 82, 0.35); }
+}
+
 /* Secili hucre izgarada belli olsun */
 .cell.sel { box-shadow: inset 0 0 0 2px var(--altin), inset 0 2px 8px rgba(0,0,0,.6); }
 
@@ -1500,21 +1529,35 @@ body[data-screen="tasks"] .sky::after {
   border-radius: 14px;
 }
 
-/* Adim rozeti: demir (bekleyen), altin (siradaki), zumrut (bitmis) */
+/* Adim rozeti: demir (bekleyen), altin (siradaki), zumrut (bitmis).
+   Uzerinde yazi yok - hangi asamada oldugu madalyonun kendisinden
+   anlasiliyor. Madalyon gorseli saydam oldugu icin altina koyu bir disk
+   koyuluyor, yoksa zincir icinden gecerken gorunuyordu. */
 .quest-dot {
+  position: relative;
   z-index: 1;
-  display: grid;
-  place-items: center;
   width: 42px;
   height: 42px;
   flex: none;
-  background: url('../../assets/ui/node-locked.webp') center / contain no-repeat;
-  font-family: var(--baslik);
-  font-size: 14px;
-  font-weight: 800;
-  color: #b8c0d6;
-  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.85);
+  font-size: 0;                 /* icerideki yazi tamamen gizli */
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
+}
+
+/* Zinciri kapatan disk: madalyonun rim'inin icinde kaliyor ve kart
+   zeminiyle ayni renkte, boylece gorseli koyulastirmiyor. */
+.quest-dot::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: #1c2132;
+}
+
+.quest-dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('../../assets/ui/node-locked.webp') center / contain no-repeat;
 }
 
 .quest.active {
@@ -1523,19 +1566,14 @@ body[data-screen="tasks"] .sky::after {
 }
 
 .quest.active .quest-dot {
-  background-image: url('../../assets/ui/node-active.webp');
-  color: #4a3208;
-  text-shadow: 0 1px 1px rgba(255, 240, 200, 0.6);
   filter: drop-shadow(0 0 10px rgba(240, 187, 82, 0.45));
 }
 
+.quest.active .quest-dot::after { background-image: url('../../assets/ui/node-active.webp'); }
+
 .quest.done { opacity: 0.6; }
 
-.quest.done .quest-dot {
-  background-image: url('../../assets/ui/node-done.webp');
-  color: #eafff2;
-  font-size: 16px;
-}
+.quest.done .quest-dot::after { background-image: url('../../assets/ui/node-done.webp'); }
 
 .quest-body { flex: 1; min-width: 0; }
 .quest-title { font-size: 13px; font-weight: 700; }
