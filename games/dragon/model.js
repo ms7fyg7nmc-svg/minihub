@@ -1,7 +1,7 @@
 
-import { loadState, saveState } from '../../js/store.js?v140';
-import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_FIYATLARI } from './ekonomi.js?v140';
-import { CONFIG, eskiToplamHarcama } from './config.js?v140';
+import { loadState, saveState } from '../../js/store.js?v141';
+import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_FIYATLARI } from './ekonomi.js?v141';
+import { CONFIG, eskiToplamHarcama } from './config.js?v141';
 
 const OYUN_ID = 'dragon';
 const SURUM = 6;
