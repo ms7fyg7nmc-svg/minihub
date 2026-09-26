@@ -1,20 +1,20 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v142';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v142';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v143';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v143';
 
-import { CONFIG, gorselSeviye } from './config.js?v142';
-import { bakimdaMi } from '../../js/store.js?v142';
+import { CONFIG, gorselSeviye } from './config.js?v143';
+import { bakimdaMi } from '../../js/store.js?v143';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         EN_COK_YUVA } from './model.js?v142';
-import { dragonSvg, dragonAssetUrls } from './art.js?v142';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v142';
-import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v142';
+         EN_COK_YUVA } from './model.js?v143';
+import { dragonSvg, dragonAssetUrls } from './art.js?v143';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v143';
+import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v143';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi } from './grid.js?v142';
+         kilitliMi, nesneMi } from './grid.js?v143';
 import { YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, GOREV_HARITASI, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi,
-         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v142';
-import { createTutorial, pozListesi } from './tutorial.js?v142';
+         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v143';
+import { createTutorial, pozListesi } from './tutorial.js?v143';
 
 const GAME_ID = 'dragon';
 
@@ -82,6 +82,8 @@ registerTexts(GAME_ID, {
   gotStars: '+{n} yıldız',
   gotItem: '{name} kazandın',
   jackpotMsg: 'JACKPOT!',
+  soundOn: 'Sesi kapat',
+  soundOff: 'Sesi aç',
   bigHitMsg: 'BÜYÜK VURUŞ!',
   refundMsg: 'Eskiden ejderhana harcadığın $MH karşılığı {n} yem hesabına eklendi.',
 
@@ -213,11 +215,21 @@ async function basla() {
   showBackButton(hubaDon);
   backToHubOnResume();
   window.addEventListener('resize', () => tut?.yenidenKonumla());
-  /* Ses dugmesi: tercih hatirlaniyor. */
+  /* Ses dugmesi: acikken dalgali hoparlor, kapaliyken carpili.
+     Govde ayni kaliyor, sadece sagdaki kisim degisiyor - goz dugmenin
+     yerini kaybetmesin. */
+  const HOPARLOR = '<path d="M4 9.5h3.2L12 6v12L7.2 14.5H4z" fill="currentColor"/>';
+  const DALGALAR = '<path d="M15.4 9.8a3.2 3.2 0 010 4.4M18 7.6a6.6 6.6 0 010 8.8"'
+    + ' fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
+  const CARPI = '<path d="M16.2 9.8l4.6 4.4M20.8 9.8l-4.6 4.4"'
+    + ' fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
+
   const sesYuzu = () => {
     const a = sesAcikMi();
-    sesBtn.textContent = a ? '\u266A' : '\u2715';
+    sesBtn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${HOPARLOR}${a ? DALGALAR : CARPI}</svg>`;
     sesBtn.classList.toggle('kapali', !a);
+    sesBtn.setAttribute('aria-label', a ? t('soundOn') : t('soundOff'));
+    sesBtn.setAttribute('aria-pressed', a ? 'false' : 'true');
   };
   sesBtn.addEventListener('click', () => { sesiAyarla(!sesAcikMi()); sesYuzu(); cal('tap'); });
   sesBaslat();

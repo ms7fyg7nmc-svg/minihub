@@ -15,20 +15,33 @@
 
 const KLASOR = '../../assets/ses';
 
-/* Her sesin kendi seviyesi var: sik calanlar kisik, odul anlari dolu. */
+/* Tum oyunun ses seviyesi. Tek yerden kisilip acilabilsin diye ayri
+   duruyor; burayi degistirmek sesler arasi dengeyi bozmaz. */
+const ANA_SEVIYE = 0.5;
+
+/* Her sesin kendi seviyesi. Hedef, sik calanlarin fark edilmeden
+   arkada kalmasi, nadir olanlarin one cikmasi:
+
+     tik   -28 dBFS   surekli duyuluyor, neredeyse bilinc altinda kalmali
+     merge -20 dBFS   sik ama his vermesi gerekiyor
+     crack -14 dBFS   odul ani
+     jackpot -8 dBFS  oyunun en yuksek sesi
+
+   Eskiden levelup ve jackpot 0 dBFS'te, yani cikabilecegi en yuksek
+   seviyede caliyordu; hepsi asagi cekildi. */
 const SESLER = {
-  tap:     { ses: 0.35, aralik: 40 },
-  merge:   { ses: 0.75, aralik: 60 },
-  crack:   { ses: 0.9,  aralik: 80 },
-  collect: { ses: 0.7,  aralik: 60 },
-  feed:    { ses: 0.8,  aralik: 120 },
-  chest:   { ses: 0.9,  aralik: 120 },
-  levelup: { ses: 1.0,  aralik: 200 },
-  claim:   { ses: 0.8,  aralik: 120 },
-  unlock:  { ses: 0.9,  aralik: 120 },
-  jackpot: { ses: 1.0,  aralik: 300 },
-  egglay:  { ses: 0.6,  aralik: 100 },
-  deny:    { ses: 0.5,  aralik: 200 },
+  tap:     { ses: 0.18, aralik: 40 },
+  merge:   { ses: 0.27, aralik: 60 },
+  crack:   { ses: 0.44, aralik: 80 },
+  collect: { ses: 0.36, aralik: 60 },
+  feed:    { ses: 0.40, aralik: 120 },
+  chest:   { ses: 0.56, aralik: 120 },
+  levelup: { ses: 0.63, aralik: 200 },
+  claim:   { ses: 0.40, aralik: 120 },
+  unlock:  { ses: 0.44, aralik: 120 },
+  jackpot: { ses: 0.80, aralik: 300 },
+  egglay:  { ses: 0.21, aralik: 100 },
+  deny:    { ses: 0.32, aralik: 200 },
 };
 
 const ANAHTAR = 'dragon_ses';
@@ -45,7 +58,7 @@ export function sesAcikMi() { return acik; }
 export function sesiAyarla(yeni) {
   acik = !!yeni;
   try { localStorage.setItem(ANAHTAR, acik ? '1' : '0'); } catch { /* gizli sekme */ }
-  if (anaKazanc) anaKazanc.gain.value = acik ? 1 : 0;
+  if (anaKazanc) anaKazanc.gain.value = acik ? ANA_SEVIYE : 0;
   return acik;
 }
 
@@ -68,7 +81,7 @@ async function uyandir() {
   ctx = new Ctx();
 
   anaKazanc = ctx.createGain();
-  anaKazanc.gain.value = acik ? 1 : 0;
+  anaKazanc.gain.value = acik ? ANA_SEVIYE : 0;
   anaKazanc.connect(ctx.destination);
 
   /* Safari bazen askida basliyor. */
