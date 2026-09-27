@@ -2100,3 +2100,45 @@ body[data-screen="tasks"] .sky::after {
   background: rgba(240, 187, 82, 0.28);
   flex: none;
 }
+
+/* ---------- KAP ACMA SAYACI ---------- */
+
+/* Sayac iliyorken kap soluyor: henuz alinamayacagi belli olsun */
+.cell.kap-iliyor .piece img { opacity: 0.55; filter: saturate(0.6); }
+
+.kap-sayac {
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  transform: translateX(-50%);
+  z-index: 2;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(8, 10, 16, 0.86);
+  font-family: var(--baslik);
+  font-size: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--altin-acik);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Hazir kap: altin halka, alinmayi bekledigi belli */
+.cell.kap-hazir {
+  box-shadow:
+    inset 0 0 0 2px var(--altin),
+    inset 0 0 16px rgba(240, 187, 82, 0.3),
+    inset 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.cell.kap-hazir .piece img { filter: drop-shadow(0 0 8px rgba(255, 214, 130, 0.6)); }
+
+/* Hemen-ac dugmesindeki yildiz */
+.btn-yildiz {
+  width: 17px;
+  height: 17px;
+  object-fit: contain;
+  margin-left: 5px;
+  vertical-align: -3px;
+}

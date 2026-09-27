@@ -1,25 +1,25 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v165';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v165';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v166';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v166';
 
-import { CONFIG, gorselSeviye } from './config.js?v165';
-import { bakimdaMi } from '../../js/store.js?v165';
+import { CONFIG, gorselSeviye } from './config.js?v166';
+import { bakimdaMi } from '../../js/store.js?v166';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         EN_COK_YUVA } from './model.js?v165';
-import { dragonSvg, dragonAssetUrls } from './art.js?v165';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v165';
-import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v165';
+         EN_COK_YUVA } from './model.js?v166';
+import { dragonSvg, dragonAssetUrls } from './art.js?v166';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v166';
+import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v166';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
          kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
          PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
-         partnerKademe } from './gorevler.js?v165';
-import { getBest } from '../../js/store.js?v165';
-import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi } from './grid.js?v165';
+         partnerKademe } from './gorevler.js?v166';
+import { getBest } from '../../js/store.js?v166';
+import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
+         kilitliMi, nesneMi } from './grid.js?v166';
 import { YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
-         toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi,
-         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v165';
-import { createTutorial, pozListesi } from './tutorial.js?v165';
+         toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
+         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v166';
+import { createTutorial, pozListesi } from './tutorial.js?v166';
 
 const GAME_ID = 'dragon';
 
@@ -96,6 +96,10 @@ registerTexts(GAME_ID, {
   tierLocked: 'Kilitli',
   questLocked: 'Önce üsttekini bitir',
   expand: 'Aç',
+  startOpen: 'Açmaya başla',
+  startNote: 'Başlayınca {time} sürer',
+  openingIn: '{time} sonra açılır',
+  skipFor: 'Hemen aç',
   allDone: 'Bütün görevler bitti',
   partnerTitle: 'Partner görevleri',
   partnerReady: '{n} ödül seni bekliyor',
@@ -470,6 +474,29 @@ function bilgiPaneliCiz() {
   infoTag.textContent = ''; infoTag.className = 'info-tag';
   infoLine.textContent = t(hucre.t === 'star' ? 'chestGivesStar' : 'chestGivesFood',
                            { a: bicim(az), b: bicim(cok) });
+
+  /* Kap uc halden birinde: sayac baslatilmamis, iliyor, ya da hazir. */
+  const durum = kapDurumu(hucre);
+
+  if (durum.hal === 'bekliyor') {
+    infoNote.textContent = t('startNote', { time: sureKisa(durum.kalan) });
+    infoNote.hidden = false;
+    infoAction.textContent = t('startOpen');
+    infoAction.disabled = false;
+    infoAction.onclick = () => kapBaslat(seciliHucre);
+    return;
+  }
+
+  if (durum.hal === 'iliyor') {
+    const fiyat = atlamaFiyati(durum.kalan);
+    infoNote.textContent = t('openingIn', { time: sureKisa(durum.kalan) });
+    infoNote.hidden = false;
+    infoAction.innerHTML = `${t('skipFor')} <b>${fiyat}</b><img class="btn-yildiz" src="../../assets/currency/star-64.webp" alt="">`;
+    infoAction.disabled = oyuncu.stars < fiyat;
+    infoAction.onclick = () => kapAtla(seciliHucre);
+    return;
+  }
+
   infoNote.textContent = hucre.lv < 4 ? t('mergeNote') : t('topPackNote');
   infoNote.hidden = false;
   infoAction.textContent = t('chestOpen');
@@ -501,9 +528,43 @@ function yumurtaKir(i) {
   tut?.olay('collect');
 }
 
+/* Sayaci baslatiyor. Duvar saati oldugu icin oyun kapaliyken de iliyor. */
+function kapBaslat(i) {
+  const hucre = oyuncu.grid.cells[i];
+  if (!kapMi(hucre) || hucre.acilis) return;
+  hucre.acilis = simdi();
+  kaydet();
+  board.ciz(); board.sec(i);
+  bilgiPaneliCiz();
+  cal('tap');
+  haptic.tap('light');
+}
+
+/* Kalan sureyi yildizla atliyor. Fiyat kalan sureye gore hesaplandigi
+   icin panelde gorunen rakam neyse o odenir. */
+function kapAtla(i) {
+  const hucre = oyuncu.grid.cells[i];
+  if (!kapMi(hucre) || !hucre.acilis) return;
+  const durum = kapDurumu(hucre);
+  if (durum.hal !== 'iliyor') return;
+
+  const fiyat = atlamaFiyati(durum.kalan);
+  if (oyuncu.stars < fiyat) { uyar(t('needStars')); return; }
+
+  oyuncu.stars -= fiyat;
+  hucre.acilis = simdi() - kapSuresi(hucre.lv);   /* aninda hazir */
+  kaydet();
+  board.ciz(); board.sec(i);
+  kaynakTazele(true);
+  bilgiPaneliCiz();
+  cal('unlock');
+  haptic.success();
+}
+
 function sandikAc(i) {
   const hucre = oyuncu.grid.cells[i];
   if (!nesneMi(hucre) || hucre.t === 'egg') return;
+  if (kapDurumu(hucre)?.hal !== 'hazir') return;     /* sayac dolmadan acilmaz */
   const kutu = board.hucreKutusu(i);
   const deger = sandikDegeri(hucre.t, hucre.lv);
   if (hucre.t === 'star') oyuncu.stars += deger;
@@ -1133,6 +1194,13 @@ function cizHepsi() {
    Artik sadece o yazi guncelleniyor. Istah penceresi doldugu an besleme
    fiyati sifirlandigi icin orada bir kez tam cizim yapiliyor. */
 function tazele() {
+  /* Ocak ekraninda kap sayaclari iliyor. Sadece yazilar guncelleniyor;
+     bir kap hazir hale gectiginde tam cizim yapiliyor. */
+  if (!$('screen-grid').hidden) {
+    if (board?.sayaclariTazele?.()) { board.ciz(); board.sec(seciliHucre); gorevNoktasi(); }
+    if (seciliHucre >= 0 && kapMi(oyuncu.grid.cells[seciliHucre])) bilgiPaneliCiz();
+  }
+
   if ($('screen-dragon').hidden) return;
   const d = aktifEjderha(oyuncu);
   if (!d) return;

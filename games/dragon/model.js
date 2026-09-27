@@ -1,7 +1,7 @@
 
-import { loadState, saveState } from '../../js/store.js?v165';
-import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_FIYATLARI } from './ekonomi.js?v165';
-import { CONFIG, eskiToplamHarcama } from './config.js?v165';
+import { loadState, saveState } from '../../js/store.js?v166';
+import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_FIYATLARI } from './ekonomi.js?v166';
+import { CONFIG, eskiToplamHarcama } from './config.js?v166';
 
 const OYUN_ID = 'dragon';
 const SURUM = 7;
@@ -83,7 +83,11 @@ function hucreDuzelt(c) {
   const t = ['egg', 'food', 'star'].includes(c.t) ? c.t : 'egg';
   const enUst = t === 'egg' ? EN_UST_YUMURTA : EN_UST_SANDIK;
   const lv = Math.min(enUst, Math.max(1, Math.round(Number(c.lv) || 1)));
-  return { t, lv };
+  if (t === 'egg') return { t, lv };
+  /* Kaplarda acilis sayacinin baslangici duruyor; 0 ise henuz
+     baslatilmamis demek. Duvar saati oldugu icin oyun kapaliyken de
+     ilerliyor. */
+  return { t, lv, acilis: Math.max(0, Number(c.acilis) || 0) };
 }
 
 function v3Tasi(kayit) {

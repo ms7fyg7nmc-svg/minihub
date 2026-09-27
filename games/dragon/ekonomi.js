@@ -26,6 +26,38 @@ export const YUMURTA = {
 export const EN_UST_YUMURTA = 8;
 export const EN_UST_SANDIK = 4;
 
+/* ---------- KAP ACMA SURELERI ----------
+
+   Kaplar artik dokununca hemen acilmiyor: bir sayac basliyor ve sure
+   dolunca odul aliniyor. Sayac duvar saatiyle isliyor, yani oyun kapali
+   ken de iliyor - oyuncuya geri donmek icin sebep veriyor.
+
+   Beklemek istemeyen yildiz harcayip aninda aciyor. Fiyat kalan sureye
+   gore, yani yarisi gecmis bir sandik yarisi kadar tutuyor. Bu, oyunun
+   ilk SINIRSIZ yildiz harcama kalemi: kilitli hucreler ve yuvalar bir
+   kez alininca bitiyor, bu her kapta yeniden geliyor. */
+export const KAP_SURESI = {
+  1: 10 * 60 * 1000,        /* kese          10 dk */
+  2: 30 * 60 * 1000,        /* sepet         30 dk */
+  3: 60 * 60 * 1000,        /* sandik         1 sa */
+  4: 90 * 60 * 1000,        /* usta sandigi   1.5 sa */
+};
+
+/* Her 7 dakikalik bekleme 1 yildiz. Tam atlama bedeli boylece
+   sirasiyla 2, 5, 9 ve 13 yildiz oluyor. */
+export const YILDIZ_BASINA_DAKIKA = 7;
+
+export function kapSuresi(lv) {
+  return KAP_SURESI[Math.min(EN_UST_SANDIK, Math.max(1, lv))] || KAP_SURESI[1];
+}
+
+/* Kalan sureyi atlamanin yildiz bedeli. Bir yildizin altina inmiyor ki
+   son saniyeler bedava olmasin. */
+export function atlamaFiyati(kalanMs) {
+  if (kalanMs <= 0) return 0;
+  return Math.max(1, Math.ceil(kalanMs / 60000 / YILDIZ_BASINA_DAKIKA));
+}
+
 /* ---------- KESELER VE SANDIKLAR ----------
 
    Artik sabit bir sayi vermiyorlar: her kademenin bir odul araligi ve o

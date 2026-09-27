@@ -4,8 +4,8 @@
    seviye oluyor. Kilitli hucreler yildizla aciliyor ve icindeki odulu
    dogrudan oyuncuya veriyor. */
 
-import { EN_UST_YUMURTA, EN_UST_SANDIK } from './ekonomi.js?v165';
-import { belir, zipla, AKIS } from './canlandir.js?v165';
+import { EN_UST_YUMURTA, EN_UST_SANDIK, kapSuresi } from './ekonomi.js?v166';
+import { belir, zipla, AKIS } from './canlandir.js?v166';
 
 const SANDIK_ADI = { 1: 'pouch', 2: 'basket', 3: 'chest', 4: 'chest-premium' };
 
@@ -17,6 +17,16 @@ export function gorselYolu(hucre) {
   if (hucre.t === 'egg') return `assets/eggs/egg-${Math.min(EN_UST_YUMURTA, hucre.lv)}-192.webp`;
   const onek = hucre.t === 'star' ? 'star' : 'meat';
   return `../../assets/packs/${onek}-${SANDIK_ADI[Math.min(EN_UST_SANDIK, hucre.lv)]}-192.webp`;
+}
+
+/* 8:24 / 1:05:00 gibi kisa bicim - hucreye sigmasi gerekiyor */
+export function sureKisa(ms) {
+  const sn = Math.max(0, Math.ceil(ms / 1000));
+  const sa = Math.floor(sn / 3600);
+  const dk = Math.floor((sn % 3600) / 60);
+  const kn = sn % 60;
+  if (sa > 0) return `${sa}:${String(dk).padStart(2, '0')}`;
+  return `${dk}:${String(kn).padStart(2, '0')}`;
 }
 
 export function onYukleListesi() {
@@ -31,6 +41,15 @@ export function onYukleListesi() {
 
 export const kilitliMi = (h) => !!h && h.kilit === true;
 export const nesneMi = (h) => !!h && !h.kilit;
+export const kapMi = (h) => nesneMi(h) && h.t !== 'egg';
+
+/* Kap acma sayacinin durumu: baslamamis / iliyor / hazir */
+export function kapDurumu(h, simdi = Date.now()) {
+  if (!kapMi(h)) return null;
+  if (!h.acilis) return { hal: 'bekliyor', kalan: kapSuresi(h.lv) };
+  const kalan = h.acilis + kapSuresi(h.lv) - simdi;
+  return kalan <= 0 ? { hal: 'hazir', kalan: 0 } : { hal: 'iliyor', kalan };
+}
 
 export const enUstSeviye = (tip) => (tip === 'egg' ? EN_UST_YUMURTA : EN_UST_SANDIK);
 
@@ -93,6 +112,19 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
         wrap.appendChild(img);
 
         cell.appendChild(wrap);
+
+        /* Kap sayaci: iliyorsa kalan sure, hazirsa parlak isaret */
+        const durum = kapDurumu(hucre);
+        if (durum && durum.hal !== 'bekliyor') {
+          cell.classList.add(durum.hal === 'hazir' ? 'kap-hazir' : 'kap-iliyor');
+          if (durum.hal === 'iliyor') {
+            const rozet = document.createElement('span');
+            rozet.className = 'kap-sayac';
+            rozet.dataset.i = String(i);
+            rozet.textContent = sureKisa(durum.kalan);
+            cell.appendChild(rozet);
+          }
+        }
       }
 
       el.appendChild(cell);
@@ -316,6 +348,23 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
       secili = Number.isInteger(i) ? i : -1;
       el.querySelectorAll('.cell.sel').forEach((c) => c.classList.remove('sel'));
       if (secili >= 0) el.querySelector(`.cell[data-i="${secili}"]`)?.classList.add('sel');
+    },
+    /* Sadece sayac yazilarini guncelliyor - tum izgarayi yeniden
+       cizmek saniyede bir gereksiz is olurdu. Hal degisirse (iliyor ->
+       hazir) true donuyor ki cagiran tam cizim yapsin. */
+    sayaclariTazele() {
+      if (!grid) return false;
+      let halDegisti = false;
+      grid.cells.forEach((h, i) => {
+        const durum = kapDurumu(h);
+        if (!durum) return;
+        const cell = el.querySelector(`.cell[data-i="${i}"]`);
+        if (!cell) return;
+        const rozet = cell.querySelector('.kap-sayac');
+        if (durum.hal === 'iliyor' && rozet) rozet.textContent = sureKisa(durum.kalan);
+        else if (durum.hal === 'hazir' && !cell.classList.contains('kap-hazir')) halDegisti = true;
+      });
+      return halDegisti;
     },
     ciz,
     hucreKutusu: (i) => el.querySelector(`.cell[data-i="${i}"]`)?.getBoundingClientRect() || null,
