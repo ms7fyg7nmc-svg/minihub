@@ -1,10 +1,10 @@
 
-import { loadState, saveState } from '../../js/store.js?v159';
-import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_FIYATLARI } from './ekonomi.js?v159';
-import { CONFIG, eskiToplamHarcama } from './config.js?v159';
+import { loadState, saveState } from '../../js/store.js?v163';
+import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_FIYATLARI } from './ekonomi.js?v163';
+import { CONFIG, eskiToplamHarcama } from './config.js?v163';
 
 const OYUN_ID = 'dragon';
-const SURUM = 6;
+const SURUM = 7;
 
 export const IZGARA_N = 4;
 export const EN_COK_YUVA = YUVA_FIYATLARI.length;
@@ -28,7 +28,12 @@ export function baslangicIzgarasi(n = IZGARA_N) {
 export const bugun = () => new Date().toISOString().slice(0, 10);
 
 function yeniSayaclar() {
-  return { merges: 0, feeds: 0, collects: 0, maxEggLv: 1 };
+  return {
+    merges: 0, feeds: 0, collects: 0, maxEggLv: 1,
+    chests: 0,      /* acilan kap sayisi */
+    maxPackLv: 0,   /* ulasilan en yuksek kap seviyesi */
+    unlocks: 0,     /* acilan kilitli hucre sayisi */
+  };
 }
 
 export function yeniEjderha(id) {
@@ -60,6 +65,7 @@ function yeniOyuncu() {
     stars: 0,
     sayaclar: yeniSayaclar(),
     gorevler: { bitti: [] },
+    partner: { alinan: [], buyukOdul: false },   /* "oyun:kademe" anahtarlari */
     gunluk: { sonGun: '', seri: 0 },
     tutorial: 0,
   };
@@ -148,6 +154,17 @@ function v5Tasi(kayit) {
   return kayit;
 }
 
+/* v6 -> v7: gorev haritasi uc kademeye bolundu ve gorev kimlikleri
+   degisti (m1 -> a1 gibi). Eski kimlikler yeni listede karsiliga sahip
+   olmadigi icin ilerleme sifirlaniyor; ama sayaclar (birlestirme,
+   besleme, kirma) duruyor, yani oyuncu ilk gorevleri aninda geri
+   kazaniyor - kaybi yok. */
+function v6Tasi(kayit) {
+  kayit.gorevler = { bitti: [] };
+  kayit.partner = { alinan: [], buyukOdul: false };
+  return kayit;
+}
+
 function duzelt(o) {
   o.v = SURUM;
   o.dragons = Array.isArray(o.dragons) ? o.dragons : [];
@@ -169,6 +186,9 @@ function duzelt(o) {
   o.sayaclar = { ...yeniSayaclar(), ...(o.sayaclar || {}) };
   o.gorevler = o.gorevler || { bitti: [] };
   if (!Array.isArray(o.gorevler.bitti)) o.gorevler.bitti = [];
+  o.partner = o.partner || { alinan: [], buyukOdul: false };
+  if (!Array.isArray(o.partner.alinan)) o.partner.alinan = [];
+  o.partner.buyukOdul = !!o.partner.buyukOdul;
   o.gunluk = o.gunluk || { sonGun: '', seri: 0 };
 
   for (const d of o.dragons) {
@@ -193,6 +213,7 @@ export async function oyuncuyuYukle() {
     else if (surum < 4) hazir = v3Tasi(kayit);
     if (surum < 5) hazir = v4Tasi(hazir);
     if (surum < 6) hazir = v5Tasi(hazir);
+    if (surum < 7) hazir = v6Tasi(hazir);
     const son = duzelt(hazir);
     saveState(OYUN_ID, son);
     return son;

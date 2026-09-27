@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="159">
+  <meta name="surum" content="163">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Dragon Island</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -15,9 +15,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;800&display=swap">
-  <link rel="stylesheet" href="../../css/style.css?v159">
-  <link rel="stylesheet" href="../../css/game.css?v159">
-  <link rel="stylesheet" href="dragon.css?v159">
+  <link rel="stylesheet" href="../../css/style.css?v163">
+  <link rel="stylesheet" href="../../css/game.css?v163">
+  <link rel="stylesheet" href="dragon.css?v163">
 </head>
 <body class="game dragon-app" data-i18n-title="title">
 
@@ -129,13 +129,43 @@
           <button class="act-btn primary" id="daily-claim" data-i18n="dailyClaim">Odulu al</button>
         </section>
 
-        <section class="quest-card">
-          <h3 class="card-title" data-i18n="questTitle">Gorev haritasi</h3>
-          <div class="quest-path" id="quest-path"></div>
-        </section>
+        <!-- GOREV HARITASI: kucuk onizleme, dokununca aciliyor -->
+        <button class="ozet-kart" id="quest-ozet">
+          <div class="ozet-ust">
+            <h3 class="card-title" data-i18n="questTitle">Gorev haritasi</h3>
+            <span class="ozet-sayac" id="quest-sayac">0/21</span>
+          </div>
+          <div class="ozet-kademeler" id="quest-kademeler"></div>
+          <div class="ozet-aktif" id="quest-aktif"></div>
+          <span class="ozet-ac" data-i18n="expand">Ac</span>
+        </button>
+
+        <!-- PARTNER GOREVLERI: diger oyunlarin skor hedefleri -->
+        <button class="ozet-kart" id="partner-ozet">
+          <div class="ozet-ust">
+            <h3 class="card-title" data-i18n="partnerTitle">Partner gorevleri</h3>
+            <span class="ozet-sayac" id="partner-sayac">0/32</span>
+          </div>
+          <div class="ozet-bar"><i id="partner-bar"></i></div>
+          <div class="ozet-aktif" id="partner-aktif"></div>
+          <span class="ozet-ac" data-i18n="expand">Ac</span>
+        </button>
       </section>
 
     </main>
+
+    <!-- GENISLEYEN PANEL: gorev haritasi ve partner gorevleri tam
+         listeyle burada aciliyor. Gorev ekrani boylece uc kucuk kartla
+         sinirli kaliyor, 21 gorev alt alta durmuyor. -->
+    <div class="sayfa" id="sayfa" hidden>
+      <div class="sayfa-bas">
+        <button class="sayfa-kapat" id="sayfa-kapat" aria-label="Kapat">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <h2 class="sayfa-baslik" id="sayfa-baslik">-</h2>
+      </div>
+      <div class="sayfa-govde" id="sayfa-govde"></div>
+    </div>
 
     <!-- ALT MENU -->
     <nav class="tabbar" id="tabbar">
@@ -168,6 +198,6 @@
     </div>
   </div>
 
-  <script type="module" src="dragon.js?v159"></script>
+  <script type="module" src="dragon.js?v163"></script>
 </body>
 </html>

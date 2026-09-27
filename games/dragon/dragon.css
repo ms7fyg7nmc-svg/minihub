@@ -1772,3 +1772,322 @@ body[data-screen="tasks"] .sky::after {
   margin: 0 auto;
   font-size: 13.5px;
 }
+
+/* ---------- OZET KARTLARI ----------
+   Gorev ekrani artik uc kucuk kart: gunluk odul, gorev haritasi ozeti ve
+   partner gorevleri ozeti. Tam listeler dokununca acilan sayfada. Once
+   21 gorev alt alta duruyordu ve ekran kaydirmaktan ibaretti. */
+
+.ozet-kart {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 14px 16px 12px;
+  border: 1px solid var(--kenar);
+  border-radius: 18px;
+  background: var(--kart);
+  box-shadow: var(--golge), inset 0 1px 0 var(--kart-ust);
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+  position: relative;
+}
+
+.ozet-kart:active { transform: translateY(1px); }
+
+.ozet-ust {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 11px;
+}
+
+.ozet-ust .card-title { margin: 0; }
+
+.ozet-sayac {
+  font-family: var(--baslik);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--altin-acik);
+}
+
+.ozet-ac {
+  position: absolute;
+  top: 15px;
+  right: 16px;
+  font-size: 0;
+}
+
+.ozet-ac::after {
+  content: '›';
+  font-size: 22px;
+  line-height: 1;
+  color: var(--soluk);
+}
+
+.ozet-ust { padding-right: 18px; }
+
+/* uc kademe rozeti */
+.ozet-kademeler { display: flex; gap: 7px; margin-bottom: 11px; }
+
+.kademe-rozet {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 7px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 11px;
+  background: rgba(0, 0, 0, 0.3);
+  opacity: 0.5;
+}
+
+.kademe-rozet.acik { opacity: 1; border-color: rgba(240, 187, 82, 0.28); }
+.kademe-rozet.bitti { background: rgba(46, 140, 96, 0.16); border-color: rgba(70, 190, 130, 0.35); }
+
+.kademe-ad {
+  font-family: var(--baslik);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--soluk);
+}
+
+.kademe-rozet.acik .kademe-ad { color: var(--altin-acik); }
+.kademe-say { font-size: 12px; font-weight: 800; }
+
+/* onizlemedeki tek aktif gorev */
+.ozet-gorev {
+  padding: 10px 12px;
+  border: 1px solid var(--kenar);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.26);
+}
+
+.ozet-gorev.hazir {
+  border-color: rgba(240, 187, 82, 0.4);
+  background: rgba(240, 187, 82, 0.09);
+}
+
+.ozet-gorev-ad { font-size: 13.5px; font-weight: 700; margin-bottom: 7px; }
+.ozet-gorev-ad.vurgulu { color: var(--altin-acik); margin-bottom: 0; }
+.ozet-gorev-alt { display: flex; align-items: center; gap: 9px; }
+.ozet-gorev-alt .bar { flex: 1; height: 6px; }
+.ozet-bitti { font-size: 13.5px; color: var(--altin-acik); font-weight: 700; }
+
+.ozet-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  margin-bottom: 11px;
+}
+
+.ozet-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--altin-koyu), var(--altin));
+}
+
+/* ---------- GENISLEYEN SAYFA ---------- */
+
+.sayfa {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  background: var(--zemin);
+  animation: sayfaGir 0.24s cubic-bezier(.2, .7, .3, 1);
+}
+
+@keyframes sayfaGir {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+.sayfa-bas {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--kenar);
+  background: rgba(16, 19, 28, 0.96);
+}
+
+.sayfa-kapat {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--kenar);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--yazi);
+  cursor: pointer;
+}
+
+.sayfa-kapat svg { width: 20px; height: 20px; }
+
+.sayfa-baslik {
+  margin: 0;
+  font-family: var(--baslik);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--altin-acik);
+}
+
+.sayfa-govde {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 14px calc(22px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ---------- SAYFADAKI KADEME BLOKLARI ---------- */
+
+.kademe-blok { margin-bottom: 22px; }
+
+.kademe-blok.kilitli { opacity: 0.55; }
+
+.kademe-bas {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--kenar);
+}
+
+.kademe-bas h3 {
+  margin: 0;
+  font-family: var(--baslik);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--altin-acik);
+}
+
+.kademe-bas span { font-size: 12.5px; font-weight: 700; color: var(--soluk); }
+
+/* kilitli gorev satiri */
+/* Kilitli gorev: basligi ve odulu gorunuyor ki oyuncu ne geldigini
+   bilsin, ama alinamiyor. */
+.quest.kapali { opacity: 0.45; }
+.quest.kapali .quest-claim { opacity: 0.6; }
+
+/* ---------- PARTNER GOREVLERI ---------- */
+
+.partner-oyun {
+  margin-bottom: 16px;
+  padding: 14px 15px 8px;
+  border: 1px solid var(--kenar);
+  border-radius: 16px;
+  background: var(--kart);
+}
+
+.partner-bas {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.partner-bas h3 {
+  margin: 0;
+  font-family: var(--baslik);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.partner-skor { font-size: 12px; color: var(--soluk); font-weight: 700; }
+
+.partner-kademeler { display: flex; flex-direction: column; gap: 8px; }
+
+.partner-kademe {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid var(--cizgi, rgba(255, 255, 255, 0.07));
+}
+
+.partner-kademe:first-child { border-top: none; }
+.partner-kademe.done { opacity: 0.5; }
+
+.pk-no {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  font-family: var(--baslik);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--soluk);
+}
+
+.partner-kademe.active .pk-no { background: rgba(240, 187, 82, 0.2); color: var(--altin-acik); }
+.partner-kademe.done .pk-no { background: rgba(46, 140, 96, 0.25); color: #9fe9c4; }
+
+.pk-govde { flex: 1; min-width: 0; }
+.pk-hedef { font-size: 12.5px; font-weight: 600; margin-bottom: 5px; }
+.pk-govde .bar { height: 5px; }
+
+.partner-kademe .quest-claim { min-height: 34px; font-size: 11.5px; padding: 0 12px; }
+
+/* ---------- BUYUK ODUL ---------- */
+
+.buyuk-odul {
+  margin-bottom: 20px;
+  padding: 16px;
+  border: 1px solid rgba(240, 187, 82, 0.3);
+  border-radius: 18px;
+  background:
+    radial-gradient(90% 70% at 50% 0%, rgba(240, 187, 82, 0.12), transparent 70%),
+    var(--kart);
+  text-align: center;
+}
+
+.buyuk-odul.hazir { border-color: var(--altin); box-shadow: 0 0 22px rgba(240, 187, 82, 0.2); }
+.buyuk-odul.alindi { opacity: 0.55; }
+
+.buyuk-bas h3 {
+  margin: 0 0 3px;
+  font-family: var(--baslik);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--altin-acik);
+}
+
+.buyuk-bas span { font-size: 12.5px; color: var(--soluk); }
+
+.buyuk-oduller {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.buyuk-oduller img { width: 42px; height: 42px; object-fit: contain; }
+
+.buyuk-al { min-width: 150px; min-height: 42px; }
+
+.kilit-mini { width: 13px; height: 13px; display: block; opacity: 0.7; }

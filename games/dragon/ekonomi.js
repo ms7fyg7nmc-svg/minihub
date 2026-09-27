@@ -124,29 +124,8 @@ export const GUNLUK_ODULLER = [
   { item: { t: 'star', lv: 1 } },
 ];
 
-/* ---------- GOREV HARITASI ---------- */
-
-/* Sirayla acilan gorevler: biri bitmeden sonraki gorunmuyor, boylece
-   oyuncunun onunde tek bir sonraki hedef duruyor. Odullerin cogu izgaraya
-   inen nesne; yer yoksa siraya giriyor ve oyuncu yer acmak zorunda kaliyor.
-
-   Kural: gorevler ve gunluk odul sadece KESE veriyor. Sepet ve sandiga
-   ulasmanin tek yolu keseleri birlestirmek ya da kilitli hucre acmak. */
-export const GOREV_HARITASI = [
-  { id: 'm1',  tip: 'merge',   hedef: 5,   odul: { food: 150 } },
-  { id: 'f1',  tip: 'feed',    hedef: 10,  odul: { item: { t: 'egg', lv: 2 } } },
-  { id: 'c1',  tip: 'collect', hedef: 15,  odul: { food: 400 } },
-  { id: 'm2',  tip: 'merge',   hedef: 20,  odul: { item: { t: 'food', lv: 1 } } },
-  { id: 'e4',  tip: 'egglv',   hedef: 4,   odul: { item: { t: 'egg', lv: 3 } } },
-  { id: 'f2',  tip: 'feed',    hedef: 20,  odul: { item: { t: 'star', lv: 1 } } },
-  { id: 'm3',  tip: 'merge',   hedef: 50,  odul: { item: { t: 'egg', lv: 5 } } },
-  { id: 'c2',  tip: 'collect', hedef: 60,  odul: { item: { t: 'food', lv: 1 } } },
-  { id: 'e6',  tip: 'egglv',   hedef: 6,   odul: { stars: 5, food: 3000 } },
-  { id: 'd2',  tip: 'draglv',  hedef: 2,   odul: { item: { t: 'star', lv: 1 } } },
-  { id: 'm4',  tip: 'merge',   hedef: 120, odul: { item: { t: 'egg', lv: 7 } } },
-  { id: 'c3',  tip: 'collect', hedef: 200, odul: { item: { t: 'star', lv: 1 } } },
-  { id: 'd3',  tip: 'draglv',  hedef: 3,   odul: { item: { t: 'egg', lv: 8 } } },
-];
+/* Gorev haritasi gorevler.js'e tasindi: uc kademeli yapi ve partner
+   gorevleri orada. */
 
 export function odulAraligi(hucre) {
   if (!hucre) return null;

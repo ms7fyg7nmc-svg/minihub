@@ -1,7 +1,7 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v159';
-import { getPoints, spendPoints, saveState, loadState } from '../../js/store.js?v159';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v159';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v163';
+import { getPoints, spendPoints, saveState, loadState } from '../../js/store.js?v163';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v163';
 
 const GAME_ID = 'pet';
 

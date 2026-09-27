@@ -1,20 +1,25 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v159';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v159';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v163';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v163';
 
-import { CONFIG, gorselSeviye } from './config.js?v159';
-import { bakimdaMi } from '../../js/store.js?v159';
+import { CONFIG, gorselSeviye } from './config.js?v163';
+import { bakimdaMi } from '../../js/store.js?v163';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         EN_COK_YUVA } from './model.js?v159';
-import { dragonSvg, dragonAssetUrls } from './art.js?v159';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v159';
-import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v159';
+         EN_COK_YUVA } from './model.js?v163';
+import { dragonSvg, dragonAssetUrls } from './art.js?v163';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v163';
+import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v163';
+import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
+         kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
+         PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
+         partnerKademe } from './gorevler.js?v163';
+import { getBest } from '../../js/store.js?v163';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi } from './grid.js?v159';
+         kilitliMi, nesneMi } from './grid.js?v163';
 import { YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
-         GUNLUK_ODULLER, GOREV_HARITASI, yemMaliyeti, seviyeIcinBesleme,
+         GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi,
-         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v159';
-import { createTutorial, pozListesi } from './tutorial.js?v159';
+         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v163';
+import { createTutorial, pozListesi } from './tutorial.js?v163';
 
 const GAME_ID = 'dragon';
 
@@ -85,6 +90,25 @@ registerTexts(GAME_ID, {
   soundOn: 'Sesi kapat',
   soundOff: 'Sesi aç',
   bigHitMsg: 'BÜYÜK VURUŞ!',
+  tier_acemi: 'Acemi',
+  tier_orta: 'Orta',
+  tier_pro: 'Pro',
+  tierLocked: 'Kilitli',
+  questLocked: 'Önce üsttekini bitir',
+  expand: 'Aç',
+  allDone: 'Bütün görevler bitti',
+  partnerTitle: 'Partner görevleri',
+  partnerReady: '{n} ödül seni bekliyor',
+  partnerHint: 'Diğer hub oyunlarında skor yap',
+  targetScore: '{n} puana ulaş',
+  targetLevel: '{n}. seviyeye ulaş',
+  yourBest: 'Rekorun: {n}',
+  grandTitle: 'Büyük ödül',
+  grandNote: 'Sekiz oyunda da 4. kademeyi bitir',
+  grandReady: 'Büyük ödül hazır',
+  questChest: '{n} kap aç',
+  questPacklv: 'Sv. {n} kaba ulaş',
+  questUnlock: '{n} kilitli hücre aç',
   refundMsg: 'Eskiden ejderhana harcadığın $MH karşılığı {n} yem hesabına eklendi.',
 
   unitS: 'sn',
@@ -125,7 +149,12 @@ const feedBtn = $('feed-btn'); const feedCostEl = $('feed-cost');
 const slotStrip = $('slot-strip');
 
 const dailyRow = $('daily-row'); const dailyNote = $('daily-note'); const dailyClaim = $('daily-claim');
-const questPath = $('quest-path');
+const questOzet = $('quest-ozet'); const questSayac = $('quest-sayac');
+const questKademeler = $('quest-kademeler'); const questAktif = $('quest-aktif');
+const partnerOzet = $('partner-ozet'); const partnerSayac = $('partner-sayac');
+const partnerBar = $('partner-bar'); const partnerAktif = $('partner-aktif');
+const sayfa = $('sayfa'); const sayfaBaslik = $('sayfa-baslik');
+const sayfaGovde = $('sayfa-govde'); const sayfaKapat = $('sayfa-kapat');
 const taskDot = $('task-dot'); const tabbar = $('tabbar');
 const sesBtn = $('ses-btn');
 
@@ -232,6 +261,12 @@ async function basla() {
     sesBtn.setAttribute('aria-pressed', a ? 'false' : 'true');
   };
   sesBtn.addEventListener('click', () => { sesiAyarla(!sesAcikMi()); sesYuzu(); cal('tap'); });
+  /* Onizleme kartlari sayfayi aciyor */
+  questOzet.addEventListener('click', () => sayfaAc(t('questTitle'), questSayfaCiz));
+  partnerOzet.addEventListener('click', () => sayfaAc(t('partnerTitle'), partnerSayfaCiz));
+  sayfaKapat.addEventListener('click', sayfaKapatt);
+
+  await partnerSkorlariOku();
   sesBaslat();
   sesYuzu();
   setInterval(tazele, 1000);
@@ -251,7 +286,7 @@ function ekranGoster(ad) {
   tabbar.querySelectorAll('.tab').forEach((b) => b.classList.toggle('is-on', b.dataset.go === ad));
   if (ad === 'grid') { board.ciz(); board.sec(seciliHucre); }
   if (ad === 'dragon') ejderhaCiz();
-  if (ad === 'tasks') { gunlukCiz(); gorevleriCiz(); }
+  if (ad === 'tasks') { gunlukCiz(); questOzetCiz(); partnerOzetCiz(); }
   tut?.yenidenKonumla();
 }
 
@@ -347,6 +382,8 @@ function birlesti(yeni) {
   oyuncu.sayaclar.merges += 1;
   if (yeni.t === 'egg') {
     oyuncu.sayaclar.maxEggLv = Math.max(oyuncu.sayaclar.maxEggLv, yeni.lv);
+  } else {
+    oyuncu.sayaclar.maxPackLv = Math.max(oyuncu.sayaclar.maxPackLv, yeni.lv);
   }
   kaydet();
   haptic.tap('medium');
@@ -453,6 +490,8 @@ function sandikAc(i) {
   else oyuncu.food += deger;
   oyuncu.grid.cells[i] = null;
   seciliHucre = -1;
+  oyuncu.sayaclar.chests += 1;
+  oyuncu.sayaclar.maxPackLv = Math.max(oyuncu.sayaclar.maxPackLv, hucre.lv);
   kaydet();
   board.ciz(); board.sec(-1);
   siradanDoldur();
@@ -471,6 +510,7 @@ function kilidiAc(i) {
   if (!kilitliMi(hucre)) return;
   if (oyuncu.stars < hucre.fiyat) { uyar(t('needStars')); return; }
   oyuncu.stars -= hucre.fiyat;
+  oyuncu.sayaclar.unlocks += 1;
   const odul = hucre.odul;
   oyuncu.grid.cells[i] = { t: odul.t, lv: odul.lv };
   if (odul.t === 'egg') oyuncu.sayaclar.maxEggLv = Math.max(oyuncu.sayaclar.maxEggLv, odul.lv);
@@ -688,6 +728,8 @@ function gunlukSiradakiGun() {
 /* Madalyonun uzerindeki durum isareti. Sayi degil isaret: sayinin
    yerlesimi ve yazi karakteri madalyona oturmuyordu. */
 const TIK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 12.5l4.2 4.2 8.8-9.4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+/* Kapali kademe rozetinde sayinin yerine duran kucuk kilit. */
+const KILIT_KUCUK = '<svg class="kilit-mini" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0110 0v2" fill="none" stroke="currentColor" stroke-width="2.4"/><rect x="5" y="10" width="14" height="10" rx="2.5" fill="currentColor"/></svg>';
 const UNLEM_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.5v8.2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/><circle cx="12" cy="18.4" r="1.9" fill="currentColor"/></svg>';
 
 function odulRozeti(odul) {
@@ -739,56 +781,277 @@ function gorevIlerleme(g) {
     case 'collect': return s.collects;
     case 'egglv': return s.maxEggLv;
     case 'draglv': return d ? d.level : 1;
+    case 'chest': return s.chests;
+    case 'packlv': return s.maxPackLv;
+    case 'unlock': return s.unlocks;
     default: return 0;
   }
 }
 
 const gorevBaslik = (g) => t(`quest${g.tip.charAt(0).toUpperCase()}${g.tip.slice(1)}`, { n: g.hedef });
 
-function gorevleriCiz() {
-  questPath.innerHTML = '';
+/* ---------- GOREV HARITASI ---------- */
+
+/* Onizleme karti: uc kademe rozetini, toplam ilerlemeyi ve oyuncunun
+   su an ustunde oldugu tek gorevi gosteriyor. Tam liste sayfada. */
+function questOzetCiz() {
   const bitti = oyuncu.gorevler.bitti;
+  const toplam = tumGorevler().length;
+  questSayac.textContent = `${bitti.length}/${toplam}`;
 
-  /* Madalyonun rengi artik oyuncunun yapabilecegi seyi anlatiyor:
-     yesil = alinmis, altin = odulu hazir bekliyor, demir = devam ediyor.
-     Once "siradaki bitmemis gorev" altin oluyordu, ama gorevler sirali
-     kilitli olmadigi icin o renk hicbir sey ifade etmiyordu. */
-  GOREV_HARITASI.forEach((g) => {
-    const tamamlandi = bitti.includes(g.id);
-    const sayi = gorevIlerleme(g);
-    const hazir = !tamamlandi && sayi >= g.hedef;
-
+  questKademeler.innerHTML = '';
+  for (const kademe of KADEMELER) {
+    const { biten, toplam: kt } = kademeIlerleme(kademe, bitti);
+    const acik = kademeAcikMi(kademe, bitti);
+    const bittiMi = biten === kt;
     const el = document.createElement('div');
-    el.className = `quest${tamamlandi ? ' done' : ''}${hazir ? ' active' : ''}`;
-    el.innerHTML = `
-      <span class="quest-dot">${tamamlandi ? TIK_SVG : (hazir ? UNLEM_SVG : '')}</span>
-      <div class="quest-body">
-        <div class="quest-title">${gorevBaslik(g)}</div>
-        <div class="quest-prog">
-          <div class="bar"><i style="width:${Math.min(100, (sayi / g.hedef) * 100)}%"></i></div>
-          <span class="quest-odul">${odulRozeti(g.odul)}</span>
-        </div>
-      </div>
-      <button class="quest-claim"${hazir ? '' : ' disabled'}>${tamamlandi ? t('questDone') : t('questClaim')}</button>`;
+    el.className = `kademe-rozet${acik ? ' acik' : ''}${bittiMi ? ' bitti' : ''}`;
+    el.innerHTML = `<span class="kademe-ad">${t(`tier_${kademe}`)}</span>
+      <span class="kademe-say">${acik ? `${biten}/${kt}` : KILIT_KUCUK}</span>`;
+    questKademeler.appendChild(el);
+  }
 
-    el.querySelector('button').addEventListener('click', () => {
-      if (bitti.includes(g.id) || gorevIlerleme(g) < g.hedef) return;
-      bitti.push(g.id);
-      cal('claim');
-      odulVer(g.odul, el.querySelector('button'));
-      kaydet();
-      haptic.success();
-      gorevleriCiz();
-      gorevNoktasi();
-    });
-    questPath.appendChild(el);
-  });
+  const g = aktifGorev(bitti);
+  if (!g) {
+    questAktif.innerHTML = `<span class="ozet-bitti">${t('allDone')}</span>`;
+    return;
+  }
+  const sayi = gorevIlerleme(g);
+  const hazir = sayi >= g.hedef;
+  questAktif.innerHTML = `
+    <div class="ozet-gorev${hazir ? ' hazir' : ''}">
+      <div class="ozet-gorev-ad">${gorevBaslik(g)}</div>
+      <div class="ozet-gorev-alt">
+        <div class="bar"><i style="width:${Math.min(100, (sayi / g.hedef) * 100)}%"></i></div>
+        <span class="quest-odul">${odulRozeti(g.odul)}</span>
+      </div>
+    </div>`;
 }
 
+/* Sayfadaki tam liste: kademe kademe, kilitli olanlar kapali. */
+function questSayfaCiz() {
+  const bitti = oyuncu.gorevler.bitti;
+  sayfaGovde.innerHTML = '';
+
+  for (const kademe of KADEMELER) {
+    const acik = kademeAcikMi(kademe, bitti);
+    const { biten, toplam } = kademeIlerleme(kademe, bitti);
+
+    const blok = document.createElement('section');
+    blok.className = `kademe-blok${acik ? '' : ' kilitli'}`;
+    blok.innerHTML = `<div class="kademe-bas">
+        <h3>${t(`tier_${kademe}`)}</h3>
+        <span>${acik ? `${biten}/${toplam}` : t('tierLocked')}</span>
+      </div>`;
+
+    const yol = document.createElement('div');
+    yol.className = 'quest-path';
+
+    kademeGorevleri(kademe).forEach((g, i) => {
+      const tamamlandi = bitti.includes(g.id);
+      const gorevAcik = gorevAcikMi(kademe, i, bitti);
+      const sayi = gorevIlerleme(g);
+      const hazir = !tamamlandi && gorevAcik && sayi >= g.hedef;
+
+      const el = document.createElement('div');
+      el.className = `quest${tamamlandi ? ' done' : ''}${hazir ? ' active' : ''}${gorevAcik ? '' : ' kapali'}`;
+      el.innerHTML = `
+        <span class="quest-dot">${tamamlandi ? TIK_SVG : (hazir ? UNLEM_SVG : '')}</span>
+        <div class="quest-body">
+          <div class="quest-title">${gorevBaslik(g)}</div>
+          <div class="quest-prog">
+            <div class="bar"><i style="width:${Math.min(100, (sayi / g.hedef) * 100)}%"></i></div>
+            <span class="quest-odul">${odulRozeti(g.odul)}</span>
+          </div>
+        </div>
+        <button class="quest-claim"${hazir ? '' : ' disabled'}>${tamamlandi ? t('questDone') : t('questClaim')}</button>`;
+
+      el.querySelector('button').addEventListener('click', () => {
+        if (!gorevAcikMi(kademe, i, oyuncu.gorevler.bitti)) return;
+        if (oyuncu.gorevler.bitti.includes(g.id) || gorevIlerleme(g) < g.hedef) return;
+        oyuncu.gorevler.bitti.push(g.id);
+        cal('claim');
+        odulVer(g.odul, el.querySelector('button'));
+        kaydet();
+        haptic.success();
+        questSayfaCiz();
+        questOzetCiz();
+        gorevNoktasi();
+      });
+      yol.appendChild(el);
+    });
+
+    blok.appendChild(yol);
+    sayfaGovde.appendChild(blok);
+  }
+}
+
+/* ---------- PARTNER GOREVLERI ---------- */
+
+let partnerSkorlar = {};      /* oyun id -> en iyi skor */
+
+async function partnerSkorlariOku() {
+  const girisler = await Promise.all(
+    PARTNER_OYUNLAR.map(async (o) => [o.id, Number(await getBest(o.id)) || 0]),
+  );
+  partnerSkorlar = Object.fromEntries(girisler);
+}
+
+const partnerAnahtar = (oyunId, kademe) => `${oyunId}:${kademe}`;
+
+function partnerAlinanSayisi() {
+  return oyuncu.partner.alinan.length;
+}
+
+/* Sekiz oyunun da 4. kademesi alindi mi? */
+function buyukOdulHazirMi() {
+  return PARTNER_OYUNLAR.every((o) => oyuncu.partner.alinan.includes(partnerAnahtar(o.id, 4)));
+}
+
+function partnerOzetCiz() {
+  const toplam = PARTNER_OYUNLAR.length * 4;
+  const alinan = partnerAlinanSayisi();
+  partnerSayac.textContent = `${alinan}/${toplam}`;
+  partnerBar.style.width = `${(alinan / toplam) * 100}%`;
+
+  /* Alinmayi bekleyen kademe sayisi - oyuncunun hemen yapabilecegi sey */
+  let hazir = 0;
+  for (const o of PARTNER_OYUNLAR) {
+    const kazanilan = partnerKademe(o.id, partnerSkorlar[o.id] || 0);
+    for (let k = 1; k <= kazanilan; k += 1) {
+      if (!oyuncu.partner.alinan.includes(partnerAnahtar(o.id, k))) hazir += 1;
+    }
+  }
+
+  if (buyukOdulHazirMi() && !oyuncu.partner.buyukOdul) {
+    partnerAktif.innerHTML = `<span class="ozet-gorev-ad vurgulu">${t('grandReady')}</span>`;
+  } else if (hazir > 0) {
+    partnerAktif.innerHTML = `<span class="ozet-gorev-ad vurgulu">${t('partnerReady', { n: hazir })}</span>`;
+  } else {
+    partnerAktif.innerHTML = `<span class="ozet-gorev-ad">${t('partnerHint')}</span>`;
+  }
+}
+
+function partnerSayfaCiz() {
+  sayfaGovde.innerHTML = '';
+
+  /* Buyuk odul kartini en uste koyuyoruz: hedefi bastan gostermek
+     sekiz oyunu da oynamak icin sebep veriyor. */
+  const buyuk = document.createElement('section');
+  const buyukHazir = buyukOdulHazirMi() && !oyuncu.partner.buyukOdul;
+  buyuk.className = `buyuk-odul${oyuncu.partner.buyukOdul ? ' alindi' : ''}${buyukHazir ? ' hazir' : ''}`;
+  buyuk.innerHTML = `
+    <div class="buyuk-bas">
+      <h3>${t('grandTitle')}</h3>
+      <span>${t('grandNote')}</span>
+    </div>
+    <div class="buyuk-oduller">
+      ${PARTNER_BUYUK_ODUL.map((o) => `<img src="${gorselYolu(o)}" alt="">`).join('')}
+    </div>
+    <button class="act-btn primary buyuk-al"${buyukHazir ? '' : ' disabled'}>
+      ${oyuncu.partner.buyukOdul ? t('questDone') : t('questClaim')}
+    </button>`;
+
+  buyuk.querySelector('button').addEventListener('click', () => {
+    if (!buyukOdulHazirMi() || oyuncu.partner.buyukOdul) return;
+    oyuncu.partner.buyukOdul = true;
+    for (const o of PARTNER_BUYUK_ODUL) odulVer({ item: { ...o } }, buyuk.querySelector('button'));
+    cal('jackpot');
+    kaydet();
+    haptic.success();
+    partnerSayfaCiz();
+    partnerOzetCiz();
+    gorevNoktasi();
+  });
+  sayfaGovde.appendChild(buyuk);
+
+  for (const oyun of PARTNER_OYUNLAR) {
+    const skor = partnerSkorlar[oyun.id] || 0;
+    const kazanilan = partnerKademe(oyun.id, skor);
+
+    const kart = document.createElement('section');
+    kart.className = 'partner-oyun';
+    kart.innerHTML = `
+      <div class="partner-bas">
+        <h3>${oyun.ad}</h3>
+        <span class="partner-skor">${t('yourBest', { n: bicim(skor) })}</span>
+      </div>`;
+
+    const liste = document.createElement('div');
+    liste.className = 'partner-kademeler';
+
+    oyun.esik.forEach((esik, i) => {
+      const kademe = i + 1;
+      const anahtar = partnerAnahtar(oyun.id, kademe);
+      const alindi = oyuncu.partner.alinan.includes(anahtar);
+      const hazir = !alindi && kazanilan >= kademe;
+
+      const sat = document.createElement('div');
+      sat.className = `partner-kademe${alindi ? ' done' : ''}${hazir ? ' active' : ''}`;
+      sat.innerHTML = `
+        <span class="pk-no">${kademe}</span>
+        <div class="pk-govde">
+          <div class="pk-hedef">${t(oyun.birim === 'seviye' ? 'targetLevel' : 'targetScore', { n: bicim(esik) })}</div>
+          <div class="bar"><i style="width:${Math.min(100, (skor / esik) * 100)}%"></i></div>
+        </div>
+        <span class="quest-odul">${odulRozeti(PARTNER_ODULLERI[i])}</span>
+        <button class="quest-claim"${hazir ? '' : ' disabled'}>${alindi ? t('questDone') : t('questClaim')}</button>`;
+
+      sat.querySelector('button').addEventListener('click', () => {
+        if (oyuncu.partner.alinan.includes(anahtar)) return;
+        if (partnerKademe(oyun.id, partnerSkorlar[oyun.id] || 0) < kademe) return;
+        oyuncu.partner.alinan.push(anahtar);
+        cal('claim');
+        odulVer(PARTNER_ODULLERI[i], sat.querySelector('button'));
+        kaydet();
+        haptic.success();
+        partnerSayfaCiz();
+        partnerOzetCiz();
+        gorevNoktasi();
+      });
+      liste.appendChild(sat);
+    });
+
+    kart.appendChild(liste);
+    sayfaGovde.appendChild(kart);
+  }
+}
+
+/* ---------- GENISLEYEN SAYFA ---------- */
+
+function sayfaAc(baslik, cizici) {
+  sayfaBaslik.textContent = baslik;
+  cizici();
+  sayfa.hidden = false;
+  sayfaGovde.scrollTop = 0;
+  cal('tap');
+}
+
+function sayfaKapatt() {
+  sayfa.hidden = true;
+  cal('tap');
+}
+
+
+/* Sekmedeki nokta: alinmayi bekleyen bir sey var mi? Kilitli gorevler
+   sayilmiyor - oyuncu onlari alamaz, bosuna cagirmayalim. */
 function gorevNoktasi() {
   const bitti = oyuncu.gorevler.bitti;
-  const hazirGorev = GOREV_HARITASI.some((g) => !bitti.includes(g.id) && gorevIlerleme(g) >= g.hedef);
-  taskDot.hidden = !(hazirGorev || gunlukAlinabilirMi());
+
+  const g = aktifGorev(bitti);
+  const hazirGorev = !!g && gorevIlerleme(g) >= g.hedef;
+
+  const hazirPartner = PARTNER_OYUNLAR.some((o) => {
+    const kazanilan = partnerKademe(o.id, partnerSkorlar[o.id] || 0);
+    for (let k = 1; k <= kazanilan; k += 1) {
+      if (!oyuncu.partner.alinan.includes(partnerAnahtar(o.id, k))) return true;
+    }
+    return false;
+  });
+
+  const hazirBuyuk = buyukOdulHazirMi() && !oyuncu.partner.buyukOdul;
+
+  taskDot.hidden = !(hazirGorev || hazirPartner || hazirBuyuk || gunlukAlinabilirMi());
 }
 
 /* ---------- ORTAK ---------- */
@@ -828,7 +1091,8 @@ function cizHepsi() {
   siraCiz();
   bilgiPaneliCiz();
   gunlukCiz();
-  gorevleriCiz();
+  questOzetCiz();
+  partnerOzetCiz();
   gorevNoktasi();
   tazele();
 }
