@@ -4,8 +4,8 @@
    seviye oluyor. Kilitli hucreler yildizla aciliyor ve icindeki odulu
    dogrudan oyuncuya veriyor. */
 
-import { EN_UST_YUMURTA, EN_UST_SANDIK } from './ekonomi.js?v163';
-import { belir, zipla, AKIS } from './canlandir.js?v163';
+import { EN_UST_YUMURTA, EN_UST_SANDIK } from './ekonomi.js?v165';
+import { belir, zipla, AKIS } from './canlandir.js?v165';
 
 const SANDIK_ADI = { 1: 'pouch', 2: 'basket', 3: 'chest', 4: 'chest-premium' };
 

@@ -2091,3 +2091,12 @@ body[data-screen="tasks"] .sky::after {
 .buyuk-al { min-width: 150px; min-height: 42px; }
 
 .kilit-mini { width: 13px; height: 13px; display: block; opacity: 0.7; }
+
+/* Bir odulde birden fazla kalem varsa aralarindaki ince ayrac */
+.odul-ayrac {
+  width: 1px;
+  height: 13px;
+  margin: 0 2px;
+  background: rgba(240, 187, 82, 0.28);
+  flex: none;
+}

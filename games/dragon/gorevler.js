@@ -34,9 +34,9 @@ export const GOREV_HARITASI = {
   acemi: [
     { id: 'a1', tip: 'merge',   hedef: 5,   odul: { food: 200 } },
     { id: 'a2', tip: 'feed',    hedef: 10,  odul: { item: { t: 'egg', lv: 2 } } },
-    { id: 'a3', tip: 'collect', hedef: 15,  odul: { food: 600 } },
+    { id: 'a3', tip: 'collect', hedef: 15,  odul: { food: 600, items: [{ t: 'food', lv: 1 }] } },
     { id: 'a4', tip: 'egglv',   hedef: 3,   odul: { item: { t: 'food', lv: 1 } } },
-    { id: 'a5', tip: 'merge',   hedef: 30,  odul: { food: 1500 } },
+    { id: 'a5', tip: 'merge',   hedef: 30,  odul: { items: [{ t: 'food', lv: 1 }, { t: 'food', lv: 1 }] } },
     { id: 'a6', tip: 'chest',   hedef: 1,   odul: { item: { t: 'egg', lv: 3 } } },
     { id: 'a7', tip: 'draglv',  hedef: 2,   odul: { stars: 3, food: 2500 } },
   ],
@@ -44,11 +44,11 @@ export const GOREV_HARITASI = {
   /* Sayilar bes-alti katina cikiyor, oduller de. Burada oyuncu artik
      kilitli hucre ve kap birlestirme gibi ileri mekaniklere giriyor. */
   orta: [
-    { id: 'o1', tip: 'merge',   hedef: 80,  odul: { food: 6000 } },
+    { id: 'o1', tip: 'merge',   hedef: 80,  odul: { food: 4000, items: [{ t: 'food', lv: 1 }, { t: 'food', lv: 1 }] } },
     { id: 'o2', tip: 'feed',    hedef: 50,  odul: { item: { t: 'star', lv: 1 } } },
     { id: 'o3', tip: 'collect', hedef: 90,  odul: { item: { t: 'food', lv: 1 } } },
     { id: 'o4', tip: 'egglv',   hedef: 5,   odul: { item: { t: 'egg', lv: 4 } } },
-    { id: 'o5', tip: 'unlock',  hedef: 1,   odul: { food: 15000 } },
+    { id: 'o5', tip: 'unlock',  hedef: 1,   odul: { food: 8000, items: [{ t: 'food', lv: 2 }] } },
     { id: 'o6', tip: 'packlv',  hedef: 2,   odul: { item: { t: 'food', lv: 2 } } },
     { id: 'o7', tip: 'draglv',  hedef: 3,   odul: { stars: 12, food: 25000 } },
   ],
@@ -96,11 +96,19 @@ export const PARTNER_OYUNLAR = [
 
 /* Her oyunda ayni kademe ayni odulu veriyor - zorluk esit oldugu icin
    odul de esit. Oyunlar arasi fark yaratmak oyuncuyu en kolay oyuna
-   yonlendirirdi. */
+   yonlendirirdi.
+
+   Kademe 3 once dogrudan Lv.3 SANDIK veriyordu. Sekiz oyun sekiz sandik
+   demekti ve ikisini birlestiren aninda Lv.4'e (~198 bin yem) ulasiyordu
+   - yani iki partner odulu oyunun en buyuk kabini aciyordu. Artik kese
+   veriyor: ayni yere varmak sekiz odul ve elle birlestirme istiyor.
+
+   Sandik (Lv.3+) artik sadece uc yerden geliyor: Pro kademesi gorevleri,
+   buyuk odul, ve yildizla acilan kilitli hucreler. Ucu de gun alir. */
 export const PARTNER_ODULLERI = [
   { food: 2000 },
-  { food: 6000 },
-  { item: { t: 'food', lv: 3 } },
+  { food: 4000, items: [{ t: 'food', lv: 1 }] },
+  { food: 12000, items: [{ t: 'food', lv: 1 }, { t: 'food', lv: 1 }] },
   { item: { t: 'star', lv: 2 } },
 ];
 

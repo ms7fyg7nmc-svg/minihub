@@ -1,25 +1,25 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v163';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v163';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v165';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v165';
 
-import { CONFIG, gorselSeviye } from './config.js?v163';
-import { bakimdaMi } from '../../js/store.js?v163';
+import { CONFIG, gorselSeviye } from './config.js?v165';
+import { bakimdaMi } from '../../js/store.js?v165';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         EN_COK_YUVA } from './model.js?v163';
-import { dragonSvg, dragonAssetUrls } from './art.js?v163';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v163';
-import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v163';
+         EN_COK_YUVA } from './model.js?v165';
+import { dragonSvg, dragonAssetUrls } from './art.js?v165';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v165';
+import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v165';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
          kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
          PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
-         partnerKademe } from './gorevler.js?v163';
-import { getBest } from '../../js/store.js?v163';
+         partnerKademe } from './gorevler.js?v165';
+import { getBest } from '../../js/store.js?v165';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi } from './grid.js?v163';
+         kilitliMi, nesneMi } from './grid.js?v165';
 import { YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi,
-         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v163';
-import { createTutorial, pozListesi } from './tutorial.js?v163';
+         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v165';
+import { createTutorial, pozListesi } from './tutorial.js?v165';
 
 const GAME_ID = 'dragon';
 
@@ -334,22 +334,42 @@ function odulVer(odul, kaynak) {
     kazanimUcur(yer, 'star', 4);
     odulUcur(t('gotStars', { n: bicim(odul.stars) }), true);
   }
-  if (odul.item) {
+  /* Tek nesne (item) ve coklu nesne (items) ayni yoldan gidiyor.
+
+     Nesneler ONCE senkron olarak yerlestiriliyor, animasyonlar sonra
+     araliklarla oynatiliyor. Once yerlestirmeyi de setTimeout icine
+     koymustum; cagiran kod kaydet()'i o zamanlayicilar calismadan
+     onceden cagirdigi icin nesneler hafizaya giriyor ama diske hic
+     yazilmiyordu - sayfa yenilenince kayboluyorlardi. */
+  const nesneler = [...(odul.items || []), ...(odul.item ? [odul.item] : [])];
+  const yerlesim = nesneler.map((nesne) => {
     sonKonan = -1;
-    const nereye = nesneVer({ ...odul.item });
-    if (nereye === 'sira') {
-      ucur({ kaynak: yer, hedef: queueRow, gorsel: gorselYolu(odul.item), boy: 34,
-             bitince: () => { zipla(queueRow, 1.1); uyar(t('queuedMsg')); } });
-    } else {
-      const kutu = board.hucreKutusu(sonKonan);
-      ucur({ kaynak: yer, hedef: kutu || queueRow, gorsel: gorselYolu(odul.item), boy: 34,
-             bitince: () => {
-               belir(board.parcaBul?.(sonKonan));
-               odulUcur(t('gotItem', { name: nesneAdi(odul.item) }), true);
-             } });
-    }
-  }
+    const nereye = nesneVer({ ...nesne });
+    return { nesne, nereye, hucre: sonKonan };
+  });
+  if (nesneler.length) kaydet();
+
+  let siraUyarisiVerildi = false;
+  yerlesim.forEach(({ nesne, nereye, hucre }, sira) => {
+    setTimeout(() => {
+      if (nereye === 'sira') {
+        ucur({ kaynak: yer, hedef: queueRow, gorsel: gorselYolu(nesne), boy: 34,
+               bitince: () => {
+                 zipla(queueRow, 1.1);
+                 if (!siraUyarisiVerildi) { siraUyarisiVerildi = true; uyar(t('queuedMsg')); }
+               } });
+      } else {
+        const kutu = board.hucreKutusu(hucre);
+        ucur({ kaynak: yer, hedef: kutu || queueRow, gorsel: gorselYolu(nesne), boy: 34,
+               bitince: () => {
+                 belir(board.parcaBul?.(hucre));
+                 if (sira === 0) odulUcur(t('gotItem', { name: nesneAdi(nesne) }), true);
+               } });
+      }
+    }, sira * 220);
+  });
   if (!odul.food && !odul.stars) kaynakTazele(true);
+  gorevNoktasi();
 }
 
 /* Izgarada yer acildiginda siradakiler otomatik iniyor. */
@@ -733,10 +753,21 @@ const KILIT_KUCUK = '<svg class="kilit-mini" viewBox="0 0 24 24" aria-hidden="tr
 const UNLEM_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.5v8.2" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/><circle cx="12" cy="18.4" r="1.9" fill="currentColor"/></svg>';
 
 function odulRozeti(odul) {
-  if (odul.food) return `<img src="../../assets/food/meat-64.webp" alt=""><b>${bicim(odul.food)}</b>`;
-  if (odul.stars) return `<img src="../../assets/currency/star-64.webp" alt=""><b>${bicim(odul.stars)}</b>`;
-  if (odul.item) return `<img src="${gorselYolu(odul.item)}" alt=""><b>${t('lvShort', { level: odul.item.lv })}</b>`;
-  return '';
+  const parcalar = [];
+  if (odul.food) parcalar.push(`<img src="../../assets/food/meat-64.webp" alt=""><b>${bicim(odul.food)}</b>`);
+  if (odul.stars) parcalar.push(`<img src="../../assets/currency/star-64.webp" alt=""><b>${bicim(odul.stars)}</b>`);
+
+  /* Ayni nesneden birden fazla varsa "2x" diye tek rozette toplaniyor. */
+  const nesneler = [...(odul.items || []), ...(odul.item ? [odul.item] : [])];
+  const sayim = new Map();
+  for (const n of nesneler) {
+    const anahtar = `${n.t}:${n.lv}`;
+    sayim.set(anahtar, { nesne: n, adet: (sayim.get(anahtar)?.adet || 0) + 1 });
+  }
+  for (const { nesne, adet } of sayim.values()) {
+    parcalar.push(`<img src="${gorselYolu(nesne)}" alt=""><b>${adet > 1 ? `${adet}\u00D7` : ''}${t('lvShort', { level: nesne.lv })}</b>`);
+  }
+  return parcalar.join('<span class="odul-ayrac"></span>');
 }
 
 function gunlukCiz() {
