@@ -1,20 +1,20 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v158';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v158';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v159';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v159';
 
-import { CONFIG, gorselSeviye } from './config.js?v158';
-import { bakimdaMi } from '../../js/store.js?v158';
+import { CONFIG, gorselSeviye } from './config.js?v159';
+import { bakimdaMi } from '../../js/store.js?v159';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         EN_COK_YUVA } from './model.js?v158';
-import { dragonSvg, dragonAssetUrls } from './art.js?v158';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v158';
-import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v158';
+         EN_COK_YUVA } from './model.js?v159';
+import { dragonSvg, dragonAssetUrls } from './art.js?v159';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v159';
+import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v159';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi,
-         kilitliMi, nesneMi } from './grid.js?v158';
+         kilitliMi, nesneMi } from './grid.js?v159';
 import { YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, GOREV_HARITASI, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi,
-         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v158';
-import { createTutorial, pozListesi } from './tutorial.js?v158';
+         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v159';
+import { createTutorial, pozListesi } from './tutorial.js?v159';
 
 const GAME_ID = 'dragon';
 

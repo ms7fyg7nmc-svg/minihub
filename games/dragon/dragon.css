@@ -1219,7 +1219,7 @@ body[data-screen="tasks"] .sky::after {
    flex akisinin ortasina dusup fiyat rozetinin uzerine biniyordu. */
 .slot-lock {
   position: absolute;
-  top: 22px;
+  top: 25px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
@@ -1483,31 +1483,51 @@ body[data-screen="tasks"] .sky::after {
   overflow: hidden;
 }
 
-/* Portre kirpimi: tam boy poz buyutulup basa dogru kaydiriliyor,
-   boylece kucuk kartta ejderhanin yuzu goruluyor. */
+/* PORTRE KUYUSU
+   Ejderhanin yuzu, 1024'luk kaynak gorselde (511, 455) noktasinda; bu
+   200 birimlik viewBox'a olceklenince (92, 119) ediyor, yani %46 / %59.
+   transform-origin oraya kurulunca buyutme yuzun etrafinda oluyor ve
+   kirpim keyfi durmuyor. Onceki %50 / %62 degerleri tahmindi. */
 .slot .mini {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 78px;
+  top: 7px;
+  left: 7px;
+  right: 7px;
+  height: 70px;
+  border-radius: 13px;
   overflow: hidden;
   pointer-events: none;
+  background:
+    radial-gradient(70% 60% at 50% 42%, rgba(255, 160, 80, 0.22), transparent 72%),
+    linear-gradient(180deg, rgba(9, 12, 19, 0.55), rgba(5, 7, 12, 0.85));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
 }
 
 .slot .mini svg {
   width: 100%;
   height: 100%;
-  transform: scale(2.05);
-  transform-origin: center 62%;
+  transform: scale(2.35);
+  transform-origin: 46% 59%;
 }
 
+/* Kirpim kenarlari sert bir kesik gibi durmasin */
+.slot .mini::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(78% 78% at 50% 46%, transparent 55%, rgba(6, 8, 14, 0.5));
+}
+
+.slot.is-on .mini { box-shadow: inset 0 0 0 1px rgba(240, 187, 82, 0.4); }
+
+/* Rozet artik portrenin uzerine binmiyor, altindaki kendi seridinde. */
 .slot-lv {
   position: relative;
   z-index: 1;
-  padding: 2px 9px;
+  padding: 1px 9px;
   border-radius: 999px;
-  background: rgba(8, 10, 16, 0.78);
+  background: none;
   font-size: 11px;
   font-weight: 800;
   color: var(--soluk);
