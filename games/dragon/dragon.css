@@ -537,48 +537,6 @@ body[data-screen="tasks"] .sky::after {
 
 /* ---------- EJDERHA EKRANI ---------- */
 
-.slot-strip {
-  display: flex;
-  gap: 9px;
-  justify-content: center;
-  padding-bottom: 2px;
-}
-
-.slot {
-  position: relative;
-  flex: none;
-  width: 70px;
-  height: 70px;
-  display: grid;
-  place-items: center;
-  border: 1.5px solid rgba(255, 255, 255, 0.14);
-  border-radius: 16px;
-  background: linear-gradient(180deg, rgba(38, 44, 62, 0.8), rgba(16, 20, 30, 0.8));
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.55);
-  cursor: pointer;
-}
-
-.slot.is-on {
-  border-color: var(--altin);
-  box-shadow: 0 0 16px rgba(240, 187, 82, 0.35), inset 0 2px 8px rgba(0, 0, 0, 0.5);
-}
-
-.slot .mini { width: 84%; height: 84%; }
-
-.slot.empty {
-  border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.22);
-  color: var(--soluk);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.slot.locked {
-  color: var(--soluk);
-  border-style: dashed;
-  background: rgba(0, 0, 0, 0.35);
-}
-
-.slot svg { width: 22px; height: 22px; }
 
 .stage {
   position: relative;
@@ -1202,57 +1160,6 @@ body[data-screen="tasks"] .sky::after {
   to { transform: translateX(-50%); opacity: 1; }
 }
 
-/* ---------- YUVA EKLERI ---------- */
-
-.slot.locked .mini { opacity: 0.35; filter: grayscale(0.7); }
-
-/* Kilitli yuva: ejderha silik, uzerinde net bir kilit rozeti */
-.slot.locked::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 17px;
-  background: rgba(8, 10, 16, 0.55);
-}
-
-/* Kilit portrenin ortasinda duruyor. Once konum verilmedigi icin
-   flex akisinin ortasina dusup fiyat rozetinin uzerine biniyordu. */
-.slot-lock {
-  position: absolute;
-  top: 25px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 2;
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border: 1px solid rgba(240, 187, 82, 0.45);
-  border-radius: 50%;
-  background: rgba(16, 19, 28, 0.9);
-  color: #ffd98a;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
-}
-
-.slot-lock svg { width: 19px; height: 19px; }
-
-.slot-buy {
-  position: relative;
-  z-index: 1;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(8, 10, 16, 0.78);
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--altin-acik);
-}
-
-.slot-buy img { width: 15px; height: 15px; object-fit: contain; }
-
 .dragon-art.dim { opacity: 0.45; filter: grayscale(0.6); }
 
 /* ---------- KULLANICI ROZETI ---------- */
@@ -1466,89 +1373,186 @@ body[data-screen="tasks"] .sky::after {
 .card-head { display: flex; align-items: baseline; justify-content: space-between; }
 .card-note { font-size: 11.5px; color: var(--altin-acik); font-weight: 800; }
 
-.slots-card .slot-strip { margin-top: 11px; justify-content: flex-start; overflow-x: auto; }
+/* ---------- YUVA SERIDI ----------
 
-/* display: flex sart - taban kuralda grid kaliyordu, o yuzden
-   flex-direction ve justify-content hicbir sey yapmiyor, fiyat rozeti
-   kilidin ustune biniyordu. */
+   Alti yuva da her zaman gorunuyor, seridi kaydirmak gerekmiyor:
+   koleksiyonun tamami tek bakista okunmali ki kilitli kartlar ise
+   yarasin. Onceki 92px'lik kartlar ekrana sigmiyordu, altincisi
+   kenardan tasip goze hic girmiyordu.
+
+   Kart genisligi sabit degil: alti esit sutun ekrani paylasiyor. */
+
+.slots-card .slot-strip {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+  margin-top: 11px;
+  padding-bottom: 2px;
+}
+
 .slot {
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  align-items: center;
   gap: 0;
-  width: 92px;
-  height: 104px;
-  padding-bottom: 8px;
-  border-radius: 18px;
+  width: 100%;
+  aspect-ratio: 54 / 70;
+  padding-bottom: 5px;
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 13px;
+  background: linear-gradient(180deg, rgba(38, 44, 62, 0.8), rgba(16, 20, 30, 0.85));
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.55);
   overflow: hidden;
+  cursor: pointer;
 }
 
-/* PORTRE KUYUSU
-   Ejderhanin yuzu, 1024'luk kaynak gorselde (511, 455) noktasinda; bu
-   200 birimlik viewBox'a olceklenince (92, 119) ediyor, yani %46 / %59.
-   transform-origin oraya kurulunca buyutme yuzun etrafinda oluyor ve
-   kirpim keyfi durmuyor. Onceki %50 / %62 degerleri tahmindi. */
+/* Portre kuyusu: sprite tam boy, kirpim yok. Onceki surumde yuze
+   zoom yapiliyordu (scale 2.35) - o govde tek parca olmadigi icin
+   gerekliydi, simdi butun ejderha zaten kadraja sigiyor. */
 .slot .mini {
   position: absolute;
-  top: 7px;
-  left: 7px;
-  right: 7px;
-  height: 70px;
-  border-radius: 13px;
+  top: 4px;
+  left: 4px;
+  right: 4px;
+  height: calc(100% - 22px);
+  border-radius: 10px;
   overflow: hidden;
   pointer-events: none;
   background:
-    radial-gradient(70% 60% at 50% 42%, rgba(255, 160, 80, 0.22), transparent 72%),
-    linear-gradient(180deg, rgba(9, 12, 19, 0.55), rgba(5, 7, 12, 0.85));
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+    radial-gradient(70% 62% at 50% 46%, rgba(255, 160, 80, 0.16), transparent 74%),
+    linear-gradient(180deg, rgba(9, 12, 19, 0.5), rgba(5, 7, 12, 0.8));
 }
 
-.slot .mini svg {
-  width: 100%;
-  height: 100%;
-  transform: scale(2.35);
-  transform-origin: 46% 59%;
-}
+.slot .mini svg { width: 100%; height: 100%; }
 
-/* Kirpim kenarlari sert bir kesik gibi durmasin */
-.slot .mini::after {
+/* ---- NADIRLIK ----
+   Kenarlik rengi hangi ejderhanin orada oldugunu daha kart acilmadan
+   soyluyor; fiyatla ayni yonde artiyor. */
+.slot.nadir-rare      { border-color: rgba(120, 200, 255, 0.34); }
+.slot.nadir-epic      { border-color: rgba(190, 140, 255, 0.36); }
+.slot.nadir-legendary { border-color: rgba(255, 190, 90, 0.42); }
+
+/* ---- HAL 1: acik + dolu ---- */
+.slot.is-on {
+  border-color: var(--altin);
+  box-shadow: 0 0 14px rgba(240, 187, 82, 0.34), inset 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.slot.is-on .slot-lv { color: var(--altin-acik); }
+
+/* ---- HAL 2: acik + bos ----
+   Ejderha silueti duruyor: yuva neyin yerini tuttugunu gosteriyor,
+   ama dolu yuvayla karistirilamayacak kadar sonuk. */
+.slot.acik.bos {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+/* Duz siyah siluet kartta okunmayan bir leke birakiyordu; gri ve
+   sonuk bir hayalet hangi ejderhanin orayi bekledigini gosteriyor. */
+.slot.acik.bos .mini svg { filter: grayscale(1) brightness(0.5); opacity: 0.4; }
+.slot-bekle { color: rgba(255, 255, 255, 0.34) !important; }
+
+/* ---- HAL 3: kilitli + bos ----
+   Ejderha RENKLI gorunuyor, sadece sonuk. Once siluet cizilmisti ve
+   kart bos bir kilitten ibaret kaliyordu - yuvanin hangi ejderhayi
+   tuttugu hic okunmuyordu, yani satin alma sebebi de yoktu. */
+.slot.locked { background: rgba(0, 0, 0, 0.4); }
+.slot.locked.bos .mini svg { opacity: 0.62; filter: grayscale(0.4) brightness(0.86); }
+
+/* ---- HAL 4: kilitli + DOLU ----
+   Asil ikna edici hal: ejderha orada, rengiyle birlikte gorunuyor,
+   sadece camin arkasinda. Silueti degil kendisini gosteriyoruz -
+   yoksa "bir ejderham var ama kullanamiyorum" hissi olusmuyor. */
+.slot.bekleyen { border-color: rgba(240, 187, 82, 0.5); }
+.slot.bekleyen .mini svg { opacity: 0.9; filter: grayscale(0.12); }
+.slot.bekleyen .mini::after {
   content: '';
   position: absolute;
   inset: 0;
+  background: rgba(8, 10, 16, 0.3);
+}
+.slot.bekleyen::before {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
   border-radius: inherit;
-  background: radial-gradient(78% 78% at 50% 46%, transparent 55%, rgba(6, 8, 14, 0.5));
+  border: 1.5px solid rgba(240, 187, 82, 0.55);
+  animation: yuvaNabiz 2.2s ease-in-out infinite;
+  pointer-events: none;
 }
 
-.slot.is-on .mini { box-shadow: inset 0 0 0 1px rgba(240, 187, 82, 0.4); }
+@keyframes yuvaNabiz {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.95; }
+}
 
-/* Rozet artik portrenin uzerine binmiyor, altindaki kendi seridinde. */
-.slot-lv {
+/* Sirada olan yuva alinabilir; gerideki kilitliler fiyatlarini sonuk
+   gosteriyor. Kartin tamamina opacity vermiyoruz - ejderha zaten
+   sonuk, ustune bir kat daha binince hic gorunmez oluyordu. */
+.slot.locked:not(.sirada) .slot-buy { opacity: 0.5; }
+.slot.sirada { border-color: rgba(240, 187, 82, 0.4); }
+
+/* ---- KILIT ve ROZETLER ----
+   Kilit ortada degil kosede: ortadayken ejderhanin tam yuzunu
+   kapatiyordu ve kart yine "kilitli bir kutu" gibi duruyordu. */
+.slot-lock {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: rgba(10, 12, 18, 0.82);
+  color: #ffd98a;
+}
+
+.slot-lock svg { width: 10px; height: 10px; }
+
+/* Kilitli yuvada bekleyen ejderhanin bayragi: portre kuyusunun ALT
+   kenarinda. Tepedeyken ejderhanin boynuzlarini kesiyordu. */
+.slot-flag {
+  position: absolute;
+  top: calc(100% - 32px);
+  left: 4px;
+  right: 4px;
+  z-index: 3;
+  padding: 1.5px 0;
+  background: rgba(240, 187, 82, 0.94);
+  font-size: 7.5px;
+  font-weight: 900;
+  color: #241703;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.slot-buy {
   position: relative;
   z-index: 1;
-  padding: 1px 9px;
-  border-radius: 999px;
-  background: none;
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
   font-weight: 800;
-  color: var(--soluk);
-  letter-spacing: 0.3px;
+  color: var(--altin-acik);
   white-space: nowrap;
 }
 
-.slot.is-on .slot-lv { color: var(--altin-acik); }
+.slot-buy img { width: 11px; height: 11px; object-fit: contain; }
 
-.slot-plus {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 1px dashed rgba(255, 255, 255, 0.25);
-  border-radius: 50%;
-  font-size: 24px;
-  font-weight: 300;
+.slot-lv {
+  position: relative;
+  z-index: 1;
+  font-size: 10px;
+  font-weight: 800;
   color: var(--soluk);
-  line-height: 1;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
+
 
 /* Besleme dugmesi ejderha kartinin icinde, istah cubugunun hemen
    altinda: once tek basina ortada duran bir blok halindeydi ve ekran

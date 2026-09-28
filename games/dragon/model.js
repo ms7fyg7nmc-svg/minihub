@@ -1,7 +1,8 @@
 
-import { loadState, saveState } from '../../js/store.js?v166';
-import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_FIYATLARI } from './ekonomi.js?v166';
-import { CONFIG, eskiToplamHarcama } from './config.js?v166';
+import { loadState, saveState } from '../../js/store.js?v167';
+import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_FIYATLARI } from './ekonomi.js?v167';
+import { CONFIG, eskiToplamHarcama } from './config.js?v167';
+import { turSira } from './turler.js?v167';
 
 const OYUN_ID = 'dragon';
 const SURUM = 7;
@@ -9,13 +10,11 @@ const SURUM = 7;
 export const IZGARA_N = 4;
 export const EN_COK_YUVA = YUVA_FIYATLARI.length;
 
-/* Ejderha artik aksesuarsiz: tac, kolye, yuz isareti ve aura yok.
-   Kanat govdenin parcasi oldugu icin duruyor (art.js zaten kanatsiz
-   ejderha cizmiyor, varsayilana dusuyor). */
-export const SADE_GORUNUM = {
-  color: 'ember', skin: 'none', wings: 'leather',
-  necklace: 'none', head: 'none', face: 'none', aura: 'none',
-};
+/* Gorunum artik tek bir alandan ibaret: `tur`. Kanat/tac/kolye/yuz
+   katmanlari kaldirildi (bkz. art.js), her tur butun bir sprite.
+   Tur yuva sirasindan geliyor, oyuncunun secimi degil - yuva seridi
+   boylece toplanacak sabit bir koleksiyon oluyor. */
+export const gorunum = (sira) => ({ tur: turSira(sira).id });
 
 export function baslangicIzgarasi(n = IZGARA_N) {
   const cells = Array.from({ length: n * n }, (_, i) => {
@@ -36,7 +35,7 @@ function yeniSayaclar() {
   };
 }
 
-export function yeniEjderha(id) {
+export function yeniEjderha(id, sira = 0) {
   const simdi = Date.now();
   return {
     id,
@@ -47,7 +46,7 @@ export function yeniEjderha(id) {
     pencereBas: 0,          /* 4 saatlik istah penceresinin baslangici */
     pencereSayi: 0,         /* pencere icinde kacinci besleme */
     happiness: 100,
-    look: { ...SADE_GORUNUM },
+    look: gorunum(sira),
     createdAt: simdi,
     updatedAt: simdi,
   };
@@ -56,7 +55,7 @@ export function yeniEjderha(id) {
 function yeniOyuncu() {
   return {
     v: SURUM,
-    dragons: [yeniEjderha('d1')],
+    dragons: [yeniEjderha('d1', 0)],
     activeId: 'd1',
     unlockedSlots: 1,
     grid: baslangicIzgarasi(IZGARA_N),
@@ -145,8 +144,8 @@ function v5Tasi(kayit) {
   kayit.gunluk = { sonGun: '', seri: 0 };
   delete kayit.tasks;
   delete kayit.owned;
-  for (const d of kayit.dragons || []) {
-    d.look = { ...SADE_GORUNUM };
+  (kayit.dragons || []).forEach((d, sira) => {
+    d.look = gorunum(sira);
     d.feeds = 0;
     d.pencereBas = 0;
     d.pencereSayi = 0;
@@ -154,7 +153,7 @@ function v5Tasi(kayit) {
     delete d.lastPlayed;
     delete d.species;
     delete d.element;
-  }
+  });
   return kayit;
 }
 
@@ -172,7 +171,7 @@ function v6Tasi(kayit) {
 function duzelt(o) {
   o.v = SURUM;
   o.dragons = Array.isArray(o.dragons) ? o.dragons : [];
-  if (!o.dragons.length) { o.dragons = [yeniEjderha('d1')]; o.activeId = 'd1'; }
+  if (!o.dragons.length) { o.dragons = [yeniEjderha('d1', 0)]; o.activeId = 'd1'; }
 
   const n = o.grid?.n || IZGARA_N;
   if (!o.grid || !Array.isArray(o.grid.cells) || o.grid.cells.length !== n * n) {
@@ -195,15 +194,18 @@ function duzelt(o) {
   o.partner.buyukOdul = !!o.partner.buyukOdul;
   o.gunluk = o.gunluk || { sonGun: '', seri: 0 };
 
-  for (const d of o.dragons) {
-    d.look = { ...SADE_GORUNUM };
+  /* Tur yuva sirasindan turetiliyor, kayittan degil: dizideki yeri
+     degisirse gorseli de degisir ve serit hep ayni sirayi gosterir. */
+  o.dragons.forEach((d, sira) => {
+    d.look = gorunum(sira);
     d.level = Math.min(CONFIG.MAX_LEVEL, Math.max(1, Number(d.level) || 1));
     d.feeds = Math.max(0, Number(d.feeds) || 0);
     d.lastFed = Number(d.lastFed) || 0;
     d.pencereBas = Number(d.pencereBas) || 0;
     d.pencereSayi = Math.max(0, Number(d.pencereSayi) || 0);
     d.happiness = Number.isFinite(d.happiness) ? d.happiness : 100;
-  }
+  });
+  o.dragons.length = Math.min(o.dragons.length, EN_COK_YUVA);
   if (!o.dragons.some((d) => d.id === o.activeId)) o.activeId = o.dragons[0].id;
   return o;
 }
@@ -244,9 +246,14 @@ export function yuvaAcikMi(oyuncu, ejderha) {
   return sira >= 0 && sira < oyuncu.unlockedSlots;
 }
 
+/* Yeni ejderha ilk BOS yuvaya iniyor - o yuva kilitli olsa bile.
+   Kilitli yuvada duran ejderha beslenemiyor ama seritte gorunuyor;
+   oyuncu neyi kacirdigini gorsun diye (bkz. dragon.js slotlariCiz). */
 export function ejderhaEkle(oyuncu) {
-  const id = `d${oyuncu.dragons.length + 1}_${Date.now().toString(36)}`;
-  const yeni = yeniEjderha(id);
+  if (oyuncu.dragons.length >= EN_COK_YUVA) return null;
+  const sira = oyuncu.dragons.length;
+  const id = `d${sira + 1}_${Date.now().toString(36)}`;
+  const yeni = yeniEjderha(id, sira);
   oyuncu.dragons.push(yeni);
   return yeni;
 }
