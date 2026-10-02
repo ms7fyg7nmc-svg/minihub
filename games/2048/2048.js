@@ -1,9 +1,9 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v188';
-import { getBest, saveState, loadState, clearState, startRun, finishRunOrLegacy, yerelTohum, oynanabilirMi } from '../../js/store.js?v188';
-import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v188';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v188';
-import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v188';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v189';
+import { getBest, saveState, loadState, clearState, startRun, finishRunOrLegacy, yerelTohum, oynanabilirMi } from '../../js/store.js?v189';
+import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v189';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v189';
+import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v189';
 
 const GAME_ID = '2048';
 const POINTS_DIVISOR = 23;

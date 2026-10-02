@@ -1,11 +1,11 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v188';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v188';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v188';
-import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v188';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v189';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v189';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v189';
+import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v189';
 /* Sesler artik sentezlenmis degil, Dragon Island ornekleri (bkz. ses.js).
    Ses dugmesi ayni sessizlik anahtarini kullandigi icin degismedi. */
-import { SFX } from './ses.js?v188';
+import { SFX } from './ses.js?v189';
 
 const GAME_ID = 'coindrop';
 
