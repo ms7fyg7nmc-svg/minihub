@@ -79,12 +79,25 @@ body {
   overscroll-behavior: none;
 }
 
+/* GUVENLI ALAN PAYLARI
+   Telegram tam ekrana gecince (bkz. js/tg.js requestFullscreen) sayfa
+   durum cubugunun ve Telegram'in kendi kapat/menu dugmelerinin altina
+   uzaniyor. js/tg.js bu iki payi toplayip asagidaki degiskenlere
+   yaziyor; tam ekran degilken ikisi de 0 oluyor, yani kural zararsiz. */
+:root { --guvenli-ust: 0px; --guvenli-alt: 0px; }
+
 /* Oyun ekranlari hic kaymasin: yukseklik tam ekrana kilitli, tasma kapali.
-   Hub'da bu yok, orada kartlar icin kaydirma gerekiyor. */
+   Hub'da bu yok, orada kartlar icin kaydirma gerekiyor.
+   box-sizing global olarak border-box, o yuzden ust pay yuksekligi
+   bozmuyor (bkz. yukarida `* { box-sizing: border-box }`). */
 body.game {
   height: var(--app-h, 100dvh);
+  padding-top: var(--guvenli-ust, 0px);
   overflow: hidden;
 }
+
+/* Hub'da sabit ust bar varsa o da centigin altina girmesin. */
+body:not(.game) { padding-top: var(--guvenli-ust, 0px); }
 
 /* Gunluk Odul/Enerji/Liderlik/Arkadaslar panellerinden biri acikken:
    body'yi tamamen sabitleyip arkaplanin kaymasini engelliyor (bkz.

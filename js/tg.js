@@ -1,5 +1,5 @@
 
-import { t } from './i18n.js?v172';
+import { t } from './i18n.js?v173';
 
 export const tg = window.Telegram?.WebApp ?? null;
 
@@ -19,6 +19,23 @@ tg.ready();
 if (supports('7.7') && tg.disableVerticalSwipes) tg.disableVerticalSwipes();
    if (supports('8.0') && tg.lockOrientation) tg.lockOrientation();
 
+   /* TAM EKRAN
+      expand() sadece sayfayi azami yuksekliğe cikariyor; Telegram'in
+      ust cubugu yerinde kaliyor. Gercek tam ekran Bot API 8.0'daki ayri
+      bir cagri - DMD gibi oyunlarin kullandigi bu.
+
+      Tam ekranda sayfa durum cubugunun ve Telegram'in kendi kapat/menu
+      dugmelerinin ALTINA uzaniyor, o yuzden guvenli alan paylari CSS
+      degiskeni olarak disari veriliyor. Istemeden cagirmak HUD'u
+      centigin altinda birakirdi. */
+   if (supports('8.0') && tg.requestFullscreen) {
+      try { tg.requestFullscreen(); } catch { /* reddedilirse expand yeterli */ }
+      tg.onEvent('fullscreenChanged', syncGuvenliAlan);
+      tg.onEvent('safeAreaChanged', syncGuvenliAlan);
+      tg.onEvent('contentSafeAreaChanged', syncGuvenliAlan);
+   }
+   syncGuvenliAlan();
+
 applyTheme();
    tg.onEvent('themeChanged', applyTheme);
    tg.onEvent('viewportChanged', syncViewport);
@@ -27,6 +44,19 @@ applyTheme();
 function syncViewport() {
    const height = tg?.viewportStableHeight || window.innerHeight;
    if (height) document.documentElement.style.setProperty('--app-h', `${height}px`);
+}
+
+/* Cihazin centigi (safeAreaInset) ve Telegram'in kendi ust seridi
+   (contentSafeAreaInset) ayri sayilar; ikisini toplamak gerekiyor.
+   Tam ekran degilken ikisi de sifir gelir, yani bu kod zararsiz. */
+function syncGuvenliAlan() {
+   const kok = document.documentElement;
+   const a = tg?.safeAreaInset || {};
+   const b = tg?.contentSafeAreaInset || {};
+   const topla = (x, y) => `${Math.max(0, Number(x) || 0) + Math.max(0, Number(y) || 0)}px`;
+   kok.style.setProperty('--guvenli-ust', topla(a.top, b.top));
+   kok.style.setProperty('--guvenli-alt', topla(a.bottom, b.bottom));
+   kok.classList.toggle('tam-ekran', !!tg?.isFullscreen);
 }
 
 syncViewport();

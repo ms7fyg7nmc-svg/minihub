@@ -4,10 +4,19 @@
    seviye oluyor. Kilitli hucreler yildizla aciliyor ve icindeki odulu
    dogrudan oyuncuya veriyor. */
 
-import { EN_UST_YUMURTA, EN_UST_SANDIK, kapSuresi } from './ekonomi.js?v172';
-import { belir, zipla, AKIS } from './canlandir.js?v172';
+import { EN_UST_YUMURTA, EN_UST_SANDIK, kapSuresi } from './ekonomi.js?v173';
+import { belir, zipla, AKIS } from './canlandir.js?v173';
 
-const SANDIK_ADI = { 1: 'pouch', 2: 'basket', 3: 'chest', 4: 'chest-premium' };
+/* Kap gorselleri v2: kaplar artik ACIK ve iceriklerini gosteriyor.
+   Eski set sekiz kabin da ayni kirmizi kutu olmasi yuzunden 64 pikselde
+   et kesesiyle yildiz kesesini ayirt ettirmiyordu - oyuncu neyi
+   acacagini ve hangisinin hangisiyle birlesecegini goremiyordu.
+   Artik renk para birimini (sicak=et, soguk=yildiz), sekil kademeyi
+   anlatiyor. Lv2 artik piknik sepeti degil cuval.
+
+   Klasor v2: gorseller ?v damgasi tasimadigi icin ayni isimle uzerine
+   yazmak tarayicilara eskisini sunmaya devam ettiriyordu. */
+const SANDIK_ADI = { 1: 'pouch', 2: 'sack', 3: 'chest', 4: 'royal' };
 
 /* Izgarada bir oge en fazla ~64 CSS px ciziliyor; DPR 3'te 192 gercek
    piksel yetiyor. 256'lik kaynaklar duruyor ama sayfa 192'likleri cekiyor:
@@ -16,7 +25,7 @@ export function gorselYolu(hucre) {
   if (!hucre) return '';
   if (hucre.t === 'egg') return `assets/eggs/egg-${Math.min(EN_UST_YUMURTA, hucre.lv)}-192.webp`;
   const onek = hucre.t === 'star' ? 'star' : 'meat';
-  return `../../assets/packs/${onek}-${SANDIK_ADI[Math.min(EN_UST_SANDIK, hucre.lv)]}-192.webp`;
+  return `../../assets/packs/v2/${onek}-${SANDIK_ADI[Math.min(EN_UST_SANDIK, hucre.lv)]}-192.webp`;
 }
 
 /* 8:24 / 1:05:00 gibi kisa bicim - hucreye sigmasi gerekiyor */

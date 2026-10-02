@@ -731,7 +731,7 @@ body[data-screen="tasks"] .sky::after {
   z-index: 3;
   display: flex;
   gap: 6px;
-  padding: 8px 12px calc(9px + env(safe-area-inset-bottom));
+  padding: 8px 12px calc(9px + max(env(safe-area-inset-bottom), var(--guvenli-alt, 0px)));
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(180deg, rgba(20, 24, 36, 0.92), rgba(9, 11, 17, 0.98));
   backdrop-filter: blur(12px);

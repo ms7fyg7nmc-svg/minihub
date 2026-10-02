@@ -1,6 +1,6 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v172';
-import { surumKontrol } from './guncel.js?v172';
+import { isTelegramUser, getInitData } from './tg.js?v173';
+import { surumKontrol } from './guncel.js?v173';
 
 /* Hub ve 12 oyunun hepsi bu modulu yukluyor, o yuzden surum tazeleyici
    buraya bagli: tek yerden hepsini kapsiyor. */
