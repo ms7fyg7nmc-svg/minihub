@@ -118,7 +118,8 @@
   place-items: center;
 }
 
-.cell { background: rgba(255, 255, 255, 0.05); }
+/* Tema duyarli: gunduz temasinda beyaz uzerine beyaz gorunmuyordu. */
+.cell { background: var(--yuzey); }
 
 .tile {
   font-weight: 800;

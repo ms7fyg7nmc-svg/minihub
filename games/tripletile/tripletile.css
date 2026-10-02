@@ -57,7 +57,7 @@
 .slot {
   aspect-ratio: 1 / 1;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--yuzey);
   display: grid;
   place-items: center;
   font-size: 19px;

@@ -28,10 +28,10 @@
   padding: 4px;
   display: flex;
   flex-direction: column-reverse; /* ilk katman en altta dursun */
-  border: 2px solid rgba(255, 255, 255, 0.16);
+  border: 2px solid var(--cizgi);
   border-top: 0;
   border-radius: 6px 6px 20px 20px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--yuzey-hafif);
   cursor: pointer;
   transition: transform 0.16s ease, height 0.2s ease;
 }

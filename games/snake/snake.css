@@ -50,7 +50,7 @@
   position: absolute;
   inset: 24%;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.24);
+  background: var(--yuzey-guclu);
 }
 
 /* Kuyruk: daha kucuk ve yuvarlak, yilan bir yerde bitiyor gibi dursun.

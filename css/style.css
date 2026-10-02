@@ -12,7 +12,16 @@
      ile ayriliyor (bkz. js/tg.js applyTheme). */
   --cizgi: rgba(255, 255, 255, 0.18);
   --cizgi-soft: rgba(255, 255, 255, 0.10);
+
+  /* YUZEY TONLARI - tema duyarli.
+     Oyunlarin izgara hucreleri bunlari sabit `rgba(255,255,255,0.05)`
+     olarak yaziyordu; Telegram'in gunduz temasinda sayfa beyaz oluyor ve
+     beyaz uzerine beyaz GORUNMUYORDU - tahta duz bir dikdortgene
+     donusuyor, hucreler ayirt edilemiyordu. */
+  --yuzey-hafif: rgba(255, 255, 255, 0.03);
   --yuzey: rgba(255, 255, 255, 0.05);
+  --yuzey-orta: rgba(255, 255, 255, 0.10);
+  --yuzey-guclu: rgba(255, 255, 255, 0.24);
   --bg: var(--tg-bg-color, #12131a);
   --bg-soft: var(--tg-secondary-bg-color, #1c1e29);
   --text: var(--tg-text-color, #ffffff);
@@ -44,7 +53,10 @@
 :root[data-tg-theme="light"] {
   --cizgi: rgba(0, 0, 0, 0.16);
   --cizgi-soft: rgba(0, 0, 0, 0.09);
-  --yuzey: rgba(0, 0, 0, 0.05);
+  --yuzey-hafif: rgba(0, 0, 0, 0.04);
+  --yuzey: rgba(0, 0, 0, 0.06);
+  --yuzey-orta: rgba(0, 0, 0, 0.11);
+  --yuzey-guclu: rgba(0, 0, 0, 0.22);
   --gold-yazi: #ad7208;
   --gold-yazi-parlak: #c28a12;
   --pembe-yazi: #b23566;
@@ -60,7 +72,10 @@
   :root[data-tg-theme="dark"] {
     --cizgi: color-mix(in srgb, var(--tg-text-color, #fff) 18%, transparent);
     --cizgi-soft: color-mix(in srgb, var(--tg-text-color, #fff) 10%, transparent);
-    --yuzey: color-mix(in srgb, var(--tg-text-color, #fff) 5%, transparent);
+    --yuzey-hafif: color-mix(in srgb, var(--tg-text-color, #fff) 4%, transparent);
+    --yuzey: color-mix(in srgb, var(--tg-text-color, #fff) 6%, transparent);
+    --yuzey-orta: color-mix(in srgb, var(--tg-text-color, #fff) 11%, transparent);
+    --yuzey-guclu: color-mix(in srgb, var(--tg-text-color, #fff) 23%, transparent);
     --gold-yazi: color-mix(in srgb, var(--gold), var(--tg-text-color, #fff) 38%);
     --gold-yazi-parlak: color-mix(in srgb, #ffe28a, var(--tg-text-color, #fff) 48%);
     --pembe-yazi: color-mix(in srgb, var(--c-pink), var(--tg-text-color, #fff) 26%);

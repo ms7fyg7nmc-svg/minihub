@@ -23,7 +23,7 @@
   border-radius: 10px;
 }
 
-.cell { background: rgba(255, 255, 255, 0.04); }
+.cell { background: var(--yuzey); }
 
 .tile {
   display: grid;

@@ -140,7 +140,7 @@
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.tab.is-on { background: rgba(255, 255, 255, 0.10); color: var(--text); }
+.tab.is-on { background: var(--yuzey-orta); color: var(--text); }
 
 .panel { width: 100%; max-width: 320px; margin: 0 auto; }
 .panel[hidden] { display: none; }
@@ -168,7 +168,7 @@ body.shop-open .pet-stage { max-width: 176px; }
 .bar-label { min-width: 52px; }
 .bar-value { font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
 
-.bar { height: 9px; border-radius: 999px; background: rgba(255, 255, 255, 0.09); overflow: hidden; }
+.bar { height: 9px; border-radius: 999px; background: var(--yuzey-orta); overflow: hidden; }
 
 .bar i {
   display: block;
@@ -231,7 +231,7 @@ body.shop-open .pet-stage { max-width: 176px; }
 }
 
 .try-btn.buy { background: var(--gold, #f5b942); color: #221a06; }
-.try-btn.buy:disabled { background: rgba(255, 255, 255, 0.08); color: var(--muted); cursor: default; }
+.try-btn.buy:disabled { background: var(--yuzey-orta); color: var(--muted); cursor: default; }
 .try-btn:active { transform: scale(0.96); }
 
 /* Denenen urun: kesikli cerceve, "alinmis" halkasindan ayirt edilsin */

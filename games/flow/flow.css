@@ -20,7 +20,7 @@
 .cell {
   position: relative;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--yuzey);
   transition: background-color 0.08s ease;
 }
 
