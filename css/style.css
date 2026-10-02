@@ -88,15 +88,18 @@ body {
 
 /* Oyun ekranlari hic kaymasin: yukseklik tam ekrana kilitli, tasma kapali.
    Hub'da bu yok, orada kartlar icin kaydirma gerekiyor.
-   box-sizing global olarak border-box, o yuzden ust pay yuksekligi
-   bozmuyor (bkz. yukarida `* { box-sizing: border-box }`). */
+
+   --app-h paylar DUSULMUS kullanilabilir yukseklik (bkz. js/tg.js), o
+   yuzden burada dolgu YOK: dolgu verilince kabuk (`min-height: var(--app-h)`)
+   govdeden pay kadar uzun kaliyor ve `overflow: hidden` alt sekme barini
+   kirpiyordu. Pay margin ile veriliyor, yukseklik bozulmuyor. */
 body.game {
   height: var(--app-h, 100dvh);
-  padding-top: var(--guvenli-ust, 0px);
+  margin-top: var(--guvenli-ust, 0px);
   overflow: hidden;
 }
 
-/* Hub'da sabit ust bar varsa o da centigin altina girmesin. */
+/* Hub kaydirilabilir oldugu icin orada dolgu sorun cikarmiyor. */
 body:not(.game) { padding-top: var(--guvenli-ust, 0px); }
 
 /* Gunluk Odul/Enerji/Liderlik/Arkadaslar panellerinden biri acikken:

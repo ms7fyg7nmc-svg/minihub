@@ -23,7 +23,12 @@
   --baslik: 'Cinzel', 'Times New Roman', serif;
 
   margin: 0;
+  /* Telegram'in bildirdigi gercek yukseklik; yoksa dvh, o da yoksa vh.
+     100dvh Telegram'da pencereden BUYUK olabiliyor (basligin arkasini da
+     sayiyor) ve fark kadari asagidan kirpiliyordu. */
+  min-height: 100vh;
   min-height: 100dvh;
+  min-height: var(--app-h, 100dvh);
   background: var(--zemin);
   color: var(--yazi);
   overflow: hidden;
@@ -235,8 +240,14 @@ body[data-screen="tasks"] .sky::after {
   z-index: 2;
   display: flex;
   flex-direction: column;
+  /* Govde `var(--app-h)` kullanirken kabuk 100dvh kullaniyordu; Telegram'da
+     bu ikisi ayni degil ve fark kadari `overflow: hidden` tarafindan
+     kirpiliyordu - alt sekme bari ekrandan dusuyordu. Ust guvenli alan
+     payi da artik merkezi olarak veriliyor (css/style.css), burada bir
+     kez daha eklemek cift sayim olurdu. */
+  height: 100vh;
   height: 100dvh;
-  padding-top: env(safe-area-inset-top);
+  height: var(--app-h, 100dvh);
 }
 
 /* ---------- UST BAR ---------- */
@@ -731,7 +742,9 @@ body[data-screen="tasks"] .sky::after {
   z-index: 3;
   display: flex;
   gap: 6px;
-  padding: 8px 12px calc(9px + max(env(safe-area-inset-bottom), var(--guvenli-alt, 0px)));
+  /* --app-h alt payi zaten dustu (js/tg.js); burada bir kez daha
+     eklemek cift sayim olurdu. env() Telegram disi tarayicilar icin. */
+  padding: 8px 12px calc(9px + env(safe-area-inset-bottom));
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(180deg, rgba(20, 24, 36, 0.92), rgba(9, 11, 17, 0.98));
   backdrop-filter: blur(12px);
@@ -2280,3 +2293,42 @@ body[data-screen="tasks"] .sky::after {
 }
 .slot .mini.bos-yuva svg { width: 54%; height: 54%; }
 .slot.locked .mini.bos-yuva { color: rgba(255, 255, 255, 0.18); }
+
+
+/* ---------- KISA EKRAN (iPhone SE 667, eski Android 640, 568) ----------
+
+   720px kademesi bu cihazlarda yetmiyordu: ejderha ekraninda yuva karti
+   katlanin altinda kaliyor ve kaydirmadan gorunmuyordu. Esik 700: 667
+   yuksekligindeki SE tam ustunde kalip eski genis duzeni aliyordu. */
+@media (max-height: 700px) {
+  .stage { min-height: 150px; }
+  .dragon-art { width: 146px; height: 146px; }
+  .screens { padding: 4px 12px 10px; }
+  .screen { gap: 9px; }
+
+  .dragon-card, .slots-card, .daily-card, .quest-card { padding: 10px 12px; }
+  .feed-big { min-height: 44px; margin-top: 8px; font-size: 13.5px; }
+  .bosta { margin-top: 8px; padding: 6px 9px 6px 10px; }
+  .bosta-btn { min-height: 32px; min-width: 82px; }
+  .tur-satiri { margin-top: 5px; }
+  .appetite { margin-top: 7px; }
+  .slots-card .slot-strip { margin-top: 8px; }
+}
+
+
+/* Kaydirilacak icerik oldugunu belli eden alt solma. En kisa
+   telefonlarda kart katlanin biraz altinda kaliyor; ipucu olmadan
+   oyuncu orada bir sey oldugunu anlamiyor. */
+.screens { position: relative; }
+
+.screens::after {
+  content: '';
+  position: sticky;
+  z-index: 1;
+  display: block;
+  bottom: 0;
+  height: 22px;
+  margin-top: -22px;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(8, 10, 16, 0.75));
+}

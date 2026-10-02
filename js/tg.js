@@ -1,5 +1,5 @@
 
-import { t } from './i18n.js?v175';
+import { t } from './i18n.js?v178';
 
 export const tg = window.Telegram?.WebApp ?? null;
 
@@ -30,38 +30,82 @@ if (supports('7.7') && tg.disableVerticalSwipes) tg.disableVerticalSwipes();
       centigin altinda birakirdi. */
    if (supports('8.0') && tg.requestFullscreen) {
       try { tg.requestFullscreen(); } catch { /* reddedilirse expand yeterli */ }
-      tg.onEvent('fullscreenChanged', syncGuvenliAlan);
-      tg.onEvent('safeAreaChanged', syncGuvenliAlan);
-      tg.onEvent('contentSafeAreaChanged', syncGuvenliAlan);
+      tg.onEvent('fullscreenChanged', syncViewport);
+      tg.onEvent('safeAreaChanged', syncViewport);
+      tg.onEvent('contentSafeAreaChanged', syncViewport);
    }
-   syncGuvenliAlan();
+   syncViewport();
 
 applyTheme();
    tg.onEvent('themeChanged', applyTheme);
    tg.onEvent('viewportChanged', syncViewport);
 }
 
-function syncViewport() {
-   const height = tg?.viewportStableHeight || window.innerHeight;
-   if (height) document.documentElement.style.setProperty('--app-h', `${height}px`);
+/* GUVENLI ALAN - SADECE TAM EKRANDA
+
+   Ilk surumde paylar kosulsuz uygulaniyordu ve yorumda "tam ekran
+   degilken ikisi de sifir gelir" yaziyordu. O varsayim YANLISTI:
+   iPhone'da safeAreaInset.top centik payini tam ekran olmasa da
+   bildiriyor. Telegram kendi basligini zaten centigin altina ciziyor,
+   yani pay bir kez daha eklenince icerik ~47 piksel asagi kayiyor ve
+   `overflow: hidden` olan govde alt sekme barini kirpiyordu - oyuncu
+   sekmelere ulasamaz hale geliyordu.
+
+   Pay artik sadece gercekten tam ekrandayken uygulaniyor. */
+function guvenliPaylar() {
+   if (!tg?.isFullscreen) return { ust: 0, alt: 0 };
+   const a = tg.safeAreaInset || {};
+   const b = tg.contentSafeAreaInset || {};
+   const say = (x) => Math.max(0, Number(x) || 0);
+   return { ust: say(a.top) + say(b.top), alt: say(a.bottom) + say(b.bottom) };
 }
 
-/* Cihazin centigi (safeAreaInset) ve Telegram'in kendi ust seridi
-   (contentSafeAreaInset) ayri sayilar; ikisini toplamak gerekiyor.
-   Tam ekran degilken ikisi de sifir gelir, yani bu kod zararsiz. */
-function syncGuvenliAlan() {
+/* --app-h ARTIK KULLANILABILIR yukseklik: paylar dusulmus hali.
+
+   Once govdeye padding veriliyordu, ama kabuk `min-height: var(--app-h)`
+   kullandigi icin kabuk govdeden tam pay kadar uzun kaliyor ve alti
+   kirpiliyordu. Payi yukseklikten DUSUP kabugu asagi kaydirmak ayni
+   gorunumu veriyor, hicbir seyi kirpmiyor. */
+/* Gercek gorunur yukseklik. Oncelik sirasi:
+     1. Telegram'in bildirdigi yukseklik - en dogrusu, orada varsa bu
+     2. visualViewport - Android'de tarayici cubugu ve klavye hareket
+        ettiginde innerHeight gec kaliyor, bu anlik dogru
+     3. innerHeight - son care */
+function gorunenYukseklik() {
+   return tg?.viewportStableHeight
+      || Math.round(window.visualViewport?.height || 0)
+      || window.innerHeight;
+}
+
+function syncViewport() {
    const kok = document.documentElement;
-   const a = tg?.safeAreaInset || {};
-   const b = tg?.contentSafeAreaInset || {};
-   const topla = (x, y) => `${Math.max(0, Number(x) || 0) + Math.max(0, Number(y) || 0)}px`;
-   kok.style.setProperty('--guvenli-ust', topla(a.top, b.top));
-   kok.style.setProperty('--guvenli-alt', topla(a.bottom, b.bottom));
+   const tam = gorunenYukseklik();
+   if (!tam) return;
+
+   let { ust, alt } = guvenliPaylar();
+
+   /* Guvenlik kelepcesi: paylar ekranin ucte birini gecerse bildirilen
+      deger saglikli degil demektir - yok sayiliyor. Oyunun oynanamaz
+      hale gelmesindense centigin altinda kalmasi yeglenir. */
+   if (ust + alt > tam / 3) { ust = 0; alt = 0; }
+
+   kok.style.setProperty('--app-h', `${tam - ust - alt}px`);
+   kok.style.setProperty('--guvenli-ust', `${ust}px`);
+   kok.style.setProperty('--guvenli-alt', `${alt}px`);
    kok.classList.toggle('tam-ekran', !!tg?.isFullscreen);
 }
 
 syncViewport();
 window.addEventListener('resize', syncViewport);
 window.addEventListener('orientationchange', syncViewport);
+
+/* Android'de adres cubugu ve klavye resize olayi uretmeden yuksekligi
+   degistirebiliyor; visualViewport bunlari bildiriyor. */
+window.visualViewport?.addEventListener('resize', syncViewport);
+window.visualViewport?.addEventListener('scroll', syncViewport);
+
+/* Yon degisiminde olcum bazen eski degeri veriyor: bir kare sonra tekrar. */
+window.addEventListener('orientationchange', () => setTimeout(syncViewport, 250));
 
 function applyTheme() {
    if (!tg) return;
