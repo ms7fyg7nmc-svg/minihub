@@ -4,8 +4,8 @@
    seviye oluyor. Kilitli hucreler yildizla aciliyor ve icindeki odulu
    dogrudan oyuncuya veriyor. */
 
-import { EN_UST_YUMURTA, EN_UST_SANDIK, kapSuresi } from './ekonomi.js?v170';
-import { belir, zipla, AKIS } from './canlandir.js?v170';
+import { EN_UST_YUMURTA, EN_UST_SANDIK, kapSuresi } from './ekonomi.js?v172';
+import { belir, zipla, AKIS } from './canlandir.js?v172';
 
 const SANDIK_ADI = { 1: 'pouch', 2: 'basket', 3: 'chest', 4: 'chest-premium' };
 
@@ -71,63 +71,115 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
   let surukle = null;
   let secili = -1;   /* bilgi paneli icin secili hucre */
 
-  function ciz() {
-    if (!grid) return;
+  /* IZGARA CIZIMI - ARTIMLI
+
+     Eskiden her cizim `el.innerHTML = ''` ile 16 hucreyi de yok edip
+     bastan kuruyordu. Bir birlestirmede ciz() iki ya da uc kez
+     cagriliyor, yani telefon tek bir hamlede 48 yeni <img> olusturuyordu.
+     Iki sonucu vardi:
+
+       1. Gorunur takilma. Her img yeniden cozulmek zorundaydi.
+       2. Birlestirme animasyonu HIC gorunmuyordu - zipla() ve patlat()
+          calistiktan hemen sonra siradanDoldur() yeni bir ciz() yapip
+          animasyonun uzerinde oldugu elementi cope atiyordu.
+
+     Artik hucre elemanlari yasiyor; sadece icerigi degisen hucre
+     yeniden yaziliyor. Imza, hucrenin DOM'unu belirleyen her seyi
+     tutuyor - geri sayim yazisi haric, onu sayaclariTazele guncelliyor. */
+
+  let hucreEl = [];        /* indeksine gore hucre elemanlari */
+  let cizilen = [];        /* en son cizilen imzalar */
+  let cizilenN = 0;
+
+  function imza(hucre) {
+    if (kilitliMi(hucre)) return `k${hucre.fiyat}:${hucre.odul?.t}${hucre.odul?.lv}`;
+    if (!nesneMi(hucre)) return '0';
+    const d = kapDurumu(hucre);
+    return `n${hucre.t}${hucre.lv}:${d ? d.hal : '-'}`;
+  }
+
+  function hucreIskelet() {
     el.style.setProperty('--n', grid.n);
     el.innerHTML = '';
-
-    grid.cells.forEach((hucre, i) => {
+    hucreEl = [];
+    cizilen = [];
+    grid.cells.forEach((_, i) => {
       const satir = Math.floor(i / grid.n);
       const sutun = i % grid.n;
       const cell = document.createElement('div');
       cell.className = `cell${(satir + sutun) % 2 ? ' alt' : ''}`;
       cell.dataset.i = String(i);
-      if (i === secili) cell.classList.add('sel');
-
-      if (kilitliMi(hucre)) {
-        cell.classList.add('locked');
-        const img = document.createElement('img');
-        img.className = 'peek';
-        img.src = gorselYolu(hucre.odul);
-        img.alt = '';
-        img.draggable = false;
-        cell.appendChild(img);
-
-        const kilit = document.createElement('span');
-        kilit.className = 'lock';
-        kilit.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0110 0v2" fill="none" stroke="currentColor" stroke-width="2.2"/><rect x="5" y="10" width="14" height="10" rx="2.5" fill="currentColor"/></svg>';
-        cell.appendChild(kilit);
-      } else if (nesneMi(hucre)) {
-        cell.dataset.lv = String(hucre.lv);
-        cell.dataset.t = hucre.t;
-
-        const wrap = document.createElement('div');
-        wrap.className = 'piece';
-        wrap.dataset.i = String(i);
-
-        const img = document.createElement('img');
-        img.src = gorselYolu(hucre);
-        img.alt = '';
-        img.draggable = false;
-        wrap.appendChild(img);
-
-        cell.appendChild(wrap);
-
-        /* Kap sayaci: iliyorsa kalan sure, hazirsa parlak isaret */
-        const durum = kapDurumu(hucre);
-        if (durum && durum.hal !== 'bekliyor') {
-          cell.classList.add(durum.hal === 'hazir' ? 'kap-hazir' : 'kap-iliyor');
-          if (durum.hal === 'iliyor') {
-            const rozet = document.createElement('span');
-            rozet.className = 'kap-sayac';
-            rozet.dataset.i = String(i);
-            rozet.textContent = sureKisa(durum.kalan);
-            cell.appendChild(rozet);
-          }
-        }
-      }
-
+      hucreEl.push(cell);
+      cizilen.push(null);
       el.appendChild(cell);
+    });
+    cizilenN = grid.n;
+  }
+
+  function hucreDoldur(cell, hucre, i) {
+    const satir = Math.floor(i / grid.n);
+    const sutun = i % grid.n;
+    /* className bastan yaziliyor, o yuzden secili hali burada korunuyor;
+       surukleme sinifi ise bitir() tarafindan elle temizleniyor. */
+    cell.className = `cell${(satir + sutun) % 2 ? ' alt' : ''}${i === secili ? ' sel' : ''}`;
+    cell.innerHTML = '';
+    delete cell.dataset.lv;
+    delete cell.dataset.t;
+
+    if (kilitliMi(hucre)) {
+      cell.classList.add('locked');
+      const img = document.createElement('img');
+      img.className = 'peek';
+      img.src = gorselYolu(hucre.odul);
+      img.alt = '';
+      img.draggable = false;
+      cell.appendChild(img);
+
+      const kilit = document.createElement('span');
+      kilit.className = 'lock';
+      kilit.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0110 0v2" fill="none" stroke="currentColor" stroke-width="2.2"/><rect x="5" y="10" width="14" height="10" rx="2.5" fill="currentColor"/></svg>';
+      cell.appendChild(kilit);
+      return;
+    }
+
+    if (!nesneMi(hucre)) return;
+
+    cell.dataset.lv = String(hucre.lv);
+    cell.dataset.t = hucre.t;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'piece';
+    wrap.dataset.i = String(i);
+
+    const img = document.createElement('img');
+    img.src = gorselYolu(hucre);
+    img.alt = '';
+    img.draggable = false;
+    wrap.appendChild(img);
+    cell.appendChild(wrap);
+
+    const durum = kapDurumu(hucre);
+    if (durum && durum.hal !== 'bekliyor') {
+      cell.classList.add(durum.hal === 'hazir' ? 'kap-hazir' : 'kap-iliyor');
+      if (durum.hal === 'iliyor') {
+        const rozet = document.createElement('span');
+        rozet.className = 'kap-sayac';
+        rozet.dataset.i = String(i);
+        rozet.textContent = sureKisa(durum.kalan);
+        cell.appendChild(rozet);
+      }
+    }
+  }
+
+  function ciz() {
+    if (!grid) return;
+    if (cizilenN !== grid.n || hucreEl.length !== grid.cells.length) hucreIskelet();
+
+    grid.cells.forEach((hucre, i) => {
+      const im = imza(hucre);
+      if (cizilen[i] === im) return;
+      cizilen[i] = im;
+      hucreDoldur(hucreEl[i], hucre, i);
     });
   }
 
@@ -198,6 +250,11 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
   function basla(e) {
     if (!grid) return;
 
+    /* Ikinci parmak: eskiden surukle ustune yazilir, birinci parmagin
+       hayaleti ekranda asili kalir ve parcasi %30 saydam donardu.
+       Artik ikinci dokunus yok sayiliyor. */
+    if (surukle) return;
+
     /* Kilitli hucre surukleme degil, sadece dokunma kabul ediyor:
        bilgi penceresi acilsin diye ayri isaretleniyor. */
     const cell = e.target.closest?.('.cell');
@@ -216,7 +273,7 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
 
     surukle = { i, hucre, ghost: hayalet(hucre, e.clientX, e.clientY),
                 tasidi: false, x0: e.clientX, y0: e.clientY,
-                sonX: e.clientX, sonY: e.clientY,
+                sonX: e.clientX, sonY: e.clientY, wrap,
                 kutular: kutulariTara(), vurgu: -2, kare: 0 };
     wrap.classList.add('dragging');
     eslesenleriIsaretle(i, hucre);
@@ -263,14 +320,29 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
     const kutu = el.querySelector(`.cell[data-i="${hedef}"]`)?.getBoundingClientRect();
     if (!kutu || !ghost.animate) { ghost.remove(); bitince(); return; }
 
+    /* GUVENLIK AGI
+       WAAPI'nin onfinish'i uygulama arka plana atildiginda gelmeyebiliyor
+       (Telegram WebView bunu siklikla yapiyor). Bu geri cagriya artik
+       oyun durumu bagli degil - sadece gorsel is var - ama hayaletin
+       ekranda asili kalmamasi icin yine de bir zamanlayici duruyor. */
+    let bitti = false;
+    let saat = 0;
+    const tamam = () => {
+      if (bitti) return;
+      bitti = true;
+      clearTimeout(saat);
+      ghost.remove();
+      bitince();
+    };
+
     const an = ghost.animate([
       { transform: ghost.style.transform },
       { transform: `translate3d(${kutu.left + kutu.width / 2}px, ${kutu.top + kutu.height / 2}px, 0) scale(.85)` },
     ], { duration: 170, easing: AKIS, fill: 'forwards' });
 
-    const tamam = () => { ghost.remove(); bitince(); };
     an.onfinish = tamam;
     an.oncancel = tamam;
+    saat = setTimeout(tamam, 500);
   }
 
   const parca = (i) => el.querySelector(`.cell[data-i="${i}"] .piece`);
@@ -285,8 +357,11 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
       return;
     }
 
-    const { i, hucre, ghost, tasidi } = surukle;
+    const { i, hucre, ghost, tasidi, wrap } = surukle;
     if (surukle.kare) cancelAnimationFrame(surukle.kare);
+    /* Artimli cizim bu sinifi artik temizlemiyor: hucrenin imzasi
+       degismediyse eleman hic yeniden yazilmiyor. */
+    wrap?.classList.remove('dragging');
     vurguTemizle();
     eslesmeTemizle();
     const hedef = hizliIndex(e.clientX, e.clientY);
@@ -303,32 +378,53 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
 
     const hedefHucre = grid.cells[hedef];
 
-    /* Bos hucreye tasima: parca yerine suzuluyor */
-    if (hedefHucre === null) {
+    /* ONEMLI: oyun durumu artik animasyonun BITMESINI BEKLEMIYOR.
+
+       Eskiden kaynak hucre hemen bosaliyor, hedefe yazma isi ise
+       suzul()'un geri cagrisinda yapiliyordu. O geri cagri gelmezse -
+       uygulama arka plana atilirsa WAAPI olaylari gelmeyebiliyor -
+       yumurta kaynaktan silinmis ama hedefe hic yazilmamis oluyordu:
+       oyuncunun gordugu sey donmus bir tahta ve kaybolmus bir parca.
+
+       Simdi durum once yaziliyor, animasyon sadece bir gorsel katman.
+       Animasyon hic calismasa bile tahta dogru. */
+    const yerlestir = (yeniHucre) => {
       grid.cells[i] = null;
+      grid.cells[hedef] = yeniHucre;
       ciz();
+      onChange?.();
+    };
+
+    /* Bos hucreye tasima */
+    if (hedefHucre === null) {
+      yerlestir(hucre);
+      const p = parca(hedef);
+      if (p) p.style.visibility = 'hidden';
       suzul(ghost, hedef, () => {
-        grid.cells[hedef] = hucre;
-        ciz();
-        belir(parca(hedef), 300);
-        onChange?.();
+        const q = parca(hedef);
+        if (!q) return;
+        q.style.visibility = '';
+        belir(q, 300);
       });
       return;
     }
 
-    /* Birlestirme: once kaynak hucre bosaliyor, parca hedefe suzuluyor,
-       sonra ust seviye taskinli bir sekilde yerine oturuyor. */
+    /* Birlestirme */
     if (birlesebilir(hucre, hedefHucre)) {
-      grid.cells[i] = null;
-      ciz();
+      const yeni = { t: hucre.t, lv: hucre.lv + 1 };
+      yerlestir(yeni);
+      onMerge?.(yeni, hedef);
+
+      /* parca() onMerge'den SONRA araniyor: siradanDoldur() araya bir
+         ciz() daha sokabiliyor ve o elemani tazeleyebiliyor. */
+      const p = parca(hedef);
+      if (p) p.style.visibility = 'hidden';
       suzul(ghost, hedef, () => {
-        const yeni = { t: hucre.t, lv: hucre.lv + 1 };
-        grid.cells[hedef] = yeni;
-        ciz();
+        const q = parca(hedef);
+        if (!q) return;
+        q.style.visibility = '';
         patlat(hedef);
-        zipla(parca(hedef), 1.32, 480);
-        onChange?.();
-        onMerge?.(yeni, hedef);
+        zipla(q, 1.32, 480);
       });
       return;
     }
@@ -358,7 +454,8 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
       grid.cells.forEach((h, i) => {
         const durum = kapDurumu(h);
         if (!durum) return;
-        const cell = el.querySelector(`.cell[data-i="${i}"]`);
+        /* Elemanlar artik elde: saniyede 16 querySelector yapmaya gerek yok. */
+        const cell = hucreEl[i];
         if (!cell) return;
         const rozet = cell.querySelector('.kap-sayac');
         if (durum.hal === 'iliyor' && rozet) rozet.textContent = sureKisa(durum.kalan);

@@ -1,27 +1,27 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v170';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v170';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v172';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v172';
 
-import { CONFIG, gorselSeviye } from './config.js?v170';
-import { bakimdaMi } from '../../js/store.js?v170';
+import { CONFIG, gorselSeviye } from './config.js?v172';
+import { bakimdaMi } from '../../js/store.js?v172';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA } from './model.js?v170';
-import { dragonSvg, dragonAssetUrls } from './art.js?v170';
-import { turSira, turYolu, turBul } from './turler.js?v170';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v170';
-import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v170';
+         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA } from './model.js?v172';
+import { dragonSvg, dragonAssetUrls } from './art.js?v172';
+import { turSira, turYolu, turBul } from './turler.js?v172';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v172';
+import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v172';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
          kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
          PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
-         partnerKademe } from './gorevler.js?v170';
-import { getBest } from '../../js/store.js?v170';
+         partnerKademe } from './gorevler.js?v172';
+import { getBest } from '../../js/store.js?v172';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v170';
+         kilitliMi, nesneMi } from './grid.js?v172';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         bostaHesapla, BOSTA_TAVAN } from './ekonomi.js?v170';
-import { createTutorial, pozListesi } from './tutorial.js?v170';
+         bostaHesapla, BOSTA_TAVAN } from './ekonomi.js?v172';
+import { createTutorial, pozListesi } from './tutorial.js?v172';
 
 const GAME_ID = 'dragon';
 
@@ -720,22 +720,28 @@ feedBtn.addEventListener('click', async () => {
   const fiyat = beslemeFiyati(d);
   if (oyuncu.food < fiyat) { uyar(t('noFood')); return; }
 
+  /* try/finally sart: arada bir hata cikarsa busy acik kalir ve besleme
+     dugmesi oturum boyunca bir daha calismaz - oyuncunun gordugu sey
+     donmus bir oyun olur. */
   busy = true;
-  oyuncu.food -= fiyat;
-  oyuncu.sayaclar.feeds += 1;
-  if (!d.pencereBas) d.pencereBas = simdi();
-  d.pencereSayi += 1;
-  kaynakTazele(true);
+  try {
+    oyuncu.food -= fiyat;
+    oyuncu.sayaclar.feeds += 1;
+    if (!d.pencereBas) d.pencereBas = simdi();
+    d.pencereSayi += 1;
+    kaynakTazele(true);
 
-  cal('feed');
-  await yemAnimasyonu();
+    cal('feed');
+    await yemAnimasyonu();
 
-  d.lastFed = simdi();
-  d.feeds += 1;
-  seviyeKontrol(d);
-  yumurtaBirak();
-  kaydet();
-  busy = false;
+    d.lastFed = simdi();
+    d.feeds += 1;
+    seviyeKontrol(d);
+    yumurtaBirak();
+    kaydet();
+  } finally {
+    busy = false;
+  }
   gorevNoktasi();
   ejderhaCiz();
   tut?.olay('feed');

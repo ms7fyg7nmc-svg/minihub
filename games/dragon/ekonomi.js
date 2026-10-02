@@ -246,16 +246,20 @@ export const BOSTA_ARALIK = 90 * 60 * 1000;      /* 90 dk'da bir yumurta */
 export const BOSTA_TAVAN = 3;                    /* ejderha basina en fazla */
 
 /* Saf fonksiyon: gecen sureye gore yeni durumu hesapliyor.
-   Tavana varildiginda `son` simdiye ceknyor - yani uretim gercekten
-   duruyor, oyuncu toplayana kadar sayac yeniden islemiyor. */
+
+   Tavan dolunca `son` OLDUGU GIBI BIRAKILIYOR. Ilk surumde her cagrida
+   simdiye cekiliyordu; saniyede bir donen tik bunu "durum degisti" diye
+   okuyup her saniye kaydet() cagiriyordu - yani butun kaydi JSON'a
+   cevirip localStorage'a yazan bir dongu. Toplama zaten `son`u elle
+   simdiye aliyor, burada dokunmaya gerek yok. */
 export function bostaHesapla(bosta, simdi) {
   let { son = simdi, biriken = 0 } = bosta || {};
-  if (biriken >= BOSTA_TAVAN) return { son: simdi, biriken: BOSTA_TAVAN, kalan: 0, dolu: true };
+  if (biriken >= BOSTA_TAVAN) return { son, biriken: BOSTA_TAVAN, kalan: 0, dolu: true };
 
   while (biriken < BOSTA_TAVAN && simdi - son >= BOSTA_ARALIK) {
     biriken += 1;
     son += BOSTA_ARALIK;
   }
-  if (biriken >= BOSTA_TAVAN) return { son: simdi, biriken: BOSTA_TAVAN, kalan: 0, dolu: true };
+  if (biriken >= BOSTA_TAVAN) return { son, biriken: BOSTA_TAVAN, kalan: 0, dolu: true };
   return { son, biriken, kalan: BOSTA_ARALIK - (simdi - son), dolu: false };
 }
