@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v191';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v192';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi, bakimListesi,
-} from './store.js?v191';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v191';
+} from './store.js?v192';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v192';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -127,8 +127,9 @@ function gameList() {
          desc: t('game.dragon.desc'),
          icon: ICONS.dragon,
          url: 'games/dragon/index.html',
-         gradient: 'linear-gradient(140deg, #b083ec, #7b4fd0)',
+         gradient: 'linear-gradient(145deg, #c79cf7 0%, #9a63e4 48%, #6b3bc4 100%)',
          accent: '#a978e8',
+         hero: true,
          noBest: true,
          ready: true,
       },
@@ -137,7 +138,7 @@ function gameList() {
          title: t('game.2048.title'),
          desc: t('game.2048.desc'),
          icon: ICONS['2048'],
-         gradient: 'linear-gradient(140deg, #f2b179, #ed6b4a)',
+         gradient: 'linear-gradient(145deg, #ffcd8a 0%, #f2834f 48%, #d94f3d 100%)',
          accent: '#f2884b',
          url: 'games/2048/index.html',
          ready: true,
@@ -148,7 +149,7 @@ function gameList() {
          desc: t('game.blockblast.desc'),
          icon: ICONS.blockblast,
          url: 'games/blockblast/index.html',
-         gradient: 'linear-gradient(140deg, #7f9bff, #5b6bff)',
+         gradient: 'linear-gradient(145deg, #9db7ff 0%, #5e74ff 48%, #3f3fd0 100%)',
          accent: '#5b8cff',
          ready: true,
       },
@@ -158,7 +159,7 @@ function gameList() {
          desc: t('game.match3.desc'),
          icon: ICONS.match3,
          url: 'games/match3/index.html',
-         gradient: 'linear-gradient(140deg, #e2679c, #c0507f)',
+         gradient: 'linear-gradient(145deg, #ffa3c8 0%, #e56a9f 48%, #b8407c 100%)',
          accent: '#e2679c',
          ready: true,
       },
@@ -168,7 +169,7 @@ function gameList() {
          desc: t('game.tripletile.desc'),
          icon: ICONS.tripletile,
          url: 'games/tripletile/index.html',
-         gradient: 'linear-gradient(140deg, #f5b942, #f2884b)',
+         gradient: 'linear-gradient(145deg, #ffdd92 0%, #f5b23f 48%, #e07a2c 100%)',
          accent: '#f5b942',
          ready: true,
       },
@@ -178,7 +179,7 @@ function gameList() {
          desc: t('game.flow.desc'),
          icon: ICONS.flow,
          url: 'games/flow/index.html',
-         gradient: 'linear-gradient(140deg, #3fc7d4, #2f8fa8)',
+         gradient: 'linear-gradient(145deg, #86efe2 0%, #37bed2 48%, #2272a0 100%)',
          accent: '#3fc7d4',
          bestKey: 'hub.level',
          ready: true,
@@ -189,7 +190,7 @@ function gameList() {
          desc: t('game.snake.desc'),
          icon: ICONS.snake,
          url: 'games/snake/index.html',
-         gradient: 'linear-gradient(140deg, #6ee7a8, #2fa06a)',
+         gradient: 'linear-gradient(145deg, #95f2bd 0%, #45c489 48%, #23865c 100%)',
          accent: '#4ecb8b',
          ready: true,
       },
@@ -199,7 +200,7 @@ function gameList() {
          desc: t('game.coindrop.desc'),
          icon: ICONS.coindrop,
          url: 'games/coindrop/index.html',
-         gradient: 'linear-gradient(140deg, #ffd76e, #c8902a)',
+         gradient: 'linear-gradient(145deg, #ffe9a6 0%, #f3c257 48%, #bd8420 100%)',
          accent: '#f5b942',
          ready: true,
       },
@@ -209,7 +210,7 @@ function gameList() {
          desc: t('game.wheelrush.desc'),
          icon: ICONS.wheelrush,
          url: 'games/wheelrush/index.html',
-         gradient: 'linear-gradient(140deg, #f5b942, #e2544e)',
+         gradient: 'linear-gradient(145deg, #ffd98a 0%, #f2884b 46%, #cf3f45 100%)',
          accent: '#f2884b',
          ready: true,
       },
@@ -300,49 +301,52 @@ const avatar = document.getElementById('avatar');
 refreshPointsChip();
 }
 
+/* Dokuz oyun, uc sutun. Eskiden her oyun tam genislikte bir satirdi:
+   dokuz satir ~900px ediyordu ve son uc oyunu goren yoktu. Kareler
+   ekranin ucte birine siginca hepsi tek bakista goruluyor.
+
+   Kareye sigmayan tek sey aciklama metniydi ("Swipe, merge, reach 2048");
+   ismi ve ikonu zaten soyluyor, o yuzden karttan dustu - gameList'teki
+   desc alani duruyor cunku baska yerde (bakim/erisilebilirlik) isimize
+   yariyor, karede alt yazi olarak rekor gosteriliyor. */
 function renderGames() {
    const container = document.getElementById('games');
    container.textContent = '';
 
 gameList().forEach((game, index) => {
-   const card = document.createElement('button');
-   card.className = 'game-card';
-   card.disabled = !game.ready;
-   card.style.setProperty('--i', index);
+   const tile = document.createElement('button');
+   tile.className = 'game-tile';
+   tile.disabled = !game.ready;
+   tile.style.setProperty('--i', index);
+   /* Ejderha Adasi hub'in amiral gemisi: karenin tamami kendi gorseli,
+      amblem onunde donuyor (bkz. .game-tile.is-hero). */
+   if (game.hero) tile.classList.add('is-hero');
 
-   card.innerHTML = `
-   <div class="game-icon${game.ready ? '' : ' soon'}">${game.icon}</div>
-   <div class="game-info">
-   <div class="game-title-row"><h3></h3><span class="game-score" hidden></span></div>
-   <p></p>
-   </div>
-   <div class="badge"></div>
+   tile.innerHTML = `
+   <span class="tile-icon${game.ready ? '' : ' soon'}"></span>
+   <span class="tile-name"></span>
+   <span class="tile-foot"></span>
    `;
-   card.querySelector('h3').textContent = game.title;
-   card.querySelector('p').textContent = game.desc;
+   const ikon = tile.querySelector('.tile-icon');
+   ikon.innerHTML = game.icon;
+   tile.querySelector('.tile-name').textContent = game.title;
+   /* Ekran okuyucu ve bakim durumu icin aciklama basligin icinde kalsin */
+   tile.title = game.desc;
 
-   if (game.gradient) {
-      card.querySelector('.game-icon').style.background = game.gradient;
-   }
+   if (game.gradient && !game.hero) ikon.style.setProperty('--tile-gradient', game.gradient);
+   if (game.accent) tile.style.setProperty('--card-accent', game.accent);
 
-   if (game.accent) card.style.setProperty('--card-accent', game.accent);
-
-   const badge = card.querySelector('.badge');
+   const alt = tile.querySelector('.tile-foot');
    if (game.ready) {
-      // "Oyna" rozeti rekor geldiginde de kalir - skor artik basligin
-      // yanindaki ayri bir etikette gosteriliyor.
-      badge.textContent = t('hub.play');
-      badge.classList.add('play');
       if (!game.noBest) {
-         const scoreEl = card.querySelector('.game-score');
          getBest(game.id).then((best) => {
             if (best > 0) {
-               scoreEl.textContent = t(game.bestKey ?? 'hub.record', { best: best.toLocaleString(locale()) });
-               scoreEl.hidden = false;
+               alt.textContent = t(game.bestKey ?? 'hub.record', { best: best.toLocaleString(locale()) });
+               alt.classList.add('is-rekor');
             }
          });
       }
-      card.addEventListener('click', async () => {
+      tile.addEventListener('click', async () => {
          if (!(await oynanabilirMi())) {
             haptic.error();
             openEnergyModal();
@@ -352,10 +356,11 @@ gameList().forEach((game, index) => {
          window.location.href = game.url;
       });
    } else {
-      badge.textContent = game.maintenance ? t('hub.maintenance') : t('hub.soon');
+      alt.textContent = game.maintenance ? t('hub.maintenance') : t('hub.soon');
+      alt.classList.add('is-durum');
    }
 
-   container.appendChild(card);
+   container.appendChild(tile);
 });
 }
 
