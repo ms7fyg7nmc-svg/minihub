@@ -2,15 +2,49 @@
 const MUTE_KEY = 'mh_sound_muted';
 
 let ctx = null;
-function getCtx() {
-  if (!ctx) {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return null;
-    ctx = new AC();
-  }
-  if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
+function kur() {
+  if (ctx) return ctx;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  try { ctx = new AC(); } catch { return null; }
   return ctx;
 }
+
+function getCtx() {
+  const c = kur();
+  if (!c) return null;
+  if (c.state === 'suspended') c.resume().catch(() => {});
+  return c;
+}
+
+/* ILK DOKUNUSTA SES KILIDINI AC
+
+   Telegram WebView'i ve iOS Safari, gercek bir kullanici hareketi
+   OLMADAN kurulan AudioContext'i askida baslatiyor; askidayken cagrilan
+   resume() de hareket disinda reddediliyor.
+
+   Bu oyunlarda bagllam ilk kez bir oyun mantigi geri cagrisinda
+   kuruluyordu - eslesme animasyon bitince cozulur, satir sayacla
+   temizlenir - yani dokunmanin kendisinde degil. Bagllam askida dogup
+   bir daha hic acilmiyordu ve oyun sessiz kaliyordu. Dragon Island'in
+   sesi calisiyordu cunku kendi modulu (games/dragon/ses.js) bu kilidi
+   zaten aciyor.
+
+   Burada da ilk gercek dokunusta kurup aciyoruz. */
+function kilidiAc() {
+  const c = kur();
+  if (c && c.state === 'suspended') c.resume().catch(() => {});
+}
+
+for (const olay of ['pointerdown', 'touchstart', 'click', 'keydown']) {
+  window.addEventListener(olay, kilidiAc, { once: true, capture: true, passive: true });
+}
+
+/* Uygulama arka plandan donunce baglam yeniden askiya alinmis olabilir. */
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
+});
 
 export function isMuted() {
   try {
