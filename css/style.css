@@ -587,11 +587,55 @@ body.hub::before {
 .widget-left { padding: 6px 10px; }
 .widget-left .daily-card-info { gap: 1px; }
 
+/* Dort widget'in emojisi yerine Scenario'da uretilmis dort cizim geldi
+   (assets/widget). Hepsi ayni uslupta: koyu zemine isleyen sicak altin,
+   tek bakista ne oldugu anlasilan tek bir nesne. Emoji 17px'ti ve
+   telefondan telefona degisiyordu (Android'de duz, iOS'ta bambaska bir
+   cizim) - bu dort dosya her cihazda ayni goruntuyu veriyor.
+
+   Kutu KARE ve sabit: dort dosya da 108x108 seffaf tuvale esit optik
+   agirlikla oturtuldu, boylece ince sise ile genis ejderha ciftinin
+   yanyana dengesi dosyada cozulmus oluyor, burada degil. */
 .widget-icon {
   flex: none;
-  font-size: 17px;
-  filter: drop-shadow(0 0 6px rgba(245, 185, 66, 0.5));
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  /* Altin cizimler aydinlik temada beyaz kartin uzerinde yassilasiyordu;
+     hafif bir koyu golge onlari zeminden ayiriyor. Karanlik temada ayni
+     golge gorunmuyor, onun yerine altin parlamasi is goruyor. */
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35))
+          drop-shadow(0 0 7px rgba(245, 185, 66, 0.35));
 }
+
+/* Sol sutun kartlari daha dar yatay bosluga sahip (baslik + alt satir),
+   cizim orada bir tik kuculup metne yer biraksin. */
+.widget-left .widget-icon { width: 36px; height: 36px; }
+/* Sag sutun (Liderlik + Enerji) sadece 149px genis. Orada cizim bir tik
+   daha kuculuyor, yoksa basliga yer kalmiyor. */
+#lider-card .widget-icon, #energy-card .widget-icon { width: 34px; height: 34px; }
+
+/* Sag sutunda deger artik baslik ALTINDA, kendi rozeti icinde degil.
+   Rozet (min-width 48 + ic bosluk + cerceve) kartin 149px'inin yarisini
+   yiyordu; cizim buyuyunce "Leaderboard" ve "Energy" uc noktaya dusuyordu.
+   Ayni bilgi bir satir asagida, hicbir kutuya ihtiyac duymadan duruyor. */
+#lider-card .card-energy, #energy-card .card-energy {
+  font-size: 15px;
+  line-height: 1.1;
+}
+/* 149px'lik sutunda "Leaderboard" 14px'te tam iki piksel tasiyordu. */
+#lider-card .daily-card-info strong,
+#energy-card .daily-card-info strong { font-size: 13px; }
+
+/* Sise dar ve uzun: kare yuvaya sigdirilinca otekilerin yaninda cilizdi.
+   Tek basina daha dar ama daha uzun bir yuva aliyor - isik oku kartin
+   ustune dogru tasiyor ve enerji hissi geri geliyor. */
+#energy-card .widget-icon { width: 30px; height: 44px; }
+
+/* Davet kartinda kazanc rozeti 48px'lik taban genisligiyle basliktan
+   yer caliyordu; sayi zaten kisa (0-9999). */
+#friends-card .daily-card-energy { min-width: 30px; padding: 4px 7px; }
+#friends-card .widget-icon { width: 34px; height: 34px; }
 
 .daily-card-energy {
   display: flex;
@@ -1083,7 +1127,6 @@ body.hub::before {
 
 /* --- Liderlik tablosu --- */
 
-.lider-card .card-energy { font-size: 16px; }
 
 /* Siralamasi henuz olmayan oyuncu icin "-" yerine CSS ile cizilen bir
    cubuk: metin karakteri (tire, em-dash) kullanmiyoruz cunku Telegram

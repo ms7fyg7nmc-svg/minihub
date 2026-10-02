@@ -7,7 +7,10 @@ const CHANNEL_URL = 'https://t.me/minihubgames';
 
 const ALLOWED_ORIGIN = 'https://ms7fyg7nmc-svg.github.io';
 
-const MAX_ENERGY = 24;
+/* Tavan 24'ten 12'ye indirildi: dolu depo 12 saat yerine 6 saatte
+   doluyor, yani oyuncu gun icinde daha sik "dolu" oluyor ve enerji
+   gercekten bir sinir gibi hissediliyor. */
+const MAX_ENERGY = 12;
 const ENERGY_REGEN_MS = 30 * 60 * 1000;
 const ENERGY_PER_EARN = 1;
 const EMPTY_ENERGY_CARPAN = 0.25;
@@ -401,9 +404,14 @@ function streakDurumu(row, now) {
 
 function enerjiTazele(row, now) {
   const son = row.energy_at || now;
+  /* Kayittaki enerji tavandan BUYUK olabilir: tavan dusuruldugunde eski
+     oyuncularin deposunda hala eski miktar duruyor. Rejenerasyon
+     beklemeden burada kirpiliyor, yoksa arayuzde "20/12" goruluyordu. */
+  const mevcut = Math.min(MAX_ENERGY, row.energy);
+  const kirpildi = mevcut !== row.energy;
   const kazanilan = Math.floor((now - son) / ENERGY_REGEN_MS);
-  if (kazanilan <= 0) return { energy: row.energy, energyAt: son, degisti: !row.energy_at };
-  const yeni = Math.min(MAX_ENERGY, row.energy + kazanilan);
+  if (kazanilan <= 0) return { energy: mevcut, energyAt: son, degisti: !row.energy_at || kirpildi };
+  const yeni = Math.min(MAX_ENERGY, mevcut + kazanilan);
   const yeniAt = yeni >= MAX_ENERGY ? now : son + kazanilan * ENERGY_REGEN_MS;
   return { energy: yeni, energyAt: yeniAt, degisti: true };
 }

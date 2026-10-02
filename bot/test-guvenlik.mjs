@@ -6,6 +6,13 @@ const BURASI = new URL('.', import.meta.url);
 const SCHEMA = readFileSync(new URL('schema.sql', BURASI), 'utf8');
 const worker = await import(new URL('worker.js', BURASI).href);
 
+/* Enerji tavani worker'in KAYNAGINDAN okunuyor, teste sabit yazilmiyor.
+   Tavan 24'ten 12'ye indirildiginde dokuz test birden kirildi; artik
+   tavan degisince beklentiler kendiliginde uyuyor. */
+const WORKER_KAYNAK = readFileSync(new URL('worker.js', BURASI), 'utf8');
+const MAX_ENERGY = Number(WORKER_KAYNAK.match(/const MAX_ENERGY = (\d+)/)[1]);
+const REFILL = Number(WORKER_KAYNAK.match(/const ENERGY_REFILL_AMOUNT = (\d+)/)[1]);
+
 function makeDb() {
   const sqlite = new DatabaseSync(':memory:');
   const temiz = SCHEMA.split('\n').filter((l) => !l.trim().startsWith('--')).join('\n');
@@ -83,7 +90,7 @@ const env = { DB, BOT_TOKEN, BAKIM: '' };
 const initData = signedInitData(111);
 
 let r = await api(env, 'sync', { initData, points: 0, state: {} });
-check('sync: energy 24', r.energy === 24);
+check(`sync: energy ${MAX_ENERGY}`, r.energy === MAX_ENERGY, `-> ${r.energy}`);
 check('sync: streak var', !!r.streak);
 check('sync: spin var', !!r.spin);
 check('odul merdiveni sunucudan geliyor (5x)',
@@ -159,11 +166,12 @@ check('sahte imza 401 ile reddedildi', sahteRes.status === 401, `-> ${sahteRes.s
 const DB5 = makeDb(); const env5 = { DB: DB5, BOT_TOKEN, BAKIM: '' }; const id5 = signedInitData(666);
 await api(env5, 'sync', { initData: id5, points: 0, state: {} });
 let toplamKazanc = 0;
-for (let i = 0; i < 24; i++) {
+for (let i = 0; i < MAX_ENERGY; i++) {
   const rr = await api(env5, 'points/earn', { initData: id5, opId: `n-${i}`, amount: 100 });
   toplamKazanc += rr.credited;
 }
-check('meshru oyun: 24 tur tam odul aldi (2400)', toplamKazanc === 2400, `-> ${toplamKazanc}`);
+check(`meshru oyun: ${MAX_ENERGY} tur tam odul aldi (${MAX_ENERGY * 100})`,
+      toplamKazanc === MAX_ENERGY * 100, `-> ${toplamKazanc}`);
 r = await api(env5, 'points/earn', { initData: id5, opId: 'n-bos', amount: 100 });
 check('enerji bitince odul %25e dustu (25)', r.credited === 25, `-> ${r.credited}`);
 
@@ -174,7 +182,7 @@ check('2 saat sonra 4 enerji yenilendi', re1.energy === 4, `-> ${re1.energy}`);
 DB5.prepare('UPDATE players SET energy = 0, energy_at = ? WHERE id = ?')
   .bind(Date.now() - 400 * 3600 * 1000, '666').run();
 re1 = await api(env5, 'sync', { initData: id5, points: 0, state: {} });
-check('cok bekleyince tavanda duruyor (24)', re1.energy === 24, `-> ${re1.energy}`);
+check(`cok bekleyince tavanda duruyor (${MAX_ENERGY})`, re1.energy === MAX_ENERGY, `-> ${re1.energy}`);
 const oncekiBakiye = r.total;
 r = await api(env5, 'points/earn', { initData: id5, opId: 'n-bos', amount: 100 });
 check('ayni opId tekrar uygulanmadi', r.total === oncekiBakiye && r.credited === 0, `-> ${JSON.stringify(r)}`);
@@ -254,14 +262,17 @@ await api(env8, 'sync', { initData: id8, points: 0, state: {} });
 
 r = await api(env8, 'points/earn', { initData: id8, opId: 'restart-earn-1', amount: 120 });
 check('restart: skor puana cevrilip krediliyor', r.total === 120, `-> ${r.total}`);
-check('restart: puan eklemek kendi enerjisini dusuyor (24 -> 23)', r.energy === 23, `-> ${r.energy}`);
+check(`restart: puan eklemek kendi enerjisini dusuyor (${MAX_ENERGY} -> ${MAX_ENERGY - 1})`,
+      r.energy === MAX_ENERGY - 1, `-> ${r.energy}`);
 
 r = await api(env8, 'energy/spend', { initData: id8, opId: 'restart-empty-1' });
-check('restart: skor yokken de -1 enerji uygulaniyor', r.ok === true && r.energy === 22, `-> ${JSON.stringify(r)}`);
+check('restart: skor yokken de -1 enerji uygulaniyor',
+      r.ok === true && r.energy === MAX_ENERGY - 2, `-> ${JSON.stringify(r)}`);
 check('restart: enerji dusrken puan bakiyesi degismiyor', r.total === 120, `-> ${r.total}`);
 
 r = await api(env8, 'energy/spend', { initData: id8, opId: 'restart-empty-1' });
-check('restart: ayni opId tekrar enerji dusurmuyor (idempotent)', r.energy === 22, `-> ${r.energy}`);
+check('restart: ayni opId tekrar enerji dusurmuyor (idempotent)',
+      r.energy === MAX_ENERGY - 2, `-> ${r.energy}`);
 
 for (let i = 0; i < 30; i++) await api(env8, 'energy/spend', { initData: id8, opId: `restart-drain-${i}` });
 r = await api(env8, 'energy/spend', { initData: id8, opId: 'restart-drain-son' });
@@ -287,9 +298,10 @@ check('sync gunluk star hakki hala tam (6)', syncSonrasi.energyRefill?.starLeft 
 
 const DB10b = makeDb(); const env10b = { DB: DB10b, BOT_TOKEN, WEBHOOK_SECRET }; const id10b = signedInitData(4243);
 await api(env10b, 'sync', { initData: id10b, points: 0, state: {} });
-DB10b.prepare('UPDATE players SET energy = 20 WHERE id = ?').bind('4243').run();
+DB10b.prepare('UPDATE players SET energy = ? WHERE id = ?').bind(MAX_ENERGY - 2, '4243').run();
 r = await api(env10b, 'energy/ad-refill', { initData: id10b, opId: 'ad-cap-test' });
-check('enerji dolumu MAX_ENERGY (24) ustune cikmiyor', r.ok === true && r.energy === 24, `-> ${JSON.stringify(r)}`);
+check(`enerji dolumu MAX_ENERGY (${MAX_ENERGY}) ustune cikmiyor`,
+      r.ok === true && r.energy === MAX_ENERGY, `-> ${JSON.stringify(r)}`);
 
 r = await api(env10, 'energy/star-invoice', { initData: id10 });
 check('star fatura linki uretiliyor', r.link === 'https://t.me/$sahte-fatura', `-> ${JSON.stringify(r)}`);
@@ -313,7 +325,8 @@ await webhook(env10, {
   },
 });
 let oyuncu10 = DB10.prepare('SELECT energy FROM players WHERE id = ?').bind('4242').first();
-check('basarili Stars odemesi enerjiyi +6 kredilendiriyor', oyuncu10.energy === 16, `-> ${oyuncu10.energy}`);
+check(`basarili Stars odemesi enerjiyi +${REFILL} kredilendiriyor`,
+      oyuncu10.energy === Math.min(MAX_ENERGY, 10 + REFILL), `-> ${oyuncu10.energy}`);
 
 await webhook(env10, {
   message: {
@@ -322,7 +335,8 @@ await webhook(env10, {
   },
 });
 oyuncu10 = DB10.prepare('SELECT energy FROM players WHERE id = ?').bind('4242').first();
-check('ayni telegram_payment_charge_id tekrar gelirse enerji ikinci kez kredilenmiyor', oyuncu10.energy === 16, `-> ${oyuncu10.energy}`);
+check('ayni telegram_payment_charge_id tekrar gelirse enerji ikinci kez kredilenmiyor',
+      oyuncu10.energy === Math.min(MAX_ENERGY, 10 + REFILL), `-> ${oyuncu10.energy}`);
 
 for (let i = 2; i <= 6; i++) {
   await webhook(env10, {
