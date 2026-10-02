@@ -1,21 +1,25 @@
 
-import { loadState, saveState } from '../../js/store.js?v173';
-import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_FIYATLARI,
-         bostaHesapla } from './ekonomi.js?v173';
-import { CONFIG, eskiToplamHarcama } from './config.js?v173';
-import { turSira } from './turler.js?v173';
+import { loadState, saveState } from '../../js/store.js?v175';
+import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_TAVANI,
+         bostaHesapla } from './ekonomi.js?v175';
+import { CONFIG, eskiToplamHarcama } from './config.js?v175';
+import { turCek, turBul } from './turler.js?v175';
 
 const OYUN_ID = 'dragon';
 const SURUM = 7;
 
 export const IZGARA_N = 4;
-export const EN_COK_YUVA = YUVA_FIYATLARI.length;
+/* Yuva sayisinda oyun siniri yok; bu sadece kotu veriye karsi tavan. */
+export const EN_COK_YUVA = YUVA_TAVANI;
 
-/* Gorunum artik tek bir alandan ibaret: `tur`. Kanat/tac/kolye/yuz
-   katmanlari kaldirildi (bkz. art.js), her tur butun bir sprite.
-   Tur yuva sirasindan geliyor, oyuncunun secimi degil - yuva seridi
-   boylece toplanacak sabit bir koleksiyon oluyor. */
-export const gorunum = (sira) => ({ tur: turSira(sira).id });
+/* Gorunum tek bir alandan ibaret: `tur`. Her tur butun bir sprite
+   (bkz. art.js).
+
+   Tur ARTIK YUVA SIRASINDAN GELMIYOR. Once 4. yuva hep altin ejderhayi
+   veriyordu; bu, ejderhayi odul degil satin alma yapiyordu. Tur ejderha
+   kazanildigi an cekiliyor ve ejderhanin uzerinde kaliyor - dizideki
+   yeri degisse bile. */
+export const gorunum = (turId) => ({ tur: turBul(turId).id });
 
 export function baslangicIzgarasi(n = IZGARA_N) {
   const cells = Array.from({ length: n * n }, (_, i) => {
@@ -36,7 +40,7 @@ function yeniSayaclar() {
   };
 }
 
-export function yeniEjderha(id, sira = 0) {
+export function yeniEjderha(id, turId = 'ember') {
   const simdi = Date.now();
   return {
     id,
@@ -50,7 +54,7 @@ export function yeniEjderha(id, sira = 0) {
     /* Bosta uretim sayaci: `son` en son yumurta dustugu an,
        `biriken` toplanmayi bekleyen yumurta sayisi. */
     bosta: { son: simdi, biriken: 0 },
-    look: gorunum(sira),
+    look: gorunum(turId),
     createdAt: simdi,
     updatedAt: simdi,
   };
@@ -59,7 +63,7 @@ export function yeniEjderha(id, sira = 0) {
 function yeniOyuncu() {
   return {
     v: SURUM,
-    dragons: [yeniEjderha('d1', 0)],
+    dragons: [yeniEjderha('d1', 'ember')],
     activeId: 'd1',
     unlockedSlots: 1,
     grid: baslangicIzgarasi(IZGARA_N),
@@ -148,8 +152,8 @@ function v5Tasi(kayit) {
   kayit.gunluk = { sonGun: '', seri: 0 };
   delete kayit.tasks;
   delete kayit.owned;
-  (kayit.dragons || []).forEach((d, sira) => {
-    d.look = gorunum(sira);
+  (kayit.dragons || []).forEach((d) => {
+    d.look = gorunum(d.look?.tur);
     d.feeds = 0;
     d.pencereBas = 0;
     d.pencereSayi = 0;
@@ -175,7 +179,7 @@ function v6Tasi(kayit) {
 function duzelt(o) {
   o.v = SURUM;
   o.dragons = Array.isArray(o.dragons) ? o.dragons : [];
-  if (!o.dragons.length) { o.dragons = [yeniEjderha('d1', 0)]; o.activeId = 'd1'; }
+  if (!o.dragons.length) { o.dragons = [yeniEjderha('d1', 'ember')]; o.activeId = 'd1'; }
 
   const n = o.grid?.n || IZGARA_N;
   if (!o.grid || !Array.isArray(o.grid.cells) || o.grid.cells.length !== n * n) {
@@ -188,6 +192,7 @@ function duzelt(o) {
   o.food = Math.max(0, Math.round(Number(o.food) || 0));
   o.stars = Math.max(0, Math.round(Number(o.stars) || 0));
   o.unlockedSlots = Math.min(EN_COK_YUVA, Math.max(1, Number(o.unlockedSlots) || 1));
+  /* Ejderha sayisi acik yuva sayisini gecebilir: kilitli yuvada bekler. */
   o.tutorial = Number(o.tutorial) || 0;
 
   o.sayaclar = { ...yeniSayaclar(), ...(o.sayaclar || {}) };
@@ -198,10 +203,11 @@ function duzelt(o) {
   o.partner.buyukOdul = !!o.partner.buyukOdul;
   o.gunluk = o.gunluk || { sonGun: '', seri: 0 };
 
-  /* Tur yuva sirasindan turetiliyor, kayittan degil: dizideki yeri
-     degisirse gorseli de degisir ve serit hep ayni sirayi gosterir. */
-  o.dragons.forEach((d, sira) => {
-    d.look = gorunum(sira);
+  /* Tur artik KAYITTAN okunuyor: ejderha kazanildigi an cekilmis ve
+     uzerinde kaliyor. Bilinmeyen/eski bir tur gelirse turBul ilk tura
+     dusuyor, yani kayit bozulmuyor. */
+  o.dragons.forEach((d) => {
+    d.look = gorunum(d.look?.tur);
     d.level = Math.min(CONFIG.MAX_LEVEL, Math.max(1, Number(d.level) || 1));
     d.feeds = Math.max(0, Number(d.feeds) || 0);
     d.lastFed = Number(d.lastFed) || 0;
@@ -217,7 +223,7 @@ function duzelt(o) {
       biriken: Math.max(0, Math.min(3, Number(b?.biriken) || 0)),
     };
   });
-  o.dragons.length = Math.min(o.dragons.length, EN_COK_YUVA);
+  if (o.dragons.length > EN_COK_YUVA) o.dragons.length = EN_COK_YUVA;
   if (!o.dragons.some((d) => d.id === o.activeId)) o.activeId = o.dragons[0].id;
   return o;
 }
@@ -281,11 +287,16 @@ export function bekleyenYumurta(oyuncu) {
     (t, d, sira) => t + (sira < oyuncu.unlockedSlots ? d.bosta.biriken : 0), 0);
 }
 
-export function ejderhaEkle(oyuncu) {
+/* Yeni ejderha ilk BOS yuvaya iniyor - o yuva kilitli olsa bile.
+   Kilitli yuvadaki ejderha beslenemiyor ama seritte gorunuyor; yuvayi
+   acmak icin en guclu sebep bu.
+
+   Tur disaridan verilmezse burada cekiliyor (bkz. turler.js turCek). */
+export function ejderhaEkle(oyuncu, tur = null) {
   if (oyuncu.dragons.length >= EN_COK_YUVA) return null;
-  const sira = oyuncu.dragons.length;
-  const id = `d${sira + 1}_${Date.now().toString(36)}`;
-  const yeni = yeniEjderha(id, sira);
+  const secilen = tur || turCek();
+  const id = `d${oyuncu.dragons.length + 1}_${Date.now().toString(36)}`;
+  const yeni = yeniEjderha(id, secilen.id);
   oyuncu.dragons.push(yeni);
   return yeni;
 }

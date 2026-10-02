@@ -1382,13 +1382,20 @@ body[data-screen="tasks"] .sky::after {
 
    Kart genisligi sabit degil: alti esit sutun ekrani paylasiyor. */
 
+/* Yuva sayisi artik sinirsiz, o yuzden sabit alti sutunluk izgara
+   olmuyor: yedinci kart alt satira kayip kartlari kuculturdu. Sabit
+   genislikli kartlardan olusan yatay kaydirmali bir serit. */
 .slots-card .slot-strip {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  display: flex;
   gap: 5px;
   margin-top: 11px;
-  padding-bottom: 2px;
+  padding-bottom: 4px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.slots-card .slot-strip::-webkit-scrollbar { display: none; }
 
 .slot {
   position: relative;
@@ -1397,7 +1404,9 @@ body[data-screen="tasks"] .sky::after {
   justify-content: flex-end;
   align-items: center;
   gap: 0;
-  width: 100%;
+  flex: 0 0 auto;
+  width: 54px;
+  scroll-snap-align: start;
   aspect-ratio: 54 / 70;
   padding-bottom: 5px;
   border: 1.5px solid rgba(255, 255, 255, 0.12);
@@ -2260,3 +2269,14 @@ body[data-screen="tasks"] .sky::after {
 }
 
 .bosta-not { line-height: 1.35; }
+
+/* Bos yuva: belirli bir tur vaat etmeyen notr isaret. Once o yuvanin
+   ejderhasinin siluetini gosteriyorduk; tur artik yuvaya degil
+   ejderhaya bagli oldugu icin gosterecek bir sey yok. */
+.slot .mini.bos-yuva {
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.26);
+}
+.slot .mini.bos-yuva svg { width: 54%; height: 54%; }
+.slot.locked .mini.bos-yuva { color: rgba(255, 255, 255, 0.18); }

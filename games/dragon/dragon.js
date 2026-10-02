@@ -1,27 +1,27 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v173';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v173';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v175';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v175';
 
-import { CONFIG, gorselSeviye } from './config.js?v173';
-import { bakimdaMi } from '../../js/store.js?v173';
+import { CONFIG, gorselSeviye } from './config.js?v175';
+import { bakimdaMi } from '../../js/store.js?v175';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA } from './model.js?v173';
-import { dragonSvg, dragonAssetUrls } from './art.js?v173';
-import { turSira, turYolu, turBul } from './turler.js?v173';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v173';
-import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v173';
+         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA } from './model.js?v175';
+import { dragonSvg, dragonAssetUrls } from './art.js?v175';
+import { turCek, turYolu, turBul } from './turler.js?v175';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v175';
+import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v175';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
          kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
          PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
-         partnerKademe } from './gorevler.js?v173';
-import { getBest } from '../../js/store.js?v173';
+         partnerKademe } from './gorevler.js?v175';
+import { getBest } from '../../js/store.js?v175';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v173';
+         kilitliMi, nesneMi } from './grid.js?v175';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         bostaHesapla, BOSTA_TAVAN } from './ekonomi.js?v173';
-import { createTutorial, pozListesi } from './tutorial.js?v173';
+         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v175';
+import { createTutorial, pozListesi } from './tutorial.js?v175';
 
 const GAME_ID = 'dragon';
 
@@ -80,6 +80,9 @@ registerTexts(GAME_ID, {
   slotBuyNote: 'Yuvayı açınca ejderhası buraya gelir, seviye atlar ve sen yokken de yumurta biriktirir.',
   slotHeldNote: 'Bu ejderha seni bekliyor. Yuvayı açar açmaz beslemeye başlayabilirsin.',
   slotUnlock: 'Yuvayı aç',
+  slotNewTitle: 'Yeni yuva',
+  slotNewLine: '{n}. ejderha yuvası',
+  eggDragonChance: 'Ayrıca %{p} ihtimalle bir ejderha çıkabilir.',
   cancel: 'Vazgeç',
   close: 'Kapat',
 
@@ -94,8 +97,18 @@ registerTexts(GAME_ID, {
   turOcean: 'Okyanus',
   turVerdant: 'Yaprak',
   turSolar: 'Güneş',
-  turOnyx: 'Oniks',
-  turNebula: 'Bulutsu',
+  turAqua: 'Turkuaz',
+  turAmber: 'Kehribar',
+  turViolet: 'Menekşe',
+  turPearl: 'İnci',
+  turMagma: 'Magma',
+  turRose: 'Gülfer',
+  turAzure: 'Gökyüzü',
+  turVerdigris: 'Zeytin',
+  turCosmic: 'Kozmik',
+  turRadiant: 'Işıltı',
+  turGlacial: 'Buzul',
+  turAmethyst: 'Ametist',
   nadirCommon: 'Yaygın',
   nadirRare: 'Nadir',
   nadirEpic: 'Destansı',
@@ -504,17 +517,19 @@ function bilgiPaneliCiz() {
   if (hucre.t === 'egg') {
     infoTag.textContent = ''; infoTag.className = 'info-tag';
 
-    /* Tepe yumurta ejderha veriyor; yer yoksa eski yem oduluna donuyor
-       ve panel bunu dogru soylemek zorunda, yoksa oyuncu kandirilmis
-       hissediyor. */
+    /* Yuksek seviye yumurtada ejderha SANSI var. Panel bunu yuzdeyle
+       soyluyor: garanti vaat edip vermemek oyuncuyu kandirilmis
+       hissettirir. Yem odulu her halukarda yaziyor. */
+    const sans = ejderhaSansi(hucre.lv);
     const yerVar = oyuncu.dragons.length < EN_COK_YUVA;
-    if (hucre.lv >= EN_UST_YUMURTA && yerVar) {
-      const sira = oyuncu.dragons.length;
-      infoLine.textContent = t('eggHatches', { name: t(turSira(sira).adKey) });
-      infoNote.textContent = sira < oyuncu.unlockedSlots
-        ? t('hatchReady') : t('hatchLockedNote');
+    if (sans > 0 && yerVar) {
+      const a = YUMURTA[hucre.lv];
+      infoLine.textContent = t('eggYield', {
+        a: bicim(a.az), b: bicim(a.cok), p: Math.round(a.sans * 100), n: bicim(a.jackpot),
+      });
+      infoNote.textContent = t('eggDragonChance', { p: Math.round(sans * 100) });
       infoNote.hidden = false;
-      infoAction.textContent = t('hatch');
+      infoAction.textContent = t('crack');
     } else {
       const a = YUMURTA[hucre.lv];
       infoLine.textContent = t('eggYield', {
@@ -566,9 +581,9 @@ function bilgiPaneliCiz() {
    Sv.8'e kadar birlestirmek uzun bir istir; sonunda sadece buyuk bir
    yem yigini cikmasi o emegi anlamsiz kiliyordu. Alti yuva da doluysa
    yapacak bir sey yok, eski yem odulune donuyor. */
-function ejderhaCikar(i) {
+function ejderhaCikar(i, tur) {
   const kutu = board.hucreKutusu(i);
-  const yeni = ejderhaEkle(oyuncu);
+  const yeni = ejderhaEkle(oyuncu, tur);
   if (!yeni) return false;
 
   const sira = oyuncu.dragons.length - 1;
@@ -587,10 +602,10 @@ function ejderhaCikar(i) {
   cal('levelup');
 
   ucur({ kaynak: kutu, hedef: slotStrip.children[sira] || artEl,
-         gorsel: turYolu(turSira(sira).id, 160), adet: 1, boy: 44,
+         gorsel: turYolu(yeni.look.tur, 160), adet: 1, boy: 44,
          bitince: () => { cizHepsi(); zipla(artEl, 1.1); } });
   odulUcur(t(acik ? 'hatched' : 'hatchedLocked',
-              { name: t(turSira(sira).adKey) }), true);
+              { name: t(turBul(yeni.look.tur).adKey) }), true);
   return true;
 }
 
@@ -598,7 +613,11 @@ function ejderhaCikar(i) {
 function yumurtaKir(i) {
   const hucre = oyuncu.grid.cells[i];
   if (!nesneMi(hucre) || hucre.t !== 'egg') return;
-  if (hucre.lv >= EN_UST_YUMURTA && ejderhaCikar(i)) return;
+  /* Yuksek seviye yumurta bir ZAR atiyor. Cikarsa ejderha, cikmazsa
+     asagidaki normal yem odulu - yani emek hicbir durumda bosa gitmiyor. */
+  const sans = ejderhaSansi(hucre.lv);
+  if (sans > 0 && oyuncu.dragons.length < EN_COK_YUVA
+      && Math.random() < sans && ejderhaCikar(i, turCek())) return;
   const kutu = board.hucreKutusu(i);          /* hucre bosalmadan once olculuyor */
   const { miktar, jackpot } = toplamaSonucu(hucre.lv);
   oyuncu.food += miktar;
@@ -804,26 +823,29 @@ function yemAnimasyonu() {
   });
 }
 
+/* Bos yuva: belirli bir ejderha vaat etmeyen notr bir yuva isareti. */
+const YUVA_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18c0-5 3.6-9 8-9s8 4 8 9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2.5 18h19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><ellipse cx="12" cy="13.5" rx="3.2" ry="4" fill="currentColor" opacity=".45"/></svg>';
+
 const KILIT_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V8a5 5 0 0110 0v2" fill="none" stroke="currentColor" stroke-width="2.2"/><rect x="5" y="10" width="14" height="10" rx="2.5" fill="currentColor"/></svg>';
 
 /* YUVA SERIDI
 
-   Alti yuvanin hepsi her zaman ciziliyor - bos olanlar da, uzaktaki
-   kilitliler de. Onceden sadece sahip olunan ejderhalar ve tek bir "+"
-   karti vardi; oyuncu seridin devaminda ne oldugunu goremedigi icin
-   yuva satin almak karanliga para atmak gibi duruyordu.
+   Serit artik MEVCUDIYET ESASLI: sahip oldugun ejderhalar, arkasina da
+   bir tane "sonraki yuva" karti. Sabit alti kart ve her karta bagli bir
+   tur yoktu artik - o duzen ejderhayi odul degil SATIN ALMA yapiyordu
+   (4. yuvayi acan kesin altin ejderhayi aliyordu).
 
-   Her yuvanin turu sabit (turler.js): 4. yuva hep altin ejderha, 6.
-   yuva hep benekli. Yani kilitli kart somut bir sey vaat ediyor.
+   Yuva sayisinda sinir yok, ama her yeni yuva oncekinden pahali
+   (ekonomi.js yuvaFiyati: 50, 150, 400, 900, 2.000, 4.400, 9.700 ...).
+   Yani yildiz gideri duruyor, sadece tura olan bagi koptu.
 
-   Dort hal var ve ikisi birbirinden bagimsiz:
-     yuva  acik / kilitli     - yildizla acilir
-     icerik dolu / bos        - ejderha yumurtadan cikar
+   Kartin hali iki bagimsiz eksenden cikiyor:
+     yuva   acik / kilitli   - yildizla acilir
+     icerik dolu / bos       - ejderha sansla kazanilir
 
-   Bu ikisi ayri yurudugu icin "ejderhasi olmayan yuva da acilabilir"
-   ve "kilitli yuvaya ejderha inebilir". Ikinci durum onemli: ejderha
-   orada, gorunuyor, ama beslenemiyor - yuvayi acmak icin en guclu
-   sebep bu. */
+   Ikisi ayri yurudugu icin ejderhasiz yuva da alinabiliyor ve kilitli
+   yuvaya ejderha inebiliyor. Ikincisi onemli: ejderha orada duruyor,
+   gorunuyor, ama beslenemiyor. */
 
 const NADIR_ETIKET = {
   common: 'nadirCommon', rare: 'nadirRare',
@@ -833,15 +855,21 @@ const NADIR_ETIKET = {
 function slotlariCiz() {
   slotStrip.innerHTML = '';
 
-  for (let i = 0; i < EN_COK_YUVA; i += 1) {
+  /* Kac kart: ejderhalarin ya da acik yuvalarin hangisi coksa o kadar,
+     bir de satin alinabilecek sonraki yuva icin bir tane daha. */
+  const dolu = Math.max(oyuncu.dragons.length, oyuncu.unlockedSlots);
+  const kart = Math.min(EN_COK_YUVA, dolu + 1);
+
+  for (let i = 0; i < kart; i += 1) {
     const d = oyuncu.dragons[i] || null;
-    const tur = turSira(i);
+    const tur = d ? turBul(d.look?.tur) : null;
     const acik = i < oyuncu.unlockedSlots;
     const aktif = acik && d && d.id === oyuncu.activeId;
-    const sirada = !acik && i === oyuncu.unlockedSlots;   /* alinabilecek tek yuva */
+    const sirada = !acik && i === oyuncu.unlockedSlots;
 
     const btn = document.createElement('button');
-    btn.className = ['slot', `nadir-${tur.nadir}`,
+    btn.className = ['slot',
+      tur ? `nadir-${tur.nadir}` : '',
       acik ? 'acik' : 'locked',
       d ? 'dolu' : 'bos',
       aktif ? 'is-on' : '',
@@ -849,16 +877,15 @@ function slotlariCiz() {
       (!acik && d) ? 'bekleyen' : '',
     ].filter(Boolean).join(' ');
 
-    /* Bos yuvada da ayni sprite ciziliyor, CSS onu siluete cevirivor:
-       ayri bir "golge" gorseli uretmeye gerek yok ve oyuncu hangi
-       ejderhanin oraya gelecegini yine de secebiliyor. */
-    const portre = `<div class="mini">${
-      dragonSvg(gorselSeviye(d?.level || 1), { tur: tur.id }, 'happy', 160)}</div>`;
+    /* Bos yuvada gosterilecek belirli bir ejderha YOK - tur ancak
+       kazanilinca cekiliyor. Yerine bos bir yuva isareti duruyor. */
+    const portre = d
+      ? `<div class="mini">${dragonSvg(gorselSeviye(d.level), d.look, 'happy', 160)}</div>`
+      : `<div class="mini bos-yuva">${YUVA_SVG}</div>`;
 
     let alt;
     if (!acik) {
-      const fiyat = yuvaFiyati(i);
-      alt = `<span class="slot-buy"><img src="../../assets/currency/star-64.webp" alt="">${bicim(fiyat)}</span>`;
+      alt = `<span class="slot-buy"><img src="../../assets/currency/star-64.webp" alt="">${bicim(yuvaFiyati(i))}</span>`;
     } else if (d) {
       alt = `<span class="slot-lv">${t('lvShort', { level: d.level })}</span>`;
     } else {
@@ -866,11 +893,10 @@ function slotlariCiz() {
     }
 
     const kilit = acik ? '' : `<span class="slot-lock">${KILIT_SVG}</span>`;
-    /* Kilitli yuvada bekleyen ejderha: kart sessizce durmasin. */
     const rozet = (!acik && d) ? `<span class="slot-flag">${t('slotHeld')}</span>` : '';
 
     btn.innerHTML = `${portre}${kilit}${rozet}${alt}`;
-    btn.setAttribute('aria-label', `${t(tur.adKey)} · ${t(NADIR_ETIKET[tur.nadir])}`);
+    if (tur) btn.setAttribute('aria-label', `${t(tur.adKey)} · ${t(NADIR_ETIKET[tur.nadir])}`);
 
     btn.addEventListener('click', () => yuvaTikla(i, d, acik, sirada));
     slotStrip.appendChild(btn);
@@ -884,13 +910,15 @@ function yuvaTikla(i, d, acik, sirada) {
        oyuncu 2.000 yildizlik ejderhanin ne verdigini hic goremiyordu -
        oysa butun mesele onu gorup ona dogru oynamasiydi. Sirada
        olmayanda dugme kapali, yerinde sebebi yaziyor. */
-    const tur = turSira(i);
-    const a = yumurtaAraligi(tur.nadir);
+    const tur = d ? turBul(d.look?.tur) : null;
+    const a = tur ? yumurtaAraligi(tur.nadir) : null;
     onayIste({
-      baslik: t(tur.adKey),
-      satir: `${t(NADIR_ETIKET[tur.nadir])} · ${
-        a.az === a.cok ? t('eggDropsOne', { a: a.az })
-                       : t('eggDropsRange', { a: a.az, b: a.cok })}`,
+      baslik: tur ? t(tur.adKey) : t('slotNewTitle'),
+      satir: tur
+        ? `${t(NADIR_ETIKET[tur.nadir])} · ${
+            a.az === a.cok ? t('eggDropsOne', { a: a.az })
+                           : t('eggDropsRange', { a: a.az, b: a.cok })}`
+        : t('slotNewLine', { n: i + 1 }),
       not: d ? t('slotHeldNote') : t('slotBuyNote'),
       fiyat: yuvaFiyati(i),
       engel: sirada ? null : t('slotInOrder'),
@@ -921,7 +949,7 @@ function yuvaAc(sira) {
   haptic.success();
   cal('levelup');
   cizHepsi();
-  if (gelen) odulUcur(t('slotOpened', { name: t(turSira(sira).adKey) }), true);
+  if (gelen) odulUcur(t('slotOpened', { name: t(turBul(gelen.look?.tur).adKey) }), true);
 }
 
 function ejderhaCiz() {

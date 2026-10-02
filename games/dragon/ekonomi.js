@@ -149,10 +149,48 @@ export const SIRA_GOSTERILEN = 4;
 
 /* ---------- YUVALAR ---------- */
 
+/* Yuvalar SINIRSIZ ama bedava degil. Ilk altisi elle yazilmis bir
+   merdiven, sonrasi her adimda 2,2 kat. Tavan yok - oyuncu istedigi
+   kadar ejderha tutabiliyor, ama her yeni yuva bir oncekinin iki
+   katindan pahali, yani yildiz gideri hic tukenmiyor.
+
+   Onceden liste alti elemanda bitiyordu ve altinci yuvadan sonrasi
+   satin alinamiyordu; tur de yuva sirasina bagliydi, bu da ejderhayi
+   odul degil satin alma haline getiriyordu. */
 export const YUVA_FIYATLARI = [0, 50, 150, 400, 900, 2000];
+const YUVA_CARPAN = 2.2;
+
+/* Akil sagligi siniri: kayit sisirmesin ve serit sonsuza gitmesin.
+   Oyunun dengesine degil, sadece kotu veriye karsi duruyor. */
+export const YUVA_TAVANI = 40;
 
 export function yuvaFiyati(sira) {
-  return YUVA_FIYATLARI[sira] ?? YUVA_FIYATLARI[YUVA_FIYATLARI.length - 1];
+  if (sira < YUVA_FIYATLARI.length) return YUVA_FIYATLARI[sira];
+  const son = YUVA_FIYATLARI[YUVA_FIYATLARI.length - 1];
+  const adim = sira - (YUVA_FIYATLARI.length - 1);
+  /* 100'un katina yuvarlaniyor: 4.400, 9.700, 21.300 gibi okunur sayilar */
+  return Math.round(son * YUVA_CARPAN ** adim / 100) * 100;
+}
+
+/* ---------- EJDERHA SANSI ----------
+
+   Ejderha artik GARANTI DEGIL. Onceden Sv.8 yumurta kirmak kesin bir
+   ejderha veriyordu; 128 Sv.1 yumurtaya denk gelen bir birlestirme
+   zinciri bunu birkac gunde garanti ediyordu ve ejderha siradanlasiyordu.
+
+   Artik yuksek seviye yumurta bir ZAR ATIYOR. Cikmazsa yumurta yine
+   normal yem odulunu veriyor, yani emek bosa gitmiyor - sadece ejderha
+   bir surpriz oluyor.
+
+   Sv.8'de dortte bir: ortalama dort Sv.8 yumurta, yani ~512 Sv.1
+   yumurtalik emek. Ikinci yol ciftlesme (bkz. CIFTLESME). */
+export const EJDERHA_SANSI = {
+  7: 0.05,
+  8: 0.25,
+};
+
+export function ejderhaSansi(lv) {
+  return EJDERHA_SANSI[lv] || 0;
 }
 
 /* ---------- GUNLUK ODUL ---------- */
