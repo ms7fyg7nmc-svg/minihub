@@ -1,11 +1,11 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v187';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v187';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v187';
-import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v187';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v188';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v188';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v188';
+import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v188';
 /* Sesler artik sentezlenmis degil, Dragon Island ornekleri (bkz. ses.js).
    Ses dugmesi ayni sessizlik anahtarini kullandigi icin degismedi. */
-import { SFX } from './ses.js?v187';
+import { SFX } from './ses.js?v188';
 
 const GAME_ID = 'coindrop';
 
@@ -55,8 +55,20 @@ const TIERS = [
 ];
 
 const SON_KADEME = TIERS.length - 1;
-/* Yeni para sadece ilk 5 kademeden gelir - yoksa oyun kendi kendini cozer */
-const DUSEN_KADEMELER = [0, 0, 0, 0, 1, 1, 1, 2, 2, 3];
+
+/* DUSEN PARA AGIRLIKLARI
+
+   Yeni para esas olarak sadece ilk UC kademeden geliyor: 1, 2 ve 5 cent.
+   10 cent nadir bir surpriz - %3. Onceki tabloda 10 cent her on
+   dususten birinde geliyordu; o kadar sik gelince kasa kendi kendini
+   yukari tasiyor ve birlestirme emegi degersizlesiyordu. */
+const DUSEN_AGIRLIK = [
+  { ti: 0, agirlik: 44 },   /* 1 cent */
+  { ti: 1, agirlik: 31 },   /* 2 cent */
+  { ti: 2, agirlik: 22 },   /* 5 cent */
+  { ti: 3, agirlik: 3 },    /* 10 cent - nadir */
+];
+const DUSEN_TOPLAM = DUSEN_AGIRLIK.reduce((t, d) => t + d.agirlik, 0);
 
 const METAL = {
   copper: { hi: '#f7bd85', mid: '#c8783c', lo: '#7c4116', rim: '#552c0d', ink: '#4a2409' },
@@ -193,7 +205,12 @@ const bicim = (n) => Number(n).toLocaleString(locale());
 const rast = (a, b) => a + Math.random() * (b - a);
 
 function yeniKademe() {
-  return DUSEN_KADEMELER[Math.floor(Math.random() * DUSEN_KADEMELER.length)];
+  let r = Math.random() * DUSEN_TOPLAM;
+  for (const d of DUSEN_AGIRLIK) {
+    r -= d.agirlik;
+    if (r < 0) return d.ti;
+  }
+  return 0;
 }
 
 function startNewGame() {

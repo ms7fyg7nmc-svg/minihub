@@ -9,9 +9,16 @@
    Kesme suresi oynanisa gore secildi:
      birak    0.11  parmak kalkinca kisa bir tik
      birles   0.16  en sik duyulan ses, neredeyse bilincalti
-     buyuk    0.40  ust kademe birlesmesi, odul hissi
+     buyuk    0.45  ust kademe birlesmesi, odul hissi
      kazanma  0.65  oyunun en yuksek sesi
      bitis    0.30  kasa doldu
+
+   Ust kademe birlesmesi once `chest` kullaniyordu ve kotu duyuluyordu:
+   o ses 1,34 saniye uzunlugunda, YAVAS yukselen bir ses ve enerjisinin
+   ancak yarisi ilk 400 ms'de. Kisa kesince tam sislerken ortasindan
+   biciliyordu. `claim` onun yerine geldi: atagi anlik, enerjisinin
+   tamami ilk 400 ms'de, ve birlesme sesinden daha kalin (6 kHz'e karsi
+   8 kHz) - yani sadece daha yuksek degil, daha BUYUK duyuluyor.
 
    Sessizlik bayragi js/audio.js ile AYNI anahtari kullaniyor, boylece
    oyundaki mevcut ses dugmesi hic degismeden calismaya devam ediyor. */
@@ -23,7 +30,7 @@ const KLASOR = '../../assets/ses';
 const SESLER = {
   birak:   { dosya: 'tap',     ses: 0.26, sure: 0.11 },
   birles:  { dosya: 'merge',   ses: 0.30, sure: 0.16 },
-  buyuk:   { dosya: 'chest',   ses: 0.50, sure: 0.40 },
+  buyuk:   { dosya: 'claim',   ses: 0.52, sure: 0.45 },
   kazanma: { dosya: 'jackpot', ses: 0.62, sure: 0.65 },
   bitis:   { dosya: 'deny',    ses: 0.34, sure: 0.30 },
 };
