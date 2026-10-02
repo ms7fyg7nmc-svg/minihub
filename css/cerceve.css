@@ -1,0 +1,59 @@
+/* OYUN CERCEVELERI
+
+   AYRI DOSYA ve EN SONDA yukleniyor. Once css/game.css'in icindeydi ve
+   hicbir oyunda gorunmuyordu: her oyunun kendi stil dosyasi sonra
+   yuklendigi icin oradaki `border: 1px solid ...` KISAYOLU border-image'i
+   sifirliyordu (kisayol, yazilmayan alt ozellikleri baslangic degerine
+   dondurur). Yukleme sirasi artik bu dosyayi kazandiriyor.
+*/
+/* ---------- OYUN CERCEVELERI ----------
+
+   Tek bir gorsel, CSS 9-slice (border-image) ile her boyuta geriliyor:
+   koseler sabit kaliyor, kenarlar uzuyor. Dort model var ve her oyuna
+   kendi dinamigine gore atandi (bkz. her oyunun css'indeki not).
+
+   `background-clip: padding-box` SART: varsayilan olarak arka plan
+   kenarligin ALTINA da uzaniyor ve cercevenin seffaf koselerinden
+   tahtanin kare kosesi disari tasiyor.
+
+   Kenarlik kalinliklari modellere gore ayri: hepsi ekranda ayni gorsel
+   agirlikta dursun diye (pirinc zaten ince bir cizgi, celik kalin bir
+   metal). */
+.cerceveli {
+  border-style: solid;
+  border-color: transparent;
+  border-image-repeat: stretch;
+  background-clip: padding-box;
+}
+
+/* Fircalanmis celik, kosede percinler. Notr gri - renkli icerikle
+   catismiyor ama agirligi var. */
+.cerceve-celik {
+  border-width: 14px;
+  border-image-source: url(../assets/frames/celik.webp);
+  border-image-slice: 10% 10%;
+}
+
+/* Kalin parlak vinil. Karakterli ve renkli, o yuzden sadece paleti
+   petrol yesiliyle catismayan oyunlarda. */
+.cerceve-vinil {
+  border-width: 16px;
+  border-image-source: url(../assets/frames/vinil.webp);
+  border-image-slice: 12% 12%;
+}
+
+/* Ince pirinc cizgi. En hafifi; aydinlik temada beyaz zeminde soluyor,
+   o yuzden sadece arka plani her zaman koyu olan oyunlarda. */
+.cerceve-pirinc {
+  border-width: 10px;
+  border-image-source: url(../assets/frames/pirinc.webp);
+  border-image-slice: 6.6% 6.5%;
+}
+
+/* Sussuz arduvaz. En tarafsiz olani: gokkusagi paletli oyunlarda
+   icerigi hic ezmiyor. */
+.cerceve-duz {
+  border-width: 14px;
+  border-image-source: url(../assets/frames/duz.webp);
+  border-image-slice: 10% 10%;
+}
