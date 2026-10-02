@@ -333,21 +333,59 @@ body.hub::before {
   margin: 0 1px;
 }
 
-.hero { margin: 28px 0 24px; }
+/* Hub'in tepesindeki baslik artik cipl ak bir yazi degil, kendi
+   afisi (Scenario, assets/hero). Suslemenin TAMAMI sagda duruyor ve
+   sola dogru sonuyor - baslik hep koyu, sakin bir zeminin uzerinde.
+   Yazi DOM'da kaldigi icin dort dile de cevriliyor; afisin kendisinde
+   tek bir harf yok.
 
+   Uc alternatif daha assets/hero icinde (isik, kart, ufuk); degistirmek
+   asagidaki tek satir. */
+.hero {
+  position: relative;
+  overflow: hidden;
+  margin: 22px 0 20px;
+  padding: 16px 16px 15px;
+  border-radius: 20px;
+  border: 1px solid var(--cizgi-soft);
+  background-color: #0e0b18;
+  /* Soldan gelen perde afisin UZERINDE duruyor: Rusca gibi uzun bir
+     cevirinin alt satiri susleme bolgesine girdiginde bile yazi koyu
+     bir zeminde kaliyor. Perde olmadan "ekosistemimizin parcasi ol"
+     satiri desenin uzerine biniyordu. */
+  background-image:
+    linear-gradient(90deg, rgba(14, 11, 24, 0.93) 0%, rgba(14, 11, 24, 0.80) 44%, rgba(14, 11, 24, 0) 72%),
+    url("../assets/hero/takim.webp");
+  background-size: cover, cover;
+  background-position: center, right center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Afis her iki temada da koyu - yazilar temadan bagimsiz acik.
+   Baslikta renk gecisi duruyor ama tek basina kullanildigindaki kadar
+   koyu degil: afisin uzerinde mavi uc okunmuyordu, o yuzden gecis
+   mordan altina, yani afisin kendi renk ailesinden geciyor. */
 .hero h1 {
-  margin: 0 0 8px;
-  font-size: 30px;
+  margin: 0 0 6px;
+  font-size: 27px;
   line-height: 1.15;
   letter-spacing: -0.5px;
-  background: linear-gradient(100deg, var(--c-blue), var(--c-violet) 38%, var(--c-pink) 68%, var(--gold));
+  background: linear-gradient(100deg, #cdb9ff, #e39ad2 42%, #ffd37a);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 1px 6px rgba(0, 0, 0, 0.6));
 }
 
-.hero p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+.hero p {
+  margin: 0;
+  max-width: 68%;
+  color: #bcc1d8;
+  font-size: 13px;
+  line-height: 1.45;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+}
 
 .section-title {
   display: flex;

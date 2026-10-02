@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v192';
-import { submitScore, addPoints, getBest, oynanabilirMi } from '../../js/store.js?v192';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v192';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v192';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v193';
+import { submitScore, addPoints, getBest, oynanabilirMi } from '../../js/store.js?v193';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v193';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v193';
 
 const GAME_ID = 'wheelrush';
 /* Skor = mesafe/10 + coin*15 - iyi bir kosu ~150-450 arasi cikiyor.
@@ -53,7 +53,6 @@ coinImg.src = '../../assets/coin.png';
 const G = {};
 for (const [ad, yol] of Object.entries({
   player: 'assets/player.webp',
-  rival:  'assets/rival.webp',
   road:   'assets/road.webp',
   kayaB:  'assets/kaya-buyuk.webp',
   kayaK:  'assets/kaya-kucuk.webp',
@@ -159,17 +158,18 @@ function spawnWave() {
   const pattern = Math.random();
   const blocked = new Set();
 
-  if (pattern < 0.32) {
+  /* Dalganin %52'si tek serit, %18'i iki serit kapali, kalan %30 bos -
+     oyuncu nefes alabilsin diye. (Ucuncu bir dalga turu daha vardi:
+     seridi kapatan kirmizi bir rakip arac. Oyunun geri kalani kaya,
+     varil, bariyer gibi YOL engellerinden olusuyor; aralarinda tek
+     basina duran bir arac yabanci duruyordu, kalkti.) */
+  if (pattern < 0.52) {
     blocked.add(Math.floor(Math.random() * 3));
-  } else if (pattern < 0.5) {
+  } else if (pattern < 0.7) {
     const a = Math.floor(Math.random() * 3);
     let b = Math.floor(Math.random() * 3);
     while (b === a) b = Math.floor(Math.random() * 3);
     blocked.add(a); blocked.add(b);
-  } else if (pattern < 0.7) {
-    const l = Math.floor(Math.random() * 3);
-    items.push({ type: 'rival', lane: l, y: -40, hit: false, passed: false });
-    blocked.add(l);
   }
 
   for (let l = 0; l < 3; l++) {
@@ -204,7 +204,15 @@ async function endGame() {
   over = true;
   haptic.error();
   SFX.gameOver();
-  shake = 10;
+  shake = 9;
+
+  /* Bitis ekrani sunucuyu BEKLEMIYOR. Eskiden once submitScore ve
+     addPoints await ediliyor, ekran ancak ikisi donunce aciliyordu:
+     zayif bir baglantida oyuncu titreyen bos bir tahtaya bakip
+     bekliyordu. Skor zaten elimizde - once onu gosteriyoruz, rekor ve
+     kazanilan $MH satirlari sunucudan gelince ARKASINDAN ekleniyor. */
+  const kendiSkoru = t('yourScore', { score: bicim(score) });
+  showOverlay(t('gameOver'), kendiSkoru, t('playAgain'), startNewGame);
 
   const result = await submitScore(GAME_ID, score);
   best = result.best;
@@ -213,11 +221,13 @@ async function endGame() {
   const earned = Math.floor(score / POINTS_DIVISOR);
   if (earned > 0) await addPoints(earned);
 
-  const lines = [t('yourScore', { score: bicim(score) })];
+  const lines = [kendiSkoru];
   if (result.isRecord) lines.push(t('newRecord'));
   if (earned > 0) lines.push(t('earnedPoints', { points: bicim(earned) }));
 
-  showOverlay(t('gameOver'), lines.join(' · '), t('playAgain'), startNewGame);
+  /* Oyuncu bu arada "Tekrar Oyna"ya basmis olabilir - kapali ekrani
+     geri doldurmuyoruz. */
+  if (!overlayEl.hidden && lines.length > 1) overlayText.innerHTML = mhHtml(lines.join(' · '));
 }
 
 function showOverlay(title, text, buttonLabel, action) {
@@ -236,6 +246,11 @@ function hideOverlay() {
 }
 
 function guncelle(dt) {
+  /* Sarsinti sonmesi `over` kapisinin ALTINDAYDI: carpar carpmaz oyun
+     duruyor, bu satira hic gelinmiyor ve ekran bitis ekranini kapatana
+     kadar titremeye devam ediyordu. Artik kapidan ONCE sonuyor. */
+  if (shake > 0) shake = Math.max(0, shake - dt * 42);
+
   if (over) return;
 
   speed = Math.min(480, speed + dt * 6.5);
@@ -270,19 +285,14 @@ function guncelle(dt) {
       haptic.tap('light');
       SFX.pickup();
       tozEkle(LANES[it.lane], it.y, 7, '#ffd76e');
-    } else if (!it.hit && (it.type === 'rock' || it.type === 'rival') &&
+    } else if (!it.hit && it.type === 'rock' &&
                closeY < ITEM_R + PLAYER_R - 8 && dx < 26) {
       it.hit = true;
       tozEkle(playerX, PLAYER_Y, 16, '#c9b89a');
       endGame();
-    } else if (it.type === 'rival' && !it.passed && it.y > PLAYER_Y + PLAYER_R) {
-      it.passed = true;
-      if (!it.hit) { score += 25; SFX.match(); }
     }
   }
   items = items.filter((it) => it.y < LH + 60 && !(it.hit && it.type === 'coin' && it.y > 0));
-
-  if (shake > 0) shake = Math.max(0, shake - dt * 30);
 }
 
 function drawWheel(x, y, r, rimColor, hubColor, spin) {
@@ -506,10 +516,6 @@ function ciz(dt = 0.016) {
       if (!sprite(G[it.gorsel || 'kayaB'], x, it.y, ITEM_R * 2.5)) drawRock(x, it.y);
     } else if (it.type === 'coin') {
       if (!it.hit) drawCoin(x, it.y, bob);
-    } else {
-      if (!sprite(G.rival, x, it.y, PLAYER_R * 2.6)) {
-        drawWheel(x, it.y, PLAYER_R * 0.92, '#e2544e', '#7a2320', it.y / 14);
-      }
     }
   }
 
