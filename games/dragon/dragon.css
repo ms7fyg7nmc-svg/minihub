@@ -1229,14 +1229,29 @@ body[data-screen="tasks"] .sky::after {
 
 /* ---------- SIRADAKILER ---------- */
 
+/* SIRA SATIRI - YERI HER ZAMAN AYRILI
+
+   Satir `hidden` ile akistan cikarilinca, #screen-grid icerigi dikeyde
+   ortaladigi icin butun sutun yeniden ortalaniyor ve IZGARA KAYIYORDU.
+   Izgara oyunun en sabit ogesi olmali: oyuncu parmagini nereye
+   koyacagini kas hafizasiyla biliyor, tahta bir piksel bile oynarsa o
+   hafiza bozuluyor (ayni sebeple bilgi paneli de sabit yukseklikte).
+
+   Cozum: yukseklik hep ayrili, kutu bosken sadece gorunmez. Oyuncu bos
+   bir kutu gormuyor ama tahta da yerinden kipirdamiyor. */
 .queue-row {
   display: flex;
   align-items: center;
   gap: 10px;
+  height: 58px;
   padding: 9px 12px;
   border: 1px solid var(--kenar);
   border-radius: 16px;
   background: var(--kart);
+}
+
+.queue-row.bos {
+  visibility: hidden;
 }
 
 .queue-label {

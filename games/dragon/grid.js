@@ -4,8 +4,8 @@
    seviye oluyor. Kilitli hucreler yildizla aciliyor ve icindeki odulu
    dogrudan oyuncuya veriyor. */
 
-import { EN_UST_YUMURTA, EN_UST_SANDIK, kapSuresi } from './ekonomi.js?v178';
-import { belir, zipla, AKIS } from './canlandir.js?v178';
+import { EN_UST_YUMURTA, EN_UST_SANDIK, kapSuresi } from './ekonomi.js?v180';
+import { belir, zipla, AKIS } from './canlandir.js?v180';
 
 /* Kap gorselleri v2: kaplar artik ACIK ve iceriklerini gosteriyor.
    Eski set sekiz kabin da ayni kirmizi kutu olmasi yuzunden 64 pikselde
@@ -256,13 +256,42 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
   const eslesmeTemizle = () => el.querySelectorAll('.cell.esles')
     .forEach((c) => c.classList.remove('esles'));
 
+  /* Suruklemeden cikisin TEK yolu. Ne sebeple biterse bitsin ayni
+     temizlik calisiyor: kare istegi iptal, siniflar silinir, surukle
+     bosaltilir. Donen deger sona eren surukleme (ya da null). */
+  function temizle() {
+    if (!surukle) return null;
+    const s = surukle;
+    surukle = null;
+    if (s.kare) cancelAnimationFrame(s.kare);
+    s.wrap?.classList.remove('dragging');
+    vurguTemizle();
+    eslesmeTemizle();
+    return s;
+  }
+
+  /* Hedefe birakmadan vazgecme: uygulama arka plana atilinca, pencere
+     odagi gidince ya da bekleyen bir surukleme bayatlayinca. */
+  function iptal() {
+    const s = temizle();
+    if (!s) return;
+    s.ghost?.remove();
+    ciz();
+  }
+
+  const BAYAT = 8000;   /* bu kadar surmus bir surukleme gercek olamaz */
+
   function basla(e) {
     if (!grid) return;
 
-    /* Ikinci parmak: eskiden surukle ustune yazilir, birinci parmagin
-       hayaleti ekranda asili kalir ve parcasi %30 saydam donardu.
-       Artik ikinci dokunus yok sayiliyor. */
-    if (surukle) return;
+    /* Ikinci parmak yok sayiliyor - ama once BAYATLIK kontrolu var.
+       Onceki surumde kosulsuz `return` vardi ve bu, takilmis bir
+       surukleme durumunu KURTARILAMAZ yapiyordu: tahta bir daha hicbir
+       dokunusu kabul etmiyordu. Oyuncunun gordugu sey donmus bir oyun. */
+    if (surukle) {
+      if (Date.now() - (surukle.bas || 0) < BAYAT) return;
+      iptal();
+    }
 
     /* Kilitli hucre surukleme degil, sadece dokunma kabul ediyor:
        bilgi penceresi acilsin diye ayri isaretleniyor. */
@@ -282,11 +311,13 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
 
     surukle = { i, hucre, ghost: hayalet(hucre, e.clientX, e.clientY),
                 tasidi: false, x0: e.clientX, y0: e.clientY,
-                sonX: e.clientX, sonY: e.clientY, wrap,
+                sonX: e.clientX, sonY: e.clientY, wrap, bas: Date.now(),
                 kutular: kutulariTara(), vurgu: -2, kare: 0 };
     wrap.classList.add('dragging');
     eslesenleriIsaretle(i, hucre);
-    el.setPointerCapture?.(e.pointerId);
+    /* Yakalama bazi WebView'larda hata firlatiyor; birakma olaylari
+       artik window'da dinlendigi icin zaten sart degil. */
+    try { el.setPointerCapture?.(e.pointerId); } catch { /* onemsiz */ }
     e.preventDefault();
   }
 
@@ -366,15 +397,10 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
       return;
     }
 
-    const { i, hucre, ghost, tasidi, wrap } = surukle;
-    if (surukle.kare) cancelAnimationFrame(surukle.kare);
-    /* Artimli cizim bu sinifi artik temizlemiyor: hucrenin imzasi
-       degismediyse eleman hic yeniden yazilmiyor. */
-    wrap?.classList.remove('dragging');
-    vurguTemizle();
-    eslesmeTemizle();
     const hedef = hizliIndex(e.clientX, e.clientY);
-    surukle = null;
+    /* temizle() surukle'yi bosaltiyor; hedef ondan ONCE hesaplanmali
+       cunku hizliIndex olculmus kutulari surukle uzerinden okuyor. */
+    const { i, hucre, ghost, tasidi } = temizle();
 
     /* Kisa dokunus: bilgi penceresi acilsin */
     if (!tasidi || hedef === i) {
@@ -442,10 +468,24 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
     ciz();
   }
 
+  /* BIRAKMA OLAYLARI WINDOW'DA.
+
+     Once hepsi tahtaya bagliydi. Parmagini tahtanin disinda kaldiran
+     oyuncuda - telefonda son derece olagan - pointerup baska bir
+     elemana gidiyor, bitir() hic calismiyor ve surukle dolu kaliyordu:
+     tahta o andan sonra hicbir dokunusu kabul etmiyordu.
+
+     Window'da dinleyince birakma nerede olursa olsun duyuluyor.
+     Dinleyiciler surukle bos oldugunda hemen donuyor, maliyeti yok. */
   el.addEventListener('pointerdown', basla);
-  el.addEventListener('pointermove', hareket);
-  el.addEventListener('pointerup', bitir);
-  el.addEventListener('pointercancel', bitir);
+  window.addEventListener('pointermove', hareket);
+  window.addEventListener('pointerup', bitir);
+  window.addEventListener('pointercancel', bitir);
+
+  /* Uygulama arka plana atilirsa ya da odak giderse surukleme iptal.
+     Telegram WebView bunu sik yapiyor ve donen parmak olayi gelmiyor. */
+  window.addEventListener('blur', iptal);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) iptal(); });
 
   return {
     bagla(yeniGrid) { grid = yeniGrid; ciz(); },
