@@ -2,17 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="193">
+  <meta name="surum" content="194">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MINI HUB GAMES</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Hub afisini SEC. Uc tasarim var (assets/hero) ve her acilista biri
+       geliyor - hub her girdiginde ayni ekran gibi durmasin diye.
+
+       Secim ISTEMCIDE yapiliyor, sunucuda degil. Sunucudan gelseydi:
+       misafir modunda (Telegram disi) afis hic gelmezdi, her acilista
+       bir istek daha atilirdi ve cevap gecikince once bos panel sonra
+       afis gorunurdu. Afis tamamen susleme - arkasinda korunacak bir
+       durum yok, o yuzden sunucunun isi degil.
+
+       Burada, <head> icinde ve her seyden once calisiyor: afis sayfa
+       ilk boyandiginda zaten yerinde oluyor, gec gelip ekrani
+       oynatmiyor.
+
+       Ayni afis ust uste iki kez gelmiyor; duz zarla ucte bir ihtimalle
+       tekrar gelir ve "degismiyor" izlenimi birakirdi. -->
+  <script>
+    (function () {
+      var afisler = ['isik', 'takim', 'kart'];
+      var son = null;
+      try { son = localStorage.getItem('mh_afis'); } catch (e) {}
+      var aday = afisler.filter(function (a) { return a !== son; });
+      var sec = aday[Math.floor(Math.random() * aday.length)];
+      try { localStorage.setItem('mh_afis', sec); } catch (e) {}
+      document.documentElement.setAttribute('data-afis', sec);
+    })();
+  </script>
   <!-- Reklamla enerji doldurma (js/hub.js -> ADSGRAM_BLOCK_ID) icin Adsgram SDK -->
   <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
   <script>
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v193">
+  <link rel="stylesheet" href="css/style.css?v194">
 </head>
 <body class="hub">
   <div class="app">
@@ -197,6 +224,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v193"></script>
+  <script type="module" src="js/hub.js?v194"></script>
 </body>
 </html>

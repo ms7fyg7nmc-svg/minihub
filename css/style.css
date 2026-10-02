@@ -353,13 +353,22 @@ body.hub::before {
      cevirinin alt satiri susleme bolgesine girdiginde bile yazi koyu
      bir zeminde kaliyor. Perde olmadan "ekosistemimizin parcasi ol"
      satiri desenin uzerine biniyordu. */
+  /* Hangi afis oldugunu index.html'deki kisa betik <html data-afis>
+     ile soyluyor; burada sadece o degiskeni okuyoruz, boylece perde
+     tek bir yerde tanimli kaliyor. Ozellik tanimsiz kalirsa (betik
+     calismadiysa) varsayilan devreye giriyor. */
+  --afis: url("../assets/hero/takim.webp");
   background-image:
     linear-gradient(90deg, rgba(14, 11, 24, 0.93) 0%, rgba(14, 11, 24, 0.80) 44%, rgba(14, 11, 24, 0) 72%),
-    url("../assets/hero/takim.webp");
+    var(--afis);
   background-size: cover, cover;
   background-position: center, right center;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
+
+:root[data-afis="isik"] .hero { --afis: url("../assets/hero/isik.webp"); }
+:root[data-afis="takim"] .hero { --afis: url("../assets/hero/takim.webp"); }
+:root[data-afis="kart"] .hero { --afis: url("../assets/hero/kart.webp"); }
 
 /* Afis her iki temada da koyu - yazilar temadan bagimsiz acik.
    Baslikta renk gecisi duruyor ama tek basina kullanildigindaki kadar
