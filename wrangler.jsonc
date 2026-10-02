@@ -1,11 +1,32 @@
+// Proje kokundeki TEK wrangler yapilandirmasi.
+//
+// Bu dosya bir kolaylik degil, bir TUZAGI KAPATIYOR. Kok dizinde hic
+// yapilandirma yokken `wrangler deploy` calistirilirsa wrangler, klasor
+// adindan ("minihub") YENI bir worker uydurup butun klasoru statik site
+// olarak oraya yukluyor VE bu dosyayi kendi icerigiyle geri yaziyor.
+// 2 Ekim 2026 gecesi tam bunu yapti: dort dagitim boyunca gercek API hic
+// guncellenmedi, oyuncular eski enerji tavaniyla oynamaya devam etti.
+//
+// Dosya adi .jsonc OLMAK ZORUNDA: wrangler .jsonc'yi .toml'un onune
+// aliyor, yani kokte bir wrangler.toml birakmak yetmiyordu - wrangler
+// kendi .jsonc'sini yazip onu gormezden geliyordu.
+//
+// Artik kokten calistirilan `wrangler deploy` dogrudan gercek worker'a,
+// minihub-bot'a gidiyor. bot/wrangler.toml da ayni worker'i gosteriyor,
+// yani hangi dizinden calistirilirsa calistirilsin sonuc ayni.
+//
+// Sitenin kendisi BURADAN yayinlanmiyor: on yuzu (oyunlar, hub, gorseller)
+// GitHub Pages servis ediyor ve `git push` ile guncelleniyor. Bu dosya
+// yalnizca arka ucu (bot/worker.js) ilgilendirir.
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "minihub",
-  "compatibility_date": "2026-10-01",
-  "observability": {
-    "enabled": true
-  },
-  "assets": {
-    "directory": "."
-  }
+  "name": "minihub-bot",
+  "main": "bot/worker.js",
+  "compatibility_date": "2024-01-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "minihub-bot-db",
+      "database_id": "68c697f7-7672-462d-9bdb-044014f4c499"
+    }
+  ]
 }
