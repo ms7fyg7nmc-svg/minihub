@@ -31,7 +31,7 @@
 .cerceve-celik {
   border-width: 14px;
   border-image-source: url(../assets/frames/celik.webp);
-  border-image-slice: 10% 10%;
+  border-image-slice: 9.3%;
 }
 
 /* Kalin parlak vinil. Karakterli ve renkli, o yuzden sadece paleti
@@ -39,7 +39,7 @@
 .cerceve-vinil {
   border-width: 16px;
   border-image-source: url(../assets/frames/vinil.webp);
-  border-image-slice: 12% 12%;
+  border-image-slice: 11.2%;
 }
 
 /* Ince pirinc cizgi. En hafifi; aydinlik temada beyaz zeminde soluyor,
@@ -47,7 +47,7 @@
 .cerceve-pirinc {
   border-width: 10px;
   border-image-source: url(../assets/frames/pirinc.webp);
-  border-image-slice: 6.6% 6.5%;
+  border-image-slice: 6.2%;
 }
 
 /* Sussuz arduvaz. En tarafsiz olani: gokkusagi paletli oyunlarda
@@ -55,5 +55,5 @@
 .cerceve-duz {
   border-width: 14px;
   border-image-source: url(../assets/frames/duz.webp);
-  border-image-slice: 10% 10%;
+  border-image-slice: 8.7%;
 }
