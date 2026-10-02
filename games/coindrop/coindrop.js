@@ -1,8 +1,11 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v185';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v185';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v185';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v185';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v187';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v187';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v187';
+import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v187';
+/* Sesler artik sentezlenmis degil, Dragon Island ornekleri (bkz. ses.js).
+   Ses dugmesi ayni sessizlik anahtarini kullandigi icin degismedi. */
+import { SFX } from './ses.js?v187';
 
 const GAME_ID = 'coindrop';
 
@@ -34,20 +37,21 @@ registerTexts(GAME_ID, {
 /* --- Kademeler ---
    6 cent kademesi, sonra ayni mantikla altin kademeler; 100$ oyunu bitiriyor.
    value = cent cinsinden deger (skor bundan geliyor), r = sanal dunya yaricapi. */
+/* Yaricaplar bir tur %5 buyutuldu: paralar kasada fazla ufak kaliyordu. */
 const TIERS = [
-  { txt: '1¢',   puan: 0,   r: 24.0, metal: 'copper' },
-  { txt: '2¢',   puan: 10,  r: 26.2, metal: 'copper' },
-  { txt: '5¢',   puan: 20,  r: 28.6, metal: 'copper' },
-  { txt: '10¢',  puan: 35,  r: 31.2, metal: 'silver' },
-  { txt: '25¢',  puan: 55,  r: 34.1, metal: 'silver' },
-  { txt: '50¢',  puan: 80,  r: 37.2, metal: 'silver' },
-  { txt: '$1',   puan: 110, r: 40.6, metal: 'gold' },
-  { txt: '$2',   puan: 145, r: 44.3, metal: 'gold' },
-  { txt: '$5',   puan: 185, r: 48.4, metal: 'gold' },
-  { txt: '$10',  puan: 230, r: 52.8, metal: 'gold' },
-  { txt: '$25',  puan: 280, r: 57.6, metal: 'royal' },
-  { txt: '$50',  puan: 335, r: 62.9, metal: 'royal' },
-  { txt: '$100', puan: 395, r: 68.6, metal: 'royal' },
+  { txt: '1¢',   puan: 0,   r: 25.2, metal: 'copper' },
+  { txt: '2¢',   puan: 10,  r: 27.5, metal: 'copper' },
+  { txt: '5¢',   puan: 20,  r: 30.0, metal: 'copper' },
+  { txt: '10¢',  puan: 35,  r: 32.8, metal: 'silver' },
+  { txt: '25¢',  puan: 55,  r: 35.8, metal: 'silver' },
+  { txt: '50¢',  puan: 80,  r: 39.1, metal: 'silver' },
+  { txt: '$1',   puan: 110, r: 42.6, metal: 'gold' },
+  { txt: '$2',   puan: 145, r: 46.5, metal: 'gold' },
+  { txt: '$5',   puan: 185, r: 50.8, metal: 'gold' },
+  { txt: '$10',  puan: 230, r: 55.4, metal: 'gold' },
+  { txt: '$25',  puan: 280, r: 60.5, metal: 'royal' },
+  { txt: '$50',  puan: 335, r: 66.0, metal: 'royal' },
+  { txt: '$100', puan: 395, r: 72.0, metal: 'royal' },
 ];
 
 const SON_KADEME = TIERS.length - 1;
@@ -66,6 +70,16 @@ const METAL = {
    boylece oyun her ekranda birebir ayni hissi veriyor. */
 const W = 360;
 const H = 540;
+
+/* ZEMIN SERIDI
+   Altin esik eskiden CSS'te `.cd-stage::after` ile canvas'in USTUNE
+   ciziliyordu; paralar ise canvas'in en dibinde duruyordu, yani seridin
+   ARKASINDA kaliyor ve gomulmus gibi gorunuyorlardi.
+
+   Artik serit dunyanin kendi koordinatinda ciziliyor ve fizik tabani
+   onun ustune alindi - paralar seridin uzerine oturuyor. */
+const ZEMIN = 9;
+const TABAN = H - ZEMIN;
 const LINE_Y = 96;
 const DROP_Y = 54;
 const GRAVITY = 1500;
@@ -114,7 +128,7 @@ let nextId = 1;
 const SPRITE = TIERS.map((t, i) => {
   const im = new Image();
   im.onload = () => ciz();
-  im.src = `assets/coin-tier${i}.webp`;
+  im.src = `assets/v2/coin-tier${i}.webp`;
   return im;
 });
 const hazirMi = (im) => im && im.complete && im.naturalWidth > 0;
@@ -276,9 +290,9 @@ function adim(dt) {
     if (c.x < r || c.x > W - r) c.vx = 0;
     if (c.y < r) c.vy = 0; // tavan - burada sekme yok, sadece durur
     c.x = Math.min(Math.max(c.x, r), W - r);
-    c.y = Math.min(Math.max(c.y, r), H - r);
+    c.y = Math.min(Math.max(c.y, r), TABAN - r);
 
-    if (c.y > H - r - 0.5) {
+    if (c.y > TABAN - r - 0.5) {
       // Zemine deymis: eskiden hiz burada direkt sifirlaniyordu, para havadan
       // dusup aninda yapisiyordu. Gercek bir madeni para gibi kucuk, sonup
       // giden bir sekme veriyoruz - yavas gelen paralar (zaten oturmus
@@ -369,7 +383,7 @@ function duvarlar(c) {
   const r = TIERS[c.ti].r;
   if (c.x - r < 0) c.x = r;
   if (c.x + r > W) c.x = W - r;
-  if (c.y + r > H) c.y = H - r;
+  if (c.y + r > TABAN) c.y = TABAN - r;
   // Tavan: eskiden yoktu. Birlesme sonrasi cozumleyici bir parayi guclu
   // itince yukari dogru sinirsiz gidip haritadan "kayboluyordu" - artik
   // sahnenin en tepesinde duruyor.
@@ -511,6 +525,18 @@ function ciz() {
   g.setTransform(olcek, 0, 0, olcek, 0, 0);
   g.clearRect(0, 0, W, H);
 
+  // Altin zemin seridi - paralarin oturdugu esik
+  const zg = g.createLinearGradient(0, TABAN, 0, H);
+  zg.addColorStop(0, '#ffd277');
+  zg.addColorStop(0.35, '#d99f33');
+  zg.addColorStop(1, '#4a3108');          /* altta koyulasiyor: pirinc cerceveyle
+                                             tek bir altin blok olmasin diye */
+  g.fillStyle = zg;
+  g.fillRect(0, TABAN, W, ZEMIN);
+  /* Ustte ince bir isik cizgisi - paralarin oturdugu esik belli olsun */
+  g.fillStyle = 'rgba(255, 228, 160, 0.9)';
+  g.fillRect(0, TABAN, W, 1.5);
+
   // Tehlike cizgisi
   g.save();
   g.strokeStyle = tehlike > 0.35 ? 'rgba(226,84,78,.9)' : 'rgba(255,255,255,.16)';
@@ -532,7 +558,7 @@ function ciz() {
     g.setLineDash([4, 8]);
     g.beginPath();
     g.moveTo(x, DROP_Y + r);
-    g.lineTo(x, H - 8);
+    g.lineTo(x, TABAN - 2);
     g.stroke();
     g.restore();
     coinCiz(x, DROP_Y, r, sonraki, 0);
@@ -618,7 +644,7 @@ function buildLadder() {
 
 /* HUD/serit icin ayni para gorseli - canvas'takiyle birebir ayni sanat */
 function coinSvg(ti) {
-  return `<img src="assets/coin-tier${ti}.webp" alt="${TIERS[ti].txt}">`;
+  return `<img src="assets/v2/coin-tier${ti}.webp" alt="${TIERS[ti].txt}">`;
 }
 
 /* --- Giris --- */
