@@ -1,8 +1,9 @@
 
-import { loadState, saveState } from '../../js/store.js?v167';
-import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_FIYATLARI } from './ekonomi.js?v167';
-import { CONFIG, eskiToplamHarcama } from './config.js?v167';
-import { turSira } from './turler.js?v167';
+import { loadState, saveState } from '../../js/store.js?v170';
+import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_FIYATLARI,
+         bostaHesapla } from './ekonomi.js?v170';
+import { CONFIG, eskiToplamHarcama } from './config.js?v170';
+import { turSira } from './turler.js?v170';
 
 const OYUN_ID = 'dragon';
 const SURUM = 7;
@@ -46,6 +47,9 @@ export function yeniEjderha(id, sira = 0) {
     pencereBas: 0,          /* 4 saatlik istah penceresinin baslangici */
     pencereSayi: 0,         /* pencere icinde kacinci besleme */
     happiness: 100,
+    /* Bosta uretim sayaci: `son` en son yumurta dustugu an,
+       `biriken` toplanmayi bekleyen yumurta sayisi. */
+    bosta: { son: simdi, biriken: 0 },
     look: gorunum(sira),
     createdAt: simdi,
     updatedAt: simdi,
@@ -204,6 +208,14 @@ function duzelt(o) {
     d.pencereBas = Number(d.pencereBas) || 0;
     d.pencereSayi = Math.max(0, Number(d.pencereSayi) || 0);
     d.happiness = Number.isFinite(d.happiness) ? d.happiness : 100;
+
+    /* Eski kayitlarda bosta sayaci yok. Simdiden baslatiyoruz, yoksa
+       `son: 0` yuzunden oyuncu aninda tavani dolu buluyor. */
+    const b = d.bosta;
+    d.bosta = {
+      son: Number(b?.son) || Date.now(),
+      biriken: Math.max(0, Math.min(3, Number(b?.biriken) || 0)),
+    };
   });
   o.dragons.length = Math.min(o.dragons.length, EN_COK_YUVA);
   if (!o.dragons.some((d) => d.id === o.activeId)) o.activeId = o.dragons[0].id;
@@ -249,6 +261,26 @@ export function yuvaAcikMi(oyuncu, ejderha) {
 /* Yeni ejderha ilk BOS yuvaya iniyor - o yuva kilitli olsa bile.
    Kilitli yuvada duran ejderha beslenemiyor ama seritte gorunuyor;
    oyuncu neyi kacirdigini gorsun diye (bkz. dragon.js slotlariCiz). */
+/* Butun ACIK yuvalardaki ejderhalarin bosta sayacini ilerletiyor.
+   Kilitli yuvadaki ejderha uretmiyor - yuvayi acmanin dogrudan karsiligi
+   bu. Degisen bir sey olduysa true donuyor ki cagiran kaydetsin. */
+export function bostaIsle(oyuncu, simdi = Date.now()) {
+  let degisti = false;
+  oyuncu.dragons.forEach((d, sira) => {
+    if (sira >= oyuncu.unlockedSlots) return;
+    const y = bostaHesapla(d.bosta, simdi);
+    if (y.biriken !== d.bosta.biriken || y.son !== d.bosta.son) degisti = true;
+    d.bosta = { son: y.son, biriken: y.biriken };
+  });
+  return degisti;
+}
+
+/* Acik yuvalarda toplanmayi bekleyen toplam yumurta. */
+export function bekleyenYumurta(oyuncu) {
+  return oyuncu.dragons.reduce(
+    (t, d, sira) => t + (sira < oyuncu.unlockedSlots ? d.bosta.biriken : 0), 0);
+}
+
 export function ejderhaEkle(oyuncu) {
   if (oyuncu.dragons.length >= EN_COK_YUVA) return null;
   const sira = oyuncu.dragons.length;

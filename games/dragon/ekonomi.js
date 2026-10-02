@@ -85,10 +85,23 @@ export const SANDIK_MERDIVEN = {
 };
 
 /* Ejderha beslenince yumurta birakir: %80 Lv1, %20 Lv2 */
-export const BESLEME_YUMURTA = [
-  { lv: 1, sans: 0.80 },
-  { lv: 2, sans: 0.20 },
-];
+/* Beslemenin dusurdugu yumurtanin seviyesi ARTIK TURE BAGLI.
+
+   Onceden her ejderha ayni dagilimi veriyordu: %80 Sv.1, %20 Sv.2. Bu,
+   nadirligi tamamen bedava birakiyordu - 2.000 yildizlik Bulutsu
+   ejderhasi 50 yildizlik Okyanus'tan hicbir seyi daha iyi yapmiyor,
+   sadece mor goruniyordu. Yuva fiyat merdiveninin (50 -> 2.000) karsilik
+   gelen bir getirisi yoktu.
+
+   Sv.2 yumurta Sv.1'in yaklasik uc kati degerinde (25-45 yem vs 8-15),
+   Sv.3 onun da uc kati. Yani Efsanevi bir ejderha ayni beslemeyle kabaca
+   dort kat getiriyor. Yuvanin fiyati artik bir sey satin aliyor. */
+export const BESLEME_YUMURTA = {
+  common:    [{ lv: 1, sans: 0.80 }, { lv: 2, sans: 0.20 }],
+  rare:      [{ lv: 1, sans: 0.50 }, { lv: 2, sans: 0.40 }, { lv: 3, sans: 0.10 }],
+  epic:      [{ lv: 1, sans: 0.30 }, { lv: 2, sans: 0.45 }, { lv: 3, sans: 0.25 }],
+  legendary: [{ lv: 1, sans: 0.15 }, { lv: 2, sans: 0.40 }, { lv: 3, sans: 0.35 }, { lv: 4, sans: 0.10 }],
+};
 
 /* ---------- BESLEME ---------- */
 
@@ -203,12 +216,46 @@ export function ustBasamakMi(tip, lv, deger) {
   return deger >= m[m.length - 1][0];
 }
 
-export function beslemeYumurtaSeviyesi() {
+export function beslemeYumurtaSeviyesi(nadir = 'common') {
+  const tablo = BESLEME_YUMURTA[nadir] || BESLEME_YUMURTA.common;
   const r = Math.random();
   let toplam = 0;
-  for (const s of BESLEME_YUMURTA) {
+  for (const s of tablo) {
     toplam += s.sans;
     if (r < toplam) return s.lv;
   }
-  return 1;
+  return tablo[0].lv;
+}
+
+/* Yuva kartinda ve ejderha kartinda yazan "Sv.1-3 yumurta" araligi. */
+export function yumurtaAraligi(nadir = 'common') {
+  const tablo = BESLEME_YUMURTA[nadir] || BESLEME_YUMURTA.common;
+  return { az: tablo[0].lv, cok: tablo[tablo.length - 1].lv };
+}
+
+/* ---------- BOSTA URETIM ----------
+
+   Ejderha oyun kapaliyken de yumurta biriktiriyor, ama DEPOSU DOLUNCA
+   DURUYOR. Dragon City'nin on dort yildir calisan geri getirme araci bu:
+   "doldu, bosa gidiyor" hissi, odul vaadinden daha guclu cekiyor.
+
+   Ayni zamanda ikinci ejderhanin degerini oyuncunun gorebilecegi bir
+   sayiya ceviriyor - iki ejderha iki kat bosta uretim demek. Sadece
+   ACIK yuvadakiler uretiyor; yuva satin almanin dogrudan karsiligi. */
+export const BOSTA_ARALIK = 90 * 60 * 1000;      /* 90 dk'da bir yumurta */
+export const BOSTA_TAVAN = 3;                    /* ejderha basina en fazla */
+
+/* Saf fonksiyon: gecen sureye gore yeni durumu hesapliyor.
+   Tavana varildiginda `son` simdiye ceknyor - yani uretim gercekten
+   duruyor, oyuncu toplayana kadar sayac yeniden islemiyor. */
+export function bostaHesapla(bosta, simdi) {
+  let { son = simdi, biriken = 0 } = bosta || {};
+  if (biriken >= BOSTA_TAVAN) return { son: simdi, biriken: BOSTA_TAVAN, kalan: 0, dolu: true };
+
+  while (biriken < BOSTA_TAVAN && simdi - son >= BOSTA_ARALIK) {
+    biriken += 1;
+    son += BOSTA_ARALIK;
+  }
+  if (biriken >= BOSTA_TAVAN) return { son: simdi, biriken: BOSTA_TAVAN, kalan: 0, dolu: true };
+  return { son, biriken, kalan: BOSTA_ARALIK - (simdi - son), dolu: false };
 }

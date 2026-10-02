@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="167">
+  <meta name="surum" content="170">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Dragon Island</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -15,9 +15,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;800&display=swap">
-  <link rel="stylesheet" href="../../css/style.css?v167">
-  <link rel="stylesheet" href="../../css/game.css?v167">
-  <link rel="stylesheet" href="dragon.css?v167">
+  <link rel="stylesheet" href="../../css/style.css?v170">
+  <link rel="stylesheet" href="../../css/game.css?v170">
+  <link rel="stylesheet" href="dragon.css?v170">
 </head>
 <body class="game dragon-app" data-i18n-title="title">
 
@@ -104,6 +104,22 @@
           <div class="bar xp"><i id="xp-fill"></i></div>
           <p class="appetite" id="appetite"></p>
 
+          <!-- Turun ne kalitede yumurta dusurdugu: nadirligin karsiligi
+               bu satirda gorunuyor, yoksa yuva fiyati anlamsiz kaliyor. -->
+          <p class="tur-satiri" id="tur-satiri"></p>
+
+          <!-- BOSTA URETIM
+               Ejderha oyun kapaliyken de yumurta biriktiriyor; depo
+               dolunca duruyor. Dolu hal ayri bir renge geciyor ki
+               oyuncu "bosa gidiyor" diye geri gelsin. -->
+          <div class="bosta" id="bosta" hidden>
+            <div class="bosta-sol">
+              <span class="bosta-say" id="bosta-say">0/3</span>
+              <span class="bosta-not" id="bosta-not"></span>
+            </div>
+            <button class="act-btn bosta-btn" id="bosta-btn" data-i18n="idleCollect">Topla</button>
+          </div>
+
           <button class="act-btn primary feed-big" id="feed-btn">
             <span data-i18n="feed">Besle</span>
             <b id="feed-cost">1</b>
@@ -176,6 +192,7 @@
       <button class="tab" data-go="dragon">
         <img src="../../assets/icons/dragon2-64.webp" alt="" width="26" height="26">
         <span data-i18n="tabDragon">Ejderha</span>
+        <i class="tab-dot" id="dragon-dot" hidden></i>
       </button>
       <button class="tab" data-go="tasks">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 11h7M9 15h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
@@ -198,6 +215,6 @@
     </div>
   </div>
 
-  <script type="module" src="dragon.js?v167"></script>
+  <script type="module" src="dragon.js?v170"></script>
 </body>
 </html>

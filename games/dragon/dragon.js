@@ -1,26 +1,27 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v167';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v167';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v170';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v170';
 
-import { CONFIG, gorselSeviye } from './config.js?v167';
-import { bakimdaMi } from '../../js/store.js?v167';
+import { CONFIG, gorselSeviye } from './config.js?v170';
+import { bakimdaMi } from '../../js/store.js?v170';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         ejderhaEkle, EN_COK_YUVA } from './model.js?v167';
-import { dragonSvg, dragonAssetUrls } from './art.js?v167';
-import { turSira, turYolu, turBul } from './turler.js?v167';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v167';
-import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v167';
+         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA } from './model.js?v170';
+import { dragonSvg, dragonAssetUrls } from './art.js?v170';
+import { turSira, turYolu, turBul } from './turler.js?v170';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v170';
+import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v170';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
          kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
          PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
-         partnerKademe } from './gorevler.js?v167';
-import { getBest } from '../../js/store.js?v167';
+         partnerKademe } from './gorevler.js?v170';
+import { getBest } from '../../js/store.js?v170';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v167';
+         kilitliMi, nesneMi } from './grid.js?v170';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
-         beslemeYumurtaSeviyesi, yuvaFiyati } from './ekonomi.js?v167';
-import { createTutorial, pozListesi } from './tutorial.js?v167';
+         beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
+         bostaHesapla, BOSTA_TAVAN } from './ekonomi.js?v170';
+import { createTutorial, pozListesi } from './tutorial.js?v170';
 
 const GAME_ID = 'dragon';
 
@@ -76,6 +77,18 @@ registerTexts(GAME_ID, {
   slotInOrder: 'Yuvalar sırayla açılıyor. Önce soldakini aç.',
   slotNeedsDragon: 'Bu yuva boş. Sv. 8 yumurta kırınca buraya ejderha gelir.',
   slotOpened: '{name} yuvası açıldı!',
+  slotBuyNote: 'Yuvayı açınca ejderhası buraya gelir, seviye atlar ve sen yokken de yumurta biriktirir.',
+  slotHeldNote: 'Bu ejderha seni bekliyor. Yuvayı açar açmaz beslemeye başlayabilirsin.',
+  slotUnlock: 'Yuvayı aç',
+  cancel: 'Vazgeç',
+  close: 'Kapat',
+
+  eggDropsOne: 'Sv. {a} yumurta bırakır',
+  eggDropsRange: 'Sv. {a}–{b} yumurta bırakır',
+  idleCollect: 'Topla',
+  idleFull: 'Yuva doldu — üretim durdu',
+  idleNext: 'Sonraki yumurta {time}',
+  idleGot: '{n} yumurta toplandı',
 
   turEmber: 'Ateş',
   turOcean: 'Okyanus',
@@ -174,6 +187,10 @@ const dragonNameEl = $('dragon-name'); const dragonLvEl = $('dragon-lv');
 const xpFill = $('xp-fill'); const appetiteEl = $('appetite');
 const feedBtn = $('feed-btn'); const feedCostEl = $('feed-cost');
 const slotStrip = $('slot-strip');
+const turSatiri = $('tur-satiri');
+const ejderhaNoktasi = $('dragon-dot');
+const bostaKutu = $('bosta'); const bostaSay = $('bosta-say');
+const bostaNot = $('bosta-not'); const bostaBtn = $('bosta-btn');
 
 const dailyRow = $('daily-row'); const dailyNote = $('daily-note'); const dailyClaim = $('daily-claim');
 const questOzet = $('quest-ozet'); const questSayac = $('quest-sayac');
@@ -238,6 +255,10 @@ async function basla() {
   if (!yerelTest && await bakimdaMi(GAME_ID)) { bakimEkrani(); return; }
 
   oyuncu = await oyuncuyuYukle();
+
+  /* Oyun kapaliyken gecen sure burada yumurtaya cevriliyor. Tahtadan
+     once calismali ki ilk cizimde sayac dogru gorunsun. */
+  bostaIsle(oyuncu, simdi());
 
   board = createBoard(boardEl, { onMerge: birlesti, onPick: hucreSecildi, onChange: izgaraDegisti });
   board.bagla(oyuncu.grid);
@@ -689,6 +710,8 @@ function beslemeFiyati(d) {
   return yemMaliyeti(d.level, d.pencereSayi);
 }
 
+bostaBtn.addEventListener('click', () => { if (!busy) bostaTopla(); });
+
 feedBtn.addEventListener('click', async () => {
   const d = aktifEjderha(oyuncu);
   if (!d || busy) return;
@@ -734,7 +757,8 @@ function seviyeKontrol(d) {
    o yuzden hedef, izgaranin temsilcisi olan Ocak sekmesi. Sekme varista
    zipliyor ki oyuncu nereye gittigini gorsun. */
 function yumurtaBirak() {
-  const lv = oyuncu.tutorial < 99 ? 1 : beslemeYumurtaSeviyesi();
+  const nadir = turBul(aktifEjderha(oyuncu)?.look?.tur).nadir;
+  const lv = oyuncu.tutorial < 99 ? 1 : beslemeYumurtaSeviyesi(nadir);
   const yer = nesneVer({ t: 'egg', lv });
   const ocakSekmesi = tabbar.querySelector('.tab[data-go="grid"]');
 
@@ -849,8 +873,23 @@ function slotlariCiz() {
 
 function yuvaTikla(i, d, acik, sirada) {
   if (!acik) {
-    if (!sirada) { uyar(t('slotInOrder')); return; }
-    yuvaAc(i);
+    /* Kutu HER kilitli yuvada aciliyor, sadece sirada olanda degil.
+       Onceden uzaktakiler "yuvalar sirayla acilir" uyarisi veriyordu ve
+       oyuncu 2.000 yildizlik ejderhanin ne verdigini hic goremiyordu -
+       oysa butun mesele onu gorup ona dogru oynamasiydi. Sirada
+       olmayanda dugme kapali, yerinde sebebi yaziyor. */
+    const tur = turSira(i);
+    const a = yumurtaAraligi(tur.nadir);
+    onayIste({
+      baslik: t(tur.adKey),
+      satir: `${t(NADIR_ETIKET[tur.nadir])} · ${
+        a.az === a.cok ? t('eggDropsOne', { a: a.az })
+                       : t('eggDropsRange', { a: a.az, b: a.cok })}`,
+      not: d ? t('slotHeldNote') : t('slotBuyNote'),
+      fiyat: yuvaFiyati(i),
+      engel: sirada ? null : t('slotInOrder'),
+      tamam: () => yuvaAc(i),
+    });
     return;
   }
   if (!d) { uyar(t('slotNeedsDragon')); return; }
@@ -901,6 +940,70 @@ function ejderhaCiz() {
   appetiteEl.textContent = d.pencereBas
     ? t('appetite', { time: sureMetni(d.pencereBas + BESLEME_PENCERESI - simdi()) })
     : t('appetiteFresh');
+
+  const tur = turBul(d.look?.tur);
+  const a = yumurtaAraligi(tur.nadir);
+  turSatiri.textContent = `${t(NADIR_ETIKET[tur.nadir])} · ${
+    a.az === a.cok ? t('eggDropsOne', { a: a.az })
+                   : t('eggDropsRange', { a: a.az, b: a.cok })}`;
+  turSatiri.className = `tur-satiri nadir-${tur.nadir}`;
+
+  bostaCiz(d, acik);
+}
+
+/* Biriken yumurtalari izgaraya indiriyor. Seviyeleri yine ture bagli:
+   Efsanevi ejderha bosta da daha iyi yumurta biriktiriyor. Izgara
+   doluysa nesneVer zaten siraya aliyor. */
+function bostaTopla() {
+  const d = aktifEjderha(oyuncu);
+  if (!d || !yuvaAcikMi(oyuncu, d)) return;
+
+  bostaIsle(oyuncu, simdi());
+  const adet = d.bosta.biriken;
+  if (!adet) return;
+
+  const nadir = turBul(d.look?.tur).nadir;
+  const ocakSekmesi = tabbar.querySelector('.tab[data-go="grid"]');
+  let sirayaGiden = 0;
+
+  /* Once hepsi yerlestiriliyor, sonra animasyon. Ters sirada yapilirsa
+     kaydet() animasyonlardan once donuyor ve oduller diske ulasmiyor. */
+  const seviyeler = [];
+  for (let i = 0; i < adet; i += 1) {
+    const lv = beslemeYumurtaSeviyesi(nadir);
+    seviyeler.push(lv);
+    if (nesneVer({ t: 'egg', lv }) !== 'izgara') sirayaGiden += 1;
+  }
+  d.bosta = { son: simdi(), biriken: 0 };
+  kaydet();
+
+  ucur({
+    kaynak: bostaKutu,
+    hedef: ocakSekmesi || resFood,
+    gorsel: gorselYolu({ t: 'egg', lv: seviyeler[0] }),
+    adet,
+    boy: 34,
+    bitince: () => { zipla(ocakSekmesi, 1.16); cal('egglay'); },
+  });
+
+  haptic.success();
+  odulUcur(t('idleGot', { n: adet }), true);
+  if (sirayaGiden) yaziUcur(t('gridFullEgg'));
+  cizHepsi();
+}
+
+/* Bosta uretim satiri. Kilitli yuvadaki ejderha uretmedigi icin orada
+   hic gosterilmiyor - bos bir sayac kafa karistirirdi. */
+function bostaCiz(d, acik) {
+  if (!acik) { bostaKutu.hidden = true; return; }
+  bostaKutu.hidden = false;
+
+  const y = bostaHesapla(d.bosta, simdi());
+  bostaSay.textContent = `${y.biriken}/${BOSTA_TAVAN}`;
+  bostaKutu.classList.toggle('dolu', y.dolu);
+  bostaNot.textContent = y.dolu ? t('idleFull')
+    : t('idleNext', { time: sureKisa(y.kalan) });
+  bostaBtn.disabled = busy || y.biriken === 0;
 }
 
 /* ---------- GUNLUK ODUL ---------- */
@@ -1258,6 +1361,10 @@ function gorevNoktasi() {
   const hazirBuyuk = buyukOdulHazirMi() && !oyuncu.partner.buyukOdul;
 
   taskDot.hidden = !(hazirGorev || hazirPartner || hazirBuyuk || gunlukAlinabilirMi());
+
+  /* Bekleyen yumurta varken Ejderha sekmesi de isaretleniyor; yoksa
+     oyuncu Ocak ekranindayken birikenin farkina varmiyor. */
+  ejderhaNoktasi.hidden = bekleyenYumurta(oyuncu) === 0;
 }
 
 /* ---------- ORTAK ---------- */
@@ -1324,6 +1431,11 @@ function tazele() {
   appetiteEl.textContent = d.pencereBas
     ? t('appetite', { time: sureMetni(d.pencereBas + BESLEME_PENCERESI - simdi()) })
     : t('appetiteFresh');
+
+  /* Tur satiri degismiyor, sadece bosta sayaci iliyor. Sayac bir
+     yumurta daha dustugunde rozetin de guncellenmesi gerekiyor. */
+  if (bostaIsle(oyuncu, simdi())) { kaydet(); gorevNoktasi(); }
+  bostaCiz(d, yuvaAcikMi(oyuncu, d));
 }
 
 /* Sure birimleri de dile bagli: arayuz Ingilizce'yken "3sa 56dk" gorunmesin. */
@@ -1350,6 +1462,44 @@ function odulUcur(metin, buyuk = false) {
   el.textContent = metin;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), 1600);
+}
+
+/* ONAY KUTUSU
+   Oyunda geri alinamayan tek pahali islem yuva acmak (2.000 yildiza
+   kadar). Oncesinde hicbir onay yoktu - serit uzerinde yanlis karta
+   dokunmak butun birikimi goturuyordu. Kutu ayni zamanda yuvanin ne
+   verdigini anlatiyor. */
+let onayKapat = null;
+
+function onayIste({ baslik, satir, not, fiyat, engel = null, tamam }) {
+  onayKapat?.();
+  const yeterli = !engel && oyuncu.stars >= fiyat;
+
+  const kat = document.createElement('div');
+  kat.className = 'onay-kat';
+  kat.innerHTML = `
+    <div class="onay" role="dialog" aria-modal="true">
+      <strong class="onay-baslik">${baslik}</strong>
+      <p class="onay-satir">${satir}</p>
+      <p class="onay-not">${not}</p>
+      <div class="onay-fiyat">
+        <img src="../../assets/currency/star-64.webp" alt="">${bicim(fiyat)}
+      </div>
+      ${engel ? `<p class="onay-engel">${engel}</p>` : ''}
+      <div class="onay-dugmeler">
+        <button class="act-btn onay-vazgec">${engel ? t('close') : t('cancel')}</button>
+        ${engel ? '' : `<button class="act-btn primary onay-tamam"${yeterli ? '' : ' disabled'}>${
+          yeterli ? t('slotUnlock') : t('needStars')}</button>`}
+      </div>
+    </div>`;
+
+  const kapat = () => { kat.remove(); onayKapat = null; };
+  onayKapat = kapat;
+  kat.addEventListener('click', (e) => { if (e.target === kat) kapat(); });
+  kat.querySelector('.onay-vazgec').addEventListener('click', () => { cal('tap'); kapat(); });
+  if (yeterli) kat.querySelector('.onay-tamam')?.addEventListener('click', () => { kapat(); tamam(); });
+  document.body.appendChild(kat);
+  cal('tap');
 }
 
 function uyar(metin) {
