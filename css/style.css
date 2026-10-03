@@ -1250,21 +1250,25 @@ body.hub::before {
   transition: transform 4.2s cubic-bezier(0.12, 0.68, 0.15, 1);
 }
 
-/* Isaretci cerceveye degil CARKA gore duruyor: cerceve carkin disinda
-   kalin bir halka, oraya oturtulan ok dilimlerden kopuk gorunuyordu. */
+/* Kazanan dilimi gosteren isaretci. Duz beyaz bir ucgendi; cercevenin
+   ve carkin antik diline hicbir sey katmiyordu. Artik envanterdeki
+   dorduncu cark tasariminin tepesindeki ejderha kafasi - ayni elden
+   cikma, ayni altin, ve zaten asagi bakiyor.
+
+   Konum cerceveye degil CARKA gore: cerceve carkin disinda kalin bir
+   halka, oraya oturtulan bir isaretci dilimlerden kopuk duruyordu.
+   Kafanin burnu carkin kenarina birkac piksel giriyor ki hangi dilimi
+   gosterdigi tartismasiz olsun. */
 .wheel-pointer {
   position: absolute;
-  top: calc(50% - 50% * var(--cark-delik) - 9px);
-  z-index: 4;
+  top: calc(50% - 50% * var(--cark-delik) - 26px);
   left: 50%;
-  width: 0;
-  height: 0;
+  width: 26px;
+  height: 35px;
   transform: translateX(-50%);
-  border-left: 9px solid transparent;
-  border-right: 9px solid transparent;
-  border-top: 18px solid #fff;
-  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.55));
-  z-index: 3;
+  background: url("../assets/wheel/pointer.webp") center / contain no-repeat;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.65));
+  z-index: 4;
 }
 
 /* Cark goze - artik tiklanmiyor, sadece $MH logosunu tasiyor.

@@ -8,6 +8,7 @@ duruyor ve kenarlarını örtüyor.
 |---|---|---|---|
 | `stone.webp` | Taş halka, mor rünler, dört altın mızrak | **0.547** | Hub'ın günlük çarkında kullanılıyor |
 | `energy.webp` | Enerji dilimindeki altın pil simgesi | — | Çark diliminde kullanılıyor |
+| `pointer.webp` | Kazanan dilimi gösteren ejderha kafası | — | İşaretçi olarak kullanılıyor |
 | `_alternatifler/rune.webp` | Dökme altın halka, kazınmış rünler, bronz perçinler | **0.590** | Envanterde bekliyor |
 
 `rune.webp` bilerek duruyor: Ejderha Adası'na ileride bir çark eklenirse
@@ -38,3 +39,14 @@ hiçbir yeri elle ayarlamak gerekmiyor.
 1. Ortası tamamen **saydam** olmalı (düz siyah değil — PNG/WebP alfa).
 2. Deliğin merkezi görüntünün merkezinde olmalı.
 3. Delik oranını ölç ve yukarıdaki tabloya yaz.
+
+## İşaretçi
+
+`pointer.webp`, **4 numaralı çark tasarımının** tepesindeki ejderha
+kafasından kesildi — o tasarım seçilmedi ama kafası işe yaradı. Zaten
+aşağı bakıyor, yani çevirmeye gerek kalmadı.
+
+Kesim tam temiz değil: kafa halkanın bandının üstünde duruyordu ve bandın
+altın kenarı kafayla aynı tonda, otomatik ayırma ikisini ayıramadı. Alt
+yanlarda birkaç piksel bant kırıntısı kaldı. Ekranda 26–35px'te
+görünmüyorlar, siluete karışıyorlar — büyütülecekse yeniden kesilmeli.
