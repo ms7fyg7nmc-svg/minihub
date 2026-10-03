@@ -458,10 +458,19 @@ body.hub::before {
 .game-tile::before {
   content: '';
   position: absolute;
-  inset: -34% -24% 46%;
+  /* Katman karenin TAMAMINI kapliyor ve sadece degradenin kendisi
+     soluyor. Eskiden `inset: -34% -24% 46%` yaziliydi: alt kenar
+     karenin %46'sinda, yani tam oyun isminin hizasinda bitiyordu.
+     Degrade yumusak soluyordu ama KUTU duz kesiyordu - renk ismin
+     arkasina gelince birden bicak gibi bitiyor gorunuyordu.
+     Artik elips bicimli bir degrade ikonun arkasindan baslayip
+     isme varmadan kendiliginden sonuyor, hicbir yerde kenar yok. */
+  inset: 0;
   z-index: -1;
-  background: radial-gradient(circle at 50% 62%, var(--card-accent, transparent), transparent 68%);
-  opacity: 0.32;
+  background: radial-gradient(74% 58% at 50% 24%,
+                              var(--card-accent, transparent),
+                              transparent 72%);
+  opacity: 0.34;
   pointer-events: none;
 }
 
@@ -1419,9 +1428,15 @@ body.hub::before {
   .tile-icon .game-img.spin { animation: none; }
 }
 
+/* Amiral gemisinde amblemin arkasinda KUTU YOK - oteki sekiz karede
+   ikonu tasiyan 46px'lik renkli blok burada yerini gorsele birakiyor.
+   O yuzden amblem kutu kadar olunca yanlarindaki dolu bloklara gore
+   kucuk ve ortada kaybolmus duruyordu. Kutudan tasacak kadar buyuk:
+   yerlesim yuksekligi 46px'lik kutuya bagli kaldigi icin izgaranin ilk
+   satiri otekilerden uzamiyor, sadece cizim buyuyor. */
 .tile-icon .game-img {
-   width: 46px;
-   height: 46px;
+   width: 64px;
+   height: 64px;
    object-fit: contain;
    filter: drop-shadow(0 2px 7px rgba(0, 0, 0, 0.65));
 }
