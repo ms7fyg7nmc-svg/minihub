@@ -641,6 +641,36 @@ body.hub::before {
 }
 .game-tile.is-hero .tile-foot { display: none; }
 
+/* Oyun adi bu karede yazi degil, kendi logosu. Sistem fontu altin
+   amblemin altinda sade kaliyordu; logo karenin geri kalaniyla ayni
+   dilde konusuyor.
+
+   Olculer karenin 123px'ine gore paylasildi, cunku bu kare oteki sekizle
+   AYNI boyda kalmali:
+     2 kenarlik + 10 ust + 58 amblem + (-5 + 49) logo + 9 alt = 123
+   Logonun ust payi EKSI: dosyada harflerin etrafinda parlama icin seffaf
+   bir pay var (ustte ~5px), o paya girildigi icin harfler amblemle
+   carpismiyor, sadece aradaki olu bosluk kapaniyor. Boylece logo 90px
+   genisliginde kalabiliyor ve amblem 58px'te duruyor - ikisini de
+   kuculmek zorunda birakmadan. */
+.game-tile.is-hero { padding-top: 10px; gap: 0; }
+.game-tile.is-hero .tile-icon { width: 58px; height: 58px; }
+
+.tile-name.is-logo {
+  min-height: 0;
+  display: block;
+  line-height: 0;
+}
+.tile-logo {
+  display: block;
+  width: 94%;
+  height: auto;
+  margin: -5px auto 0;
+  /* Logonun kendi parlamasi var ama pul dokusu acik yerlerinde onunla
+     yarisiyor; ince bir koyu golge harflerin altini her yerde ayiriyor. */
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.75));
+}
+
 
 /* --- Alt satir: surum (ve ana ekranda dil sectirici) --- */
 

@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v196';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v197';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi, bakimListesi,
-} from './store.js?v196';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v196';
+} from './store.js?v197';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v197';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -130,6 +130,11 @@ function gameList() {
          gradient: 'linear-gradient(145deg, #c79cf7 0%, #9a63e4 48%, #6b3bc4 100%)',
          accent: '#a978e8',
          hero: true,
+         /* Oyun adi bu karede yazi degil, kendi logosu (bkz. tile-logo).
+            Adin cevirisi duruyor ve img'nin alt metni olarak kullaniliyor;
+            gorselin kendisi dort dilde de Ingilizce - Coin Drop gibi marka
+            adi sayiliyor. */
+         logo: 'assets/dragon-tile/logo.webp',
          noBest: true,
          ready: true,
       },
@@ -329,7 +334,18 @@ gameList().forEach((game, index) => {
    `;
    const ikon = tile.querySelector('.tile-icon');
    ikon.innerHTML = game.icon;
-   tile.querySelector('.tile-name').textContent = game.title;
+   const isim = tile.querySelector('.tile-name');
+   if (game.logo) {
+      const im = document.createElement('img');
+      im.className = 'tile-logo';
+      im.src = game.logo;
+      im.alt = game.title;          /* ekran okuyucu cevrilmis adi duyar */
+      im.width = 256; im.height = 140;
+      isim.appendChild(im);
+      isim.classList.add('is-logo');
+   } else {
+      isim.textContent = game.title;
+   }
    /* Ekran okuyucu ve bakim durumu icin aciklama basligin icinde kalsin */
    tile.title = game.desc;
 
