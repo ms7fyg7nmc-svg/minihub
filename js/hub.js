@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v200';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v201';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi, bakimListesi,
-} from './store.js?v200';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v200';
+} from './store.js?v201';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v201';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -380,7 +380,24 @@ gameList().forEach((game, index) => {
 });
 }
 
-const WHEEL_COLORS = ['#5b8cff', '#4ecb8b', '#f2884b', '#c079f2', '#e2679c', '#3fc7d4', '#8be9ff', '#ffd166'];
+/* CARK PALETI
+   Hub'in sekiz parlak rengi kullaniliyordu (mavi, yesil, turuncu...).
+   Cark antik tas bir halkanin icine girince o palet lunapark gibi
+   duruyordu - cerceveyle hicbir akrabaligi yoktu.
+
+   Renkler artik cercevenin KENDISINDEN turuyor: stone.webp'in doygun
+   pikselleri olculdugunde iki aile cikiyor, eskimis altin (#9e7948,
+   vurgularin %65'i) ve run isigi moru (#833790, %23). Dilimler bu iki
+   aileden.
+
+   Renk SIRAYA degil ODULE bagli: ozel iki dilim (enerji ve en buyuk
+   ikramiye) kendi rengini aliyor, geri kalanlar iki mor tonu arasinda
+   siralaniyor. Boylece odul listesi degisince renkler kaymiyor. */
+const WHEEL_ZEMIN = ['#2a1738', '#3b2550'];   /* sirayla degisen taban */
+const WHEEL_ENERJI = '#5e2472';               /* run isigi moru */
+const WHEEL_BUYUK = '#7c5520';                /* en buyuk odul: eskimis altin */
+const WHEEL_AYIRAC = 'rgba(176, 138, 84, 0.8)';
+const WHEEL_YAZI = '#f6e7c8';
 
 let dailyPrizes = null;
 let wheelRotation = 0;
@@ -431,14 +448,21 @@ function buildWheel(prizes) {
    const segAngle = 360 / n;
    const cx = 100, cy = 100, r = 94, labelR = r * 0.76;
 
+   /* En buyuk jeton odulu altin dilimi aliyor. Enerji disarida: o kendi
+      rengini zaten tasiyor ve miktari (3) jetonlarla kiyaslanamaz. */
+   const enBuyuk = Math.max(...prizes.filter((p) => p.tur !== 'enerji').map((p) => p.miktar));
+   let tabanSira = 0;
+
    let html = '';
    prizes.forEach((prize, i) => {
       const start = polar(cx, cy, r, i * segAngle);
       const end = polar(cx, cy, r, (i + 1) * segAngle);
       const mid = i * segAngle + segAngle / 2;
       const label = polar(cx, cy, labelR, mid);
-      const color = WHEEL_COLORS[i % WHEEL_COLORS.length];
       const isEnergy = prize.tur === 'enerji';
+      const color = isEnergy ? WHEEL_ENERJI
+                  : (prize.miktar === enBuyuk ? WHEEL_BUYUK
+                  : WHEEL_ZEMIN[tabanSira++ % WHEEL_ZEMIN.length]);
       const text = isEnergy ? `${SPIN_ENERGY_REWARD}x` : prize.miktar;
 
       /* Enerji dilimi ⚡ emojisi tasiyordu - her telefonda baska bir
@@ -453,9 +477,9 @@ function buildWheel(prizes) {
       html += `
       <path d="M${cx},${cy} L${start.x.toFixed(2)},${start.y.toFixed(2)}
                A${r},${r} 0 0,1 ${end.x.toFixed(2)},${end.y.toFixed(2)} Z"
-            fill="${color}" stroke="rgba(0,0,0,.28)" stroke-width="1.5"/>
+            fill="${color}" stroke="${WHEEL_AYIRAC}" stroke-width="1"/>
       <g transform="translate(${label.x.toFixed(2)} ${label.y.toFixed(2)}) rotate(${mid.toFixed(1)})">
-        <text text-anchor="middle" dominant-baseline="middle" y="-4" fill="#fff" font-weight="800"
+        <text text-anchor="middle" dominant-baseline="middle" y="-4" fill="${WHEEL_YAZI}" font-weight="800"
               font-family="${WHEEL_FONT}" font-size="15"
               style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))">${text}</text>${simge}
       </g>`;
