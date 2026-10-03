@@ -15,11 +15,23 @@ const ENERGY_REGEN_MS = 30 * 60 * 1000;
 const ENERGY_PER_EARN = 1;
 const EMPTY_ENERGY_CARPAN = 0.25;
 
-const STREAK_REWARDS = [100, 150, 200, 300, 400, 500, 1000];
+const STREAK_REWARDS = [200, 300, 400, 600, 800, 1000, 2000];
 const STREAK_MIN_GAP_MS = 24 * 3600 * 1000;
 const STREAK_RESET_GAP_MS = 48 * 3600 * 1000;
 
 const SPIN_MIN_GAP_MS = 24 * 3600 * 1000;
+/* Carkin enerji odulu: UC BIRIM enerji (tam depo degil). */
+const SPIN_ENERGY_REWARD = 3;
+
+/* Enerji normalde MAX_ENERGY'de durur ve rejenerasyon oraya kadar doldurur.
+   Ama ODUL tavani birkac birim asabiliyor. Sebebi su: deposu doluyken
+   carki ceviren oyuncu enerji kazanirsa hicbir sey almamis olurdu -
+   "3 enerji kazandin" deyip 0 vermek kotu bir odul. Uc birimlik pay
+   birakiliyor, boylece odul her zaman tam olarak odeniyor.
+     MAX_ENERGY       rejenerasyonun doldurdugu yer (arayuzdeki "x/12"nin paydasi)
+     ENERGY_HARD_CAP  deponun tasiyabilecegi mutlak ust sinir
+   Sert tavan olmasaydi carki her gun ceviren biri enerji biriktirirdi. */
+const ENERGY_HARD_CAP = MAX_ENERGY + SPIN_ENERGY_REWARD;
 
 const REFERRAL_SIGNUP_BONUS = 500;
 
@@ -54,7 +66,7 @@ const SPIN_PRIZES = [
   { tur: 'coin',   miktar: 250,         agirlik: 150 },
   { tur: 'coin',   miktar: 375,         agirlik: 80  },
   { tur: 'coin',   miktar: 500,         agirlik: 45  },
-  { tur: 'enerji', miktar: MAX_ENERGY,  agirlik: 10  },
+  { tur: 'enerji', miktar: SPIN_ENERGY_REWARD, agirlik: 10 },
   { tur: 'coin',   miktar: 750,         agirlik: 5   },
 ];
 
@@ -462,14 +474,19 @@ function streakDurumu(row, now) {
 
 function enerjiTazele(row, now) {
   const son = row.energy_at || now;
-  /* Kayittaki enerji tavandan BUYUK olabilir: tavan dusuruldugunde eski
-     oyuncularin deposunda hala eski miktar duruyor. Rejenerasyon
-     beklemeden burada kirpiliyor, yoksa arayuzde "20/12" goruluyordu. */
-  const mevcut = Math.min(MAX_ENERGY, row.energy);
+  /* Kirpma SERT tavana gore, yumusak olana gore degil. Eskiden burada
+     MAX_ENERGY'ye kirpiliyordu; o haliyle carkin uc depoluk odulu bir
+     sonraki okumada sessizce 12'ye dusurulur, oyuncu kazandigi seyi
+     hic goremezdi. Tavani asan enerji artik duruyor ve harcanabiliyor;
+     kirpma yalnizca akil disi degerlere karsi (ornegin eski bir
+     surumden kalan) son bir emniyet. */
+  const mevcut = Math.min(ENERGY_HARD_CAP, row.energy);
   const kirpildi = mevcut !== row.energy;
   const kazanilan = Math.floor((now - son) / ENERGY_REGEN_MS);
   if (kazanilan <= 0) return { energy: mevcut, energyAt: son, degisti: !row.energy_at || kirpildi };
-  const yeni = Math.min(MAX_ENERGY, mevcut + kazanilan);
+  /* Rejenerasyon YUMUSAK tavanda duruyor: depo oduller sayesinde 12'nin
+     ustundeyse zaman gecmesi onu daha da doldurmuyor. */
+  const yeni = mevcut >= MAX_ENERGY ? mevcut : Math.min(MAX_ENERGY, mevcut + kazanilan);
   const yeniAt = yeni >= MAX_ENERGY ? now : son + kazanilan * ENERGY_REGEN_MS;
   return { energy: yeni, energyAt: yeniAt, degisti: true };
 }
@@ -870,12 +887,16 @@ async function handleSpin(env, playerId) {
     const index = carkCek();
     const odul = SPIN_PRIZES[index];
 
+    /* Enerji odulu EKLENIYOR, atanmiyor. Eskiden `energy = MAX_ENERGY`
+       yaziliyordu, yani odul "deposunu doldur" demekti; artik "uc birim
+       ekle". MIN ile sert tavani asmiyor. */
     const sql = odul.tur === 'enerji'
-      ? 'UPDATE players SET energy = ?, last_spin_at = ?, updated_at = ? WHERE id = ? AND last_spin_at = ?'
+      ? 'UPDATE players SET energy = MIN(?, energy + ?), last_spin_at = ?, updated_at = ? WHERE id = ? AND last_spin_at = ?'
       : 'UPDATE players SET points = points + ?, last_spin_at = ?, updated_at = ? WHERE id = ? AND last_spin_at = ?';
-    const deger = odul.tur === 'enerji' ? MAX_ENERGY : odul.miktar;
 
-    const res = await env.DB.prepare(sql).bind(deger, now, now, playerId, row.last_spin_at).run();
+    const res = odul.tur === 'enerji'
+      ? await env.DB.prepare(sql).bind(ENERGY_HARD_CAP, odul.miktar, now, now, playerId, row.last_spin_at).run()
+      : await env.DB.prepare(sql).bind(odul.miktar, now, now, playerId, row.last_spin_at).run();
     if (res.meta.changes === 0) continue;
 
     const player = await env.DB.prepare('SELECT points, energy FROM players WHERE id = ?').bind(playerId).first();

@@ -2,9 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="198">
+  <meta name="surum" content="199">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MINI HUB GAMES</title>
+  <!-- Cark rakamlari icin (bkz. js/hub.js WHEEL_FONT). Ejderha Adasi
+       zaten ayni fontu kullaniyor; hub ile oyun ayni yazi diliyle
+       konusuyor ve ikinci bir font indirilmiyor. Yalnizca rakam agirligi
+       yukleniyor - hub'in geri kalani sistem fontunda kaliyor. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap">
+
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <!-- Hub afisini SEC. Uc tasarim var (assets/hero) ve her acilista biri
@@ -39,7 +47,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v198">
+  <link rel="stylesheet" href="css/style.css?v199">
 </head>
 <body class="hub">
   <div class="app">
@@ -224,6 +232,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v198"></script>
+  <script type="module" src="js/hub.js?v199"></script>
 </body>
 </html>

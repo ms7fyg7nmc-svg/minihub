@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v198';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v199';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi, bakimListesi,
-} from './store.js?v198';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v198';
+} from './store.js?v199';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v199';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -413,7 +413,16 @@ function polar(cx, cy, r, angleDeg) {
    return { x: cx + r * Math.sin(a), y: cy - r * Math.cos(a) };
 }
 
-const WHEEL_FONT = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+/* Cark rakamlari sistem fontundaydi ve arayuzun geri kalaniyla ayni
+   goruntugu icin bir odul carkindan cok bir form alani gibi duruyordu.
+   Cinzel'i Ejderha Adasi zaten kullaniyor (bkz. games/dragon/dragon.css
+   --baslik), yani yeni bir yuk degil ve cark ejderha temasina oturuyor. */
+const WHEEL_FONT = "'Cinzel', 'Times New Roman', serif";
+
+/* bot/worker.js'teki SPIN_ENERGY_REWARD ile ayni - cark diliminde yazan
+   "3x" bu, yani UC BIRIM enerji. Gercek odul her zaman sunucuda
+   belirleniyor; buradaki sayi yalnizca dilimin etiketi. */
+const SPIN_ENERGY_REWARD = 3;
 
 function buildWheel(prizes) {
    const svg = document.getElementById('wheel');
@@ -430,11 +439,14 @@ function buildWheel(prizes) {
       const label = polar(cx, cy, labelR, mid);
       const color = WHEEL_COLORS[i % WHEEL_COLORS.length];
       const isEnergy = prize.tur === 'enerji';
-      const text = isEnergy ? '1x' : prize.miktar;
+      const text = isEnergy ? `${SPIN_ENERGY_REWARD}x` : prize.miktar;
 
+      /* Enerji dilimi ⚡ emojisi tasiyordu - her telefonda baska bir
+         cizim, hub'in geri kalanindaki altin pille hicbir ilgisi yok.
+         Artik gercek enerji ikonunun kendisi. */
       const simge = isEnergy
-         ? `<text text-anchor="middle" dominant-baseline="middle" y="13" font-size="13"
-                  style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))">⚡</text>`
+         ? `<image href="assets/wheel/energy.webp" x="-5" y="4" width="10" height="16"
+                   style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))"/>`
          : `<image href="assets/coin.png" x="-7" y="4" width="14" height="14"
                    style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))"/>`;
 

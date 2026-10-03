@@ -1203,36 +1203,59 @@ body.hub::before {
 /* Baslik carkin ustune binmesin: ibre yukari tastigi icin ekstra pay */
 .daily-section.is-orta h3 { margin-bottom: 22px; }
 
+/* Cark artik bir CERCEVENIN icinde oturuyor: taslardan orulmus, rune
+   kazinmis, dort altin mizrakli bir halka (assets/wheel/stone.webp).
+   Eskiden yerinde conic-gradient ile cizilmis 7px'lik duz bir altin
+   serit vardi.
+
+   Olculer gorselin kendisinden geliyor: cerceve dosyasinin ortasindaki
+   bosluk, dosya genisliginin %54,7'si. --cark-delik bunu tutuyor ve
+   carkin capi buradan hesaplaniyor; cerceveyi degistirirsek (ornegin
+   envanterdeki rune.webp'e) sadece bu iki satir degisir.
+
+   Dis olcu 220'den 300'e cikti, cunku cerceve carkin disina degil
+   ETRAFINA oturuyor: ayni dis olcuyle devam etseydik cark 120px'e
+   dusup rakamlar okunmaz olurdu. */
 .wheel-wrap {
+  --cark-cerceve: url("../assets/wheel/stone.webp");
+  --cark-delik: 0.547;
+
   position: relative;
-  width: 220px;
+  width: 300px;
   max-width: 100%;
   aspect-ratio: 1;
-  margin: 4px auto 18px;
+  margin: 2px auto 14px;
+  display: grid;
+  place-items: center;
 }
 
 .wheel-wrap::before {
   content: '';
   position: absolute;
-  inset: -7px;
-  border-radius: 50%;
-  background: conic-gradient(from 0deg, #ffe28a, var(--gold), #b8860b, var(--gold), #ffe28a);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45), inset 0 0 12px rgba(0, 0, 0, 0.35);
+  inset: 0;
+  background: var(--cark-cerceve) center / contain no-repeat;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+  z-index: 2;              /* cerceve carkin USTUNDE: kenarlari ortuyor */
 }
 
 .wheel {
   position: relative;
-  width: 100%;
-  height: 100%;
+  z-index: 1;
+  width: calc(100% * var(--cark-delik));
+  height: calc(100% * var(--cark-delik));
   display: block;
   border-radius: 50%;
   box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.22);
   transition: transform 4.2s cubic-bezier(0.12, 0.68, 0.15, 1);
 }
 
+/* Isaretci cerceveye degil CARKA gore duruyor: cerceve carkin disinda
+   kalin bir halka, oraya oturtulan ok dilimlerden kopuk gorunuyordu. */
 .wheel-pointer {
   position: absolute;
-  top: -13px;
+  top: calc(50% - 50% * var(--cark-delik) - 9px);
+  z-index: 4;
   left: 50%;
   width: 0;
   height: 0;
@@ -1251,15 +1274,19 @@ body.hub::before {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 70px;
-  height: 70px;
+  /* Gobek carkin CAPINA bagli. Sabit 70px'ti; cark cerceveye girip
+     164px'e dusunce gobek carkin %43'unu kapliyor ve rakamlara yer
+     birakmiyordu. */
+  width: calc(100% * var(--cark-delik) * 0.31);
+  height: calc(100% * var(--cark-delik) * 0.31);
   border-radius: 50%;
   overflow: hidden;
   display: grid;
   place-items: center;
   background: linear-gradient(150deg, #ffe28a, var(--gold));
   box-shadow: 0 6px 14px rgba(245, 185, 66, 0.4);
-  z-index: 2;
+  /* Cerceve z-index 2'de; gobek onun ustunde kalmali. */
+  z-index: 3;
 }
 
 .wheel-hub-coin {

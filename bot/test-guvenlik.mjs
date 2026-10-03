@@ -93,9 +93,13 @@ let r = await api(env, 'sync', { initData, points: 0, state: {} });
 check(`sync: energy ${MAX_ENERGY}`, r.energy === MAX_ENERGY, `-> ${r.energy}`);
 check('sync: streak var', !!r.streak);
 check('sync: spin var', !!r.spin);
-check('odul merdiveni sunucudan geliyor (5x)',
-      JSON.stringify(r.streak.rewards) === JSON.stringify([100,150,200,300,400,500,1000]),
-      `-> ${JSON.stringify(r.streak.rewards)}`);
+/* Sayilari burada SABIT yazmiyoruz; worker.js'ten okuyoruz. Eskiden
+   [100,150,...] elle yaziliydi ve odulleri iki katina cikarmak testi
+   kirdi - oysa kirilmasi gereken bir sey yoktu. */
+const STREAK_BEKLENEN = JSON.parse('[' + WORKER_KAYNAK.match(/const STREAK_REWARDS = \[([^\]]+)\]/)[1] + ']');
+check('odul merdiveni sunucudan geliyor',
+      JSON.stringify(r.streak.rewards) === JSON.stringify(STREAK_BEKLENEN),
+      `-> ${JSON.stringify(r.streak.rewards)} vs ${JSON.stringify(STREAK_BEKLENEN)}`);
 
 r = await api(env, 'points/earn', { initData, opId: 'atk-1', amount: 999999999 });
 check('dev miktar istek basi tavana kirpildi (10.000)', r.credited === 10000, `-> ${r.credited}`);
@@ -187,9 +191,68 @@ const oncekiBakiye = r.total;
 r = await api(env5, 'points/earn', { initData: id5, opId: 'n-bos', amount: 100 });
 check('ayni opId tekrar uygulanmadi', r.total === oncekiBakiye && r.credited === 0, `-> ${JSON.stringify(r)}`);
 r = await api(env5, 'streak/claim', { initData: id5 });
-check('gunluk seri hala calisiyor (gun 1, 100 jeton)', r.ok && r.streak === 1 && r.reward === 100, `-> ${JSON.stringify(r)}`);
+check(`gunluk seri hala calisiyor (gun 1, ${STREAK_BEKLENEN[0]} jeton)`,
+      r.ok && r.streak === 1 && r.reward === STREAK_BEKLENEN[0], `-> ${JSON.stringify(r)}`);
 r = await api(env5, 'spin', { initData: id5 });
 check('gunluk cark hala calisiyor', r.ok === true, `-> ${JSON.stringify(r)}`);
+
+/* CARKIN ENERJI ODULU: UC BIRIM, VE DEPO DOLUYKEN DE ODENIYOR.
+   Bu test iki hatanin tekrarina karsi. Birincisi: enerji okunurken
+   MAX_ENERGY'ye kirpiliyordu, yani tavan ustu odul bir sonraki okumada
+   sessizce siliniyordu. Ikincisi: odul "energy = X" olarak ATANIYORDU,
+   yani eklemek yerine depoyu sabit bir degere kuruyordu. */
+const SPIN_ODUL = Number(WORKER_KAYNAK.match(/const SPIN_ENERGY_REWARD = (\d+)/)[1]);
+const SERT_TAVAN = MAX_ENERGY + SPIN_ODUL;
+
+const DBe = makeDb(); const enve = { DB: DBe, BOT_TOKEN, BAKIM: '' }; const ide = signedInitData(4242);
+await api(enve, 'sync', { initData: ide, points: 0, state: {} });
+DBe.prepare('UPDATE players SET energy = ?, energy_at = ? WHERE id = ?')
+  .bind(SERT_TAVAN, Date.now(), '4242').run();
+
+r = await api(enve, 'sync', { initData: ide, points: 0, state: {} });
+check(`cark odulu: tavan ustu enerji okunurken kirpilmiyor (${SERT_TAVAN})`,
+      r.energy === SERT_TAVAN, `-> ${r.energy}`);
+
+/* Zaman gecmesi tavan ustu depoyu daha da doldurmamali. */
+DBe.prepare('UPDATE players SET energy_at = ? WHERE id = ?')
+  .bind(Date.now() - 48 * 3600 * 1000, '4242').run();
+r = await api(enve, 'sync', { initData: ide, points: 0, state: {} });
+check('cark odulu: rejenerasyon tavan ustu depoyu daha da doldurmuyor',
+      r.energy === SERT_TAVAN, `-> ${r.energy}`);
+
+/* Odulun GERCEKTEN eklendigini cevirerek kanitliyoruz. Cark rastgele
+   seciyor, o yuzden Math.random'i enerji dilimine denk gelecek sekilde
+   sabitliyoruz: agirliklarin toplami 1000 ve enerji dilimi [985,995)
+   araligina dusuyor. */
+const gercekRandom = Math.random;
+Math.random = () => 0.99;
+try {
+  DBe.prepare('UPDATE players SET energy = ?, energy_at = ?, last_spin_at = 0 WHERE id = ?')
+    .bind(5, Date.now(), '4242').run();
+  r = await api(enve, 'spin', { initData: ide });
+  check(`cark odulu: enerji dilimi ${SPIN_ODUL} birim EKLIYOR (5 -> ${5 + SPIN_ODUL})`,
+        r.ok && r.prize?.tur === 'enerji' && r.energy === 5 + SPIN_ODUL,
+        `-> ${JSON.stringify({ tur: r.prize?.tur, energy: r.energy })}`);
+
+  /* Deposu doluyken de odul kayboluyor olmamali - tam tavana kadar
+     cikabilmeli, yoksa "3 enerji kazandin" deyip 0 vermis oluruz. */
+  DBe.prepare('UPDATE players SET energy = ?, energy_at = ?, last_spin_at = 0 WHERE id = ?')
+    .bind(MAX_ENERGY, Date.now(), '4242').run();
+  r = await api(enve, 'spin', { initData: ide });
+  check(`cark odulu: depo doluyken de odeniyor (${MAX_ENERGY} -> ${SERT_TAVAN})`,
+        r.ok && r.energy === SERT_TAVAN, `-> ${r.energy}`);
+
+  /* Ama sert tavani asamamali. */
+  DBe.prepare('UPDATE players SET energy = ?, energy_at = ?, last_spin_at = 0 WHERE id = ?')
+    .bind(SERT_TAVAN, Date.now(), '4242').run();
+  r = await api(enve, 'spin', { initData: ide });
+  check('cark odulu: sert tavani asmiyor', r.ok && r.energy === SERT_TAVAN, `-> ${r.energy}`);
+} finally {
+  Math.random = gercekRandom;
+}
+
+check(`cark odulu: sert tavanin ustu kirpiliyor (9999 -> ${SERT_TAVAN})`,
+      r.energy === SERT_TAVAN, `-> ${r.energy}`);
 r = await api(env5, 'points/spend', { initData: id5, opId: 'harca-1', amount: 50 });
 check('harcama hala calisiyor', r.ok === true, `-> ${JSON.stringify(r)}`);
 r = await api(env5, 'points/spend', { initData: id5, opId: 'harca-2', amount: 99999999 });
