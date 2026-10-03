@@ -339,7 +339,7 @@ body.hub::before {
    Yazi DOM'da kaldigi icin dort dile de cevriliyor; afisin kendisinde
    tek bir harf yok.
 
-   Uc alternatif daha assets/hero icinde (isik, kart, ufuk); degistirmek
+   Dorduncu tasarim assets/hero/_alternatifler icinde (ufuk); degistirmek
    asagidaki tek satir. */
 .hero {
   position: relative;
@@ -1211,7 +1211,7 @@ body.hub::before {
    Olculer gorselin kendisinden geliyor: cerceve dosyasinin ortasindaki
    bosluk, dosya genisliginin %54,7'si. --cark-delik bunu tutuyor ve
    carkin capi buradan hesaplaniyor; cerceveyi degistirirsek (ornegin
-   envanterdeki rune.webp'e) sadece bu iki satir degisir.
+   assets/wheel/_alternatifler/rune.webp'e) sadece bu iki satir degisir.
 
    Dis olcu 220'den 300'e cikti, cunku cerceve carkin disina degil
    ETRAFINA oturuyor: ayni dis olcuyle devam etseydik cark 120px'e

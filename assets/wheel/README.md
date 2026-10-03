@@ -7,12 +7,12 @@ duruyor ve kenarlarını örtüyor.
 | Dosya | Tarz | Delik oranı | Durum |
 |---|---|---|---|
 | `stone.webp` | Taş halka, mor rünler, dört altın mızrak | **0.547** | Hub'ın günlük çarkında kullanılıyor |
-| `rune.webp` | Dökme altın halka, kazınmış rünler, bronz perçinler | **0.590** | Envanterde, henüz kullanılmıyor |
 | `energy.webp` | Enerji dilimindeki altın pil simgesi | — | Çark diliminde kullanılıyor |
+| `_alternatifler/rune.webp` | Dökme altın halka, kazınmış rünler, bronz perçinler | **0.590** | Envanterde bekliyor |
 
 `rune.webp` bilerek duruyor: Ejderha Adası'na ileride bir çark eklenirse
 oyunun kendi çarkı o olacak. Hub ile oyun ayrı çerçeve taşısın diye ikisi
-birden üretildi. **Silme.**
+birden üretildi. Envanter kuralı için bkz. `assets/README.md`. **Silme.**
 
 ## Delik oranı ne demek
 
