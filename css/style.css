@@ -613,13 +613,20 @@ body.hub::before {
   opacity: 1;
   z-index: -1;
 }
-/* Kutu oteki sekiz kareyle AYNI 46px - yoksa amblem birkac piksel
-   asagi kayiyor ve ilk satirdaki uc isim ayni hizada durmuyordu.
-   Amblemin kendisi kutudan tasacak kadar buyuk (bkz. .tile-icon .game-img). */
+/* Amblem kutusu burada 64px, oteki sekiz karede 46px. Bir ara amblem
+   46px'lik kutunun ICINDE 64px yapilip tasmaya birakilmisti; tarayici
+   kutusundan buyuk bir izgara ogesini ORTALAMIYOR, sol kenara yaslayip
+   sadece saga tasiriyor (tasan icerik erisilemez kalmasin diye) - amblem
+   tam 9px saga kaymis gorunuyordu. Kutuyu buyutunce ortalama normal
+   calisiyor.
+
+   Yukseklige etkisi yok: bu karede rekor satiri gizli (noBest), o yuzden
+   ~20px bos pay vardi; kare hala oteki sekiziyle ayni boyda. */
 .game-tile.is-hero .tile-icon {
+  width: 64px;
+  height: 64px;
   background: none;
   box-shadow: none;
-  overflow: visible;
 }
 /* Gorsel her iki temada da koyu - yazi burada temadan bagimsiz beyaz.
    Isim oteki karelerde oldugu gibi ikonun hemen altinda degil, karenin
@@ -1430,13 +1437,12 @@ body.hub::before {
 
 /* Amiral gemisinde amblemin arkasinda KUTU YOK - oteki sekiz karede
    ikonu tasiyan 46px'lik renkli blok burada yerini gorsele birakiyor.
-   O yuzden amblem kutu kadar olunca yanlarindaki dolu bloklara gore
-   kucuk ve ortada kaybolmus duruyordu. Kutudan tasacak kadar buyuk:
-   yerlesim yuksekligi 46px'lik kutuya bagli kaldigi icin izgaranin ilk
-   satiri otekilerden uzamiyor, sadece cizim buyuyor. */
+   O yuzden amblem blok kadar olunca yanindaki dolu bloklara gore kucuk
+   ve pul dokusunun ustunde kaybolmus duruyordu. Kendi kutusuyla birlikte
+   64px (bkz. .game-tile.is-hero .tile-icon). */
 .tile-icon .game-img {
-   width: 64px;
-   height: 64px;
+   width: 100%;
+   height: 100%;
    object-fit: contain;
    filter: drop-shadow(0 2px 7px rgba(0, 0, 0, 0.65));
 }
