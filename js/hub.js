@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v197';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v198';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi, bakimListesi,
-} from './store.js?v197';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v197';
+} from './store.js?v198';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v198';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -13,21 +13,21 @@ const ADSGRAM_BLOCK_ID = '43308';
 const BOT_LINK = '';
 const BOT_USERNAME = 'minihubgames_bot';
 
-/* bot/worker.js'teki REFERRAL_SIGNUP_BONUS ve REFERRAL_LEVEL_MILESTONES ile
-   ayni degerler - yalnizca afis susu icin, gercek odul her zaman sunucudan
-   gelir. Ikisi ayrisirsa test-guvenlik.mjs "referral: banner sunucuyla ayni"
-   testi yakalar. */
+/* bot/worker.js'teki REFERRAL_SIGNUP_BONUS, REFERRAL_RATE_DIRECT ve
+   REFERRAL_RATE_INDIRECT ile ayni degerler - yalnizca ekranda anlatmak
+   icin, gercek odeme her zaman sunucuda hesaplaniyor. Ikisi ayrisirsa
+   test-guvenlik.mjs yakalar. */
 const REFERRAL_SIGNUP_BONUS = 500;
-const REFERRAL_TIERS = [
-   { lv: 5, amt: 750 }, { lv: 15, amt: 1500 }, { lv: 30, amt: 3000 },
-   { lv: 50, amt: 5000 }, { lv: 75, amt: 7500 }, { lv: 99, amt: 10000 },
-];
-const REFERRAL_TOTAL = REFERRAL_SIGNUP_BONUS + REFERRAL_TIERS.reduce((s, x) => s + x.amt, 0);
-// Davet banner'inda "28,250" yerine kisa "28k" - hem daha carpici hem de
-// widget'i tek satirda tutmaya yardimci oluyor (bkz. .daily-card-hint).
-const REFERRAL_TOTAL_KISA = REFERRAL_TOTAL >= 1000
-   ? `${Math.floor(REFERRAL_TOTAL / 1000)}k`
-   : String(REFERRAL_TOTAL);
+const REFERRAL_RATE_DIRECT = 0.15;
+const REFERRAL_RATE_INDIRECT = 0.025;
+
+/* %15 / %2,5 - oran kullanicinin dilinde yazilsin diye Intl kullaniyoruz
+   (Turkce'de ondalik ayraci virgul). */
+function oranYazi(oran) {
+   return new Intl.NumberFormat(locale(), {
+      style: 'percent', maximumFractionDigits: 1,
+   }).format(oran);
+}
 
 const ICONS = {
    '2048': `<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -916,7 +916,7 @@ async function renderFriendsCard() {
    card.hidden = false;
    document.getElementById('friends-earned').textContent = veri.toplamKazanc.toLocaleString(locale());
    document.getElementById('friends-hint').innerHTML =
-      mhHtml(t('hub.friends.upTo', { n: REFERRAL_TOTAL_KISA }));
+      mhHtml(t('hub.friends.cut', { n: oranYazi(REFERRAL_RATE_DIRECT) }));
 }
 
 function wireFriendsPanel() {
@@ -957,31 +957,39 @@ async function acFriendsPanel() {
       ad.className = 'lider-ad';
       ad.textContent = a.ad || t('hub.player');
 
-      const seviye = document.createElement('span');
-      seviye.className = 'lider-puan';
-      seviye.textContent = a.seviye > 0 ? t('hub.friends.level', { n: a.seviye }) : '-';
+      /* Eskiden arkadasin ejderha seviyesi yaziyordu. Odul artik
+         seviyeden gelmedigi icin o sayinin oyuncuya soyledigi bir sey
+         kalmamisti; yerine o arkadasin sana KAZANDIRDIGI $MH var. */
+      const kazanc = document.createElement('span');
+      kazanc.className = 'lider-puan';
+      kazanc.textContent = a.kazandirdi > 0
+         ? `+${a.kazandirdi.toLocaleString(locale())}`
+         : '-';
 
-      satir.append(ad, seviye);
+      satir.append(ad, kazanc);
       liste.appendChild(satir);
    }
 }
 
+/* Eskiden burada bir seviye merdiveni ciziliyordu (Sv.5 +750, Sv.15
+   +1500 ...). Odul artik seviyeye degil arkadasin KAZANCINA bagli, o
+   yuzden merdivenin yerinde iki satir var: dogrudan davet ettiklerin ve
+   onlarin davet ettikleri. */
 function renderReferralLadder() {
    const ladder = document.getElementById('referral-ladder');
    if (!ladder) return;
    ladder.textContent = '';
 
-   const kayitPill = document.createElement('div');
-   kayitPill.className = 'referral-pill is-signup';
-   kayitPill.innerHTML = `<span class="lv">${t('hub.friends.signupLabel')}</span>` +
-      `<span class="amt">+${REFERRAL_SIGNUP_BONUS.toLocaleString(locale())}</span>`;
-   ladder.appendChild(kayitPill);
-
-   REFERRAL_TIERS.forEach((tier, i) => {
+   const satir = (etiket, deger, sinif) => {
       const pill = document.createElement('div');
-      pill.className = 'referral-pill' + (i === REFERRAL_TIERS.length - 1 ? ' is-top' : '');
-      pill.innerHTML = `<span class="lv">${t('hub.friends.level', { n: tier.lv })}</span>` +
-         `<span class="amt">+${tier.amt.toLocaleString(locale())}</span>`;
+      pill.className = `referral-pill ${sinif}`;
+      pill.innerHTML = `<span class="lv"></span><span class="amt"></span>`;
+      pill.querySelector('.lv').textContent = etiket;
+      pill.querySelector('.amt').textContent = deger;
       ladder.appendChild(pill);
-   });
+   };
+
+   satir(t('hub.friends.signupLabel'), `+${REFERRAL_SIGNUP_BONUS.toLocaleString(locale())}`, 'is-signup');
+   satir(t('hub.friends.tier1'), oranYazi(REFERRAL_RATE_DIRECT), '');
+   satir(t('hub.friends.tier2'), oranYazi(REFERRAL_RATE_INDIRECT), 'is-top');
 }

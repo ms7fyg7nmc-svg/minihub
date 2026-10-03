@@ -22,9 +22,30 @@ const STREAK_RESET_GAP_MS = 48 * 3600 * 1000;
 const SPIN_MIN_GAP_MS = 24 * 3600 * 1000;
 
 const REFERRAL_SIGNUP_BONUS = 500;
-const REFERRAL_LEVEL_MILESTONES = [
-  [5, 750], [15, 1500], [30, 3000], [50, 5000], [75, 7500], [99, 10000],
-];
+
+/* DAVET KOMISYONU
+   Davet ettigin biri $MH kazandiginda sen de kazaniyorsun. Iki kademe:
+   dogrudan davet ettiklerinden %15, ONLARIN davet ettiklerinden %2.5.
+
+   Komisyon oyuncunun kazancindan KESILMIYOR - uretiliyor. Arkadasin
+   1000 kazandiysa yine 1000 aliyor, sen ayrica 150 aliyorsun. Kesinti
+   olsaydi davet edilen kisi cezalandirilmis olurdu.
+
+   Zincir ikinci kademede DURUYOR; komisyonun kendisi komisyon
+   uretmiyor, yoksa bir davet agaci yukari dogru sonsuz carpardi. Iki
+   oran da kaynaktaki kazancin uzerinden hesaplaniyor.
+
+   Eskiden bunun yerine arkadasin ejderhasi seviye atladikca odeyen bir
+   esik merdiveni vardi (5/15/30/50/75/99). Ejderhalar artik 99'a
+   cikmadigi icin ustteki basamaklar hic odenmiyordu. */
+const REFERRAL_RATE_DIRECT = 0.15;
+const REFERRAL_RATE_INDIRECT = 0.025;
+
+/* Komisyon davet edenin KENDI gunluk tavanini (DAILY_EARN_CAP) tuketmiyor;
+   kendi oynadigi oyunlardan ayri bir kalem. Ama sinirsiz da degil: cok
+   genis bir davet agaci olan biri gunde yuz binlerce $MH uretebilirdi.
+   Bu tavan dogrudan ve dolayli komisyonun TOPLAMI icin gunluktur. */
+const REFERRAL_DAILY_CAP = 50000;
 
 const SPIN_PRIZES = [
   { tur: 'coin',   miktar: 50,          agirlik: 260 },
@@ -370,19 +391,56 @@ async function applyReferralSignup(env, playerId) {
   await applyDelta(env, playerId, `ref:welcome:${playerId}`, REFERRAL_SIGNUP_BONUS);
 }
 
-async function applyReferralMilestones(env, playerId, state) {
-  const seviye = Math.max(0, Math.min(99, Math.floor(Number(state?.dragons?.[0]?.level)) || 0));
-  if (seviye < REFERRAL_LEVEL_MILESTONES[0][0]) return;
+/* Bir oyuncu kazandiginda zincirde yukari dogru komisyon odiyor.
 
-  const oyuncu = await env.DB.prepare('SELECT referrer_id FROM players WHERE id = ?').bind(playerId).first();
-  const referrerId = oyuncu?.referrer_id;
-  if (!referrerId) return;
+   op_id'ye KAYNAK oyuncunun kimligi de yaziliyor (`ref1:<kaynak>:<op>`);
+   boylece davet eden kisinin ekraninda "bu arkadas sana ne kazandirdi"
+   tek bir SQL gruplamasiyla cikariliyor (bkz. handleReferral).
 
-  await ensurePlayer(env, referrerId);
-  for (const [esik, odul] of REFERRAL_LEVEL_MILESTONES) {
-    if (seviye < esik) break;
-    await applyDelta(env, referrerId, `ref:lvl:${esik}:${playerId}`, odul);
+   Idempotentlik kaynagin op_id'sinden geliyor: ayni kazanc iki kez
+   gonderilirse komisyon da iki kez odenmiyor. */
+async function odeReferralKomisyon(env, kaynakId, opKey, kazanc) {
+  if (!(kazanc > 0) || !opKey) return;
+
+  const kaynak = await env.DB.prepare('SELECT referrer_id FROM players WHERE id = ?')
+    .bind(kaynakId).first();
+  const birinci = kaynak?.referrer_id;
+  if (!birinci || String(birinci) === String(kaynakId)) return;
+
+  const ikinciSatir = await env.DB.prepare('SELECT referrer_id FROM players WHERE id = ?')
+    .bind(birinci).first();
+  const ikinci = ikinciSatir?.referrer_id;
+
+  await komisyonYaz(env, birinci, `ref1:${kaynakId}:${opKey}`,
+                    Math.round(kazanc * REFERRAL_RATE_DIRECT));
+
+  /* Dolayli kademe yalnizca UCUNCU bir kisi varsa: zincir A -> B -> C
+     iken C'nin kazancindan B %15, A %2.5 aliyor. A ile C ayni kisiyse
+     (dairesel davet) odeme yok. */
+  if (ikinci && String(ikinci) !== String(birinci) && String(ikinci) !== String(kaynakId)) {
+    await komisyonYaz(env, ikinci, `ref2:${kaynakId}:${opKey}`,
+                      Math.round(kazanc * REFERRAL_RATE_INDIRECT));
   }
+}
+
+/* Gunluk komisyon tavanina gore kirpip yaziyor. Tavan dogrudan ve
+   dolayli komisyonun toplamina bakiyor (op_id'si ref1/ref2 ile
+   baslayanlar); kayit bonusu (ref:signup) buna dahil degil. */
+async function komisyonYaz(env, alanId, opId, miktar) {
+  if (!(miktar > 0)) return;
+  await ensurePlayer(env, alanId);
+
+  const now = Date.now();
+  const pencere = await env.DB.prepare(
+    `SELECT COALESCE(SUM(delta), 0) AS toplam FROM spend_log
+     WHERE player_id = ? AND created_at > ?
+       AND (op_id LIKE 'ref1:%' OR op_id LIKE 'ref2:%')`,
+  ).bind(alanId, now - 24 * 3600 * 1000).first();
+
+  const kalan = Math.max(0, REFERRAL_DAILY_CAP - (pencere ? pencere.toplam : 0));
+  if (kalan <= 0) return;
+
+  await applyDelta(env, alanId, opId, Math.min(miktar, kalan));
 }
 
 function streakDurumu(row, now) {
@@ -635,6 +693,10 @@ async function applyEarn(env, playerId, opId, requestedAmount) {
     await env.DB.prepare(
       'UPDATE spend_log SET delta = ?, balance_after = ? WHERE player_id = ? AND op_id = ?',
     ).bind(verilecek, total, playerId, key).run();
+
+    /* Davet zincirine komisyon. Oyuncunun aldigi miktardan kesilmiyor,
+       uzerine uretiliyor (bkz. REFERRAL_RATE_DIRECT). */
+    await odeReferralKomisyon(env, playerId, key, verilecek);
 
     return { ok: true, total, energy: yeniEnerji, credited: verilecek };
   }
@@ -952,24 +1014,44 @@ async function handleLeaderboard(env, playerId) {
 }
 
 async function handleReferral(env, playerId) {
+  /* 'ref%' uc kalemi birden yakaliyor: ref:signup (kayit bonusu),
+     ref1: (dogrudan komisyon), ref2: (dolayli komisyon). Eskiden
+     'ref:%' yaziyordu; komisyon op_id'leri iki nokta tasimadigi icin
+     o desen artik yetmezdi. */
   const kazanc = await env.DB.prepare(
-    "SELECT COALESCE(SUM(delta), 0) AS toplam FROM spend_log WHERE player_id = ? AND op_id LIKE 'ref:%'",
+    "SELECT COALESCE(SUM(delta), 0) AS toplam FROM spend_log WHERE player_id = ? AND op_id LIKE 'ref%'",
+  ).bind(playerId).first();
+
+  /* Arkadas basina komisyon. op_id 'ref1:<arkadasId>:<op>' bicimindeki
+     ortadaki parcayi ayirip tek sorguda gruplayabiliyoruz - arkadas
+     basina ayri sorgu atmaya gerek kalmiyor. */
+  const komisyon = await env.DB.prepare(
+    `SELECT substr(op_id, 6, instr(substr(op_id, 6), ':') - 1) AS arkadas,
+            COALESCE(SUM(delta), 0) AS toplam
+     FROM spend_log
+     WHERE player_id = ? AND op_id LIKE 'ref1:%'
+     GROUP BY arkadas`,
+  ).bind(playerId).all();
+  const basina = new Map((komisyon.results || []).map((r) => [String(r.arkadas), r.toplam]));
+
+  /* Dolayli kademe toplami ayri gosteriliyor: oyuncunun "agacin ikinci
+     katindan" ne kazandigini gormesi, sistemin calistigini anlatan sey. */
+  const dolayli = await env.DB.prepare(
+    "SELECT COALESCE(SUM(delta), 0) AS toplam FROM spend_log WHERE player_id = ? AND op_id LIKE 'ref2:%'",
   ).bind(playerId).first();
 
   const rows = await env.DB.prepare(
-    `SELECT p.id, p.name, pd.value AS durum
-     FROM players p LEFT JOIN player_data pd ON pd.player_id = p.id AND pd.key = 'state_dragon'
-     WHERE p.referrer_id = ? ORDER BY p.created_at DESC LIMIT 100`,
+    `SELECT id, name FROM players WHERE referrer_id = ? ORDER BY created_at DESC LIMIT 100`,
   ).bind(playerId).all();
 
-  const arkadaslar = rows.results.map((r) => {
-    let seviye = 0;
-    try { seviye = Math.max(0, Math.floor(Number(JSON.parse(r.durum)?.dragons?.[0]?.level)) || 0); } catch {}
-    return { ad: r.name || '', seviye };
-  });
+  const arkadaslar = rows.results.map((r) => ({
+    ad: r.name || '',
+    kazandirdi: basina.get(String(r.id)) || 0,
+  }));
 
   return {
     toplamKazanc: kazanc ? kazanc.toplam : 0,
+    dolayliKazanc: dolayli ? dolayli.toplam : 0,
     sayi: arkadaslar.length,
     arkadaslar,
   };
@@ -1227,7 +1309,10 @@ async function handleState(env, playerId, body) {
     .bind(playerId, key).first();
   const kayitliDurum = JSON.parse(row.value);
 
-  if (game === 'dragon') await applyReferralMilestones(env, playerId, kayitliDurum);
+  /* Burada eskiden applyReferralMilestones cagriliyordu: arkadasin
+     ejderhasi seviye atladikca davet edene odeme yapiliyordu. Komisyon
+     artik SEVIYEYE degil KAZANCA bagli, o yuzden odeme noktasi
+     applyEarn'a tasindi (bkz. odeReferralKomisyon). */
 
   return { state: kayitliDurum, version: row.version };
 }

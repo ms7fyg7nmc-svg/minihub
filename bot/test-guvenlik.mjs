@@ -249,13 +249,13 @@ const hubSignup = /REFERRAL_SIGNUP_BONUS = (\d+)/.exec(hubKaynak)?.[1];
 check('referral: afis katilim bonusu sunucuyla ayni', workerSignup && workerSignup === hubSignup,
       `-> worker=${workerSignup} hub=${hubSignup}`);
 
-const workerBlok = workerKaynak.match(/REFERRAL_LEVEL_MILESTONES = \[([\s\S]*?)\];/)?.[1] || '';
-const workerEsikler = [...workerBlok.matchAll(/\[(\d+),\s*(\d+)\]/g)].map((m) => `${m[1]}:${m[2]}`);
-const hubBlok = hubKaynak.match(/REFERRAL_TIERS = \[([\s\S]*?)\];/)?.[1] || '';
-const hubEsikler = [...hubBlok.matchAll(/\{\s*lv:\s*(\d+),\s*amt:\s*(\d+)\s*\}/g)].map((m) => `${m[1]}:${m[2]}`);
-check('referral: afis esikleri sunucuyla ayni',
-      workerEsikler.length > 0 && JSON.stringify(workerEsikler) === JSON.stringify(hubEsikler),
-      `-> worker=${JSON.stringify(workerEsikler)} hub=${JSON.stringify(hubEsikler)}`);
+/* Oranlar iki dosyada ayri yaziliyor (sunucu odiyor, hub anlatiyor).
+   Ayrisirlarsa oyuncuya yanlis yuzde gosterilir - burada yakalaniyor. */
+const oran = (kaynak, ad) => /REFERRAL_RATE_DIRECT = ([\d.]+)/.exec(kaynak)?.[1] + '/'
+                           + /REFERRAL_RATE_INDIRECT = ([\d.]+)/.exec(kaynak)?.[1];
+check('referral: komisyon oranlari sunucuyla ayni',
+      oran(workerKaynak) === oran(hubKaynak) && !oran(workerKaynak).includes('undefined'),
+      `-> worker=${oran(workerKaynak)} hub=${oran(hubKaynak)}`);
 
 const DB8 = makeDb(); const env8 = { DB: DB8, BOT_TOKEN, BAKIM: '' }; const id8 = signedInitData(999);
 await api(env8, 'sync', { initData: id8, points: 0, state: {} });
@@ -385,50 +385,71 @@ check('referral: davet eden kayit bonusu aldi (+500)', referrerRow.points === 50
 const bekleyenA = DB9.prepare('SELECT * FROM pending_referrals WHERE user_id = ?').bind('2002').first();
 check('referral: bekleyen davet tuketildi', !bekleyenA);
 
-r = await api(env9, 'state', { initData: idA, game: 'dragon',
-  state: { v: 2, dragons: [{ id: 'd1', level: 10, xp: 0, look: {} }], owned: {}, ownedIslands: [] },
-  expectedVersion: 0 });
-check('referral: arkadasin ilk ejderha durumu taban olarak kabul edildi', r.state?.dragons?.[0]?.level === 10,
-      `-> ${JSON.stringify(r).slice(0, 80)}`);
+/* --- KOMISYON: %15 dogrudan, %2,5 dolayli --- */
 
-referrerRow = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first();
-check('referral: seviye 10 sadece esik-5 odulunu tetikledi (500+750=1250)', referrerRow.points === 1250, `-> ${referrerRow.points}`);
+/* Zincir: 1001 -> 2002 -> 3003. 3003 kazaninca 2002 %15, 1001 %2,5 alir. */
+const idC2 = signedInitData(3003);
+DB9.prepare('INSERT INTO pending_referrals (user_id, referrer_id, created_at) VALUES (?, ?, ?)')
+  .bind('3003', '2002', Date.now()).run();
+await api(env9, 'sync', { initData: idC2, points: 0, state: {} });
 
+const once1001 = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first().points;
+const once2002 = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('2002').first().points;
+
+r = await api(env9, 'points/earn', { initData: idC2, opId: 'k-1', amount: 1000 });
+check('referral: kazanan oyuncunun kendi kazanci kesilmedi (tam 1000)', r.credited === 1000, `-> ${r.credited}`);
+
+let p2002 = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('2002').first().points;
+let p1001 = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first().points;
+check('referral: dogrudan davet eden %15 aldi (150)', p2002 - once2002 === 150, `-> ${p2002 - once2002}`);
+check('referral: bir ust kademe %2,5 aldi (25)', p1001 - once1001 === 25, `-> ${p1001 - once1001}`);
+
+/* Komisyonun kendisi komisyon uretmemeli: 2002'nin aldigi 150 icin
+   1001'e ayrica %15 odenmemis olmali (odenseydi fark 25 degil 47,5
+   olurdu). Yukaridaki kontrol bunu zaten kanitliyor. */
+
+r = await api(env9, 'points/earn', { initData: idC2, opId: 'k-1', amount: 1000 });
+const p2002Tekrar = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('2002').first().points;
+check('referral: ayni opId tekrar gonderilince komisyon iki kez odenmiyor',
+      p2002Tekrar === p2002, `-> ${p2002Tekrar} vs ${p2002}`);
+
+/* Zincirin tepesindeki kisinin ustu yok: 2002 kazandiginda 1001 %15
+   alir, daha yukarisi olmadigi icin baska odeme olmaz. */
+const once1001b = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first().points;
+await api(env9, 'points/earn', { initData: idA, opId: 'k-2', amount: 400 });
+p1001 = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first().points;
+check('referral: zincirin tepesi dogrudan orani aliyor (60)', p1001 - once1001b === 60, `-> ${p1001 - once1001b}`);
+
+/* Daveti olmayan bir oyuncunun kazanci kimseye komisyon uretmemeli. */
+const idYalniz = signedInitData(7007);
+await api(env9, 'sync', { initData: idYalniz, points: 0, state: {} });
+const oncePool = DB9.prepare("SELECT COALESCE(SUM(delta),0) AS t FROM spend_log WHERE op_id LIKE 'ref1:%' OR op_id LIKE 'ref2:%'").first().t;
+await api(env9, 'points/earn', { initData: idYalniz, opId: 'k-3', amount: 1000 });
+const sonraPool = DB9.prepare("SELECT COALESCE(SUM(delta),0) AS t FROM spend_log WHERE op_id LIKE 'ref1:%' OR op_id LIKE 'ref2:%'").first().t;
+check('referral: daveti olmayan oyuncu komisyon uretmiyor', sonraPool === oncePool, `-> ${sonraPool} vs ${oncePool}`);
+
+/* Hic kazanmamis ikinci bir arkadas: listede "0" olarak gorunmeli,
+   kaybolmamali - davet eden kimi davet ettigini gormek ister. */
 const idB = signedInitData(2003);
 DB9.prepare('INSERT INTO pending_referrals (user_id, referrer_id, created_at) VALUES (?, ?, ?)')
   .bind('2003', '1001', Date.now()).run();
 await api(env9, 'sync', { initData: idB, points: 0, state: {} });
-r = await api(env9, 'state', { initData: idB, game: 'dragon',
-  state: { v: 2, dragons: [{ id: 'd1', level: 99, xp: 0, look: {} }], owned: {}, ownedIslands: [] },
-  expectedVersion: 0 });
-check('referral: ikinci arkadasin seviye 99 durumu taban olarak kabul edildi', r.state?.dragons?.[0]?.level === 99);
-
-referrerRow = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first();
-const beklenenToplam = 1250 + 500 /* B kayit */ + 750 + 1500 + 3000 + 5000 + 7500 + 10000 /* B tum esikler */;
-check('referral: ikinci arkadas tum esikleri tek seferde tetikledi', referrerRow.points === beklenenToplam,
-      `-> ${referrerRow.points} beklenen ${beklenenToplam}`);
-
-r = await api(env9, 'state', { initData: idB, game: 'dragon',
-  state: { v: 2, dragons: [{ id: 'd1', level: 99, xp: 0, look: {} }], owned: {}, ownedIslands: [] },
-  expectedVersion: 1 });
-referrerRow = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first();
-check('referral: ayni seviyeye tekrar senkron odulu tekrarlamiyor', referrerRow.points === beklenenToplam,
-      `-> ${referrerRow.points}`);
+p1001 = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first().points;
 
 const idC = signedInitData(2004);
 DB9.prepare('INSERT INTO pending_referrals (user_id, referrer_id, created_at) VALUES (?, ?, ?)')
   .bind('2004', '2004', Date.now()).run();
 r = await api(env9, 'sync', { initData: idC, points: 0, state: {} });
 check('referral: kendi kendini davet etmek odul kazandirmiyor', r.points === 0, `-> ${r.points}`);
-referrerRow = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first();
-check('referral: kendi kendini davet referans toplamini etkilemedi', referrerRow.points === beklenenToplam);
 
 r = await api(env9, 'referral', { initData: idRef });
-check('referral: /api/referral arkadas sayisi dogru (2, kendi-davet halic)', r.sayi === 2, `-> ${r.sayi}`);
-check('referral: /api/referral toplam kazanc dogru', r.toplamKazanc === beklenenToplam, `-> ${r.toplamKazanc}`);
-const seviyeler = r.arkadaslar.map((a) => a.seviye).sort((a, b) => a - b);
-check('referral: arkadas listesi seviyeleri dogru', JSON.stringify(seviyeler) === JSON.stringify([10, 99]),
-      `-> ${JSON.stringify(seviyeler)}`);
+check('referral: /api/referral arkadas sayisi dogru (2, kendi-davet haric)', r.sayi === 2, `-> ${r.sayi}`);
+check('referral: /api/referral toplam kazanc kayit bonusu + komisyonu kapsiyor',
+      r.toplamKazanc === p1001, `-> ${r.toplamKazanc} vs ${p1001}`);
+const kazandirdilar = r.arkadaslar.map((a) => a.kazandirdi).sort((a, b) => a - b);
+check('referral: arkadas listesi arkadas basina komisyonu gosteriyor',
+      JSON.stringify(kazandirdilar) === JSON.stringify([0, 60]), `-> ${JSON.stringify(kazandirdilar)}`);
+check('referral: dolayli kazanc ayrica raporlaniyor (25)', r.dolayliKazanc === 25, `-> ${r.dolayliKazanc}`);
 
 const DB11 = makeDb(); const env11 = { DB: DB11, BOT_TOKEN, BAKIM: '' }; const idHaric = signedInitData(8100679296);
 const idNormal = signedInitData(5555);
