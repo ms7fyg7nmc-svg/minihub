@@ -16,20 +16,19 @@ not:
 tasarlandılar ve o boyutta denendi.
 
 **2. Aydınlık tema.** İkisi de açık gri ve içlerinde pişmiş gölge var —
-rengi CSS'ten değiştirilemez. Aydınlık temada beyaz kartın üzerinde
-**kaybolmuyorlar ama soluyorlar**: okunur, sadece zayıf. Çözüm, oyun
-karelerinde zaten kullandığımız desen: ikonun altına koyu, yuvarlatılmış
-küçük bir zemin (chip) koymak. O zaman iki temada da aynı dosya,
-aynı net görüntü.
+rengi değiştirilemez. Önce butonun zeminini koyulaştırmayı denedim;
+sonuç üst barda **iki siyah lekeydi** ve ikonlar o lekenin içinde
+kayboldu. Çalışan çözüm, zemini olduğu gibi bırakıp **ikonu** koyu
+siluete çevirmek:
 
 ```css
-/* aydinlik temada ikonun arkasina koyu zemin */
-:root[data-tg-theme="light"] .ayar-ikon {
-  background: #2c2a3c;
-  border-radius: 8px;
-  padding: 4px;
+:root[data-tg-theme="light"] .arac-btn img {
+  filter: brightness(0) opacity(0.55);
 }
 ```
+
+Kabartma gölgesi aydınlık temada kayboluyor — ama o gölge zaten koyu
+zemin için yapılmıştı; orada önemli olan şeklin okunması.
 
 Seçilmeyen üç işlem `_alternatifler/` içinde: `-1` ince kontur,
 `-2` düz dolgu, `-4` buzlu cam. 1 ve 2 düz tek renk olduğu için

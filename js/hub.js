@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v206';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v207';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi, bakimListesi,
-} from './store.js?v206';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v206';
+} from './store.js?v207';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v207';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -905,7 +905,7 @@ function cuzdanTazele() {
       document.getElementById('wallet-mh').textContent = puan.toLocaleString(locale());
    });
    const gram = document.getElementById('wallet-gram');
-   if (gram) gram.textContent = `${(0).toLocaleString(locale())} g`;
+   if (gram) gram.textContent = (0).toLocaleString(locale());
 }
 
 function wireLiderPanel() {

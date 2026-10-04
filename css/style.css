@@ -1536,12 +1536,18 @@ body.hub::before {
 .arac-btn:active { transform: scale(0.94); background: var(--yuzey-orta); }
 .arac-btn img { width: 22px; height: 22px; object-fit: contain; }
 
-/* Ikonlarin golgesi gorselin icine pismis, rengi degistirilemiyor
-   (bkz. assets/ui/README.md). Aydinlik temada beyaz kartin uzerinde
-   soluyorlar; butonun zeminini koyulastirmak onlari geri getiriyor. */
-:root[data-tg-theme="light"] .arac-btn {
-  background: #2c2a3c;
-  border-color: rgba(0, 0, 0, 0.18);
+/* AYDINLIK TEMA.
+   Once butonun zemini koyulastirilmisti; sonuc ust barda iki siyah
+   lekeydi ve ikonlar o lekenin icinde kayboluyordu - koyu gri ikon koyu
+   zemin uzerinde. Zemin artik oteki yuzeylerle ayni; ikonun KENDISI
+   koyuya cevriliyor.
+
+   brightness(0) ikonu tek renk siyah siluete indiriyor, opacity onu
+   metinle ayni agirliga getiriyor. Kabartma golgesi aydinlik temada
+   kayboluyor, ama o golge zaten koyu zemin icin yapilmisti; burada
+   onemli olan seklin okunmasi. */
+:root[data-tg-theme="light"] .arac-btn img {
+  filter: brightness(0) opacity(0.55);
 }
 
 /* --- Ayarlar ve Cuzdan panelleri --- */
@@ -1599,7 +1605,27 @@ body.hub::before {
   font-variant-numeric: tabular-nums;
 }
 .cuzdan-birim { font-size: 12px; font-weight: 700; letter-spacing: 1.2px; color: var(--muted); }
-.cuzdan-not { margin: 12px 0 0; text-align: center; white-space: normal; }
+/* Iki kutu yan yana: $MH ve gram. Altinda aciklama YOK - bir bakista
+   iki sayi, okunacak paragraf degil. */
+.cuzdan-izgara { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cuzdan-izgara .cuzdan-kutu { margin: 0; }
+.cuzdan-gram .cuzdan-deger { color: var(--text); opacity: 0.55; }
+.cuzdan-gram {
+  border-color: var(--cizgi-soft);
+  background: var(--yuzey);
+}
+.cuzdan-gram-simge {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--yuzey-orta);
+  font-size: 19px;
+  font-weight: 900;
+  color: var(--text);
+  opacity: 0.5;
+}
 
 /* Misafir: baglanmamis. Yerelden (turuncu, "sunucuya yazamadi") farkli -
    bu bir hata degil, sadece henuz Telegram'dan girilmemis. */

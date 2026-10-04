@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="206">
+  <meta name="surum" content="207">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MINI HUB GAMES</title>
   <!-- Cark rakamlari icin (bkz. js/hub.js WHEEL_FONT). Ejderha Adasi
@@ -47,7 +47,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v206">
+  <link rel="stylesheet" href="css/style.css?v207">
 </head>
 <body class="hub">
   <div class="app">
@@ -191,20 +191,19 @@
       <button class="daily-close" id="wallet-close" aria-label="Kapat">✕</button>
       <h3 class="ayar-baslik" data-i18n="hub.wallet.title">Cüzdan</h3>
 
-      <div class="cuzdan-kutu">
-        <img class="cuzdan-simge" src="assets/coin.png" alt="" width="64" height="64">
-        <div class="cuzdan-deger" id="wallet-mh">0</div>
-        <div class="cuzdan-birim">$MH</div>
-      </div>
+      <div class="cuzdan-izgara">
+        <div class="cuzdan-kutu">
+          <img class="cuzdan-simge" src="assets/coin.png" alt="" width="64" height="64">
+          <div class="cuzdan-deger" id="wallet-mh">0</div>
+          <div class="cuzdan-birim">$MH</div>
+        </div>
 
-      <div class="ayar-liste">
-        <div class="ayar-satir">
-          <span class="ayar-ad" data-i18n="hub.wallet.gram">Gram karşılığı</span>
-          <span class="ayar-deger" id="wallet-gram">0 g</span>
+        <div class="cuzdan-kutu cuzdan-gram">
+          <span class="cuzdan-gram-simge" aria-hidden="true">g</span>
+          <div class="cuzdan-deger" id="wallet-gram">0</div>
+          <div class="cuzdan-birim" data-i18n="hub.wallet.gram">Gram</div>
         </div>
       </div>
-
-      <p class="daily-card-hint cuzdan-not" data-i18n="hub.wallet.note"></p>
     </div>
   </div>
 
@@ -294,6 +293,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v206"></script>
+  <script type="module" src="js/hub.js?v207"></script>
 </body>
 </html>
