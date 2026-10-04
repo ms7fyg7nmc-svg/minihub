@@ -4,8 +4,9 @@
    seviye oluyor. Kilitli hucreler yildizla aciliyor ve icindeki odulu
    dogrudan oyuncuya veriyor. */
 
-import { EN_UST_YUMURTA, EN_UST_SANDIK, kapSuresi } from './ekonomi.js?v211';
-import { belir, zipla, AKIS } from './canlandir.js?v211';
+import { EN_UST_YUMURTA, EN_UST_SANDIK, kapSuresi } from './ekonomi.js?v212';
+import { belir, zipla, AKIS } from './canlandir.js?v212';
+import { iz } from '../../js/tani.js?v212';
 
 /* Kap gorselleri v2: kaplar artik ACIK ve iceriklerini gosteriyor.
    Eski set sekiz kabin da ayni kirmizi kutu olmasi yuzunden 64 pikselde
@@ -293,17 +294,29 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
     ciz();
   }
 
-  const BAYAT = 8000;   /* bu kadar surmus bir surukleme gercek olamaz */
+  /* Bir surukleme en fazla bu kadar surer; otesi takilmis demektir.
+     8 saniyeydi. Telefondaki kayit, donma aninda HIC merge satiri
+     olmadigini gosterdi - yani birlestirme baslamiyor bile, dokunus
+     tahtaya hic ulasmiyor. Takilmis bir surukleme tam bunu yapiyor:
+     bitir() hic cagrilmazsa (Telegram sistem hareketini kapiyorsa
+     pointerup gelmeyebiliyor) `surukle` dolu kaliyor ve basla() her
+     dokunusu 8 saniye boyunca sessizce yutuyor. Gercek bir surukleme
+     bir saniyeyi gecmez; 1,2 saniye hem guvenli hem fark edilmez. */
+  const BAYAT = 1200;
 
   function basla(e) {
     if (!grid) return;
 
-    /* Ikinci parmak yok sayiliyor - ama once BAYATLIK kontrolu var.
-       Onceki surumde kosulsuz `return` vardi ve bu, takilmis bir
-       surukleme durumunu KURTARILAMAZ yapiyordu: tahta bir daha hicbir
-       dokunusu kabul etmiyordu. Oyuncunun gordugu sey donmus bir oyun. */
     if (surukle) {
-      if (Date.now() - (surukle.bas || 0) < BAYAT) return;
+      const yas = Date.now() - (surukle.bas || 0);
+      /* Ayni parmak degilse ikinci dokunustur, yok sayiliyor.
+         AYNI parmak yeniden basiyorsa onceki surukleme oluden
+         baskasi degil - hemen temizleniyor, yas beklenmiyor. */
+      if (yas < BAYAT && surukle.pid !== undefined && surukle.pid !== e.pointerId) {
+        iz('surukle.yutuldu', `yas${yas}`);
+        return;
+      }
+      iz('surukle.bayat', `yas${yas}`);
       iptal();
     }
 
@@ -326,6 +339,7 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
     surukle = { i, hucre, ghost: hayalet(hucre, e.clientX, e.clientY),
                 tasidi: false, x0: e.clientX, y0: e.clientY,
                 sonX: e.clientX, sonY: e.clientY, wrap, bas: Date.now(),
+                pid: e.pointerId,
                 kutular: kutulariTara(), vurgu: -2, kare: 0,
                 kayma: window.scrollY + (el.closest('.screen')?.scrollTop || 0) };
     wrap.classList.add('dragging');
@@ -426,7 +440,7 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
   const parca = (i) => el.querySelector(`.cell[data-i="${i}"] .piece`);
 
   function bitir(e) {
-    if (!surukle) return;
+    if (!surukle) { iz('surukle.bosbitir', e.type); return; }
 
     if (surukle.kilitDokunus) {
       const { i } = surukle;
@@ -447,7 +461,7 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
       onPick?.(i, grid.cells[i]);
       return;
     }
-    if (hedef < 0) { ghost.remove(); ciz(); return; }
+    if (hedef < 0) { iz('surukle.hedefyok'); ghost.remove(); ciz(); return; }
 
     const hedefHucre = grid.cells[hedef];
 
@@ -502,6 +516,7 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
       return;
     }
 
+    iz('surukle.birlesmez', `${hucre.t}${hucre.lv}->${hedefHucre.t}${hedefHucre.lv}`);
     ghost.remove();
     ciz();
   }
@@ -524,6 +539,26 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
      Telegram WebView bunu sik yapiyor ve donen parmak olayi gelmiyor. */
   window.addEventListener('blur', iptal);
   document.addEventListener('visibilitychange', () => { if (document.hidden) iptal(); });
+
+  /* Yakalama kaybolursa surukleme de biter. setPointerCapture(el)
+     yapiyoruz; Telegram bir sistem hareketi icin parmagi kapinca
+     tarayici yakalamayi birakiyor ve pointerup BIZE HIC GELMEYEBILIYOR.
+     O durumda surukle dolu kalir ve tahta dokunus kabul etmez - telefon
+     kaydindaki o 14 saniyelik sessizligin en olasi aciklamasi bu.
+     lostpointercapture her zaman geliyor; onu da bir cikis sayiyoruz. */
+  el.addEventListener('lostpointercapture', () => {
+    if (surukle) { iz('surukle.yakalamakayip'); iptal(); }
+  });
+
+  /* Son emniyet: hicbir olay gelmese bile takilmis bir surukleme kendi
+     kendine cozulur. Saniyede bir bakmak bedava; BAYAT'i gecmis bir
+     surukleme oyuncunun bir daha dokunmasini beklemeden temizleniyor. */
+  setInterval(() => {
+    if (surukle && Date.now() - (surukle.bas || 0) > BAYAT) {
+      iz('surukle.supurge');
+      iptal();
+    }
+  }, 1000);
 
   return {
     bagla(yeniGrid) { grid = yeniGrid; ciz(); },
