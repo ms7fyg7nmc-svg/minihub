@@ -145,6 +145,33 @@ r = await api(env3b, 'state', { initData: id3b, game: 'dragon',
   expectedVersion: 1 });
 check('senkronla kilitlenen tabanin uzerine harcamasiz yukselis reddediliyor', r.reddedildi === true, `-> ${JSON.stringify(r).slice(0, 90)}`);
 
+/* SURUM CAKISMASI - istemcideki sira mekanizmasinin VARLIK SEBEBI.
+
+   Sunucu beklenen surum tutmazsa YAZMIYOR ve o anda kayitli olani geri
+   donduruyor. Istemci bunu kosulsuz kabul ederse, es zamanli iki kayit
+   gonderildiginde ikincisi sessizce silinir ve tahta geri doner - oyuncu
+   bunu "birlestirirken dondu" diye yasiyor (bkz. js/store.js saveState,
+   kayitUcusta/kayitBekleyen).
+
+   Bu test o sunucu davranisini sabitliyor: degisirse istemcideki sira
+   da gozden gecirilmeli. */
+const DBv = makeDb(); const envv = { DB: DBv, BOT_TOKEN, BAKIM: '' }; const idv = signedInitData(777001);
+await api(envv, 'sync', { initData: idv, points: 0, state: {} });
+
+r = await api(envv, 'state', { initData: idv, game: '2048', state: { a: 1 }, expectedVersion: 0 });
+check('surum: ilk yazma gecti (surum 1)', r.version === 1 && r.state?.a === 1, `-> ${JSON.stringify(r)}`);
+
+/* Es zamanli ikinci kayit: ILK yanit gelmedigi icin hala eski surumu
+   tasiyor. Sunucu yazmiyor ve ESKI state'i donduruyor. */
+r = await api(envv, 'state', { initData: idv, game: '2048', state: { a: 2 }, expectedVersion: 0 });
+check('surum: bayat surumle gelen yazma REDDEDILDI (a hala 1)',
+      r.state?.a === 1 && r.version === 1, `-> ${JSON.stringify(r)}`);
+
+/* Taze surumle ayni yazma geciyor - istemci sirada bekleyip bunu yapiyor. */
+r = await api(envv, 'state', { initData: idv, game: '2048', state: { a: 2 }, expectedVersion: 1 });
+check('surum: taze surumle ayni yazma gecti (a = 2)',
+      r.state?.a === 2 && r.version === 2, `-> ${JSON.stringify(r)}`);
+
 r = await api(env3, 'best', { initData: id3, game: 'uydurma-oyun', score: 100 });
 check('bilinmeyen oyun icin rekor reddedildi', r.error === 'bilinmeyen oyun', `-> ${JSON.stringify(r)}`);
 r = await api(env3, 'state', { initData: id3, game: '../../etc', state: { x: 1 }, expectedVersion: 0 });

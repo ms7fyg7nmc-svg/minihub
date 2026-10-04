@@ -1,5 +1,5 @@
 
-import { getPoints, addPoints, spendPoints } from '../../js/store.js?v207';
+import { getPoints, addPoints, spendPoints } from '../../js/store.js?v208';
 
 export const KAYNAKLAR = {
   points: {

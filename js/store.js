@@ -1,6 +1,6 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v207';
-import { surumKontrol } from './guncel.js?v207';
+import { isTelegramUser, getInitData } from './tg.js?v208';
+import { surumKontrol } from './guncel.js?v208';
 
 /* Hub ve 12 oyunun hepsi bu modulu yukluyor, o yuzden surum tazeleyici
    buraya bagli: tek yerden hepsini kapsiyor. */
@@ -573,22 +573,69 @@ export async function loadState(game) {
   return loadStateYerel(game);
 }
 
+/* OYUN BASINA TEK UCUSTA KAYIT.
+
+   Burada gercek bir hata vardi ve yalnizca TELEFONDA goruluyordu.
+
+   saveState her cagrildiginda yanitini BEKLEMEDEN sunucuya yaziyordu.
+   Oyuncu hizli hizli iki birlestirme yaparsa iki kayit ayni anda yola
+   cikiyor ve ikisi de AYNI expectedVersion'i tasiyor - cunku ilkinin
+   yanitiyla gelecek olan yeni surum henuz elimizde degil.
+
+   Sunucu surum tutmazsa YAZMIYOR (bkz. worker.js handleState, WHERE
+   player_data.version = ?) ve o anda kayitli olan state'i geri
+   donduruyor. Istemci de onu kosulsuz kabul ediyordu:
+   `v.state[key] = sonuc.state`. Sonuc: ikinci birlestirme sessizce
+   silinip tahta bir onceki haline donuyor. Oyuncunun gordugu sey,
+   yaptigi hamlenin tutmamasi - yani "dondu".
+
+   Masaustunde hic olmuyordu cunku localhost 1 ms'de cevap veriyor ve
+   iki kayit asla cakismiyor. Telefonda yanit 300-800 ms; iki merge
+   arasi bundan kisa.
+
+   Cozum: ayni oyun icin ayni anda birden fazla kayit ucmuyor. Ucusta
+   biri varsa yenisi BEKLEYENE yaziliyor (eskisinin uzerine - en son
+   durum zaten en dogrusu), ucus bitince taze surumle gonderiliyor. */
+const kayitUcusta = new Map();    /* key -> true */
+const kayitBekleyen = new Map();  /* key -> son state */
+
+function kayitGonder(v, game, key) {
+  const state = kayitBekleyen.get(key);
+  kayitBekleyen.delete(key);
+  kayitUcusta.set(key, true);
+
+  const beklenen = v.meta[key] || 0;
+
+  return sunucuGonder('/api/state', { game, state, expectedVersion: beklenen })
+    .then((sonuc) => {
+      if (sonuc) {
+        v.meta[key] = sonuc.version;
+        /* Sunucunun donduruu state'i yalnizca ARDIMIZDA bekleyen bir
+           kayit yoksa kabul ediyoruz. Bekleyen varsa oyuncu o cevaptan
+           daha yeni bir hamle yapmis demektir; sunucunun kopyasi
+           eskidir ve onu yazmak hamleyi yutar. */
+        if (!kayitBekleyen.has(key)) v.state[key] = sonuc.state;
+      } else {
+        kuyrugaEkle({ tur: 'state', game, state, expectedVersion: beklenen });
+      }
+    })
+    .finally(() => {
+      kayitUcusta.delete(key);
+      if (kayitBekleyen.has(key)) kayitGonder(v, game, key);
+    });
+}
+
 export function saveState(game, state) {
   senkron.then((v) => {
     if (!v) return saveStateYerel(game, state);
 
     const key = `state_${game}`;
-    const beklenen = v.meta[key] || 0;
+    /* Yerel kopya her zaman ANINDA guncelleniyor: oyun ekrani sunucuyu
+       beklemiyor, bekleseydi her hamle gecikirdi. */
     v.state[key] = state;
+    kayitBekleyen.set(key, state);
 
-    sunucuGonder('/api/state', { game, state, expectedVersion: beklenen }).then((sonuc) => {
-      if (sonuc) {
-        v.state[key] = sonuc.state;
-        v.meta[key] = sonuc.version;
-      } else {
-        kuyrugaEkle({ tur: 'state', game, state, expectedVersion: beklenen });
-      }
-    });
+    if (!kayitUcusta.has(key)) kayitGonder(v, game, key);
   });
 }
 
