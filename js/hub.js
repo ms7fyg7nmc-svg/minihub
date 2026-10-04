@@ -1,17 +1,17 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v219';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v220';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi, bakimListesi,
-} from './store.js?v219';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v219';
+} from './store.js?v220';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v220';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniListesi, taniBaslat, taniHataVar, iz } from './tani.js?v219';
+import { taniListesi, taniBaslat, taniHataVar, iz } from './tani.js?v220';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -217,6 +217,10 @@ function gameList() {
          desc: t('game.wheelrush.desc'),
          icon: ICONS.wheelrush,
          url: 'games/wheelrush/index.html',
+         /* Amblem yerine gercek bir gorsel: gece asfalti, farin sicak
+            konisi, tekerlek tozu. Gradyan + SVG ikon ikilisi oyunun ne
+            oldugunu anlatmiyordu. */
+         foto: 'assets/wheel-tile/yol.webp',
          gradient: 'linear-gradient(145deg, #ffd98a 0%, #f2884b 46%, #cf3f45 100%)',
          accent: '#f2884b',
          ready: true,
@@ -429,6 +433,15 @@ gameList().forEach((game, index) => {
    /* Ekran okuyucu ve bakim durumu icin aciklama basligin icinde kalsin */
    tile.title = game.desc;
 
+   if (game.foto) {
+      ikon.classList.add('is-foto');
+      /* MUTLAK adres sart. Goreli bir url() ozel degiskene konup
+         style.css icinde var() ile kullanilinca tarayici onu
+         STIL DOSYASINA gore cozuyor: /css/assets/... diye 404.
+         document.baseURI hem localhost'ta hem /minihub/ altinda dogru. */
+      const mutlak = new URL(game.foto, document.baseURI).href;
+      ikon.style.setProperty('--tile-foto', `url("${mutlak}")`);
+   }
    if (game.gradient && !game.hero) ikon.style.setProperty('--tile-gradient', game.gradient);
    if (game.accent) tile.style.setProperty('--card-accent', game.accent);
 

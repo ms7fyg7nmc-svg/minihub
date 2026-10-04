@@ -534,6 +534,18 @@ body.hub::before {
     inset 0 -1px 0 rgba(0, 0, 0, 0.22);
 }
 
+/* Amblem yerine kirpilmis bir gorsel tasiyan kare. Gradyan ve SVG ikon
+   kapaniyor; ustte ince bir parlaklik kaliyor ki digerleriyle ayni
+   kabartma hissini korusun. */
+.tile-icon.is-foto {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 42%),
+    var(--tile-foto) center / cover no-repeat,
+    #11131c;
+}
+
+.tile-icon.is-foto svg { display: none; }
+
 .tile-icon.soon { --tile-gradient: linear-gradient(145deg, #5a6078, #2e3243); box-shadow: none; }
 
 .tile-icon svg {
