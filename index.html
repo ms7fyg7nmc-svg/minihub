@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="208">
+  <meta name="surum" content="210">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MINI HUB GAMES</title>
   <!-- Cark rakamlari icin (bkz. js/hub.js WHEEL_FONT). Ejderha Adasi
@@ -47,7 +47,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v208">
+  <link rel="stylesheet" href="css/style.css?v210">
 </head>
 <body class="hub">
   <div class="app">
@@ -178,7 +178,18 @@
           <span class="ayar-ad" data-i18n="hub.settings.version">Sürüm</span>
           <span class="ayar-deger" data-i18n="hub.version">Version 0.1</span>
         </div>
+
+        <!-- Donma hatasini telefonda yakalamak icin gecici. Oyuncu
+             burayi acip bize okuyor; hata bulununca kaldirilacak. -->
+        <div class="ayar-satir">
+          <span class="ayar-ad" data-i18n="hub.settings.diag">Kayıt</span>
+          <button class="tani-btn" id="tani-ac" data-i18n="hub.settings.diagShow">Göster</button>
+        </div>
       </div>
+
+      <pre class="tani-kutu" id="tani-kutu" hidden></pre>
+      <button class="tani-btn tani-kopya" id="tani-kopya" hidden
+              data-i18n="hub.settings.diagCopy">Kopyala</button>
     </div>
   </div>
 
@@ -293,6 +304,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v208"></script>
+  <script type="module" src="js/hub.js?v210"></script>
 </body>
 </html>

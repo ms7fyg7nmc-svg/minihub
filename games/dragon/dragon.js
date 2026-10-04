@@ -1,26 +1,27 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v208';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v208';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v210';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v210';
 
-import { CONFIG, gorselSeviye } from './config.js?v208';
-import { bakimdaMi } from '../../js/store.js?v208';
+import { CONFIG, gorselSeviye } from './config.js?v210';
+import { bakimdaMi } from '../../js/store.js?v210';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA } from './model.js?v208';
-import { dragonSvg, dragonAssetUrls } from './art.js?v208';
-import { turCek, turYolu, turBul } from './turler.js?v208';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v208';
+         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA } from './model.js?v210';
+import { dragonSvg, dragonAssetUrls } from './art.js?v210';
+import { turCek, turYolu, turBul } from './turler.js?v210';
+import { taniBaslat, iz } from '../../js/tani.js?v210';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v210';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
          kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
          PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
-         partnerKademe } from './gorevler.js?v208';
-import { getBest } from '../../js/store.js?v208';
+         partnerKademe } from './gorevler.js?v210';
+import { getBest } from '../../js/store.js?v210';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v208';
+         kilitliMi, nesneMi } from './grid.js?v210';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v208';
-import { createTutorial, pozListesi } from './tutorial.js?v208';
+         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v210';
+import { createTutorial, pozListesi } from './tutorial.js?v210';
 
 const GAME_ID = 'dragon';
 
@@ -309,6 +310,8 @@ async function basla() {
      kalmadi. */
   setInterval(tazele, 1000);
 
+  taniBaslat('dragon');
+
   tutorialKur();
   if (oyuncu.tutorial < 99) tut.basla(tutorialAdimlari());
 }
@@ -438,18 +441,23 @@ function siraCiz() {
 /* ---------- IZGARA ---------- */
 
 function birlesti(yeni) {
+  /* Birlestirmenin HER adimi yaziliyor. Donma telefonda oluyor ve
+     masaustunde uretilemiyor; hangi adimdan sonra kesildigi tek
+     basina hatayi daraltiyor. */
+  iz('merge', `lv${yeni.lv}`);
   oyuncu.sayaclar.merges += 1;
   if (yeni.t === 'egg') {
     oyuncu.sayaclar.maxEggLv = Math.max(oyuncu.sayaclar.maxEggLv, yeni.lv);
   } else {
     oyuncu.sayaclar.maxPackLv = Math.max(oyuncu.sayaclar.maxPackLv, yeni.lv);
   }
-  kaydet();
-  haptic.tap('medium');
-  siradanDoldur();
+  kaydet();              iz('merge.kaydet');
+  haptic.tap('medium');  iz('merge.haptic');
+  siradanDoldur();       iz('merge.sira');
   gorevNoktasi();
   bilgiPaneliCiz();
   tut?.olay('merge');
+  iz('merge.bitti');
 }
 
 /* Izgara degisince kaydet ve panelin gecerliligini kontrol et: secili
@@ -606,8 +614,6 @@ function yumurtaKir(i) {
   gorevNoktasi();
   bilgiPaneliCiz();
   haptic.success();
-  cal(jackpot ? 'jackpot' : 'crack');
-  cal(jackpot ? 'jackpot' : 'crack');
   kazanimUcur(kutu, 'food', jackpot ? 7 : 4);
   odulUcur(jackpot ? `${t('jackpotMsg')} ${t('gotFood', { n: bicim(miktar) })}`
                    : t('gotFood', { n: bicim(miktar) }), jackpot);

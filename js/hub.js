@@ -1,16 +1,18 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v208';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v210';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi, bakimListesi,
-} from './store.js?v208';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v208';
+} from './store.js?v210';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v210';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
+import { taniListesi, taniBaslat } from './tani.js?v210';
+
 const BOT_USERNAME = 'minihubgames_bot';
 
 /* bot/worker.js'teki REFERRAL_SIGNUP_BONUS, REFERRAL_RATE_DIRECT ve
@@ -246,6 +248,8 @@ renderFriendsCard();
 wireFriendsPanel();
 basitPanel('settings-btn', 'settings-overlay', 'settings-close');
 basitPanel('wallet-btn', 'wallet-overlay', 'wallet-close', cuzdanTazele);
+wireTani();
+taniBaslat('hub');
 renderReferralLadder();
 
 document.addEventListener('langchange', () => {
@@ -906,6 +910,32 @@ function cuzdanTazele() {
    });
    const gram = document.getElementById('wallet-gram');
    if (gram) gram.textContent = (0).toLocaleString(locale());
+}
+
+/* Tani kaydini Ayarlar'da gosteriyor. Gecici: donma hatasi bulununca
+   hem bu hem js/tani.js kalkacak. Oyuncunun telefondan okuyup bize
+   iletebilmesi icin kopyalama dugmesi de var. */
+function wireTani() {
+   const ac = document.getElementById('tani-ac');
+   const kutu = document.getElementById('tani-kutu');
+   const kopya = document.getElementById('tani-kopya');
+   if (!ac || !kutu) return;
+
+   ac.addEventListener('click', () => {
+      const satirlar = taniListesi();
+      kutu.textContent = satirlar.length ? satirlar.join('\n') : '—';
+      kutu.hidden = false;
+      if (kopya) kopya.hidden = false;
+      haptic.tap();
+   });
+
+   kopya?.addEventListener('click', async () => {
+      try {
+         await navigator.clipboard.writeText(kutu.textContent);
+         kopya.textContent = '✓';
+         setTimeout(() => { kopya.textContent = t('hub.settings.diagCopy'); }, 1500);
+      } catch { /* pano yoksa oyuncu elle secebilir */ }
+   });
 }
 
 function wireLiderPanel() {

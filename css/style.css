@@ -1631,3 +1631,34 @@ body.hub::before {
    bu bir hata degil, sadece henuz Telegram'dan girilmemis. */
 .sync-badge.is-misafir .sync-dot { background: var(--muted); }
 .sync-badge.is-misafir { color: var(--muted); }
+
+/* --- Tani kaydi (gecici) --- */
+
+.tani-btn {
+  padding: 5px 12px;
+  border: 1px solid var(--cizgi);
+  border-radius: 999px;
+  background: var(--yuzey);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.tani-kutu {
+  max-height: 240px;
+  margin: 10px 0 0;
+  padding: 10px;
+  overflow: auto;
+  border: 1px solid var(--cizgi-soft);
+  border-radius: 10px;
+  background: var(--yuzey);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.tani-kutu[hidden], .tani-kopya[hidden] { display: none; }
+.tani-kopya { display: block; width: 100%; margin-top: 8px; text-align: center; }
