@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="215">
+  <meta name="surum" content="217">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MINI HUB GAMES</title>
   <!-- Cark rakamlari icin (bkz. js/hub.js WHEEL_FONT). Ejderha Adasi
@@ -47,9 +47,20 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v215">
+  <link rel="stylesheet" href="css/style.css?v217">
 </head>
 <body class="hub">
+  <!-- ACILIS EKRANI
+       Hub'in render'i asenkron: dil dosyasi, sunucudan bakim listesi,
+       sonra widget'lar ve oyunlar. Bu ekran olmadan oyuncu yarim
+       render edilmis bir hub goruyordu - bazen widget'lar, bazen
+       oyunlar eksik beliriyordu. Ejderha Adasi'ndaki ile ayni desen. -->
+  <div class="hub-boot" id="hub-boot">
+    <div class="hub-boot-glow"></div>
+    <img class="hub-boot-logo" src="assets/currency/mh-logo-256.webp" alt="" width="128" height="128">
+    <div class="hub-boot-bar"><i id="hub-boot-fill"></i></div>
+  </div>
+
   <div class="app">
 
     <header class="topbar">
@@ -304,6 +315,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v215"></script>
+  <script type="module" src="js/hub.js?v217"></script>
 </body>
 </html>

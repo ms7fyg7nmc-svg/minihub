@@ -1,17 +1,17 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v215';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v217';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi, bakimListesi,
-} from './store.js?v215';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v215';
+} from './store.js?v217';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v217';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniListesi, taniBaslat, taniHataVar } from './tani.js?v215';
+import { taniListesi, taniBaslat, taniHataVar, iz } from './tani.js?v217';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -227,13 +227,57 @@ function gameList() {
 initTelegram();
 hideBackButton();
 
+/* ACILIS EKRANI
+
+   Hub'in kurulumu asenkron: dil dosyasi iniyor, sunucudan bakim listesi
+   geliyor, sonra widget'lar ve oyunlar ciziliyor. Perde olmadan oyuncu
+   bu adimlarin arasini goruyordu - bazen widget'siz, bazen oyunsuz bir
+   hub.
+
+   Perde KENDI KENDINE kalkar. Bugun ogrendigimiz ders tam da bu: bir
+   seyin kapanmasi baska bir kodun calismasina bagliysa, o kod
+   calismadiginda ekranda kalir ve donma olur. Burada ne olursa olsun
+   en gec 4 saniyede kalkiyor - yarim bir hub, acilmayan bir hub'dan
+   iyidir. */
+/* OLU BOLGE (temporal dead zone) NOTU.
+
+   Bu `let` asagida, sayaclariBaslat()'in yaninda duruyordu. Modulun
+   kurulumu `await` icerdigi icin render cagrilari (renderDailyCard vb.)
+   modul govdesi daha o satira varmadan calisiyor ve clearInterval
+   satiri "Cannot access 'sayacTimer' before initialization" atiyordu.
+   Fonksiyon bildirimi yukari tasiniyor, `let` tasinmiyor - o yuzden
+   degisken kullanildigi yerin DEGIL, kurulumun basinda tanimli olmali. */
+let sayacTimer = null;
+
+const bootEl = document.getElementById('hub-boot');
+const bootFill = document.getElementById('hub-boot-fill');
+let bootKalkti = false;
+
+function bootIlerle(oran) {
+   if (bootFill) bootFill.style.width = `${Math.round(oran * 100)}%`;
+}
+
+function bootKaldir() {
+   if (bootKalkti || !bootEl) return;
+   bootKalkti = true;
+   bootIlerle(1);
+   bootEl.classList.add('is-gone');
+   setTimeout(() => { bootEl.hidden = true; }, 360);
+}
+
+/* Emniyet: kurulum takilirsa bile perde kalkar. */
+const bootEmniyet = setTimeout(() => { iz('boot.emniyet'); bootKaldir(); }, 4000);
+
+bootIlerle(0.15);
 await initLang();
 applyTranslations();
 renderLangSwitcher(document.getElementById('lang-switcher'));
 
 /* Bakimdaki oyunlari sunucu belirliyor (bot/worker.js BAKIMDAKI_OYUNLAR).
    Acilista bir kez okunup gameList()'e veriliyor; renderGames senkron kaliyor. */
+bootIlerle(0.4);
 const BAKIM = new Set(await bakimListesi());
+bootIlerle(0.65);
 
 renderProfile();
 renderGames();
@@ -250,6 +294,31 @@ basitPanel('settings-btn', 'settings-overlay', 'settings-close');
 basitPanel('wallet-btn', 'wallet-overlay', 'wallet-close', cuzdanTazele);
 wireTani();
 taniBaslat('hub');
+
+/* Her sey cizildi. Gorsellerin de inmesini bekliyoruz ki perde
+   kalkinca hub tam olsun, parca parca belirmesin - ama beklemek
+   SINIRLI: gorseller gelmese de perde kalkiyor. */
+bootIlerle(0.85);
+await Promise.race([
+   gorselleriBekle([
+      'assets/currency/mh-logo-128.webp',
+      'assets/dragon-tile/pul.webp',
+      'assets/dragon-tile/logo.webp',
+      'assets/widget/daily.webp', 'assets/widget/lider.webp',
+      'assets/widget/energy.webp', 'assets/widget/friends.webp',
+   ]),
+   new Promise((c) => setTimeout(c, 1800)),
+]);
+clearTimeout(bootEmniyet);
+bootKaldir();
+
+function gorselleriBekle(yollar) {
+   return Promise.all(yollar.map((y) => new Promise((c) => {
+      const im = new Image();
+      im.onload = c; im.onerror = c;     /* hata da bitis sayilir */
+      im.src = y;
+   })));
+}
 renderReferralLadder();
 
 document.addEventListener('langchange', () => {
@@ -519,7 +588,6 @@ function kalanMetin(ms) {
    return `${sn % 60}${t('hub.time.s')}`;
 }
 
-let sayacTimer = null;
 function sayaclariBaslat() {
    clearInterval(sayacTimer);
    sayacTimer = setInterval(() => {

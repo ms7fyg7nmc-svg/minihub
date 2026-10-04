@@ -1677,3 +1677,61 @@ body.hub::before {
   box-shadow: 0 0 6px rgba(226, 103, 156, 0.9);
 }
 .tani-btn.var-haber { border-color: var(--c-pink); color: var(--c-pink); }
+
+/* --- Hub acilis ekrani --- */
+
+.hub-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 22px;
+  background:
+    radial-gradient(60% 40% at 50% 44%, rgba(192, 121, 242, 0.16), transparent 70%),
+    var(--bg);
+  transition: opacity 0.35s ease;
+}
+.hub-boot[hidden] { display: none; }
+.hub-boot.is-gone { opacity: 0; pointer-events: none; }
+
+.hub-boot-glow {
+  position: absolute;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 185, 66, 0.18) 0%, transparent 62%);
+  animation: hubBootPulse 2.6s ease-in-out infinite;
+}
+.hub-boot-logo {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 24px rgba(245, 185, 66, 0.4));
+  animation: hubBootFloat 2.8s ease-in-out infinite;
+}
+.hub-boot-bar {
+  position: relative;
+  width: 150px;
+  height: 4px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--yuzey-orta);
+}
+.hub-boot-bar i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--c-violet), var(--gold));
+  transition: width 0.25s ease;
+}
+
+@keyframes hubBootFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes hubBootPulse { 0%, 100% { opacity: 0.45; transform: scale(0.94); } 50% { opacity: 1; transform: scale(1.06); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hub-boot-glow, .hub-boot-logo { animation: none; }
+}
