@@ -1,27 +1,27 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v212';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v212';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v213';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v213';
 
-import { CONFIG, gorselSeviye } from './config.js?v212';
-import { bakimdaMi } from '../../js/store.js?v212';
+import { CONFIG, gorselSeviye } from './config.js?v213';
+import { bakimdaMi } from '../../js/store.js?v213';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA } from './model.js?v212';
-import { dragonSvg, dragonAssetUrls } from './art.js?v212';
-import { turCek, turYolu, turBul } from './turler.js?v212';
-import { taniBaslat, iz } from '../../js/tani.js?v212';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v212';
+         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA } from './model.js?v213';
+import { dragonSvg, dragonAssetUrls } from './art.js?v213';
+import { turCek, turYolu, turBul } from './turler.js?v213';
+import { taniBaslat, iz } from '../../js/tani.js?v213';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v213';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
          kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
          PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
-         partnerKademe } from './gorevler.js?v212';
-import { getBest } from '../../js/store.js?v212';
+         partnerKademe } from './gorevler.js?v213';
+import { getBest } from '../../js/store.js?v213';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v212';
+         kilitliMi, nesneMi } from './grid.js?v213';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v212';
-import { createTutorial, pozListesi } from './tutorial.js?v212';
+         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v213';
+import { createTutorial, pozListesi } from './tutorial.js?v213';
 
 const GAME_ID = 'dragon';
 
@@ -217,7 +217,25 @@ const taskDot = $('task-dot'); const tabbar = $('tabbar');
 let oyuncu = null;
 let board = null;
 let tut = null;
-let busy = false;
+/* MESGUL KILIDI - SURESI DOLAR.
+
+   Duz bir boolean'di ve `await yemAnimasyonu()` ile birlikte oyunu
+   donduruyordu: o soz ic ice setTimeout'larla cozuluyor, telefon
+   uygulamayi arka plana alinca zamanlayicilar duruyor, soz hic
+   cozulmuyor, finally hic calismiyor ve busy SONSUZA KADAR acik
+   kaliyor. Besleme dugmesi oturum boyunca olu - oyuncunun gordugu sey
+   donmus bir oyun.
+
+   try/finally bunu kurtarmiyor; o yalnizca ATILAN hataya karsi. Hic
+   cozulmeyen bir soz icin hicbir sey calismaz.
+
+   Artik kilit bir ZAMAN DAMGASI. Zamanlayiciya bagli degil: bir sonraki
+   dokunusta suresi dolmussa kendiliginden aciliyor. */
+const MESGUL_SURE = 3000;
+let busyBas = 0;
+const mesgulMu = () => busyBas > 0 && Date.now() - busyBas < MESGUL_SURE;
+const mesgulAc = () => { busyBas = Date.now(); };
+const mesgulKapat = () => { busyBas = 0; };
 let seciliHucre = -1;
 
 const bicim = (n) => Number(n).toLocaleString(locale());
@@ -707,20 +725,18 @@ function beslemeFiyati(d) {
   return yemMaliyeti(d.level, d.pencereSayi);
 }
 
-bostaBtn.addEventListener('click', () => { if (!busy) bostaTopla(); });
+bostaBtn.addEventListener('click', () => { if (!mesgulMu()) bostaTopla(); });
 
 feedBtn.addEventListener('click', async () => {
   const d = aktifEjderha(oyuncu);
-  if (!d || busy) return;
+  if (!d || mesgulMu()) return;
   if (!yuvaAcikMi(oyuncu, d)) { uyar(t('slotLockedFeed')); return; }
 
   const fiyat = beslemeFiyati(d);
   if (oyuncu.food < fiyat) { uyar(t('noFood')); return; }
 
-  /* try/finally sart: arada bir hata cikarsa busy acik kalir ve besleme
-     dugmesi oturum boyunca bir daha calismaz - oyuncunun gordugu sey
-     donmus bir oyun olur. */
-  busy = true;
+  mesgulAc();
+  iz('besle');
   try {
     oyuncu.food -= fiyat;
     oyuncu.sayaclar.feeds += 1;
@@ -735,11 +751,12 @@ feedBtn.addEventListener('click', async () => {
     yumurtaBirak();
     kaydet();
   } finally {
-    busy = false;
+    mesgulKapat();
   }
   gorevNoktasi();
   ejderhaCiz();
   tut?.olay('feed');
+  iz('besle.bitti');
 });
 
 function seviyeKontrol(d) {
@@ -777,8 +794,33 @@ function yumurtaBirak() {
   });
 }
 
+/* Soz HER DURUMDA cozuluyor.
+
+   Eskiden yalnizca ic ice iki setTimeout cozuyordu. Telefon uygulamayi
+   arka plana alinca zamanlayicilar duruyor; sayfa geri gelmezse soz
+   asili kaliyor ve onu bekleyen her sey (besleme kilidi) kilitli
+   kaliyor. Artik iki cikis daha var: sayfa gizlenirse hemen cozuluyor,
+   ve her ihtimale karsi bir son zamanlayici duruyor. Hangisi once
+   gelirse; `bitti` ikinci kez cozulmeyi engelliyor. */
 function yemAnimasyonu() {
-  return new Promise((cozul) => {
+  return new Promise((cozulHam) => {
+    let bitti = false;
+    const temizle = [];
+    const cozul = () => {
+      if (bitti) return;
+      bitti = true;
+      temizle.forEach((f) => f());
+      flyFood.hidden = true;
+      artEl.classList.remove('eating');
+      cozulHam();
+    };
+
+    const gizlenince = () => { if (document.hidden) cozul(); };
+    document.addEventListener('visibilitychange', gizlenince);
+    const emniyet = setTimeout(cozul, 2000);
+    temizle.push(() => document.removeEventListener('visibilitychange', gizlenince));
+    temizle.push(() => clearTimeout(emniyet));
+
     flyFood.hidden = false;
     flyFood.style.transition = 'none';
     flyFood.style.left = '6%'; flyFood.style.top = '62%';
@@ -941,7 +983,7 @@ function ejderhaCiz() {
 
   const fiyat = beslemeFiyati(d);
   feedCostEl.textContent = bicim(fiyat);
-  feedBtn.disabled = busy || !acik || oyuncu.food < fiyat;
+  feedBtn.disabled = mesgulMu() || !acik || oyuncu.food < fiyat;
 
   appetiteEl.textContent = d.pencereBas
     ? t('appetite', { time: sureMetni(d.pencereBas + BESLEME_PENCERESI - simdi()) })
@@ -1009,7 +1051,7 @@ function bostaCiz(d, acik) {
   bostaKutu.classList.toggle('dolu', y.dolu);
   bostaNot.textContent = y.dolu ? t('idleFull')
     : t('idleNext', { time: sureKisa(y.kalan) });
-  bostaBtn.disabled = busy || y.biriken === 0;
+  bostaBtn.disabled = mesgulMu() || y.biriken === 0;
 }
 
 /* ---------- GUNLUK ODUL ---------- */
