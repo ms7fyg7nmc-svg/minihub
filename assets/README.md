@@ -40,7 +40,9 @@ bir tasarım kararı değişirse yeniden üretmek yerine oradan alınır.
 | `currency/` | $MH logosu ve yıldız | Üç para tasarımı + kaynak kolajlar |
 | `food/` | Et | Üç yem tasarımı |
 | `packs/` | Market paketleri | Kaynak kolajlar |
-| `frames/`, `ui/`, `icons/`, `bg/`, `board/` | Oyun içi arayüz parçaları | — |
+| `ui/` | Arayüz ikonları — ayarlar, cüzdan, butonlar | Üç ikon işlemi (`-1`, `-2`, `-4`) |
+| `frames/`, `icons/`, `bg/`, `board/` | Oyun içi arayüz parçaları | — |
+| `_sosyal/` | Sosyal medya görselleri (siteye çıkmaz) | — |
 
 ## Karakterler
 
