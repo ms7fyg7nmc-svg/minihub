@@ -2,15 +2,14 @@
 
 | Dosya | Ne | Durum |
 |---|---|---|
-| `settings.webp` | Ayarlar — dişli | **Onaylandı, henüz bağlı değil** |
-| `wallet.webp` | Cüzdan | **Onaylandı, henüz bağlı değil** |
+| `settings.webp` | Ayarlar — dişli | Hub üst barında kullanılıyor |
+| `wallet.webp` | Cüzdan | Hub üst barında kullanılıyor |
 | `btn-*.webp`, `node-*.webp`, `chain.webp` | Ejderha Adası arayüz parçaları | Kullanılıyor |
 
 ## settings / wallet
 
-Hub'da şu an **Settings veya Wallet ekranı yok**. İkonlar o ekranlar
-yapıldığında hazır olsun diye önceden üretildi. Bağlayan kişi için iki
-not:
+Hub üst barında kullanılıyorlar. İki not:
+
 
 **1. Boyut.** 96×96 şeffaf tuval, ortalanmış. Ekranda 24px'te
 tasarlandılar ve o boyutta denendi.
