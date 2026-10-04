@@ -4,8 +4,8 @@
    seviye oluyor. Kilitli hucreler yildizla aciliyor ve icindeki odulu
    dogrudan oyuncuya veriyor. */
 
-import { EN_UST_YUMURTA, EN_UST_SANDIK, kapSuresi } from './ekonomi.js?v205';
-import { belir, zipla, AKIS } from './canlandir.js?v205';
+import { EN_UST_YUMURTA, EN_UST_SANDIK, kapSuresi } from './ekonomi.js?v206';
+import { belir, zipla, AKIS } from './canlandir.js?v206';
 
 /* Kap gorselleri v2: kaplar artik ACIK ve iceriklerini gosteriyor.
    Eski set sekiz kabin da ayni kirmizi kutu olmasi yuzunden 64 pikselde
@@ -237,7 +237,21 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
   }
 
   function hizliIndex(x, y) {
-    for (const k of surukle?.kutular || []) {
+    if (!surukle) return -1;
+
+    /* Kutular surukleme basinda bir kez olculuyor. Arada sayfa kaydiysa
+       o olcumler yalan soyluyor: parmak dogru hucrenin uzerindeyken
+       hizliIndex baskasini - ya da hicbirini - buluyor, birakinca
+       yumurta yerine donuyor ve oyuncu "bir sey olmadi" diyor.
+       Kaymayi yakalayip yeniden olcuyoruz; kaymadigi surece hicbir
+       maliyeti yok. */
+    const kayma = window.scrollY + (el.closest('.screen')?.scrollTop || 0);
+    if (kayma !== surukle.kayma) {
+      surukle.kayma = kayma;
+      surukle.kutular = kutulariTara();
+    }
+
+    for (const k of surukle.kutular || []) {
       if (x >= k.sol && x <= k.sag && y >= k.ust && y <= k.alt) return k.i;
     }
     return -1;
@@ -312,7 +326,8 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
     surukle = { i, hucre, ghost: hayalet(hucre, e.clientX, e.clientY),
                 tasidi: false, x0: e.clientX, y0: e.clientY,
                 sonX: e.clientX, sonY: e.clientY, wrap, bas: Date.now(),
-                kutular: kutulariTara(), vurgu: -2, kare: 0 };
+                kutular: kutulariTara(), vurgu: -2, kare: 0,
+                kayma: window.scrollY + (el.closest('.screen')?.scrollTop || 0) };
     wrap.classList.add('dragging');
     eslesenleriIsaretle(i, hucre);
     /* Yakalama bazi WebView'larda hata firlatiyor; birakma olaylari
@@ -328,19 +343,42 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
     if (!surukle || surukle.kilitDokunus) return;
     surukle.sonX = e.clientX;
     surukle.sonY = e.clientY;
-    if (surukle.kare) return;
+
+    /* HAYALET DOGRUDAN TASINIYOR, rAF BEKLEMIYOR.
+
+       Eskiden parmagin takibi de kare dongusune bagliydi: hareket()
+       yalnizca koordinati not edip bir rAF siraya koyuyor, hayaleti o
+       geri cagri tasiyordu. Bunun bir bedeli vardi - Telegram WebView
+       rAF'i durdurabiliyor (arka plan, sistem hareketi, guc tasarrufu).
+       rAF durunca `surukle.kare` sifirlanmiyor, sonraki her hareket
+       `if (surukle.kare) return` kapisina takiliyor ve YUMURTA PARMAGIN
+       ALTINDA DONUYOR. Oyuncunun gordugu sey tam olarak bu.
+
+       Hayaleti tasimak tek bir transform yazmasi; yerlesim hesabi
+       gerektirmiyor, compositor isi. Her pointermove'da yapmanin bir
+       maliyeti yok. Kare dongusune sadece sinif yazan VURGU isi kaldi -
+       asil pahali olan oydu. */
+    hayaletTasi(surukle.ghost, surukle.sonX, surukle.sonY);
+    if (Math.abs(surukle.sonX - surukle.x0) > 6
+        || Math.abs(surukle.sonY - surukle.y0) > 6) surukle.tasidi = true;
+
+    /* Bekleyen bir kare varsa yenisini sıraya koymuyoruz - ama o kare
+       cok uzun suredir bekliyorsa (rAF durmus demektir) kilidi aciyoruz.
+       Vurgu birkac kare gec gelebilir, kalici olarak kaybolmaz. */
+    if (surukle.kare) {
+      if (performance.now() - (surukle.kareAn || 0) < 400) return;
+      cancelAnimationFrame(surukle.kare);
+    }
+    surukle.kareAn = performance.now();
     surukle.kare = requestAnimationFrame(kareIsle);
   }
 
+  /* Yalnizca VURGU: hangi hucrenin uzerindeyiz ve orasi birlesir mi. */
   function kareIsle() {
     if (!surukle) return;
     surukle.kare = 0;
     const { sonX: x, sonY: y } = surukle;
 
-    hayaletTasi(surukle.ghost, x, y);
-    if (Math.abs(x - surukle.x0) > 6 || Math.abs(y - surukle.y0) > 6) surukle.tasidi = true;
-
-    /* Vurgu sadece hedef hucre degistiginde yaziliyor. */
     const hedef = hizliIndex(x, y);
     if (hedef === surukle.vurgu) return;
     surukle.vurgu = hedef;
