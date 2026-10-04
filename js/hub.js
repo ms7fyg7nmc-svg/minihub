@@ -1,11 +1,11 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v202';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v205';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi, bakimListesi,
-} from './store.js?v202';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v202';
+} from './store.js?v205';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v205';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
@@ -244,6 +244,8 @@ renderLiderCard();
 wireLiderPanel();
 renderFriendsCard();
 wireFriendsPanel();
+basitPanel('settings-btn', 'settings-overlay', 'settings-close');
+basitPanel('wallet-btn', 'wallet-overlay', 'wallet-close', cuzdanTazele);
 renderReferralLadder();
 
 document.addEventListener('langchange', () => {
@@ -277,13 +279,18 @@ async function renderSyncBadge() {
    if (!badge) return;
 
    const durum = await sunucuDurumu();
-   if (durum === 'misafir') return;
 
+   /* Rozet artik Ayarlar'da "Sunucu" satirinin karsiligi, yani bos
+      birakilamaz - eskiden altbilgideydi ve misafirde gizlenmesi
+      yetiyordu. Misafir de bir durum: baglanmamis. */
    badge.hidden = false;
+   badge.classList.toggle('is-misafir', durum === 'misafir');
    badge.classList.toggle('is-sunucu', durum === 'sunucu');
    badge.classList.toggle('is-yerel', durum === 'yerel');
    document.getElementById('sync-text').textContent =
-      durum === 'sunucu' ? t('hub.sync.server') : t('hub.sync.local');
+      durum === 'sunucu' ? t('hub.sync.server')
+      : durum === 'yerel' ? t('hub.sync.local')
+      : t('hub.sync.guest');
 }
 
 function refreshPointsChip() {
@@ -862,6 +869,43 @@ async function renderLiderCard() {
 
    card.hidden = false;
    document.getElementById('lider-sira').innerHTML = veri.kendi ? `#${veri.kendi.sira}` : '<span class="rank-dash"></span>';
+}
+
+/* --- AYARLAR ve CUZDAN panelleri ---
+
+   Ikisi de mevcut .daily-overlay desenini kullaniyor: ayni kapanma
+   davranisi, ayni kaydirma kilidi, ayni gorunum. Yeni bir panel turu
+   icat etmenin bir sebebi yoktu. */
+function basitPanel(acBtnId, overlayId, kapatBtnId, acilinca) {
+   const btn = document.getElementById(acBtnId);
+   const overlay = document.getElementById(overlayId);
+   if (!btn || !overlay) return;
+
+   const kapat = () => { overlay.hidden = true; panelKaydirmayiAc(); };
+   const ac = () => {
+      overlay.hidden = false;
+      panelKaydirmayiKilitle();
+      haptic.tap();
+      acilinca?.();
+   };
+
+   btn.addEventListener('click', ac);
+   document.getElementById(kapatBtnId)?.addEventListener('click', kapat);
+   overlay.addEventListener('click', (e) => { if (e.target === overlay) kapat(); });
+}
+
+/* Cuzdan acilinca bakiye tazeleniyor: ust bardaki jeton ile ayni
+   kaynaktan okuyor, yani iki yerde farkli sayi gorunmuyor.
+
+   Gram SIFIR ve bilerek gosteriliyor. Token henuz yok; satiri gizlemek
+   yerine sifir yazmak, $MH'in ileride neye donusecegini bugunden
+   anlatiyor. Oran belirlendiginde burasi tek satirlik bir carpma olacak. */
+function cuzdanTazele() {
+   getPoints().then((puan) => {
+      document.getElementById('wallet-mh').textContent = puan.toLocaleString(locale());
+   });
+   const gram = document.getElementById('wallet-gram');
+   if (gram) gram.textContent = `${(0).toLocaleString(locale())} g`;
 }
 
 function wireLiderPanel() {

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="202">
+  <meta name="surum" content="205">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MINI HUB GAMES</title>
   <!-- Cark rakamlari icin (bkz. js/hub.js WHEEL_FONT). Ejderha Adasi
@@ -47,7 +47,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v202">
+  <link rel="stylesheet" href="css/style.css?v205">
 </head>
 <body class="hub">
   <div class="app">
@@ -60,6 +60,17 @@
           <strong id="username">Player</strong>
         </div>
       </div>
+      <!-- Isim ile MH jetonu ARASINDA duruyorlar: ikisi de ikincil,
+           ortada durunca ne profili ne bakiyeyi golgeliyorlar. -->
+      <div class="topbar-araclar">
+        <button class="arac-btn" id="wallet-btn" aria-label="Wallet">
+          <img src="assets/ui/wallet.webp" alt="" width="96" height="96">
+        </button>
+        <button class="arac-btn" id="settings-btn" aria-label="Settings">
+          <img src="assets/ui/settings.webp" alt="" width="96" height="96">
+        </button>
+      </div>
+
       <div class="points-chip">
         <img class="coin" src="assets/coin.png" alt="">
         <span id="points">0</span>
@@ -133,17 +144,68 @@
     <div class="game-grid" id="games"></div>
 
     <!-- Alt satir: solda surum, saginda dil sectirici -->
-    <footer class="foot">
-      <span data-i18n="hub.version">Version 0.1</span>
-      <!-- Sunucuya baglanip baglanmadigini gosterir. Ust barda dikkat
-           dagitiyordu; teknik bir ayrinti oldugu icin surumun yanina alindi. -->
-      <span class="sync-badge" id="sync-badge" hidden>
-        <span class="sync-dot"></span>
-        <span id="sync-text"></span>
-      </span>
-      <div id="lang-switcher"></div>
-    </footer>
+    <!-- Surum, sunucu durumu ve dil AYARLAR panelinde (asagida).
+         Eskiden burada bir altbilgi vardi; uc teknik ayrinti her acilista
+         ekranin dibinde duruyordu, oysa biri bile gunde bir kez
+         bakilacak seyler degil. -->
 
+  </div>
+
+  <!-- AYARLAR. Simdilik dil, sunucu durumu ve surum. Kullanici
+       sozlesmesi ve gizlilik sozlesmesi gibi kurumsal baglantilar da
+       buraya gelecek - o yuzden liste bicimi secildi, satir eklemek
+       tek <div> olsun diye. -->
+  <div class="daily-overlay" id="settings-overlay" hidden>
+    <div class="daily-modal">
+      <button class="daily-close" id="settings-close" aria-label="Kapat">✕</button>
+      <h3 class="ayar-baslik" data-i18n="hub.settings.title">Ayarlar</h3>
+
+      <div class="ayar-liste">
+        <div class="ayar-satir">
+          <span class="ayar-ad" data-i18n="hub.settings.language">Dil</span>
+          <div id="lang-switcher"></div>
+        </div>
+
+        <div class="ayar-satir">
+          <span class="ayar-ad" data-i18n="hub.settings.server">Sunucu</span>
+          <span class="sync-badge" id="sync-badge">
+            <span class="sync-dot"></span>
+            <span id="sync-text"></span>
+          </span>
+        </div>
+
+        <div class="ayar-satir">
+          <span class="ayar-ad" data-i18n="hub.settings.version">Sürüm</span>
+          <span class="ayar-deger" data-i18n="hub.version">Version 0.1</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUZDAN. Simdilik iki satir: $MH bakiyesi ve gram karsiligi.
+       Gram sifir cunku token henuz yok - gizlemek yerine sifir
+       gosteriliyor, boylece satirin ne anlama geldigi bugunden
+       anlasiliyor. -->
+  <div class="daily-overlay" id="wallet-overlay" hidden>
+    <div class="daily-modal">
+      <button class="daily-close" id="wallet-close" aria-label="Kapat">✕</button>
+      <h3 class="ayar-baslik" data-i18n="hub.wallet.title">Cüzdan</h3>
+
+      <div class="cuzdan-kutu">
+        <img class="cuzdan-simge" src="assets/coin.png" alt="" width="64" height="64">
+        <div class="cuzdan-deger" id="wallet-mh">0</div>
+        <div class="cuzdan-birim">$MH</div>
+      </div>
+
+      <div class="ayar-liste">
+        <div class="ayar-satir">
+          <span class="ayar-ad" data-i18n="hub.wallet.gram">Gram karşılığı</span>
+          <span class="ayar-deger" id="wallet-gram">0 g</span>
+        </div>
+      </div>
+
+      <p class="daily-card-hint cuzdan-not" data-i18n="hub.wallet.note"></p>
+    </div>
   </div>
 
   <!-- Gunluk Oduller paneli: seri + cark. Sadece Telegram/sunucu modunda
@@ -232,6 +294,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v202"></script>
+  <script type="module" src="js/hub.js?v205"></script>
 </body>
 </html>

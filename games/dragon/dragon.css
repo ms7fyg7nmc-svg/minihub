@@ -44,39 +44,7 @@
 .dragon-app select { font-family: inherit; }
 
 /* Ses acma/kapama: ust barda kucuk, dikkat cekmeyen bir dugme. */
-.ses-btn {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  flex: none;
-  padding: 0;
-  border: 1px solid var(--kenar);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--soluk);
-  cursor: pointer;
-}
 
-.ses-btn svg { width: 19px; height: 19px; display: block; }
-
-.ses-btn.kapali { color: #5b6276; }
-
-.ses-btn:active { transform: translateY(1px); }
-
-/* ---------- ATMOSFER ---------- */
-
-/* Sahne arka plani: ekrana gore degisen tek gorsel + uzerine okunabilirlik
-   icin koyu bir gecis. Gorseller 8-11 KB, telefonu yormuyor. */
-.sky {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  background-image: url('../../assets/bg/forge.webp');
-  background-size: cover;
-  background-position: center 72%;
-  transition: opacity 0.4s ease;
-}
 
 .sky::after {
   content: '';

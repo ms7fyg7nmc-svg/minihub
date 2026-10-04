@@ -1507,3 +1507,101 @@ body.hub::before {
    object-fit: contain;
    filter: drop-shadow(0 2px 7px rgba(0, 0, 0, 0.65));
 }
+
+/* --- Ust bar araclari: Cuzdan + Ayarlar --- */
+
+/* Profil ile MH jetonunun ARASINDA duruyorlar. Ikisi de ikincil islev;
+   ortada durunca ne ismi ne bakiyeyi golgeliyorlar ve ust bar tek bir
+   satirda dengeleniyor. */
+.topbar-araclar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  margin-right: 8px;
+}
+
+.arac-btn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--cizgi-soft);
+  border-radius: 11px;
+  background: var(--yuzey);
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+.arac-btn:active { transform: scale(0.94); background: var(--yuzey-orta); }
+.arac-btn img { width: 22px; height: 22px; object-fit: contain; }
+
+/* Ikonlarin golgesi gorselin icine pismis, rengi degistirilemiyor
+   (bkz. assets/ui/README.md). Aydinlik temada beyaz kartin uzerinde
+   soluyorlar; butonun zeminini koyulastirmak onlari geri getiriyor. */
+:root[data-tg-theme="light"] .arac-btn {
+  background: #2c2a3c;
+  border-color: rgba(0, 0, 0, 0.18);
+}
+
+/* --- Ayarlar ve Cuzdan panelleri --- */
+
+.ayar-baslik {
+  margin: 0 0 14px;
+  font-size: 15px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Satir listesi: ileride kullanici sozlesmesi, gizlilik sozlesmesi gibi
+   satirlar eklenecek, hepsi ayni kaliba otursun diye liste bicimi. */
+.ayar-liste { display: flex; flex-direction: column; }
+
+.ayar-satir {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 46px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--cizgi-soft);
+}
+.ayar-satir:last-child { border-bottom: 0; }
+
+.ayar-ad { font-size: 14px; font-weight: 600; }
+.ayar-deger { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Ayarlar icinde rozet artik gizlenmiyor: "sunucu" satirinin karsiligi
+   o, bos birakilamaz. */
+#settings-overlay .sync-badge[hidden] { display: inline-flex; }
+
+/* --- Cuzdan --- */
+
+.cuzdan-kutu {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  padding: 18px 12px 16px;
+  margin-bottom: 6px;
+  border: 1px solid color-mix(in srgb, var(--gold) 26%, transparent);
+  border-radius: 16px;
+  background: linear-gradient(160deg,
+              color-mix(in srgb, var(--gold) 12%, transparent),
+              transparent 70%), var(--yuzey);
+}
+.cuzdan-simge { width: 40px; height: 40px; }
+.cuzdan-deger {
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1.1;
+  color: var(--gold-yazi);
+  font-variant-numeric: tabular-nums;
+}
+.cuzdan-birim { font-size: 12px; font-weight: 700; letter-spacing: 1.2px; color: var(--muted); }
+.cuzdan-not { margin: 12px 0 0; text-align: center; white-space: normal; }
+
+/* Misafir: baglanmamis. Yerelden (turuncu, "sunucuya yazamadi") farkli -
+   bu bir hata degil, sadece henuz Telegram'dan girilmemis. */
+.sync-badge.is-misafir .sync-dot { background: var(--muted); }
+.sync-badge.is-misafir { color: var(--muted); }

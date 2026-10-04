@@ -1,27 +1,26 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v202';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v202';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v205';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v205';
 
-import { CONFIG, gorselSeviye } from './config.js?v202';
-import { bakimdaMi } from '../../js/store.js?v202';
+import { CONFIG, gorselSeviye } from './config.js?v205';
+import { bakimdaMi } from '../../js/store.js?v205';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA } from './model.js?v202';
-import { dragonSvg, dragonAssetUrls } from './art.js?v202';
-import { turCek, turYolu, turBul } from './turler.js?v202';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v202';
-import { sesBaslat, cal, sesAcikMi, sesiAyarla } from './ses.js?v202';
+         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA } from './model.js?v205';
+import { dragonSvg, dragonAssetUrls } from './art.js?v205';
+import { turCek, turYolu, turBul } from './turler.js?v205';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v205';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
          kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
          PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
-         partnerKademe } from './gorevler.js?v202';
-import { getBest } from '../../js/store.js?v202';
+         partnerKademe } from './gorevler.js?v205';
+import { getBest } from '../../js/store.js?v205';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v202';
+         kilitliMi, nesneMi } from './grid.js?v205';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v202';
-import { createTutorial, pozListesi } from './tutorial.js?v202';
+         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v205';
+import { createTutorial, pozListesi } from './tutorial.js?v205';
 
 const GAME_ID = 'dragon';
 
@@ -136,8 +135,6 @@ registerTexts(GAME_ID, {
   gotStars: '+{n} yıldız',
   gotItem: '{name} kazandın',
   jackpotMsg: 'JACKPOT!',
-  soundOn: 'Sesi kapat',
-  soundOff: 'Sesi aç',
   bigHitMsg: 'BÜYÜK VURUŞ!',
   tier_acemi: 'Acemi',
   tier_orta: 'Orta',
@@ -213,7 +210,6 @@ const partnerBar = $('partner-bar'); const partnerAktif = $('partner-aktif');
 const sayfa = $('sayfa'); const sayfaBaslik = $('sayfa-baslik');
 const sayfaGovde = $('sayfa-govde'); const sayfaKapat = $('sayfa-kapat');
 const taskDot = $('task-dot'); const tabbar = $('tabbar');
-const sesBtn = $('ses-btn');
 
 /* ---------- DURUM ---------- */
 
@@ -305,31 +301,12 @@ async function basla() {
   showBackButton(hubaDon);
   backToHubOnResume();
   window.addEventListener('resize', () => tut?.yenidenKonumla());
-  /* Ses dugmesi: acikken dalgali hoparlor, kapaliyken carpili.
-     Govde ayni kaliyor, sadece sagdaki kisim degisiyor - goz dugmenin
-     yerini kaybetmesin. */
-  const HOPARLOR = '<path d="M4 9.5h3.2L12 6v12L7.2 14.5H4z" fill="currentColor"/>';
-  const DALGALAR = '<path d="M15.4 9.8a3.2 3.2 0 010 4.4M18 7.6a6.6 6.6 0 010 8.8"'
-    + ' fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
-  const CARPI = '<path d="M16.2 9.8l4.6 4.4M20.8 9.8l-4.6 4.4"'
-    + ' fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>';
-
-  const sesYuzu = () => {
-    const a = sesAcikMi();
-    sesBtn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${HOPARLOR}${a ? DALGALAR : CARPI}</svg>`;
-    sesBtn.classList.toggle('kapali', !a);
-    sesBtn.setAttribute('aria-label', a ? t('soundOn') : t('soundOff'));
-    sesBtn.setAttribute('aria-pressed', a ? 'false' : 'true');
-  };
-  sesBtn.addEventListener('click', () => { sesiAyarla(!sesAcikMi()); sesYuzu(); cal('tap'); });
-  /* Onizleme kartlari sayfayi aciyor */
-  questOzet.addEventListener('click', () => sayfaAc(t('questTitle'), questSayfaCiz));
-  partnerOzet.addEventListener('click', () => sayfaAc(t('partnerTitle'), partnerSayfaCiz));
-  sayfaKapat.addEventListener('click', sayfaKapatt);
-
-  await partnerSkorlariOku();
-  sesBaslat();
-  sesYuzu();
+  /* SES KALDIRILDI.
+     Ejderha Adasi'nin kendi ses motoru vardi (ses.js) ve her birlestirme
+     `cal('merge')` ile bir ornek caliyordu. Oyuncu sesleri istemedi;
+     ayrica birlestirme ani zaten en yogun kare ve oraya is eklemenin
+     bir karsiligi yoktu. Ses dugmesi de kalkti - kapatilacak bir sey
+     kalmadi. */
   setInterval(tazele, 1000);
 
   tutorialKur();
@@ -355,7 +332,6 @@ tabbar.addEventListener('click', (e) => {
   const btn = e.target.closest('.tab');
   if (!btn) return;
   haptic.tap('light');
-  cal('tap');
   ekranGoster(btn.dataset.go);
 });
 
@@ -470,7 +446,6 @@ function birlesti(yeni) {
   }
   kaydet();
   haptic.tap('medium');
-  cal('merge');
   siradanDoldur();
   gorevNoktasi();
   bilgiPaneliCiz();
@@ -601,7 +576,6 @@ function ejderhaCikar(i, tur) {
   gorevNoktasi();
   bilgiPaneliCiz();
   haptic.success();
-  cal('levelup');
 
   ucur({ kaynak: kutu, hedef: slotStrip.children[sira] || artEl,
          gorsel: turYolu(yeni.look.tur, 160), adet: 1, boy: 44,
@@ -648,7 +622,6 @@ function kapBaslat(i) {
   kaydet();
   board.ciz(); board.sec(i);
   bilgiPaneliCiz();
-  cal('tap');
   haptic.tap('light');
 }
 
@@ -669,7 +642,6 @@ function kapAtla(i) {
   board.ciz(); board.sec(i);
   kaynakTazele(true);
   bilgiPaneliCiz();
-  cal('unlock');
   haptic.success();
 }
 
@@ -690,7 +662,6 @@ function sandikAc(i) {
   siradanDoldur();
   bilgiPaneliCiz();
   haptic.success();
-  cal('chest');
   kazanimUcur(kutu, hucre.t === 'star' ? 'star' : 'food', hucre.lv >= 3 ? 7 : 5);
   const ust = ustBasamakMi(hucre.t, hucre.lv, deger);
   const mesaj = hucre.t === 'star' ? t('gotStars', { n: bicim(deger) })
@@ -713,7 +684,6 @@ function kilidiAc(i) {
   bilgiPaneliCiz();
   gorevNoktasi();
   haptic.success();
-  cal('unlock');
 }
 
 /* ---------- EJDERHA ---------- */
@@ -751,8 +721,6 @@ feedBtn.addEventListener('click', async () => {
     if (!d.pencereBas) d.pencereBas = simdi();
     d.pencereSayi += 1;
     kaynakTazele(true);
-
-    cal('feed');
     await yemAnimasyonu();
 
     d.lastFed = simdi();
@@ -774,7 +742,6 @@ function seviyeKontrol(d) {
     d.level += 1;
     d.feeds = 0;
     haptic.success();
-    cal('levelup');
     odulUcur(t('levelUp', { level: d.level }), true);
   }
 }
@@ -797,7 +764,6 @@ function yumurtaBirak() {
     sure: 720,
     bitince: () => {
       zipla(ocakSekmesi, 1.16);
-      cal('egglay');
       /* Izgara doluysa yumurta siraya giriyor; oyuncu Ocak'a gecince
          zaten goruyor, ayrica uyari cikarmaya gerek yok. */
       if (yer === 'izgara') yaziUcur(t('laidEgg'));
@@ -932,7 +898,6 @@ function yuvaTikla(i, d, acik, sirada) {
   if (d.id === oyuncu.activeId) return;
   oyuncu.activeId = d.id;
   kaydet();
-  cal('tap');
   cizHepsi();
 }
 
@@ -949,7 +914,6 @@ function yuvaAc(sira) {
 
   kaydet();
   haptic.success();
-  cal('levelup');
   cizHepsi();
   if (gelen) odulUcur(t('slotOpened', { name: t(turBul(gelen.look?.tur).adKey) }), true);
 }
@@ -1019,7 +983,7 @@ function bostaTopla() {
     gorsel: gorselYolu({ t: 'egg', lv: seviyeler[0] }),
     adet,
     boy: 34,
-    bitince: () => { zipla(ocakSekmesi, 1.16); cal('egglay'); },
+    bitince: () => { zipla(ocakSekmesi, 1.16); },
   });
 
   haptic.success();
@@ -1105,7 +1069,6 @@ function gunlukCiz() {
 dailyClaim.addEventListener('click', () => {
   if (!gunlukAlinabilirMi()) return;
   const gun = gunlukSiradakiGun();
-  cal('claim');
   odulVer(GUNLUK_ODULLER[gun - 1], dailyClaim);
   oyuncu.gunluk.seri = gun;
   oyuncu.gunluk.sonGun = bugun();
@@ -1215,7 +1178,6 @@ function questSayfaCiz() {
         if (!gorevAcikMi(kademe, i, oyuncu.gorevler.bitti)) return;
         if (oyuncu.gorevler.bitti.includes(g.id) || gorevIlerleme(g) < g.hedef) return;
         oyuncu.gorevler.bitti.push(g.id);
-        cal('claim');
         odulVer(g.odul, el.querySelector('button'));
         kaydet();
         haptic.success();
@@ -1301,7 +1263,6 @@ function partnerSayfaCiz() {
     if (!buyukOdulHazirMi() || oyuncu.partner.buyukOdul) return;
     oyuncu.partner.buyukOdul = true;
     for (const o of PARTNER_BUYUK_ODUL) odulVer({ item: { ...o } }, buyuk.querySelector('button'));
-    cal('jackpot');
     kaydet();
     haptic.success();
     partnerSayfaCiz();
@@ -1346,7 +1307,6 @@ function partnerSayfaCiz() {
         if (oyuncu.partner.alinan.includes(anahtar)) return;
         if (partnerKademe(oyun.id, partnerSkorlar[oyun.id] || 0) < kademe) return;
         oyuncu.partner.alinan.push(anahtar);
-        cal('claim');
         odulVer(PARTNER_ODULLERI[i], sat.querySelector('button'));
         kaydet();
         haptic.success();
@@ -1369,12 +1329,10 @@ function sayfaAc(baslik, cizici) {
   cizici();
   sayfa.hidden = false;
   sayfaGovde.scrollTop = 0;
-  cal('tap');
 }
 
 function sayfaKapatt() {
   sayfa.hidden = true;
-  cal('tap');
 }
 
 
@@ -1430,7 +1388,7 @@ function kazanimUcur(kaynak, tip, adet = 4) {
     hedef: yildiz ? resStar : resFood,
     gorsel: yildiz ? '../../assets/currency/star-64.webp' : '../../assets/food/meat-64.webp',
     adet,
-    bitince: () => { kaynakTazele(true); zipla(yildiz ? resStar : resFood, 1.22); cal('collect'); },
+    bitince: () => { kaynakTazele(true); zipla(yildiz ? resStar : resFood, 1.22); },
   });
 }
 
@@ -1532,14 +1490,12 @@ function onayIste({ baslik, satir, not, fiyat, engel = null, tamam }) {
   const kapat = () => { kat.remove(); onayKapat = null; };
   onayKapat = kapat;
   kat.addEventListener('click', (e) => { if (e.target === kat) kapat(); });
-  kat.querySelector('.onay-vazgec').addEventListener('click', () => { cal('tap'); kapat(); });
+  kat.querySelector('.onay-vazgec').addEventListener('click', () => { kapat(); });
   if (yeterli) kat.querySelector('.onay-tamam')?.addEventListener('click', () => { kapat(); tamam(); });
   document.body.appendChild(kat);
-  cal('tap');
 }
 
 function uyar(metin) {
-  cal('deny');
   const el = document.createElement('div');
   el.className = 'toast';
   el.textContent = metin;
