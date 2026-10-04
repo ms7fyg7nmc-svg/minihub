@@ -1,17 +1,17 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v210';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v211';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi, bakimListesi,
-} from './store.js?v210';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v210';
+} from './store.js?v211';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v211';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniListesi, taniBaslat } from './tani.js?v210';
+import { taniListesi, taniBaslat, taniHataVar } from './tani.js?v211';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -920,6 +920,14 @@ function wireTani() {
    const kutu = document.getElementById('tani-kutu');
    const kopya = document.getElementById('tani-kopya');
    if (!ac || !kutu) return;
+
+   /* Kayitta hata varsa Ayarlar dugmesine nokta koyuyoruz. Oyuncunun
+      donunca ne yapacagini hatirlamasi gerekmiyor - uygulama kendisi
+      "burada bir sey oldu" diyor. */
+   if (taniHataVar()) {
+      document.getElementById('settings-btn')?.classList.add('var-haber');
+      ac.classList.add('var-haber');
+   }
 
    ac.addEventListener('click', () => {
       const satirlar = taniListesi();

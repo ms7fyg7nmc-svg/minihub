@@ -32,6 +32,13 @@ export function iz(olay, ayrinti) {
 export function taniListesi() { return oku(); }
 export function taniTemizle() { yaz([]); }
 
+/* Kayitta hata satiri var mi. Hub acilista buna bakip Ayarlar dugmesine
+   bir nokta koyuyor - oyuncunun "donunca su adimlari izle" diye bir sey
+   hatirlamasi gerekmesin diye. */
+export function taniHataVar() {
+  return oku().some((satir) => / HATA | RED |kayit\.reddedildi/.test(` ${satir} `));
+}
+
 /* Yakalanmamis her hata ve reddedilen her soz buraya dusuyor. Asil
    aradigimiz bu: bir yerde sessizce patlayan bir sey varsa gorunur
    olacak. */

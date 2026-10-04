@@ -1662,3 +1662,18 @@ body.hub::before {
 }
 .tani-kutu[hidden], .tani-kopya[hidden] { display: none; }
 .tani-kopya { display: block; width: 100%; margin-top: 8px; text-align: center; }
+
+/* Tani kaydinda hata varken Ayarlar dugmesinde kucuk bir nokta. */
+.arac-btn.var-haber { position: relative; }
+.arac-btn.var-haber::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c-pink);
+  box-shadow: 0 0 6px rgba(226, 103, 156, 0.9);
+}
+.tani-btn.var-haber { border-color: var(--c-pink); color: var(--c-pink); }

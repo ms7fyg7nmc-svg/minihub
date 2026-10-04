@@ -1,6 +1,6 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v210';
-import { surumKontrol } from './guncel.js?v210';
+import { isTelegramUser, getInitData } from './tg.js?v211';
+import { surumKontrol } from './guncel.js?v211';
 
 /* Hub ve 12 oyunun hepsi bu modulu yukluyor, o yuzden surum tazeleyici
    buraya bagli: tek yerden hepsini kapsiyor. */
@@ -599,6 +599,16 @@ export async function loadState(game) {
 const kayitUcusta = new Map();    /* key -> true */
 const kayitBekleyen = new Map();  /* key -> son state */
 
+/* Sunucu yazmayi reddettiyse (surum tutmadi) bunu kayda dusuyoruz.
+   Oyuncunun telefonunda gercekten olup olmadigini ancak boyle
+   ogrenebiliyoruz - masaustunde hic olmuyor. */
+async function taniYaz(olay, ayrinti) {
+  try {
+    const m = await import('./tani.js?v210');
+    m.iz(olay, ayrinti);
+  } catch { /* tani yoksa sessiz */ }
+}
+
 function kayitGonder(v, game, key) {
   const state = kayitBekleyen.get(key);
   kayitBekleyen.delete(key);
@@ -609,6 +619,8 @@ function kayitGonder(v, game, key) {
   return sunucuGonder('/api/state', { game, state, expectedVersion: beklenen })
     .then((sonuc) => {
       if (sonuc) {
+        /* Surum bir artmadiysa sunucu YAZMADI; bizimki reddedildi. */
+        if (sonuc.version === beklenen) taniYaz('kayit.reddedildi', `${key} v${beklenen}`);
         v.meta[key] = sonuc.version;
         /* Sunucunun donduruu state'i yalnizca ARDIMIZDA bekleyen bir
            kayit yoksa kabul ediyoruz. Bekleyen varsa oyuncu o cevaptan
@@ -616,6 +628,7 @@ function kayitGonder(v, game, key) {
            eskidir ve onu yazmak hamleyi yutar. */
         if (!kayitBekleyen.has(key)) v.state[key] = sonuc.state;
       } else {
+        taniYaz('kayit.cevapyok', key);
         kuyrugaEkle({ tur: 'state', game, state, expectedVersion: beklenen });
       }
     })
