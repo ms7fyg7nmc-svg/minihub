@@ -13,10 +13,25 @@ export function pozListesi() {
   return Object.values(POZ);
 }
 
-export function createTutorial({ kok, maske, buyucu, metin, ileriBtn, t, bitince }) {
+export function createTutorial({ kok, maske, buyucu, metin, ileriBtn, atlaBtn, t, bitince, iz }) {
   let adimlar = [];
   let i = -1;
   let acik = false;
+  let kurtarmaSaati = 0;
+
+  /* KURTARMA SURESI.
+
+     Olay bekleyen bir adimda "Devam" dugmesi gizleniyordu ve adimdan
+     cikisin TEK yolu oyundan gelecek olaydi. O olay herhangi bir
+     sebeple gelmezse - bir hata onu yutar, oyuncu baska bir sey yapar -
+     tutorial tum ekrani maskeleyip sonsuza kadar bekliyor. Oyuncunun
+     gordugu sey acar acmaz donmus bir oyun; ustelik tutorial ancak
+     BITINCE 99 olarak isaretlendigi icin her acilista ayni yere
+     takiliyor.
+
+     Artik bekleyen adimda dugme gizli basliyor ama bu sureden sonra
+     kendiliginden geliyor. Oyuncu asla kapana kisilmiyor. */
+  const KURTARMA_MS = 7000;
 
   function delikAc(el) {
     if (!el) {
@@ -38,6 +53,16 @@ export function createTutorial({ kok, maske, buyucu, metin, ileriBtn, t, bitince
     ileriBtn.hidden = !!adim.bekle;
     delikAc(typeof adim.delik === 'function' ? adim.delik() : null);
     adim.girince?.();
+    iz?.('tut', `${i} ${adim.key}${adim.bekle ? ' bekle:' + adim.bekle : ''}`);
+
+    clearTimeout(kurtarmaSaati);
+    if (adim.bekle) {
+      kurtarmaSaati = setTimeout(() => {
+        if (!acik || adimlar[i] !== adim) return;
+        ileriBtn.hidden = false;
+        iz?.('tut.kurtarma', adim.bekle);
+      }, KURTARMA_MS);
+    }
   }
 
   function ilerle() {
@@ -52,11 +77,21 @@ export function createTutorial({ kok, maske, buyucu, metin, ileriBtn, t, bitince
 
   function kapat() {
     acik = false;
+    clearTimeout(kurtarmaSaati);
     kok.hidden = true;
     maske.classList.remove('has-hole');
   }
 
   ileriBtn.addEventListener('click', () => { if (acik) ilerle(); });
+
+  /* Tutorial'i tamamen birakma. Kalici cikis: bitince() cagriliyor,
+     yani bir daha acilmiyor. */
+  atlaBtn?.addEventListener('click', () => {
+    if (!acik) return;
+    iz?.('tut.atlandi', String(i));
+    kapat();
+    bitince?.();
+  });
 
   return {
     basla(yeniAdimlar) {

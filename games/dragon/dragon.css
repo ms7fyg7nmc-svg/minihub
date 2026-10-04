@@ -2315,3 +2315,19 @@ body[data-screen="tasks"] .sky::after {
   pointer-events: none;
   background: linear-gradient(180deg, transparent, rgba(8, 10, 16, 0.75));
 }
+
+/* Tutorial'dan kalici cikis. Her adimda gorunur: bir adim oyundan olay
+   bekler ve o olay gelmezse oyuncunun baska cikisi kalmiyordu. */
+.tut-atla {
+  display: block;
+  margin: 8px auto 0;
+  padding: 6px 14px;
+  border: 0;
+  background: none;
+  color: var(--kul, #9aa0b5);
+  font: inherit;
+  font-size: 12px;
+  text-decoration: underline;
+  opacity: 0.75;
+  cursor: pointer;
+}

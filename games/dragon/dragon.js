@@ -1,27 +1,27 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v213';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v213';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v215';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v215';
 
-import { CONFIG, gorselSeviye } from './config.js?v213';
-import { bakimdaMi } from '../../js/store.js?v213';
+import { CONFIG, gorselSeviye } from './config.js?v215';
+import { bakimdaMi } from '../../js/store.js?v215';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA } from './model.js?v213';
-import { dragonSvg, dragonAssetUrls } from './art.js?v213';
-import { turCek, turYolu, turBul } from './turler.js?v213';
-import { taniBaslat, iz } from '../../js/tani.js?v213';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v213';
+         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA } from './model.js?v215';
+import { dragonSvg, dragonAssetUrls } from './art.js?v215';
+import { turCek, turYolu, turBul } from './turler.js?v215';
+import { taniBaslat, iz } from '../../js/tani.js?v215';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v215';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
          kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
          PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
-         partnerKademe } from './gorevler.js?v213';
-import { getBest } from '../../js/store.js?v213';
+         partnerKademe } from './gorevler.js?v215';
+import { getBest } from '../../js/store.js?v215';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v213';
+         kilitliMi, nesneMi } from './grid.js?v215';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v213';
-import { createTutorial, pozListesi } from './tutorial.js?v213';
+         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v215';
+import { createTutorial, pozListesi } from './tutorial.js?v215';
 
 const GAME_ID = 'dragon';
 
@@ -167,6 +167,7 @@ registerTexts(GAME_ID, {
   unitH: 'sa',
 
   tutNext: 'Devam',
+  tutSkip: 'Atla',
   tut1: 'Hoş geldin genç ejderha bakıcısı! Sana düzeni göstereyim.',
   tut2: 'Önce ejderhanı besle. Her yem verişinde sana bir yumurta bırakır.',
   tut3: 'Yumurta ocağa düştü. Bir kez daha besle ki ikinci yumurtan olsun.',
@@ -1556,7 +1557,7 @@ function uyar(metin) {
 function tutorialKur() {
   tut = createTutorial({
     kok: $('tut'), maske: $('tut-mask'), buyucu: $('tut-wizard'),
-    metin: $('tut-text'), ileriBtn: $('tut-next'), t,
+    metin: $('tut-text'), ileriBtn: $('tut-next'), atlaBtn: $('tut-atla'), t, iz,
     bitince() { oyuncu.tutorial = 99; kaydet(); },
   });
 }
