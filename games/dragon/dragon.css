@@ -2304,17 +2304,11 @@ body[data-screen="tasks"] .sky::after {
    oyuncu orada bir sey oldugunu anlamiyor. */
 .screens { position: relative; }
 
-.screens::after {
-  content: '';
-  position: sticky;
-  z-index: 1;
-  display: block;
-  bottom: 0;
-  height: 22px;
-  margin-top: -22px;
-  pointer-events: none;
-  background: linear-gradient(180deg, transparent, rgba(8, 10, 16, 0.75));
-}
+/* Burada "asagida devami var" ipucu olarak yapiskan bir degrade vardi.
+   Icerik tasmadiginda da ciziliyordu ve ekranin dibinde, menuye paralel
+   duran bir bant gibi gorunuyordu - kullanicinin sordugu cizgi oydu.
+   Sekme cubugunun zaten kendi ust kenarligi ve yukari dogru golgesi var
+   (bkz. .tabbar), yani icerigi ayiran sey kaybolmuyor. */
 
 /* Tutorial'dan kalici cikis. Her adimda gorunur: bir adim oyundan olay
    bekler ve o olay gelmezse oyuncunun baska cikisi kalmiyordu. */

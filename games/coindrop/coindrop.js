@@ -1,11 +1,11 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v217';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v217';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v217';
-import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v217';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v219';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v219';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v219';
+import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v219';
 /* Sesler artik sentezlenmis degil, Dragon Island ornekleri (bkz. ses.js).
    Ses dugmesi ayni sessizlik anahtarini kullandigi icin degismedi. */
-import { SFX } from './ses.js?v217';
+import { SFX } from './ses.js?v219';
 
 const GAME_ID = 'coindrop';
 
@@ -100,7 +100,10 @@ const ALT_ADIM = 2;
    icine gomuyordu (40+ para 360x540 tahtaya "siginca" kasa hic dolmuyordu).
    Konum tabanli cozumleme + birkac gevseme turu yigini gercekten
    ust uste tutuyor. */
-const COZUM_TURU = 6;
+/* Cozumleyici gecisi. 6'ydi; 8'e cikti cunku bir kare icinde derin
+   gomulmelerin tamamen cozulmesi gerekiyor - kalan girinti bir sonraki
+   kareye devrederse goz onu "ic ice gecmis" olarak goruyor. */
+const COZUM_TURU = 8;
 const BEKLEME = 0.34;
 const TEHLIKE_SURESI = 1.5;
 const TAU = Math.PI * 2;
@@ -288,7 +291,14 @@ function adim(dt) {
     // Cozumleyici COZUM_TURU kadar gecis yapiyor; her gecis kendi icinde
     // sinirli olsa da ust uste binince toplamda yine de parayi firlatabiliyordu -
     // gercek sinir parayi TUM kare icin.
-    c._pay = TIERS[c.ti].r * 0.38;
+    // Paya bir TABAN eklendi. Pay yalnizca paranin kendi yaricapiyla
+    // olculuyordu: 1 sentlik bir para icin kare basi 9,6 piksel. Dev bir
+    // paranin icine gomulmus kucuk bir para o bütceyle cikamiyor, hele
+    // birden fazla komsuyla temasta butce ilk temasta tukeniyor ve para
+    // otekilerin icinde gomulu kaliyordu - oyuncunun gordugu "ic ice
+    // gecmis paralar" buydu. Taban kucuk paraya orantili olarak cok daha
+    // fazla yardim ediyor, buyuk parada fark kucuk kaliyor.
+    c._pay = TIERS[c.ti].r * 0.38 + 7;
   }
 
   for (let tur = 0; tur < COZUM_TURU; tur++) {
@@ -367,7 +377,12 @@ function ayir(a, b) {
   // Tek bir cakisma cozumu bir iterasyonda cok buyuk yer degistirmesin -
   // yeni birlesen (daha buyuk yaricapli) bir para birden cok komsuya
   // derin gomulebiliyor, sinirsiz duzeltme birikip parayi firlatiyordu.
-  let girinti = Math.min((top - d) * 0.85, Math.min(ra, rb) * 0.42);
+  // Gecis basina sinir ORTALAMA yaricapa gore. Eskiden KUCUK yaricapa
+  // gore idi; 1 sent ile 100 dolar yan yana geldiginde sinir kucugun
+  // olcusune dusuyor ve cok farkli boyuttaki ciftler bir turlu
+  // ayrilamiyordu. Ortalama, esit ciftlerde ayni davraniyor, farkli
+  // ciftlerde ise ayrilmayi mumkun kiliyor.
+  let girinti = Math.min((top - d) * 0.85, (ra + rb) * 0.5 * 0.42);
   // Agirlik yaricapin KUPU ile olculuyor (hacim gibi) - eskiden kare
   // (r*r) kullaniliyordu, iki kademe farkli paralarda bile buyugu
   // hemen hemen kucugu kadar itiliyordu. Kup ile kucuk para artik

@@ -1,27 +1,27 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v217';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v217';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v219';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v219';
 
-import { CONFIG, gorselSeviye } from './config.js?v217';
-import { bakimdaMi } from '../../js/store.js?v217';
+import { CONFIG, gorselSeviye } from './config.js?v219';
+import { bakimdaMi } from '../../js/store.js?v219';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA } from './model.js?v217';
-import { dragonSvg, dragonAssetUrls } from './art.js?v217';
-import { turCek, turYolu, turBul } from './turler.js?v217';
-import { taniBaslat, iz } from '../../js/tani.js?v217';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v217';
+         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA } from './model.js?v219';
+import { dragonSvg, dragonAssetUrls } from './art.js?v219';
+import { turCek, turYolu, turBul } from './turler.js?v219';
+import { taniBaslat, iz } from '../../js/tani.js?v219';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v219';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
          kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
          PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
-         partnerKademe } from './gorevler.js?v217';
-import { getBest } from '../../js/store.js?v217';
+         partnerKademe } from './gorevler.js?v219';
+import { getBest } from '../../js/store.js?v219';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v217';
+         kilitliMi, nesneMi } from './grid.js?v219';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v217';
-import { createTutorial, pozListesi } from './tutorial.js?v217';
+         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v219';
+import { createTutorial, pozListesi } from './tutorial.js?v219';
 
 const GAME_ID = 'dragon';
 
@@ -307,6 +307,14 @@ async function basla() {
 
   siradanDoldur();      /* acilista bekleyen oduller izgaraya insin */
   cizHepsi();
+
+  /* Oyun HER ZAMAN ejderha ekraninda aciliyor. HTML'de Ocak ekrani
+     isaretsiz (gorunur) duruyordu, yani acilista once izgara geliyordu.
+     Oyunun kalbi ejderha: oyuncu girince once onu gormeli, izgaraya
+     sekmeden gecmeli. Tutorial kendi adiminda ekrani zaten
+     degistiriyor, ona dokunmuyoruz. */
+  ekranGoster('dragon');
+
   shellEl.hidden = false;
   bootEl.classList.add('is-gone');
   setTimeout(() => { bootEl.hidden = true; }, 400);
