@@ -1,19 +1,19 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v222';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v223';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, enerjiBosMu, bakimListesi,
    getGorev, gorevAl,
-} from './store.js?v222';
-import { enerjiBosOnayi } from './onay.js?v222';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v222';
+} from './store.js?v223';
+import { enerjiBosOnayi } from './onay.js?v223';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v223';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniListesi, taniBaslat, taniHataVar, iz } from './tani.js?v222';
+import { taniListesi, taniBaslat, taniHataVar, iz } from './tani.js?v223';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -1072,7 +1072,27 @@ function basitPanel(acBtnId, overlayId, kapatBtnId, acilinca) {
    Gram SIFIR ve bilerek gosteriliyor. Token henuz yok; satiri gizlemek
    yerine sifir yazmak, $MH'in ileride neye donusecegini bugunden
    anlatiyor. Oran belirlendiginde burasi tek satirlik bir carpma olacak. */
+/* GRAM SIMGESI
+   Resmi GRAM logosu baska bir projenin marka varligi; benzerini
+   uretmiyoruz. Dosya assets/currency/gram-64.webp olarak projeye
+   konunca bu kod onu devreye aliyor. Dosya yoksa img kaldiriliyor ve
+   yedek "g" harfi kaliyor - cuzdanda kirik bir ikon durmasin. */
+function gramSimgesi() {
+   const kap = document.querySelector('.cuzdan-gram-simge');
+   const im = kap?.querySelector('img');
+   const harf = kap?.querySelector('b');
+   if (!im || !harf) return;
+   im.addEventListener('load', () => { im.hidden = false; harf.hidden = true; });
+   im.addEventListener('error', () => { im.remove(); });
+   /* src zaten HTML'de; yukleme bu satirdan once bitmis olabilir. */
+   if (im.complete) {
+      if (im.naturalWidth > 0) { im.hidden = false; harf.hidden = true; }
+      else im.remove();
+   }
+}
+
 function cuzdanTazele() {
+   gramSimgesi();
    getPoints().then((puan) => {
       document.getElementById('wallet-mh').textContent = puan.toLocaleString(locale());
    });

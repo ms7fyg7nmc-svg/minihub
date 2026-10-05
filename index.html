@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="222">
+  <meta name="surum" content="223">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MINI HUB GAMES</title>
   <!-- Cark rakamlari icin (bkz. js/hub.js WHEEL_FONT). Ejderha Adasi
@@ -47,7 +47,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v222">
+  <link rel="stylesheet" href="css/style.css?v223">
 </head>
 <body class="hub">
   <!-- ACILIS EKRANI
@@ -234,7 +234,13 @@
         </div>
 
         <div class="cuzdan-kutu cuzdan-gram">
-          <span class="cuzdan-gram-simge" aria-hidden="true">g</span>
+          <!-- GRAM simgesi. Resmi logo assets/currency/gram-64.webp olarak
+               projeye konunca kendiliginden devreye giriyor; dosya yoksa
+               yedek "g" harfi kaliyor (bkz. js/hub.js gramSimgesi). -->
+          <span class="cuzdan-gram-simge" aria-hidden="true">
+            <img src="assets/currency/gram-64.webp" alt="" width="64" height="64" hidden>
+            <b>g</b>
+          </span>
           <div class="cuzdan-deger" id="wallet-gram">0</div>
           <div class="cuzdan-birim" data-i18n="hub.wallet.gram">Gram</div>
         </div>
@@ -328,6 +334,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v222"></script>
+  <script type="module" src="js/hub.js?v223"></script>
 </body>
 </html>
