@@ -1,12 +1,12 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v221';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v221';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v221';
-import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v221';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v222';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v222';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v222';
+import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v222';
 /* Sesler artik sentezlenmis degil, Dragon Island ornekleri (bkz. ses.js).
    Ses dugmesi ayni sessizlik anahtarini kullandigi icin degismedi. */
-import { SFX } from './ses.js?v221';
-import { yarimBirakmaOnayi, onayAcik } from '../../js/onay.js?v221';
+import { SFX } from './ses.js?v222';
+import { yarimBirakmaOnayi, onayAcik } from '../../js/onay.js?v222';
 
 const GAME_ID = 'coindrop';
 
@@ -162,7 +162,6 @@ document.getElementById('back-link').addEventListener('click', (e) => {
 /* "Yeni oyun" oyun surerken basilirsa: el bitmis sayilir, kazanilan
    $MH ekrani normal bitisteki gibi gosterilir (match3 ile ayni davranis). */
 document.getElementById('new-game').addEventListener('click', async () => {
-  if (!(await oynanabilirMi())) { haptic.error(); goHome(); return; }
   haptic.tap();
   if (!over) {
     /* Onay: "Yeni oyun" oyunun ortasinda basildiginda kosuyu bitiriyor.

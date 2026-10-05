@@ -14,7 +14,7 @@
    panel DOM'dan cikmadan once cevap veriliyor. Hicbir yol, cevabi
    bir animasyonun bitmesine baglamiyor. */
 
-import { haptic } from './tg.js?v221';
+import { haptic } from './tg.js?v222';
 
 const STIL = `
 .onay-perde {
@@ -213,6 +213,26 @@ export async function yarimBirakmaOnayi(t) {
     enerji: t('ortak.onay.enerji'),
     devam: t('ortak.onay.devam'),
     bitir: t('ortak.onay.bitir.evet'),
+  });
+}
+
+/* ENERJI BOSKEN OYUNA GIRIS
+
+   Bu bir engel degil, bir bilgilendirme. Eskiden 0 enerjiyle oyuna
+   girilemiyordu; artik giriliyor ama kazanc dortte bire dusuyor ve
+   oyuncu bunu ONCEDEN ogreniyor.
+
+   Vurgulu dugme OYNAMAK. Oyuncu zaten oynamak icin dokundu; onu enerji
+   satin almaya itmek bu degisikligin amacinin tam tersi olurdu.
+
+   @returns {Promise<boolean>} true = oyuncu enerji almayi secti */
+export async function enerjiBosOnayi(t) {
+  return onayla({
+    baslik: t('ortak.enerji.baslik'),
+    mesaj: t('ortak.enerji.mesaj'),
+    enerji: t('ortak.enerji.not'),
+    devam: t('ortak.enerji.oyna'),
+    bitir: t('ortak.enerji.al'),
   });
 }
 

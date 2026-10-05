@@ -1,18 +1,19 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v221';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v222';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
-   referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi, bakimListesi,
+   referralOzeti, adEnergyRefill, starEnergyInvoiceLink, enerjiBosMu, bakimListesi,
    getGorev, gorevAl,
-} from './store.js?v221';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v221';
+} from './store.js?v222';
+import { enerjiBosOnayi } from './onay.js?v222';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v222';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniListesi, taniBaslat, taniHataVar, iz } from './tani.js?v221';
+import { taniListesi, taniBaslat, taniHataVar, iz } from './tani.js?v222';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -271,7 +272,7 @@ function bootKaldir() {
 }
 
 /* Emniyet: kurulum takilirsa bile perde kalkar. */
-const bootEmniyet = setTimeout(() => { iz('boot.emniyet'); bootKaldir(); }, 4000);
+const bootEmniyet = setTimeout(() => { iz('boot.emniyet'); bootKaldir(); }, 5000);
 
 bootIlerle(0.15);
 await initLang();
@@ -288,13 +289,21 @@ renderProfile();
 renderGames();
 renderTelegramNotice();
 renderSyncBadge();
-renderDailyCard();
-renderGorevKart();
-renderEnergyCard();
+
+/* Widget cizimleri ASYNC. Eskiden burada cagrilip birakiliyorlardi ve
+   perde yalnizca gorselleri bekliyordu - sonuc, perde kalktiktan sonra
+   beliren widget'lardi. Artik sozleri toplaniyor ve perde onlari da
+   bekliyor (asagida, sinirli sure). */
+const cizimler = Promise.all([
+   renderDailyCard(),
+   renderGorevKart(),
+   renderEnergyCard(),
+   renderLiderCard(),
+   renderFriendsCard(),
+]).catch(() => { /* biri patlarsa perde yine de kalkar */ });
+
 wireDailyPanel();
-renderLiderCard();
 wireLiderPanel();
-renderFriendsCard();
 wireFriendsPanel();
 basitPanel('settings-btn', 'settings-overlay', 'settings-close');
 basitPanel('wallet-btn', 'wallet-overlay', 'wallet-close', cuzdanTazele);
@@ -306,14 +315,17 @@ taniBaslat('hub');
    SINIRLI: gorseller gelmese de perde kalkiyor. */
 bootIlerle(0.85);
 await Promise.race([
-   gorselleriBekle([
+   Promise.all([cizimler, gorselleriBekle([
       'assets/currency/mh-logo-128.webp',
       'assets/dragon-tile/pul.webp',
       'assets/dragon-tile/logo.webp',
       'assets/widget/daily.webp', 'assets/widget/lider.webp',
       'assets/widget/energy.webp', 'assets/widget/friends.webp',
-   ]),
-   new Promise((c) => setTimeout(c, 1800)),
+   ])]),
+   /* Bekleme sinirli: ag yavassa perde yine de kalkiyor. Widget'lar o
+      durumda bile YERLERINDE duruyor (gorunurluk karari veriden once
+      veriliyor), sadece sayilari biraz sonra doluyor. */
+   new Promise((c) => setTimeout(c, 2600)),
 ]);
 clearTimeout(bootEmniyet);
 bootKaldir();
@@ -459,10 +471,12 @@ gameList().forEach((game, index) => {
          });
       }
       tile.addEventListener('click', async () => {
-         if (!(await oynanabilirMi())) {
-            haptic.error();
-            openEnergyModal();
-            return;
+         /* Enerji artik KAPI DEGIL. Eskiden burada oyuncu geri cevrilip
+            enerji penceresine atiliyordu; yapacak hicbir sey kalmiyordu.
+            Simdi sadece ne olacagi soyleniyor ve karar onun. */
+         if (await enerjiBosMu()) {
+            const enerjiIstedi = await enerjiBosOnayi(t);
+            if (enerjiIstedi) { openEnergyModal(); return; }
          }
          haptic.tap();
          window.location.href = game.url;
@@ -1020,10 +1034,12 @@ async function renderLiderCard() {
 
    if ((await odulDurumu()) !== 'sunucu') { card.hidden = true; return; }
 
-   const veri = await liderTablosu();
-   if (!veri) { card.hidden = true; return; }
-
+   /* Gorunurluk kararı veriden once (bkz. renderFriendsCard). Sira
+      gelene kadar tire duruyor, kart yerini kaybetmiyor. */
    card.hidden = false;
+
+   const veri = await liderTablosu();
+   if (!veri) return;
    document.getElementById('lider-sira').innerHTML = veri.kendi ? `#${veri.kendi.sira}` : '<span class="rank-dash"></span>';
 }
 
@@ -1180,13 +1196,23 @@ async function renderFriendsCard() {
 
    if ((await odulDurumu()) !== 'sunucu') { card.hidden = true; return; }
 
-   const veri = await referralOzeti();
-   if (!veri) { card.hidden = true; return; }
+   /* GORUNURLUK KARARI VERIDEN ONCE VERILIYOR.
 
+      Eskiden kart referralOzeti() donene kadar gizli duruyordu. O cagri
+      aga cikiyor; acilis perdesi ondan once kalkinca oyuncu widget'i
+      EKSIK bir hub goruyordu - "invite friend widgeti renderlenmeden
+      acildi" sikayeti tam olarak buydu. Kartin gorunup gorunmeyecegi
+      yalnizca hesabin sunucuya bagli olmasina bagli, ki o bilgi burada
+      zaten elimizde. Kart hemen yerini aliyor, sayisi sonra doluyor. */
    card.hidden = false;
-   document.getElementById('friends-earned').textContent = veri.toplamKazanc.toLocaleString(locale());
    document.getElementById('friends-hint').innerHTML =
       mhHtml(t('hub.friends.cut', { n: oranYazi(REFERRAL_RATE_DIRECT) }));
+
+   const veri = await referralOzeti();
+   /* Veri gelmezse kart yerinde kaliyor ve 0 gosteriyor - bos bir
+      delikten iyidir. */
+   if (!veri) return;
+   document.getElementById('friends-earned').textContent = veri.toplamKazanc.toLocaleString(locale());
 }
 
 function wireFriendsPanel() {

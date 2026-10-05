@@ -1,10 +1,10 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v221';
-import { getBest, saveState, loadState, clearState, startRun, finishRunOrLegacy, yerelTohum, oynanabilirMi } from '../../js/store.js?v221';
-import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v221';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v221';
-import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v221';
-import { yarimBirakmaOnayi } from '../../js/onay.js?v221';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v222';
+import { getBest, saveState, loadState, clearState, startRun, finishRunOrLegacy, yerelTohum } from '../../js/store.js?v222';
+import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v222';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v222';
+import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v222';
+import { yarimBirakmaOnayi } from '../../js/onay.js?v222';
 
 const GAME_ID = '2048';
 const POINTS_DIVISOR = 23;
@@ -49,8 +49,7 @@ document.getElementById('back-link').addEventListener('click', (e) => {
    goHome();
 });
 document.getElementById('new-game').addEventListener('click', async () => {
-   if (!(await oynanabilirMi())) { haptic.error(); goHome(); return; }
-   haptic.tap();
+    haptic.tap();
    // Oyun devam ederken "Yeni Oyun"a basmak = yarida birakma: dogal
    // game-over ile AYNI ekrani (skor/rekor/kazanc) gosterip oradan
    // "Yeniden oyna"ya basinca yeni oyuna geciyoruz - sessizce atlamiyoruz.

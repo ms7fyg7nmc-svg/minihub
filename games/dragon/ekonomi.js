@@ -142,6 +142,35 @@ export const KILITLI_HUCRELER = {
   15: { fiyat: 220, odul: { t: 'star', lv: 4 } },
 };
 
+/* ---------- IZGARA GENISLEMESI ----------
+
+   Izgara 4x4 baslıyor; sagi ve alti kilitli. IKINCI EJDERHA YUVASI
+   acilinca 5x5'e cikiyor - ama yeni gelen sira SOLA ve USTE ekleniyor
+   ve hepsi KILITLI geliyor. Yani genisleme bedava bir alan degil, yeni
+   bir kilit merdiveni: oyunun ilk gunundeki duygu tekrar ediyor.
+
+   Fiyatlar oyuncunun tahtasina EN YAKIN hucreden baslıyor. Kose (0)
+   en son, cunku oraya ulasmak icin iki kenarin da acilmasi gerekiyor -
+   ve en pahali olmasi onu bir hedef yapiyor.
+
+   Anahtarlar 5x5 izgaradaki indis: ust satir 0-4, sol sutun 5/10/15/20. */
+export const GENISLEME_N = 5;
+
+export const GENISLEME_KILITLERI = {
+  5:  { fiyat: 60,  odul: { t: 'egg',  lv: 7 } },
+  1:  { fiyat: 90,  odul: { t: 'egg',  lv: 7 } },
+  10: { fiyat: 130, odul: { t: 'food', lv: 4 } },
+  2:  { fiyat: 180, odul: { t: 'egg',  lv: 8 } },
+  15: { fiyat: 240, odul: { t: 'egg',  lv: 8 } },
+  3:  { fiyat: 320, odul: { t: 'star', lv: 4 } },
+  20: { fiyat: 420, odul: { t: 'egg',  lv: 8 } },
+  4:  { fiyat: 560, odul: { t: 'food', lv: 4 } },
+  0:  { fiyat: 760, odul: { t: 'star', lv: 4 } },
+};
+
+/* Genisleme hangi yuva sayisinda aciliyor. */
+export const GENISLEME_YUVA = 2;
+
 /* Izgara doluyken kazanilan oduller burada bekliyor, yer acilinca
    otomatik iniyor. Sinirsiz: oyuncunun kazandigi hicbir sey cope gitmez,
    seritte sadece ilk birkaci gosterilip gerisi sayi olarak yaziliyor. */

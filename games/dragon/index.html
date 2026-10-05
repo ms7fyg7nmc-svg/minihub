@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="221">
+  <meta name="surum" content="222">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Dragon Island</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -15,9 +15,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;800&display=swap">
-  <link rel="stylesheet" href="../../css/style.css?v221">
-  <link rel="stylesheet" href="../../css/game.css?v221">
-  <link rel="stylesheet" href="dragon.css?v221">
+  <link rel="stylesheet" href="../../css/style.css?v222">
+  <link rel="stylesheet" href="../../css/game.css?v222">
+  <link rel="stylesheet" href="dragon.css?v222">
 </head>
 <body class="game dragon-app" data-i18n-title="title">
 
@@ -82,6 +82,22 @@
             <button class="act-btn primary" id="info-action">-</button>
           </div>
         </div>
+      </section>
+
+      <!-- EKRAN: TUCCAR
+           Merge'e anlam katan yer. Buyucu dede bir sey ISTIYOR; izgarada
+           uretilen yumurtanin bir alicisi var. Iki acik siparis: biri
+           tikanirsa digeri calismaya devam etsin. -->
+      <section class="screen" id="screen-trader" data-screen="trader" hidden>
+        <div class="tuccar-bas">
+          <img class="tuccar-yuz" src="../../assets/tutorial/wizard-greet-384.webp" alt="" width="96" height="96">
+          <div class="tuccar-soz">
+            <strong data-i18n="traderName">Tüccar Büyücü</strong>
+            <p data-i18n="traderIntro">Bana getir, karşılığını vereyim.</p>
+          </div>
+        </div>
+        <div class="siparis-liste" id="siparis-liste"></div>
+        <p class="tuccar-not" data-i18n="traderNote">Teslim ettiğin her sipariş, kırmaktan daha çok kazandırır.</p>
       </section>
 
       <!-- EKRAN 2: EJDERHA -->
@@ -193,6 +209,11 @@
         <span data-i18n="tabDragon">Ejderha</span>
         <i class="tab-dot" id="dragon-dot" hidden></i>
       </button>
+      <button class="tab" data-go="trader">
+        <img src="../../assets/tutorial/wizard-greet-256.webp" alt="" width="26" height="26">
+        <span data-i18n="tabTrader">Tüccar</span>
+        <i class="tab-dot" id="trader-dot" hidden></i>
+      </button>
       <button class="tab" data-go="tasks">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 11h7M9 15h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <span data-i18n="tabTasks">Gorevler</span>
@@ -217,6 +238,6 @@
     </div>
   </div>
 
-  <script type="module" src="dragon.js?v221"></script>
+  <script type="module" src="dragon.js?v222"></script>
 </body>
 </html>

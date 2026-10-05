@@ -2325,3 +2325,65 @@ body[data-screen="tasks"] .sky::after {
   opacity: 0.75;
   cursor: pointer;
 }
+
+/* ---------- TUCCAR ----------
+   Buyucu dede ustte, iki siparis karti altinda. Kartlar bilerek genis
+   ve tek sutun: istenen nesne, kac tane oldugu ve odul tek bakista
+   okunmali, yoksa oyuncu siparisi hesaplamak icin durur. */
+
+#screen-trader { display: flex; flex-direction: column; gap: 12px; padding-bottom: 8px; }
+
+.tuccar-bas {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 13px;
+  border-radius: 16px;
+  background: linear-gradient(140deg, rgba(88, 66, 136, 0.42), rgba(30, 26, 46, 0.5));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.tuccar-yuz {
+  width: 56px; height: 56px;
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 50% 22%;     /* yuz ortada kalsin, govde kirpilsin */
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.tuccar-soz strong { display: block; font-size: 14px; font-weight: 800; }
+.tuccar-soz p { margin: 2px 0 0; font-size: 12px; line-height: 1.4; color: var(--muted, #a9adc4); }
+
+.siparis-liste { display: grid; gap: 10px; }
+
+.siparis {
+  padding: 12px 13px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.siparis-ust { display: flex; align-items: center; gap: 10px; }
+
+.siparis-nesne {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 0;
+}
+
+.siparis-nesne img { width: 42px; height: 42px; flex: none; }
+.siparis-ad { font-size: 13px; font-weight: 700; }
+.siparis-say { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted, #a9adc4); }
+.siparis-say.is-tam { color: #58d08a; font-weight: 800; }
+
+/* Odul rozetleri gorev ekranindakiyle AYNI sinifi (.quest-odul)
+   kullaniyor - oyuncu ayni gorunumu iki ayri yerde yeniden ogrenmek
+   zorunda kalmasin diye burada yeni bir bicim TANIMLANMIYOR. */
+
+.siparis-alt { display: flex; align-items: center; gap: 9px; margin-top: 10px; }
+.siparis-alt .act-btn { flex: 1; }
+
+.tuccar-not { margin: 2px 0 0; font-size: 11.5px; line-height: 1.45; color: var(--muted, #a9adc4); text-align: center; }

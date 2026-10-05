@@ -1,6 +1,6 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v221';
-import { surumKontrol } from './guncel.js?v221';
+import { isTelegramUser, getInitData } from './tg.js?v222';
+import { surumKontrol } from './guncel.js?v222';
 
 /* Hub ve 12 oyunun hepsi bu modulu yukluyor, o yuzden surum tazeleyici
    buraya bagli: tek yerden hepsini kapsiyor. */
@@ -366,11 +366,29 @@ export async function getEnergy() {
   return { energy: v.energy, max: v.maxEnergy, nextMs: v.energyNextMs, kilitli: false, refill: v.energyRefill };
 }
 
-// Misafir/yerel modda enerji zaten sahte/sinirsiz - sadece sunucuya
-// baglanan gercek hesaplarda 0 enerjiyle yeni oyuna baslamayi engelliyoruz.
-export async function oynanabilirMi() {
+/* ENERJI ARTIK KAPI DEGIL, CARPAN.
+
+   Eskiden 0 enerjiyle oyun BASLATILAMIYORDU: oyuncu hub'a geri atiliyor
+   ve yapacak hicbir sey bulamiyordu. Oysa sunucu zaten daha yumusak bir
+   kural isletiyordu - enerji bosken kazanc ceyrege dusuyor
+   (bkz. worker.js EMPTY_ENERGY_CARPAN). Yani mekanizma vardi, istemci
+   onun ustune gereksiz bir duvar koyuyordu.
+
+   Artik kapi yok: enerjisi biten oynayabiliyor, sadece daha az
+   kazaniyor. Oyuncuya bu ACIKCA soyleniyor (bkz. js/onay.js
+   enerjiBosOnayi) - sessizce dortte bir odemek, kapiyi kapatmaktan daha
+   kotu olurdu.
+
+   Misafir/yerel modda enerji zaten sahte: her zaman dolu sayiliyor. */
+export async function enerjiBosMu() {
   const enerji = await getEnergy();
-  return enerji.kilitli || enerji.energy > 0;
+  return !enerji.kilitli && enerji.energy <= 0;
+}
+
+/* Eski ad, geriye donuk: artik HER ZAMAN true. Cagiran yerler
+   temizlenirken birakildi ki unutulan bir cagri oyunu kapatmasin. */
+export async function oynanabilirMi() {
+  return true;
 }
 
 export async function adEnergyRefill() {

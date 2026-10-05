@@ -1,27 +1,29 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v221';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v221';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v222';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v222';
 
-import { CONFIG, gorselSeviye } from './config.js?v221';
-import { bakimdaMi } from '../../js/store.js?v221';
+import { CONFIG, gorselSeviye } from './config.js?v222';
+import { bakimdaMi } from '../../js/store.js?v222';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA } from './model.js?v221';
-import { dragonSvg, dragonAssetUrls } from './art.js?v221';
-import { turCek, turYolu, turBul } from './turler.js?v221';
-import { taniBaslat, iz } from '../../js/tani.js?v221';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v221';
+         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA,
+         izgarayiGenislet, genislemeHakki } from './model.js?v222';
+import { dragonSvg, dragonAssetUrls } from './art.js?v222';
+import { turCek, turYolu, turBul } from './turler.js?v222';
+import { taniBaslat, iz } from '../../js/tani.js?v222';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v222';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
          kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
          PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
-         partnerKademe } from './gorevler.js?v221';
-import { getBest, gorevOlay } from '../../js/store.js?v221';
+         partnerKademe } from './gorevler.js?v222';
+import { getBest, gorevOlay } from '../../js/store.js?v222';
+import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v222';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v221';
+         kilitliMi, nesneMi } from './grid.js?v222';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v221';
-import { createTutorial, pozListesi } from './tutorial.js?v221';
+         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v222';
+import { createTutorial, pozListesi } from './tutorial.js?v222';
 
 const GAME_ID = 'dragon';
 
@@ -61,6 +63,13 @@ registerTexts(GAME_ID, {
   needStars: 'Yeterli yıldızın yok.',
 
   feed: 'Besle',
+  tabTrader: 'Tüccar',
+  traderName: 'Tüccar Büyücü',
+  traderIntro: 'Bana getir, karşılığını vereyim.',
+  traderNote: 'Teslim ettiğin her sipariş, yumurtayı kırmaktan daha çok kazandırır.',
+  traderDeliver: 'Teslim et',
+  traderNeed: 'Eksik',
+  traderDone: 'Teslim edildi!',
   noFood: 'Yemin yetmiyor. Izgaradaki dolu yumurtaları kır.',
   appetite: 'İştah büyüyor · {time} sonra sıfırlanır',
   appetiteFresh: 'İştahı taze, ilk besleme en ucuzu.',
@@ -355,6 +364,7 @@ function ekranGoster(ad) {
   if (ad === 'grid') { board.ciz(); board.sec(seciliHucre); }
   if (ad === 'dragon') ejderhaCiz();
   if (ad === 'tasks') { gunlukCiz(); questOzetCiz(); partnerOzetCiz(); }
+  if (ad === 'trader') siparisCiz();
   tut?.yenidenKonumla();
 }
 
@@ -489,6 +499,88 @@ function birlesti(yeni) {
      bu yuzden bildiriliyor. Cevap beklenmiyor (bkz. store.gorevOlay). */
   gorevOlay('merge');
   iz('merge.bitti');
+}
+
+/* ---------- TUCCAR ----------
+
+   Siparisler oyuncunun kaydinda (oyuncu.siparisler) duruyor ve her
+   cizimden once ACIK_SIPARIS sayisina tamamlaniyor - bozuk ya da eksik
+   bir kayit da boylece kendiliginden duzeliyor, tuccar hicbir zaman bos
+   gorunmuyor. Uretim kurallari siparis.js'te. */
+
+function siparisCiz() {
+  const kap = $('siparis-liste');
+  if (!kap) return;
+
+  const { liste, degisti } = siparisleriTamamla(oyuncu);
+  if (degisti) kaydet();
+  kap.innerHTML = '';
+
+  for (const sip of liste) {
+    const durum = siparisDurumu(oyuncu, sip);
+    const istek = sip.istek[0];
+    const satir = durum.satirlar[0];
+
+    const el = document.createElement('article');
+    el.className = 'siparis';
+    el.innerHTML = `
+      <div class="siparis-ust">
+        <div class="siparis-nesne">
+          <img src="${gorselYolu(istek)}" alt="">
+          <div>
+            <div class="siparis-ad"></div>
+            <div class="siparis-say"></div>
+          </div>
+        </div>
+        <span class="quest-odul">${odulRozeti(sip.odul)}</span>
+      </div>
+      <div class="siparis-alt">
+        <button class="act-btn primary"></button>
+      </div>`;
+
+    el.querySelector('.siparis-ad').textContent = `${istek.adet}× ${nesneAdi(istek)}`;
+    const sayEl = el.querySelector('.siparis-say');
+    sayEl.textContent = `${satir.var}/${istek.adet}`;
+    sayEl.classList.toggle('is-tam', satir.tamam);
+
+    const btn = el.querySelector('.act-btn');
+    btn.textContent = durum.hazir ? t('traderDeliver') : t('traderNeed');
+    btn.disabled = !durum.hazir;
+    btn.addEventListener('click', () => teslimEt(sip.id, btn));
+
+    kap.appendChild(el);
+  }
+}
+
+function teslimEt(id, btn) {
+  const sip = (oyuncu.siparisler || []).find((x) => x.id === id);
+  if (!sip) return;
+  /* siparisiAl() yetersiz stokta HICBIR SEYE dokunmadan false donuyor -
+      yani yarim bir teslimat (nesneler gitti, odul gelmedi) mumkun degil. */
+  if (!siparisiAl(oyuncu, sip)) { siparisCiz(); return; }
+
+  haptic.success();
+  const odul = sip.odul;
+  siparisiDegistir(oyuncu, id);
+  kaydet();
+
+  board.ciz(); board.sec(-1);
+  siradanDoldur();
+  odulVer(odul, btn);
+  odulUcur(t('traderDone'), true);
+  kaynakTazele(true);
+  siparisCiz();
+  gorevNoktasi();
+}
+
+/* Tab'daki nokta: teslim edilebilir bir siparis varsa yaniyor. Oyuncu
+   ocakta merge ederken tuccara bakmiyor; haber ayagina gitmeli. */
+function siparisNoktasi() {
+  const nokta = $('trader-dot');
+  if (!nokta) return;
+  const { liste, degisti } = siparisleriTamamla(oyuncu);
+  if (degisti) kaydet();
+  nokta.hidden = !liste.some((sip) => siparisDurumu(oyuncu, sip).hazir);
 }
 
 /* Izgara degisince kaydet ve panelin gecerliligini kontrol et: secili
@@ -972,6 +1064,11 @@ function yuvaAc(sira) {
   oyuncu.stars -= fiyat;
   oyuncu.unlockedSlots = Math.min(EN_COK_YUVA, sira + 1);
 
+  /* IKINCI YUVA IZGARAYI BUYUTUYOR. Yeni sira sola ve uste geliyor,
+     hepsi kilitli - oyuncu bedava alan almiyor, yeni bir kilit
+     merdiveni aliyor. */
+  const genisledi = genislemeHakki(oyuncu) && izgarayiGenislet(oyuncu);
+
   /* Yuvayi acinca orada bekleyen ejderha varsa dogrudan ona geciliyor:
      oyuncunun parayi ne icin verdigini aninda gormesi gerekiyor. */
   const gelen = oyuncu.dragons[sira];
@@ -981,6 +1078,12 @@ function yuvaAc(sira) {
   haptic.success();
   cizHepsi();
   if (gelen) odulUcur(t('slotOpened', { name: t(turBul(gelen.look?.tur).adKey) }), true);
+  if (genisledi) {
+    /* Haber ejderha ekraninda veriliyor ama degisiklik OCAK'ta - oyuncu
+       oraya bakmazsa buyumeyi hic gormeyebilir. */
+    uyar(t('gridGrew'));
+    ekranGoster('grid');
+  }
 }
 
 function ejderhaCiz() {
@@ -1404,6 +1507,7 @@ function sayfaKapatt() {
 /* Sekmedeki nokta: alinmayi bekleyen bir sey var mi? Kilitli gorevler
    sayilmiyor - oyuncu onlari alamaz, bosuna cagirmayalim. */
 function gorevNoktasi() {
+  siparisNoktasi();
   const bitti = oyuncu.gorevler.bitti;
 
   const g = aktifGorev(bitti);

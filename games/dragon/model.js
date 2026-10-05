@@ -1,9 +1,10 @@
 
-import { loadState, saveState } from '../../js/store.js?v221';
+import { loadState, saveState } from '../../js/store.js?v222';
 import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_TAVANI,
-         bostaHesapla } from './ekonomi.js?v221';
-import { CONFIG, eskiToplamHarcama } from './config.js?v221';
-import { turCek, turBul } from './turler.js?v221';
+         GENISLEME_N, GENISLEME_KILITLERI, GENISLEME_YUVA,
+         bostaHesapla } from './ekonomi.js?v222';
+import { CONFIG, eskiToplamHarcama } from './config.js?v222';
+import { turCek, turBul } from './turler.js?v222';
 
 const OYUN_ID = 'dragon';
 const SURUM = 7;
@@ -28,6 +29,40 @@ export function baslangicIzgarasi(n = IZGARA_N) {
   });
   return { n, cells };
 }
+
+/* IZGARAYI GENISLET: 4x4 -> 5x5, yeni sira SOLA ve USTE.
+
+   Her eski hucre (r,c) yeni izgarada (r+1,c+1)'e tasiniyor; boylece
+   oyuncunun tahtasindaki hicbir sey yer degistirmis GIBI hissettirmiyor,
+   etrafinda yeni bir cerceve beliriyor. Yeni hucrelerin tamami kilitli.
+
+   Bir kez calisiyor: grid.n zaten GENISLEME_N ise dokunmuyor. */
+export function izgarayiGenislet(kayit) {
+  const eski = kayit.grid;
+  if (!eski || !Array.isArray(eski.cells)) return false;
+  const n = Number(eski.n) || IZGARA_N;
+  if (n >= GENISLEME_N) return false;
+  if (eski.cells.length !== n * n) return false;
+
+  const yeniN = GENISLEME_N;
+  const cells = Array.from({ length: yeniN * yeniN }, (_, j) => {
+    const k = GENISLEME_KILITLERI[j];
+    return k ? { kilit: true, fiyat: k.fiyat, odul: { ...k.odul } } : null;
+  });
+
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      cells[(r + 1) * yeniN + (c + 1)] = eski.cells[r * n + c];
+    }
+  }
+
+  kayit.grid = { n: yeniN, cells };
+  return true;
+}
+
+/* Genisleme hakki dogdu mu? (Ikinci yuva acildiginda.) */
+export const genislemeHakki = (kayit) =>
+  (Number(kayit?.unlockedSlots) || 1) >= GENISLEME_YUVA && (Number(kayit?.grid?.n) || IZGARA_N) < GENISLEME_N;
 
 export const bugun = () => new Date().toISOString().slice(0, 10);
 
@@ -72,6 +107,7 @@ function yeniOyuncu() {
     stars: 0,
     sayaclar: yeniSayaclar(),
     gorevler: { bitti: [] },
+    siparisler: [],                            /* tuccarin acik siparisleri */
     partner: { alinan: [], buyukOdul: false },   /* "oyun:kademe" anahtarlari */
     gunluk: { sonGun: '', seri: 0 },
     tutorial: 0,
@@ -192,6 +228,10 @@ function duzelt(o) {
   o.food = Math.max(0, Math.round(Number(o.food) || 0));
   o.stars = Math.max(0, Math.round(Number(o.stars) || 0));
   o.unlockedSlots = Math.min(EN_COK_YUVA, Math.max(1, Number(o.unlockedSlots) || 1));
+  /* Ikinci yuvasi acik olup hala 4x4 oynayan kayitlar (yani bu surumden
+     onceki herkes) yukleme aninda genisliyor - yeni hucreler kilitli
+     geldigi icin kimseye bedava alan verilmis olmuyor. */
+  if (genislemeHakki(o)) izgarayiGenislet(o);
   /* Ejderha sayisi acik yuva sayisini gecebilir: kilitli yuvada bekler. */
   o.tutorial = Number(o.tutorial) || 0;
 

@@ -1,9 +1,9 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v221';
-import { submitScore, addPoints, getBest, oynanabilirMi } from '../../js/store.js?v221';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v221';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v221';
-import { yarimBirakmaOnayi, onayAcik } from '../../js/onay.js?v221';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v222';
+import { submitScore, addPoints, getBest } from '../../js/store.js?v222';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v222';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v222';
+import { yarimBirakmaOnayi, onayAcik } from '../../js/onay.js?v222';
 
 const GAME_ID = 'wheelrush';
 /* Skor = mesafe/10 + coin*15 - iyi bir kosu ~150-450 arasi cikiyor.
@@ -167,7 +167,6 @@ document.getElementById('back-link').addEventListener('click', (e) => {
 });
 
 document.getElementById('new-game').addEventListener('click', async () => {
-  if (!(await oynanabilirMi())) { haptic.error(); goHome(); return; }
   haptic.tap();
   if (!over) {
     /* Onay: "Yeni oyun" oyunun ortasinda basildiginda kosuyu bitiriyor.
