@@ -12,6 +12,12 @@ const worker = await import(new URL('worker.js', BURASI).href);
 const WORKER_KAYNAK = readFileSync(new URL('worker.js', BURASI), 'utf8');
 const MAX_ENERGY = Number(WORKER_KAYNAK.match(/const MAX_ENERGY = (\d+)/)[1]);
 const REFILL = Number(WORKER_KAYNAK.match(/const ENERGY_REFILL_AMOUNT = (\d+)/)[1]);
+/* Davet sayilari da ayni sebeple kaynaktan: bonus 500'den 1500'e,
+   oranlar %15/%2,5'ten %25/%5'e cikinca yedi test birden kirilmisti. */
+const DAVET_BONUS = Number(WORKER_KAYNAK.match(/const REFERRAL_SIGNUP_BONUS = (\d+)/)[1]);
+const ORAN1 = Number(WORKER_KAYNAK.match(/const REFERRAL_RATE_DIRECT = ([\d.]+)/)[1]);
+const ORAN2 = Number(WORKER_KAYNAK.match(/const REFERRAL_RATE_INDIRECT = ([\d.]+)/)[1]);
+const yuzde = (o) => `%${String(o * 100).replace('.', ',')}`;
 
 function makeDb() {
   const sqlite = new DatabaseSync(':memory:');
@@ -467,10 +473,10 @@ const idA = signedInitData(2002);
 DB9.prepare('INSERT INTO pending_referrals (user_id, referrer_id, created_at) VALUES (?, ?, ?)')
   .bind('2002', '1001', Date.now()).run();
 r = await api(env9, 'sync', { initData: idA, points: 0, state: {} });
-check('referral: davet edilen arkadas hos geldin bonusu aldi (+500)', r.points === 500, `-> ${r.points}`);
+check(`referral: davet edilen arkadas hos geldin bonusu aldi (+${DAVET_BONUS})`, r.points === DAVET_BONUS, `-> ${r.points}`);
 
 let referrerRow = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first();
-check('referral: davet eden kayit bonusu aldi (+500)', referrerRow.points === 500, `-> ${referrerRow.points}`);
+check(`referral: davet eden kayit bonusu aldi (+${DAVET_BONUS})`, referrerRow.points === DAVET_BONUS, `-> ${referrerRow.points}`);
 
 const bekleyenA = DB9.prepare('SELECT * FROM pending_referrals WHERE user_id = ?').bind('2002').first();
 check('referral: bekleyen davet tuketildi', !bekleyenA);
@@ -491,24 +497,27 @@ check('referral: kazanan oyuncunun kendi kazanci kesilmedi (tam 1000)', r.credit
 
 let p2002 = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('2002').first().points;
 let p1001 = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first().points;
-check('referral: dogrudan davet eden %15 aldi (150)', p2002 - once2002 === 150, `-> ${p2002 - once2002}`);
-check('referral: bir ust kademe %2,5 aldi (25)', p1001 - once1001 === 25, `-> ${p1001 - once1001}`);
+check(`referral: dogrudan davet eden ${yuzde(ORAN1)} aldi (${1000 * ORAN1})`,
+      p2002 - once2002 === 1000 * ORAN1, `-> ${p2002 - once2002}`);
+check(`referral: bir ust kademe ${yuzde(ORAN2)} aldi (${1000 * ORAN2})`,
+      p1001 - once1001 === 1000 * ORAN2, `-> ${p1001 - once1001}`);
 
-/* Komisyonun kendisi komisyon uretmemeli: 2002'nin aldigi 150 icin
-   1001'e ayrica %15 odenmemis olmali (odenseydi fark 25 degil 47,5
-   olurdu). Yukaridaki kontrol bunu zaten kanitliyor. */
+/* Komisyonun kendisi komisyon uretmemeli: 2002'nin aldigi dogrudan
+   komisyon icin 1001'e AYRICA bir odeme yapilmamis olmali. Yukaridaki
+   iki kontrol bunu zaten kanitliyor - fark tam olarak orani kadar. */
 
 r = await api(env9, 'points/earn', { initData: idC2, opId: 'k-1', amount: 1000 });
 const p2002Tekrar = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('2002').first().points;
 check('referral: ayni opId tekrar gonderilince komisyon iki kez odenmiyor',
       p2002Tekrar === p2002, `-> ${p2002Tekrar} vs ${p2002}`);
 
-/* Zincirin tepesindeki kisinin ustu yok: 2002 kazandiginda 1001 %15
-   alir, daha yukarisi olmadigi icin baska odeme olmaz. */
+/* Zincirin tepesindeki kisinin ustu yok: 2002 kazandiginda 1001
+   dogrudan orani alir, daha yukarisi olmadigi icin baska odeme olmaz. */
 const once1001b = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first().points;
 await api(env9, 'points/earn', { initData: idA, opId: 'k-2', amount: 400 });
 p1001 = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first().points;
-check('referral: zincirin tepesi dogrudan orani aliyor (60)', p1001 - once1001b === 60, `-> ${p1001 - once1001b}`);
+check(`referral: zincirin tepesi dogrudan orani aliyor (${400 * ORAN1})`,
+      p1001 - once1001b === 400 * ORAN1, `-> ${p1001 - once1001b}`);
 
 /* Daveti olmayan bir oyuncunun kazanci kimseye komisyon uretmemeli. */
 const idYalniz = signedInitData(7007);
@@ -538,8 +547,9 @@ check('referral: /api/referral toplam kazanc kayit bonusu + komisyonu kapsiyor',
       r.toplamKazanc === p1001, `-> ${r.toplamKazanc} vs ${p1001}`);
 const kazandirdilar = r.arkadaslar.map((a) => a.kazandirdi).sort((a, b) => a - b);
 check('referral: arkadas listesi arkadas basina komisyonu gosteriyor',
-      JSON.stringify(kazandirdilar) === JSON.stringify([0, 60]), `-> ${JSON.stringify(kazandirdilar)}`);
-check('referral: dolayli kazanc ayrica raporlaniyor (25)', r.dolayliKazanc === 25, `-> ${r.dolayliKazanc}`);
+      JSON.stringify(kazandirdilar) === JSON.stringify([0, 400 * ORAN1]), `-> ${JSON.stringify(kazandirdilar)}`);
+check(`referral: dolayli kazanc ayrica raporlaniyor (${1000 * ORAN2})`,
+      r.dolayliKazanc === 1000 * ORAN2, `-> ${r.dolayliKazanc}`);
 
 const DB11 = makeDb(); const env11 = { DB: DB11, BOT_TOKEN, BAKIM: '' }; const idHaric = signedInitData(8100679296);
 const idNormal = signedInitData(5555);
@@ -729,6 +739,113 @@ check('bakim: sahip ejderha durumunu yazabiliyor',
 const baskaOyun = await api(envBakim, 'best', { initData: idBaskasi, game: 'snake', score: 10 });
 check('bakim: bakimda olmayan oyun etkilenmiyor',
       baskaOyun.error === undefined && baskaOyun.best === 10, `-> ${JSON.stringify(baskaOyun)}`);
+
+/* ---------------- GUNLUK GOREVLER ---------------- */
+
+const GOREV_ODUL = Number(WORKER_KAYNAK.match(/const GOREV_ODUL = (\d+)/)[1]);
+
+const DBG = makeDb(); const envG = { DB: DBG, BOT_TOKEN, BAKIM: '' };
+const idG = signedInitData(9100);
+await api(envG, 'sync', { initData: idG, points: 0, state: {} });
+
+let g = await api(envG, 'gorev', { initData: idG });
+check('gorev: gunde uc gorev geliyor', Array.isArray(g.gorevler) && g.gorevler.length === 3,
+      `-> ${JSON.stringify(g.gorevler)}`);
+check('gorev: ucu de sifirdan basliyor', g.gorevler.every((x) => x.ilerleme === 0 && !x.bitti),
+      `-> ${JSON.stringify(g.gorevler)}`);
+check('gorev: baslangicta odul alinabilir degil', g.hepsiBitti === false && g.alindi === false,
+      `-> ${JSON.stringify({ h: g.hepsiBitti, a: g.alindi })}`);
+
+/* Gunun gorevleri havuzlardan birer tane olmali - yoksa yalnizca hub
+   oynayan ya da yalnizca ejderha oynayan bir oyuncu tikanirdi. */
+const ARCADE = new Set(['skor', 'oyun', 'tur']);
+const EJDER = new Set(['merge', 'besle', 'yumurta']);
+const GENEL = new Set(['mh', 'cark', 'seri']);
+const idler = g.gorevler.map((x) => x.id);
+check('gorev: her havuzdan bir tane var',
+      idler.filter((i) => ARCADE.has(i)).length === 1 &&
+      idler.filter((i) => EJDER.has(i)).length === 1 &&
+      idler.filter((i) => GENEL.has(i)).length === 1, `-> ${JSON.stringify(idler)}`);
+
+/* Istemci 'gorev' satirini /api/state ile yazamamali - yazabilseydi
+   butun gorevleri tamamlanmis isaretleyip sandigi alabilirdi. */
+const sahteYazma = await api(envG, 'state', {
+  initData: idG, game: 'gorev', expectedVersion: 0, state: { gun: 0, ilerleme: {} },
+});
+check('gorev: istemci ilerleme satirini /api/state ile yazamiyor',
+      sahteYazma.error !== undefined, `-> ${JSON.stringify(sahteYazma)}`);
+
+check('gorev: bilinmeyen olay reddediliyor',
+      (await api(envG, 'gorev/olay', { initData: idG, olay: 'uydurma', miktar: 99 })).ok === false);
+
+/* Tamamlanmamisken odul verilmemeli. */
+let al = await api(envG, 'gorev/al', { initData: idG });
+check('gorev: tamamlanmadan odul alinamiyor', al.ok === false && al.reason === 'tamamlanmadi',
+      `-> ${JSON.stringify(al)}`);
+
+/* Gunun hangi gorevleri geldiyse onlari tamamla. */
+async function gorevleriBitir(env, initData, liste) {
+  for (const gr of liste) {
+    if (gr.id === 'skor') {
+      await api(env, 'best', { initData, game: 'snake', score: gr.hedef });
+    } else if (gr.id === 'oyun') {
+      for (const oyun of ['snake', 'coindrop', 'match3', 'tripletile'].slice(0, gr.hedef)) {
+        await api(env, 'best', { initData, game: oyun, score: 10 });
+      }
+    } else if (gr.id === 'tur') {
+      for (let i = 0; i < gr.hedef; i++) {
+        await api(env, 'best', { initData, game: 'snake', score: 10 + i });
+      }
+    } else if (gr.id === 'mh') {
+      await api(env, 'points/earn', { initData, opId: `gv-${Math.random()}`, amount: gr.hedef });
+    } else if (gr.id === 'cark') {
+      await api(env, 'spin', { initData });
+    } else if (gr.id === 'seri') {
+      await api(env, 'streak/claim', { initData });
+    } else {
+      await api(env, 'gorev/olay', { initData, olay: gr.id, miktar: gr.hedef });
+    }
+  }
+}
+
+await gorevleriBitir(envG, idG, g.gorevler);
+g = await api(envG, 'gorev', { initData: idG });
+check('gorev: ucu de tamamlandi', g.hepsiBitti === true, `-> ${JSON.stringify(g.gorevler)}`);
+check('gorev: ilerleme hedefin ustune cikmiyor',
+      g.gorevler.every((x) => x.ilerleme === x.hedef), `-> ${JSON.stringify(g.gorevler)}`);
+
+const onceG = DBG.prepare('SELECT points FROM players WHERE id = ?').bind('9100').first().points;
+al = await api(envG, 'gorev/al', { initData: idG });
+const sonraG = DBG.prepare('SELECT points FROM players WHERE id = ?').bind('9100').first().points;
+check(`gorev: sandik ${GOREV_ODUL} $MH veriyor`, al.ok === true && sonraG - onceG === GOREV_ODUL,
+      `-> ${sonraG - onceG}`);
+check('gorev: sandik enerji harcamiyor', al.ok === true, `-> ${JSON.stringify(al.reason || '')}`);
+
+const al2 = await api(envG, 'gorev/al', { initData: idG });
+const sonraG2 = DBG.prepare('SELECT points FROM players WHERE id = ?').bind('9100').first().points;
+check('gorev: sandik ikinci kez alinamiyor', al2.ok === false && al2.reason === 'alindi',
+      `-> ${JSON.stringify(al2)}`);
+check('gorev: ikinci deneme puan eklemiyor', sonraG2 === sonraG, `-> ${sonraG2} vs ${sonraG}`);
+
+/* Gun degisince sayac sifirlanmali. Satirdaki gun numarasini elle
+   geriye alip taklit ediyoruz - sunucu gun numarasini kendi hesapliyor,
+   eskimis satiri gormezden gelmeli. */
+const ham = JSON.parse(DBG.prepare("SELECT value FROM player_data WHERE player_id = ? AND key = 'gorev'")
+  .bind('9100').first().value);
+DBG.prepare("UPDATE player_data SET value = ? WHERE player_id = ? AND key = 'gorev'")
+  .bind(JSON.stringify({ ...ham, gun: ham.gun - 1 }), '9100').run();
+const yeniGun = await api(envG, 'gorev', { initData: idG });
+check('gorev: gun degisince ilerleme sifirlaniyor',
+      yeniGun.gorevler.every((x) => x.ilerleme === 0) && yeniGun.alindi === false,
+      `-> ${JSON.stringify(yeniGun.gorevler)}`);
+
+/* Sync cevabi gorev durumunu da tasimali - hub ayri bir istek atmasin. */
+const syncG = await api(envG, 'sync', { initData: idG, points: 0, state: {} });
+check('gorev: sync cevabinda gorev durumu var',
+      syncG.gorev && Array.isArray(syncG.gorev.gorevler) && syncG.gorev.gorevler.length === 3,
+      `-> ${JSON.stringify(syncG.gorev)}`);
+check('gorev: ham ilerleme satiri state icinde sizmiyor',
+      syncG.state.gorev === undefined, `-> ${JSON.stringify(Object.keys(syncG.state))}`);
 
 console.log(`\n${passed} basarili, ${failed} basarisiz`);
 process.exit(failed > 0 ? 1 : 0);

@@ -27,6 +27,22 @@ const DICT = {
     'hub.maintenance': 'Maintenance',
     'hub.record': 'Record {best}',
 
+    /* Gunluk gorevler. Basliklar gorev kimligiyle ayni ada sahip:
+       hub.gorev.<id> (bkz. bot/worker.js GOREV_HAVUZ). */
+    'hub.gorev.title': 'Daily Quests',
+    'hub.gorev.yenilen': 'Resets tomorrow',
+    'hub.gorev.skor': 'Score {n} in a single run',
+    'hub.gorev.oyun': 'Play {n} different games',
+    'hub.gorev.tur': 'Finish {n} runs',
+    'hub.gorev.merge': 'Merge {n} eggs',
+    'hub.gorev.besle': 'Feed your dragon {n} times',
+    'hub.gorev.yumurta': 'Hatch {n} eggs',
+    'hub.gorev.mh': 'Earn {n} $MH',
+    'hub.gorev.cark': 'Spin the wheel',
+    'hub.gorev.seri': 'Claim your daily reward',
+    'hub.gorev.al': 'Open the chest · +{n} $MH',
+    'hub.gorev.alindi': "Today's chest is open",
+
     /* "Yeni oyun" onayi - butun oyunlarda ortak (bkz. js/onay.js) */
     'ortak.onay.devam': 'Keep playing',
     'ortak.onay.enerji': 'Energy is spent either way — ending now will not give it back.',
@@ -549,6 +565,22 @@ const DICT = {
     'hub.soon': 'Yakında',
     'hub.maintenance': 'Bakımda',
     'hub.record': 'Rekor {best}',
+
+    /* Gunluk gorevler. Basliklar gorev kimligiyle ayni ada sahip:
+       hub.gorev.<id> (bkz. bot/worker.js GOREV_HAVUZ). */
+    'hub.gorev.title': 'Günlük Görevler',
+    'hub.gorev.yenilen': 'Yarın yenilenir',
+    'hub.gorev.skor': 'Tek turda {n} puan yap',
+    'hub.gorev.oyun': '{n} farklı oyun oyna',
+    'hub.gorev.tur': '{n} oyun turu tamamla',
+    'hub.gorev.merge': '{n} yumurta birleştir',
+    'hub.gorev.besle': 'Ejderhanı {n} kez besle',
+    'hub.gorev.yumurta': '{n} yumurta aç',
+    'hub.gorev.mh': '{n} $MH kazan',
+    'hub.gorev.cark': 'Çarkı çevir',
+    'hub.gorev.seri': 'Günlük ödülünü al',
+    'hub.gorev.al': 'Sandığı aç · +{n} $MH',
+    'hub.gorev.alindi': 'Bugünkü sandık alındı',
 
     /* "Yeni oyun" onayi - butun oyunlarda ortak (bkz. js/onay.js) */
     'ortak.onay.devam': 'Devam et',
@@ -1073,6 +1105,22 @@ const DICT = {
     'hub.maintenance': 'Mantenimiento',
     'hub.record': 'Récord {best}',
 
+    /* Gunluk gorevler. Basliklar gorev kimligiyle ayni ada sahip:
+       hub.gorev.<id> (bkz. bot/worker.js GOREV_HAVUZ). */
+    'hub.gorev.title': 'Misiones diarias',
+    'hub.gorev.yenilen': 'Se renuevan mañana',
+    'hub.gorev.skor': 'Haz {n} puntos en una partida',
+    'hub.gorev.oyun': 'Juega a {n} juegos distintos',
+    'hub.gorev.tur': 'Termina {n} partidas',
+    'hub.gorev.merge': 'Combina {n} huevos',
+    'hub.gorev.besle': 'Alimenta a tu dragón {n} veces',
+    'hub.gorev.yumurta': 'Abre {n} huevos',
+    'hub.gorev.mh': 'Gana {n} $MH',
+    'hub.gorev.cark': 'Gira la ruleta',
+    'hub.gorev.seri': 'Recoge tu recompensa diaria',
+    'hub.gorev.al': 'Abrir el cofre · +{n} $MH',
+    'hub.gorev.alindi': 'El cofre de hoy ya está abierto',
+
     /* "Yeni oyun" onayi - butun oyunlarda ortak (bkz. js/onay.js) */
     'ortak.onay.devam': 'Seguir jugando',
     'ortak.onay.enerji': 'La energía se gasta igualmente: terminar ahora no la devuelve.',
@@ -1595,6 +1643,22 @@ const DICT = {
     'hub.soon': 'Скоро',
     'hub.maintenance': 'Обслуживание',
     'hub.record': 'Рекорд {best}',
+
+    /* Gunluk gorevler. Basliklar gorev kimligiyle ayni ada sahip:
+       hub.gorev.<id> (bkz. bot/worker.js GOREV_HAVUZ). */
+    'hub.gorev.title': 'Ежедневные задания',
+    'hub.gorev.yenilen': 'Обновятся завтра',
+    'hub.gorev.skor': 'Наберите {n} очков за одну игру',
+    'hub.gorev.oyun': 'Сыграйте в {n} разных игры',
+    'hub.gorev.tur': 'Завершите {n} игр',
+    'hub.gorev.merge': 'Объедините {n} яиц',
+    'hub.gorev.besle': 'Покормите дракона {n} раз',
+    'hub.gorev.yumurta': 'Высидите {n} яиц',
+    'hub.gorev.mh': 'Заработайте {n} $MH',
+    'hub.gorev.cark': 'Крутите колесо',
+    'hub.gorev.seri': 'Заберите ежедневную награду',
+    'hub.gorev.al': 'Открыть сундук · +{n} $MH',
+    'hub.gorev.alindi': 'Сегодняшний сундук открыт',
 
     /* "Yeni oyun" onayi - butun oyunlarda ortak (bkz. js/onay.js) */
     'ortak.onay.devam': 'Продолжить игру',

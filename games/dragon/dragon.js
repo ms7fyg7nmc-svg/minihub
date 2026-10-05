@@ -13,7 +13,7 @@ import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
          kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
          PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
          partnerKademe } from './gorevler.js?v221';
-import { getBest } from '../../js/store.js?v221';
+import { getBest, gorevOlay } from '../../js/store.js?v221';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
          kilitliMi, nesneMi } from './grid.js?v221';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
@@ -484,6 +484,10 @@ function birlesti(yeni) {
   gorevNoktasi();
   bilgiPaneliCiz();
   tut?.olay('merge');
+  /* Gunluk gorev sayaci. Birlestirme sunucuda GORUNMUYOR - ejderha
+     durumu tek parca JSON olarak kaydediliyor, tek tek hamleler degil -
+     bu yuzden bildiriliyor. Cevap beklenmiyor (bkz. store.gorevOlay). */
+  gorevOlay('merge');
   iz('merge.bitti');
 }
 
@@ -627,6 +631,9 @@ function yumurtaKir(i) {
   /* Yuksek seviye yumurta bir ZAR atiyor. Cikarsa ejderha, cikmazsa
      asagidaki normal yem odulu - yani emek hicbir durumda bosa gitmiyor. */
   const sans = ejderhaSansi(hucre.lv);
+  /* Gorev sayaci ZARDAN ONCE: yumurta aciliyor, icinden ejderha da ciksa
+     yem de ciksa oyuncu acmis sayilir. */
+  gorevOlay('yumurta');
   if (sans > 0 && oyuncu.dragons.length < EN_COK_YUVA
       && Math.random() < sans && ejderhaCikar(i, turCek())) return;
   const kutu = board.hucreKutusu(i);          /* hucre bosalmadan once olculuyor */
@@ -765,6 +772,7 @@ feedBtn.addEventListener('click', async () => {
   gorevNoktasi();
   ejderhaCiz();
   tut?.olay('feed');
+  gorevOlay('besle');
   iz('besle.bitti');
 });
 

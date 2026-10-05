@@ -33,7 +33,7 @@ const SPIN_ENERGY_REWARD = 3;
    Sert tavan olmasaydi carki her gun ceviren biri enerji biriktirirdi. */
 const ENERGY_HARD_CAP = MAX_ENERGY + SPIN_ENERGY_REWARD;
 
-const REFERRAL_SIGNUP_BONUS = 500;
+const REFERRAL_SIGNUP_BONUS = 1500;
 
 /* DAVET KOMISYONU
    Davet ettigin biri $MH kazandiginda sen de kazaniyorsun. Iki kademe:
@@ -50,8 +50,8 @@ const REFERRAL_SIGNUP_BONUS = 500;
    Eskiden bunun yerine arkadasin ejderhasi seviye atladikca odeyen bir
    esik merdiveni vardi (5/15/30/50/75/99). Ejderhalar artik 99'a
    cikmadigi icin ustteki basamaklar hic odenmiyordu. */
-const REFERRAL_RATE_DIRECT = 0.15;
-const REFERRAL_RATE_INDIRECT = 0.025;
+const REFERRAL_RATE_DIRECT = 0.25;
+const REFERRAL_RATE_INDIRECT = 0.05;
 
 /* Komisyon davet edenin KENDI gunluk tavanini (DAILY_EARN_CAP) tuketmiyor;
    kendi oynadigi oyunlardan ayri bir kalem. Ama sinirsiz da degil: cok
@@ -455,6 +455,171 @@ async function komisyonYaz(env, alanId, opId, miktar) {
   await applyDelta(env, alanId, opId, Math.min(miktar, kalan));
 }
 
+/* ---------------- GUNLUK GOREVLER ----------------
+
+   Oyuncunun yarin geri gelmek icin tek sebebi gunluk odul ve carkti;
+   ikisi de pasif - ac, al, kapat. Gorev sistemi OYNAMAYI gerektiren ilk
+   sebep, ve dokuz oyunu birbirine baglayan ilk sey.
+
+   Gorevler VERITABANINDA TUTULMUYOR. Her gun ucu birden gun numarasindan
+   hesaplaniyor; sunucu da istemci de ayni gun icin ayni ucunu bulur.
+   Saklanan tek sey oyuncunun ilerlemesi - o da yeni bir tablo degil,
+   player_data'daki 'gorev' satiri. Bu anahtar gecerliVeriAnahtari()
+   testinden gecmiyor, yani istemci onu /api/state ile yazamaz.
+
+   Her gun bir arcade, bir ejderha, bir genel gorev: boylece yalnizca
+   hub oyunlarini oynayan da, yalnizca Dragon Island oynayan da gunun
+   icinde bir yere varabiliyor. */
+
+const GOREV_ODUL = 2000;
+const GUN_MS = 86400000;
+
+const GOREV_HAVUZ = {
+  arcade: [
+    { id: 'skor', hedef: 400 },   /* tek bir turda */
+    { id: 'oyun', hedef: 3 },     /* farkli oyun */
+    { id: 'tur', hedef: 5 },      /* tamamlanan tur */
+  ],
+  ejderha: [
+    { id: 'merge', hedef: 8 },
+    { id: 'besle', hedef: 5 },
+    { id: 'yumurta', hedef: 3 },
+  ],
+  genel: [
+    { id: 'mh', hedef: 800 },
+    { id: 'cark', hedef: 1 },
+    { id: 'seri', hedef: 1 },
+  ],
+};
+
+/* Istemcinin dogrudan bildirebilecegi olaylar. Ejderha icindeki
+   birlestirme/besleme sunucuda gorunmuyor - durum tek parca JSON olarak
+   kaydediliyor, tek tek hamleler degil. Bu yuzden bunlar bildiriliyor.
+   Kotuye kullanim siniri gunde bir sandik: hedefi asan ilerleme ise
+   yaramiyor, odul de gune bagli tek bir opId ile oduyor. */
+const GOREV_ISTEMCI_OLAYLARI = new Set(['merge', 'besle', 'yumurta']);
+
+const gunNo = (now) => Math.floor(now / GUN_MS);
+
+function gununGorevleri(gun) {
+  /* Uc havuz ayri hizda donuyor (gun, gun+1, gun+2) ki ucu birden ayni
+     anda basa sarmasin - aksi halde dokuz gunde bir tekrar yerine her
+     uc gunde bir ayni ucluyu gorurduk. */
+  return [
+    GOREV_HAVUZ.arcade[gun % GOREV_HAVUZ.arcade.length],
+    GOREV_HAVUZ.ejderha[(gun + 1) % GOREV_HAVUZ.ejderha.length],
+    GOREV_HAVUZ.genel[(gun + 2) % GOREV_HAVUZ.genel.length],
+  ];
+}
+
+async function gorevOku(env, playerId, now) {
+  const gun = gunNo(now);
+  const row = await env.DB.prepare(
+    "SELECT value FROM player_data WHERE player_id = ? AND key = 'gorev'",
+  ).bind(playerId).first();
+
+  let v = null;
+  try { v = row ? JSON.parse(row.value) : null; } catch { v = null; }
+  /* Gun degistiyse sayac sifirlanir; eski satiri silmeye gerek yok,
+     uzerine yaziliyor. */
+  if (!v || typeof v !== 'object' || v.gun !== gun) return { gun, ilerleme: {}, oyunlar: [], alindi: false };
+  if (!v.ilerleme || typeof v.ilerleme !== 'object') v.ilerleme = {};
+  if (!Array.isArray(v.oyunlar)) v.oyunlar = [];
+  return v;
+}
+
+async function gorevYaz(env, playerId, v, now) {
+  await env.DB.prepare(
+    `INSERT INTO player_data (player_id, key, value, updated_at) VALUES (?, 'gorev', ?, ?)
+     ON CONFLICT(player_id, key) DO UPDATE
+       SET value = excluded.value, updated_at = excluded.updated_at`,
+  ).bind(playerId, JSON.stringify(v), now).run();
+}
+
+function gorevRapor(v) {
+  const liste = gununGorevleri(v.gun).map((g) => {
+    const ilerleme = Math.min(g.hedef, Math.max(0, Number(v.ilerleme[g.id]) || 0));
+    return { id: g.id, hedef: g.hedef, ilerleme, bitti: ilerleme >= g.hedef };
+  });
+  return {
+    gun: v.gun,
+    gorevler: liste,
+    hepsiBitti: liste.every((g) => g.bitti),
+    alindi: !!v.alindi,
+    odul: GOREV_ODUL,
+    /* Gun sonuna kalan sure: arayuz "yarin yenilenir" diyebilsin diye. */
+    kalanMs: (v.gun + 1) * GUN_MS - Date.now(),
+  };
+}
+
+/* Gorev sayaci ASLA ana islemi bozmamali. Burada atilan bir hata
+   oyuncunun puanini yazmayi, rekorunu kaydetmeyi engellerse gorev
+   sistemi oyunun kendisinden daha pahaliya mal olur - bu yuzden her sey
+   tek bir try/catch icinde ve sessizce vazgeciyor. */
+async function gorevKaydet(env, playerId, olay) {
+  try {
+    const now = Date.now();
+    const v = await gorevOku(env, playerId, now);
+    const aktif = gununGorevleri(v.gun);
+    const varMi = (id) => aktif.some((g) => g.id === id);
+    const il = v.ilerleme;
+    let degisti = false;
+
+    const topla = (id, n) => {
+      if (!varMi(id) || !(n > 0)) return;
+      il[id] = (Number(il[id]) || 0) + n;
+      degisti = true;
+    };
+    const enBuyuk = (id, n) => {
+      if (!varMi(id) || !(n > 0) || n <= (Number(il[id]) || 0)) return;
+      il[id] = n;
+      degisti = true;
+    };
+
+    if (olay.oyunAdi) {
+      topla('tur', 1);
+      enBuyuk('skor', Number(olay.skor) || 0);   /* en iyi TEK tur, toplam degil */
+      if (varMi('oyun') && !v.oyunlar.includes(olay.oyunAdi)) {
+        v.oyunlar.push(olay.oyunAdi);
+        il.oyun = v.oyunlar.length;
+        degisti = true;
+      }
+    }
+    if (olay.mh) topla('mh', Number(olay.mh) || 0);
+    if (olay.cark) topla('cark', 1);
+    if (olay.seri) topla('seri', 1);
+    if (olay.ejderha) topla(olay.ejderha, Math.min(Number(olay.miktar) || 1, 20));
+
+    if (degisti) await gorevYaz(env, playerId, v, now);
+  } catch { /* gorev sayaci oyunu bozmaz */ }
+}
+
+async function handleGorev(env, playerId) {
+  return gorevRapor(await gorevOku(env, playerId, Date.now()));
+}
+
+async function handleGorevOlay(env, playerId, body) {
+  const tur = String(body.olay || '').trim();
+  if (!GOREV_ISTEMCI_OLAYLARI.has(tur)) return { ok: false, reason: 'bilinmeyen olay' };
+  await gorevKaydet(env, playerId, { ejderha: tur, miktar: guvenliSayi(body.miktar, 20) || 1 });
+  return { ok: true, ...(await handleGorev(env, playerId)) };
+}
+
+async function handleGorevAl(env, playerId) {
+  const now = Date.now();
+  const v = await gorevOku(env, playerId, now);
+  const rapor = gorevRapor(v);
+  if (!rapor.hepsiBitti) return { ok: false, reason: 'tamamlanmadi', ...rapor };
+  if (v.alindi) return { ok: false, reason: 'alindi', ...rapor };
+
+  v.alindi = true;
+  await gorevYaz(env, playerId, v, now);
+  /* opId gune bagli: satir yazmayla odeme arasinda bir yaris olsa bile
+     ayni gun icin ikinci bir odeme gecmez (applyDelta idempotent). */
+  const sonuc = await applyDelta(env, playerId, `gorev:${v.gun}`, GOREV_ODUL);
+  return { ok: true, total: sonuc.total, ...gorevRapor(v) };
+}
+
 function streakDurumu(row, now) {
   const sonAlim = row.last_claim_at || 0;
   const gecenSure = sonAlim ? now - sonAlim : Infinity;
@@ -577,10 +742,18 @@ async function handleSync(env, playerId, body, ad) {
 
   const state = {};
   const meta = {};
+  let gorevSatiri = null;
   for (const r of rows.results) {
+    /* 'gorev' ham ilerleme sayaci - istemcinin isine yaramaz, asagida
+       islenmis haliyle ayri bir alanda gidiyor. */
+    if (r.key === 'gorev') { try { gorevSatiri = JSON.parse(r.value); } catch { gorevSatiri = null; } continue; }
     state[r.key] = JSON.parse(r.value);
     meta[r.key] = r.version;
   }
+
+  const gorevDurum = (gorevSatiri && gorevSatiri.gun === gunNo(now))
+    ? gorevSatiri
+    : { gun: gunNo(now), ilerleme: {}, oyunlar: [], alindi: false };
 
   const [adSayi, starSayi] = await Promise.all([
     refillSayisiBugun(env, playerId, 'ad'),
@@ -601,6 +774,7 @@ async function handleSync(env, playerId, body, ad) {
       starPrice: ENERGY_REFILL_STAR_PRICE,
     },
     streak: streakDurumu(player, now),
+    gorev: gorevRapor(gorevDurum),
     spin: { ...spinDurumu(player, now), prizes: SPIN_PRIZES.map((p) => ({ tur: p.tur, miktar: p.miktar })) },
     state,
     meta,
@@ -710,6 +884,8 @@ async function applyEarn(env, playerId, opId, requestedAmount) {
     await env.DB.prepare(
       'UPDATE spend_log SET delta = ?, balance_after = ? WHERE player_id = ? AND op_id = ?',
     ).bind(verilecek, total, playerId, key).run();
+
+    await gorevKaydet(env, playerId, { mh: verilecek });
 
     /* Davet zincirine komisyon. Oyuncunun aldigi miktardan kesilmiyor,
        uzerine uretiliyor (bkz. REFERRAL_RATE_DIRECT). */
@@ -864,6 +1040,7 @@ async function handleStreakClaim(env, playerId) {
     if (res.meta.changes === 0) continue;
 
     const player = await env.DB.prepare('SELECT points FROM players WHERE id = ?').bind(playerId).first();
+    await gorevKaydet(env, playerId, { seri: 1 });
     return {
       ok: true,
       streak: durum.nextDay,
@@ -900,6 +1077,7 @@ async function handleSpin(env, playerId) {
     if (res.meta.changes === 0) continue;
 
     const player = await env.DB.prepare('SELECT points, energy FROM players WHERE id = ?').bind(playerId).first();
+    await gorevKaydet(env, playerId, { cark: 1 });
     return {
       ok: true,
       index,
@@ -1100,6 +1278,8 @@ async function handleBest(env, playerId, body) {
     .bind(playerId, key).first();
   const best = row ? Number(JSON.parse(row.value)) || 0 : score;
 
+  await gorevKaydet(env, playerId, { oyunAdi: game, skor: score });
+
   return { best, isRecord };
 }
 
@@ -1246,6 +1426,10 @@ async function handleGameFinish(env, playerId, game, body) {
     const oyuncu = await env.DB.prepare('SELECT points FROM players WHERE id = ?').bind(playerId).first();
     earnResult = { total: oyuncu ? oyuncu.points : 0, credited: 0 };
   }
+
+  /* Dogrulanmis yol /api/best'e ugramiyor, gorev sayaci oraya bagli
+     olsaydi 2048 ve flow hicbir gorevi ilerletmezdi. */
+  await gorevKaydet(env, playerId, { oyunAdi: game, skor: sonuc.score });
 
   return {
     ok: true,
@@ -1394,6 +1578,12 @@ async function handleApi(request, env, url) {
         return json(await handleLeaderboard(env, playerId));
       case '/api/referral':
         return json(await handleReferral(env, playerId));
+      case '/api/gorev':
+        return json(await handleGorev(env, playerId));
+      case '/api/gorev/olay':
+        return json(await handleGorevOlay(env, playerId, body));
+      case '/api/gorev/al':
+        return json(await handleGorevAl(env, playerId));
       default:
         return json({ error: 'bulunamadi' }, 404);
     }

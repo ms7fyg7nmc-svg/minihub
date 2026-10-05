@@ -4,6 +4,7 @@ import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, oynanabilirMi, bakimListesi,
+   getGorev, gorevAl,
 } from './store.js?v221';
 import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v221';
 
@@ -19,11 +20,11 @@ const BOT_USERNAME = 'minihubgames_bot';
    REFERRAL_RATE_INDIRECT ile ayni degerler - yalnizca ekranda anlatmak
    icin, gercek odeme her zaman sunucuda hesaplaniyor. Ikisi ayrisirsa
    test-guvenlik.mjs yakalar. */
-const REFERRAL_SIGNUP_BONUS = 500;
-const REFERRAL_RATE_DIRECT = 0.15;
-const REFERRAL_RATE_INDIRECT = 0.025;
+const REFERRAL_SIGNUP_BONUS = 1500;
+const REFERRAL_RATE_DIRECT = 0.25;
+const REFERRAL_RATE_INDIRECT = 0.05;
 
-/* %15 / %2,5 - oran kullanicinin dilinde yazilsin diye Intl kullaniyoruz
+/* %25 / %5 - oran kullanicinin dilinde yazilsin diye Intl kullaniyoruz
    (Turkce'de ondalik ayraci virgul). */
 function oranYazi(oran) {
    return new Intl.NumberFormat(locale(), {
@@ -288,6 +289,7 @@ renderGames();
 renderTelegramNotice();
 renderSyncBadge();
 renderDailyCard();
+renderGorevKart();
 renderEnergyCard();
 wireDailyPanel();
 renderLiderCard();
@@ -331,6 +333,7 @@ document.addEventListener('langchange', () => {
    renderGames();
    renderSyncBadge();
    renderDailyCard();
+   renderGorevKart();
    renderEnergyCard();
    renderLiderCard();
    renderFriendsCard();
@@ -626,6 +629,74 @@ function pipsHtml(energy, max, small) {
    for (let i = 0; i < max; i++) html += `<span class="energy-pip${i < energy ? ' is-full' : ''}"></span>`;
    return html;
 }
+
+/* GUNLUK GOREVLER
+   Gorev listesi sunucudan geliyor; burada yalnizca ciziliyor. Metinler
+   gorev kimligine gore seciliyor (hub.gorev.<id>), hedef sayi {n} ile
+   yerine konuyor - yani yeni bir gorev turu eklemek icin burada hicbir
+   sey degismiyor, sadece dort dile bir satir yazmak yetiyor. */
+async function renderGorevKart() {
+   const kart = document.getElementById('gorev-kart');
+   const liste = document.getElementById('gorev-liste');
+   const alBtn = document.getElementById('gorev-al');
+   if (!kart || !liste || !alBtn) return;
+
+   let durum = null;
+   try { durum = await getGorev(); } catch { durum = null; }
+   /* Misafirde ve sunucuya ulasilamadiginda kart hic cizilmiyor -
+      ilerlemesi olmayan bos bir gorev listesi gostermek, hicbir sey
+      gostermemekten kotu. */
+   if (!durum || !Array.isArray(durum.gorevler) || durum.gorevler.length === 0) {
+      kart.hidden = true;
+      return;
+   }
+   kart.hidden = false;
+
+   liste.innerHTML = '';
+   for (const g of durum.gorevler) {
+      const li = document.createElement('li');
+      li.className = 'gorev-satir' + (g.bitti ? ' is-bitti' : '');
+      const oran = g.hedef > 0 ? Math.min(1, g.ilerleme / g.hedef) : 0;
+      li.innerHTML = `
+        <span class="gorev-tik" aria-hidden="true">${g.bitti ? '\u2713' : ''}</span>
+        <span class="gorev-ad"></span>
+        <span class="gorev-sayi"></span>
+        <i class="gorev-bar"><b></b></i>`;
+      li.querySelector('.gorev-ad').innerHTML =
+         mhHtml(t(`hub.gorev.${g.id}`, { n: g.hedef.toLocaleString(locale()) }));
+      /* Hedefi 1 olan gorevde "0/1" sayaci gurultu - tik zaten anlatiyor. */
+      li.querySelector('.gorev-sayi').textContent =
+         g.hedef > 1 ? `${g.ilerleme.toLocaleString(locale())}/${g.hedef.toLocaleString(locale())}` : '';
+      li.querySelector('.gorev-bar b').style.width = `${Math.round(oran * 100)}%`;
+      liste.appendChild(li);
+   }
+
+   if (!durum.hepsiBitti) {
+      alBtn.hidden = true;
+      return;
+   }
+   alBtn.hidden = false;
+   alBtn.disabled = !!durum.alindi;
+   alBtn.innerHTML = durum.alindi
+      ? t('hub.gorev.alindi')
+      : mhHtml(t('hub.gorev.al', { n: Number(durum.odul || 0).toLocaleString(locale()) }));
+}
+
+document.getElementById('gorev-al')?.addEventListener('click', async () => {
+   const btn = document.getElementById('gorev-al');
+   if (!btn || btn.disabled) return;
+   /* Cift dokunusa karsi dugme ANINDA kapaniyor; sunucu zaten gune bagli
+      tek bir opId ile idempotent, bu sadece arayuzun yalan soylememesi
+      icin. */
+   btn.disabled = true;
+   haptic.tap();
+   const sonuc = await gorevAl();
+   if (sonuc?.ok) {
+      haptic.success();
+      await renderProfile();
+   }
+   await renderGorevKart();
+});
 
 async function renderDailyCard() {
    const card = document.getElementById('daily-card');

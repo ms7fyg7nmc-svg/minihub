@@ -228,6 +228,7 @@ async function senkronDene() {
       energyNextMs: Number(veri.energyNextMs) || 0,
       energyRefill: veri.energyRefill && typeof veri.energyRefill === 'object' ? veri.energyRefill : null,
       streak: veri.streak && typeof veri.streak === 'object' ? veri.streak : null,
+      gorev: veri.gorev && typeof veri.gorev === 'object' ? veri.gorev : null,
       spin: veri.spin && typeof veri.spin === 'object' ? veri.spin : null,
       state: veri.state && typeof veri.state === 'object' ? veri.state : {},
       meta: veri.meta && typeof veri.meta === 'object' ? veri.meta : {},
@@ -340,6 +341,10 @@ export async function addPoints(amount) {
 
 const MISAFIR = {
   energy: 24, maxEnergy: 24, energyNextMs: 0,
+  /* Misafirde gorev yok: ilerleme sunucuda tutuluyor ve sandik gercek
+     $MH odedigi icin hesapsiz bir oyuncuya gosterilmesi yanlis olurdu.
+     null gelince hub karti hic cizilmiyor. */
+  gorev: null,
   streak: { count: 0, canClaim: false, nextDay: 1, nextReward: 100,
             nextInMs: 0, broken: false, rewards: [100, 150, 200, 300, 400, 500, 1000] },
   spin: { canSpin: false, nextInMs: 0, prizes: [
@@ -402,6 +407,76 @@ export async function claimStreak() {
     v.streak = sonuc.durum || { ...v.streak, count: sonuc.streak, canClaim: false };
   }
   return sonuc;
+}
+
+/* ---- Gunluk gorevler ----
+   Ilerleme sunucuda; burada yalnizca koprusu var. gorevOlay() ejderha
+   icindeki birlestirme/besleme gibi sunucunun GORMEDIGI hamleleri
+   bildiriyor - sunucu ejderha durumunu tek parca JSON olarak aliyor,
+   tek tek hamleleri degil. */
+
+export async function getGorev() {
+  const v = await senkron;
+  if (!v) return null;
+  if (!v.gorev) {
+    const sonuc = await sunucuGonder('/api/gorev', {});
+    if (sonuc && Array.isArray(sonuc.gorevler)) v.gorev = sonuc;
+  }
+  return v.gorev;
+}
+
+export async function gorevAl() {
+  const v = await senkron;
+  if (!v) return { ok: false, reason: 'misafir' };
+  const sonuc = await sunucuGonder('/api/gorev/al', {});
+  if (!sonuc) return { ok: false, reason: 'ag' };
+  if (sonuc.ok) {
+    v.points = sonuc.total;
+    v.gorev = sonuc;
+  } else if (Array.isArray(sonuc.gorevler)) {
+    v.gorev = sonuc;
+  }
+  return sonuc;
+}
+
+/* Oyun ici olay bildirimi.
+
+   BIRIKTIRILIYOR. Ilk hali her birlestirmede ayri bir istek atiyordu;
+   hizli oynayan biri saniyede birkac kez mobil veri uzerinden sunucuya
+   gidiyordu - gorev sayaci oyunun kendisinden pahaliya mal olurdu.
+   Simdi sayilar toplanip bir buçuk saniyede bir tek istekte gidiyor.
+
+   Sayfa gizlenirken (oyuncu Telegram'i kapatirken) bekleyen ne varsa
+   hemen gonderiliyor, yoksa son birkac hamle kaybolurdu.
+
+   Cevap beklenmiyor ve hatalar yutuluyor: bir birlestirme animasyonunun
+   gorev sayaci yuzunden gecikmesi kabul edilemez. */
+const gorevBekleyen = new Map();
+let gorevSaat = null;
+
+function gorevBosalt() {
+  if (gorevSaat) { clearTimeout(gorevSaat); gorevSaat = null; }
+  if (gorevBekleyen.size === 0) return;
+  const gonderilecek = [...gorevBekleyen.entries()];
+  gorevBekleyen.clear();
+  senkron.then((v) => {
+    if (!v) return;
+    for (const [olay, miktar] of gonderilecek) {
+      sunucuGonder('/api/gorev/olay', { olay, miktar }).then((sonuc) => {
+        if (sonuc && Array.isArray(sonuc.gorevler)) v.gorev = sonuc;
+      }).catch(() => {});
+    }
+  }).catch(() => { /* gorev sayaci oyunu bozmaz */ });
+}
+
+export function gorevOlay(olay, miktar = 1) {
+  gorevBekleyen.set(olay, (gorevBekleyen.get(olay) || 0) + miktar);
+  if (!gorevSaat) gorevSaat = setTimeout(gorevBosalt, 1500);
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => { if (document.hidden) gorevBosalt(); });
+  window.addEventListener('pagehide', gorevBosalt);
 }
 
 // Liderlik tablosu panele her acilista sunucuya gitmesin diye 4 saat
@@ -468,6 +543,7 @@ export async function refreshDaily() {
   v.energyNextMs = Number(veri.energyNextMs) || 0;
   if (veri.energyRefill && typeof veri.energyRefill === 'object') v.energyRefill = veri.energyRefill;
   if (veri.streak && typeof veri.streak === 'object') v.streak = veri.streak;
+  if (veri.gorev && typeof veri.gorev === 'object') v.gorev = veri.gorev;
   if (veri.spin && typeof veri.spin === 'object') v.spin = veri.spin;
 }
 

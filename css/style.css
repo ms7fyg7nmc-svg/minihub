@@ -1747,3 +1747,77 @@ body.hub::before {
 @media (prefers-reduced-motion: reduce) {
   .hub-boot-glow, .hub-boot-logo { animation: none; }
 }
+
+/* --- GUNLUK GOREVLER ---
+   Uc satir, her birinde minik bir ilerleme cubugu. Cubuklar bilerek ince:
+   kart oyunlarin ustunde duruyor ve dikkati oradan calmamali. */
+
+.gorev-kart {
+  margin: 0 0 14px;
+  padding: 13px 14px 12px;
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgba(42, 46, 68, 0.62), rgba(24, 26, 38, 0.62));
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.gorev-kart[hidden] { display: none; }
+
+.gorev-bas {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.gorev-bas strong { font-size: 14px; font-weight: 800; color: var(--text); }
+.gorev-yenilen { font-size: 11px; color: var(--muted); }
+
+.gorev-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+
+.gorev-satir {
+  display: grid;
+  grid-template-columns: 16px 1fr auto;
+  align-items: center;
+  gap: 8px 9px;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+/* Cubuk ucuncu sutunun ALTINDA degil, tum satirin altinda: metin uzadiginda
+   cubugun boyu degismesin. */
+.gorev-bar { grid-column: 2 / -1; height: 4px; border-radius: 3px; background: rgba(255, 255, 255, 0.09); overflow: hidden; }
+.gorev-bar b { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #6f7dff, #a98bff); }
+
+.gorev-tik {
+  width: 16px; height: 16px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  font-size: 10px; font-weight: 900;
+  color: #8e93ad;
+  border: 1.5px solid rgba(255, 255, 255, 0.16);
+}
+
+.gorev-sayi { font-size: 11.5px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.gorev-satir.is-bitti .gorev-ad { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(255, 255, 255, 0.28); }
+.gorev-satir.is-bitti .gorev-tik { color: #0d1018; background: #58d08a; border-color: #58d08a; }
+.gorev-satir.is-bitti .gorev-bar b { background: linear-gradient(90deg, #45c489, #58d08a); }
+
+.gorev-al {
+  width: 100%;
+  margin-top: 11px;
+  padding: 11px;
+  border: 0;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #241a05;
+  background: linear-gradient(135deg, #ffd98a, #f3b23f);
+  cursor: pointer;
+}
+.gorev-al[hidden] { display: none; }
+.gorev-al:active { transform: scale(0.985); }
+.gorev-al:disabled { background: rgba(255, 255, 255, 0.07); color: var(--muted); cursor: default; }
+.gorev-al:disabled:active { transform: none; }
