@@ -11,7 +11,7 @@ const DICT = {
     'hub.title': 'MINI HUB GAMES',
     'hub.subtitle': 'Play the games, earn $MH, and be part of our ecosystem.',
     'hub.gamesTitle': 'Games',
-    'hub.version': 'Version 1.87',
+    'hub.version': 'Version 1.88',
     'hub.sync.guest': 'Not connected',
     'hub.settings.title': 'Settings',
     'hub.settings.language': 'Language',
@@ -578,7 +578,7 @@ const DICT = {
     'hub.title': 'MINI HUB GAMES',
     'hub.subtitle': 'Oyunları oyna, $MH kazan ve ekosistemimizin bir parçası ol.',
     'hub.gamesTitle': 'Oyunlar',
-    'hub.version': 'Sürüm 1.87',
+    'hub.version': 'Sürüm 1.88',
     'hub.sync.guest': 'Bağlı değil',
     'hub.settings.title': 'Ayarlar',
     'hub.settings.language': 'Dil',
@@ -1145,7 +1145,7 @@ const DICT = {
     'hub.title': 'MINI HUB GAMES',
     'hub.subtitle': 'Juega, gana $MH y forma parte de nuestro ecosistema.',
     'hub.gamesTitle': 'Juegos',
-    'hub.version': 'Versión 1.87',
+    'hub.version': 'Versión 1.88',
     'hub.sync.guest': 'Sin conexión',
     'hub.settings.title': 'Ajustes',
     'hub.settings.language': 'Idioma',
@@ -1712,7 +1712,7 @@ const DICT = {
     'hub.title': 'MINI HUB GAMES',
     'hub.subtitle': 'Играй, зарабатывай $MH и стань частью нашей экосистемы.',
     'hub.gamesTitle': 'Игры',
-    'hub.version': 'Версия 1.87',
+    'hub.version': 'Версия 1.88',
     'hub.sync.guest': 'Нет подключения',
     'hub.settings.title': 'Настройки',
     'hub.settings.language': 'Язык',
@@ -2326,7 +2326,7 @@ export function locale() {
   return LOCALE_MAP[currentLang] || 'en-US';
 }
 
-export function mhHtml(text, iconSrc = 'assets/coin.png') {
+export function mhHtml(text, iconSrc = 'assets/coin-128.webp') {
   return String(text).replace(/\$MH/g, `<img class="mh-icon" src="${iconSrc}" alt="$MH">`);
 }
 

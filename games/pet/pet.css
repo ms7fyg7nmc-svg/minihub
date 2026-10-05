@@ -329,7 +329,7 @@ body.shop-open .pet-stage { max-width: 176px; }
   height: 14px;
   margin-right: 4px;
   vertical-align: -2px;
-  background: url('../../assets/coin.png') center/contain no-repeat;
+  background: url('../../assets/coin-128.webp') center/contain no-repeat;
   opacity: 0.9;
 }
 

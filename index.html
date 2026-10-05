@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="227">
+  <meta name="surum" content="228">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MINI HUB GAMES</title>
   <!-- Cark rakamlari icin (bkz. js/hub.js WHEEL_FONT). Ejderha Adasi
@@ -41,13 +41,16 @@
       document.documentElement.setAttribute('data-afis', sec);
     })();
   </script>
-  <!-- Reklamla enerji doldurma (js/hub.js -> ADSGRAM_BLOCK_ID) icin Adsgram SDK -->
-  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+  <!-- Adsgram SDK'si BURADAN KALDIRILDI. 188 KB'lik ucuncu parti bir
+       betikti ve hub'in HER acilisinda iniyordu - oysa reklamla enerji
+       doldurma su an kapali ve acildiginda bile oturumlarin cogunda
+       kullanilmiyor. Artik yalnizca oyuncu reklam dugmesine bastiginda
+       yukleniyor (bkz. js/hub.js adsgramYukle). -->
   <script>
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v227">
+  <link rel="stylesheet" href="css/style.css?v228">
 </head>
 <body class="hub">
   <!-- ACILIS EKRANI
@@ -83,7 +86,7 @@
       </div>
 
       <div class="points-chip">
-        <img class="coin" src="assets/coin.png" alt="">
+        <img class="coin" src="assets/coin-128.webp" alt="">
         <span id="points">0</span>
       </div>
     </header>
@@ -234,7 +237,7 @@
 
       <div class="cuzdan-izgara">
         <div class="cuzdan-kutu">
-          <img class="cuzdan-simge" src="assets/coin.png" alt="" width="64" height="64">
+          <img class="cuzdan-simge" src="assets/coin-128.webp" alt="" width="64" height="64">
           <div class="cuzdan-deger" id="wallet-mh">0</div>
           <div class="cuzdan-birim">$MH</div>
         </div>
@@ -271,7 +274,7 @@
         <div class="wheel-wrap">
           <div class="wheel-pointer"></div>
           <svg class="wheel" id="wheel" viewBox="0 0 200 200"></svg>
-          <div class="wheel-hub" id="wheel-hub"><img class="wheel-hub-coin" src="assets/coin.png" alt=""></div>
+          <div class="wheel-hub" id="wheel-hub"><img class="wheel-hub-coin" src="assets/coin-128.webp" alt=""></div>
         </div>
         <button class="daily-btn" id="spin-claim-btn"></button>
       </section>
@@ -340,6 +343,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v227"></script>
+  <script type="module" src="js/hub.js?v228"></script>
 </body>
 </html>

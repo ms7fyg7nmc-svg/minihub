@@ -14,7 +14,7 @@
    panel DOM'dan cikmadan once cevap veriliyor. Hicbir yol, cevabi
    bir animasyonun bitmesine baglamiyor. */
 
-import { haptic } from './tg.js?v227';
+import { haptic } from './tg.js?v228';
 
 const STIL = `
 .onay-perde {

@@ -1,9 +1,9 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v227';
-import { submitScore, getBest } from '../../js/store.js?v227';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v227';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v227';
-import { yarimBirakmaOnayi, onayAcik } from '../../js/onay.js?v227';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v228';
+import { submitScore, getBest } from '../../js/store.js?v228';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v228';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v228';
+import { yarimBirakmaOnayi, onayAcik } from '../../js/onay.js?v228';
 
 const GAME_ID = 'wheelrush';
 /* Skor = mesafe/10 + coin*15 - iyi bir kosu ~150-450 arasi cikiyor.
@@ -46,7 +46,7 @@ const overlayText = document.getElementById('overlay-text');
 const overlayBtn = document.getElementById('overlay-btn');
 
 const coinImg = new Image();
-coinImg.src = '../../assets/coin.png';
+coinImg.src = '../../assets/coin-128.webp';
 
 /* GORSEL VARLIKLAR
    Oyun eskiden her seyi canvas ilkelleriyle ciziyordu: oyuncu bir altin

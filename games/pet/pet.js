@@ -1,7 +1,7 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v227';
-import { getPoints, spendPoints, saveState, loadState } from '../../js/store.js?v227';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v227';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v228';
+import { getPoints, spendPoints, saveState, loadState } from '../../js/store.js?v228';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v228';
 
 const GAME_ID = 'pet';
 
@@ -822,4 +822,4 @@ function showFloater(text) {
 
 const format = (n) => Number(n).toLocaleString(locale());
 
-const coinIkon = () => '<img class="coin-ic" src="../../assets/coin.png" alt="">';
+const coinIkon = () => '<img class="coin-ic" src="../../assets/coin-128.webp" alt="">';

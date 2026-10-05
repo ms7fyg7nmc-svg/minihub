@@ -1,6 +1,6 @@
 
-import { initLang, t as coreT, getLang } from './i18n.js?v227';
-export { locale } from './i18n.js?v227';
+import { initLang, t as coreT, getLang } from './i18n.js?v228';
+export { locale } from './i18n.js?v228';
 
 let gameId = '';
 let fallbackTexts = {};
@@ -20,7 +20,7 @@ function fillParams(text, params) {
     (params[name] !== undefined ? params[name] : match));
 }
 
-const MH_ICON = '<img class="mh-icon" src="../../assets/coin.png" alt="$MH">';
+const MH_ICON = '<img class="mh-icon" src="../../assets/coin-128.webp" alt="$MH">';
 
 export function mhHtml(text) {
   return String(text).replace(/\$MH/g, MH_ICON);

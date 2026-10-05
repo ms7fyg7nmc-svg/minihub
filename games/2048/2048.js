@@ -1,10 +1,10 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v227';
-import { getBest, saveState, loadState, clearState, startRun, finishRunOrLegacy, yerelTohum } from '../../js/store.js?v227';
-import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v227';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v227';
-import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v227';
-import { yarimBirakmaOnayi } from '../../js/onay.js?v227';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v228';
+import { getBest, saveState, loadState, clearState, startRun, finishRunOrLegacy, yerelTohum } from '../../js/store.js?v228';
+import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v228';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v228';
+import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v228';
+import { yarimBirakmaOnayi } from '../../js/onay.js?v228';
 
 const GAME_ID = '2048';
 const POINTS_DIVISOR = 23;
@@ -410,7 +410,7 @@ function overlayVisible() {
 
 function showOverlay(title, text, buttonLabel, action) {
    overlayTitle.textContent = title;
-   overlayText.innerHTML = mhHtml(text, '../../assets/coin.png');
+   overlayText.innerHTML = mhHtml(text, '../../assets/coin-128.webp');
    overlayBtn.textContent = buttonLabel;
    overlayBtn.onclick = () => {
       haptic.tap();

@@ -1,6 +1,6 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v227';
-import { surumKontrol } from './guncel.js?v227';
+import { isTelegramUser, getInitData } from './tg.js?v228';
+import { surumKontrol } from './guncel.js?v228';
 
 /* Hub ve 12 oyunun hepsi bu modulu yukluyor, o yuzden surum tazeleyici
    buraya bagli: tek yerden hepsini kapsiyor. */
@@ -350,6 +350,294 @@ export async function addPoints(amount) {
   const v = await senkron;
   if (!v) return addPointsYerel(n);
   return v.points;
+}
+
+const MISAFIR = {
+  energy: 24, maxEnergy: 24, energyNextMs: 0,
+  /* Misafirde gorev yok: ilerleme sunucuda tutuluyor ve sandik gercek
+     $MH odedigi icin hesapsiz bir oyuncuya gosterilmesi yanlis olurdu.
+     null gelince hub karti hic cizilmiyor. */
+  gorev: null,
+  streak: { count: 0, canClaim: false, nextDay: 1, nextReward: 100,
+            nextInMs: 0, broken: false, rewards: [100, 150, 200, 300, 400, 500, 1000] },
+  /* Sunucudaki SPIN_PRIZES ile AYNI sirada ve ayni degerlerde olmali -
+     misafir carki dondurup sonra Telegram'dan girince baska sayilar
+     gormesin. */
+  spin: { canSpin: false, nextInMs: 0, prizes: [
+    { tur: 'coin', miktar: 250 }, { tur: 'coin', miktar: 400 },
+    { tur: 'coin', miktar: 600 }, { tur: 'coin', miktar: 900 },
+    { tur: 'coin', miktar: 1200 }, { tur: 'coin', miktar: 1600 },
+    { tur: 'enerji', miktar: 3 }, { tur: 'coin', miktar: 2500 },
+  ] },
+};
+
+export async function odulDurumu() {
+  if (!isTelegramUser()) return 'misafir';
+  return (await senkron) ? 'sunucu' : 'yerel';
+}
+
+export async function getEnergy() {
+  const v = await senkron;
+  if (!v) return { energy: MISAFIR.energy, max: MISAFIR.maxEnergy, nextMs: 0, kilitli: true, refill: null };
+  return { energy: v.energy, max: v.maxEnergy, nextMs: v.energyNextMs, kilitli: false, refill: v.energyRefill };
+}
+
+/* ENERJI ARTIK KAPI DEGIL, CARPAN.
+
+   Eskiden 0 enerjiyle oyun BASLATILAMIYORDU: oyuncu hub'a geri atiliyor
+   ve yapacak hicbir sey bulamiyordu. Oysa sunucu zaten daha yumusak bir
+   kural isletiyordu - enerji bosken kazanc ceyrege dusuyor
+   (bkz. worker.js EMPTY_ENERGY_CARPAN). Yani mekanizma vardi, istemci
+   onun ustune gereksiz bir duvar koyuyordu.
+
+   Artik kapi yok: enerjisi biten oynayabiliyor, sadece daha az
+   kazaniyor. Oyuncuya bu ACIKCA soyleniyor (bkz. js/onay.js
+   enerjiBosOnayi) - sessizce dortte bir odemek, kapiyi kapatmaktan daha
+   kotu olurdu.
+
+   Misafir/yerel modda enerji zaten sahte: her zaman dolu sayiliyor. */
+export async function enerjiBosMu() {
+  const enerji = await getEnergy();
+  return !enerji.kilitli && enerji.energy <= 0;
+}
+
+/* Eski ad, geriye donuk: artik HER ZAMAN true. Cagiran yerler
+   temizlenirken birakildi ki unutulan bir cagri oyunu kapatmasin. */
+export async function oynanabilirMi() {
+  return true;
+}
+
+export async function adEnergyRefill() {
+  const v = await senkron;
+  if (!v) return { ok: false, reason: 'misafir' };
+  const sonuc = await sunucuGonder('/api/energy/ad-refill', { opId: uuid() });
+  if (!sonuc) return { ok: false, reason: 'ag' };
+  if (sonuc.ok) v.energy = sonuc.energy;
+  return sonuc;
+}
+
+export async function starEnergyInvoiceLink() {
+  const v = await senkron;
+  if (!v) return { ok: false, reason: 'misafir' };
+  const sonuc = await sunucuGonder('/api/energy/star-invoice', {});
+  if (!sonuc) return { ok: false, reason: 'ag' };
+  if (sonuc.error) return { ok: false, reason: sonuc.error };
+  return { ok: true, link: sonuc.link };
+}
+
+export async function getStreak() {
+  const v = await senkron;
+  if (!v) return MISAFIR.streak;
+  return v.streak;
+}
+
+export async function claimStreak() {
+  const v = await senkron;
+  if (!v) return { ok: false, reason: 'misafir' };
+  const sonuc = await sunucuGonder('/api/streak/claim', {});
+  if (!sonuc) return { ok: false, reason: 'ag' };
+  if (sonuc.ok) {
+    v.points = sonuc.total;
+    v.streak = sonuc.durum || { ...v.streak, count: sonuc.streak, canClaim: false };
+  }
+  return sonuc;
+}
+
+/* ---- Gunluk gorevler ----
+   Ilerleme sunucuda; burada yalnizca koprusu var. gorevOlay() ejderha
+   icindeki birlestirme/besleme gibi sunucunun GORMEDIGI hamleleri
+   bildiriyor - sunucu ejderha durumunu tek parca JSON olarak aliyor,
+   tek tek hamleleri degil. */
+
+export async function getGorev() {
+  const v = await senkron;
+  if (!v) return null;
+  if (!v.gorev) {
+    const sonuc = await sunucuGonder('/api/gorev', {});
+    if (sonuc && Array.isArray(sonuc.gorevler)) v.gorev = sonuc;
+  }
+  return v.gorev;
+}
+
+export async function gorevAl() {
+  const v = await senkron;
+  if (!v) return { ok: false, reason: 'misafir' };
+  const sonuc = await sunucuGonder('/api/gorev/al', {});
+  if (!sonuc) return { ok: false, reason: 'ag' };
+  if (sonuc.ok) {
+    v.points = sonuc.total;
+    v.gorev = sonuc;
+  } else if (Array.isArray(sonuc.gorevler)) {
+    v.gorev = sonuc;
+  }
+  return sonuc;
+}
+
+/* Oyun ici olay bildirimi.
+
+   BIRIKTIRILIYOR. Ilk hali her birlestirmede ayri bir istek atiyordu;
+   hizli oynayan biri saniyede birkac kez mobil veri uzerinden sunucuya
+   gidiyordu - gorev sayaci oyunun kendisinden pahaliya mal olurdu.
+   Simdi sayilar toplanip bir buçuk saniyede bir tek istekte gidiyor.
+
+   Sayfa gizlenirken (oyuncu Telegram'i kapatirken) bekleyen ne varsa
+   hemen gonderiliyor, yoksa son birkac hamle kaybolurdu.
+
+   Cevap beklenmiyor ve hatalar yutuluyor: bir birlestirme animasyonunun
+   gorev sayaci yuzunden gecikmesi kabul edilemez. */
+const gorevBekleyen = new Map();
+let gorevSaat = null;
+
+function gorevBosalt() {
+  if (gorevSaat) { clearTimeout(gorevSaat); gorevSaat = null; }
+  if (gorevBekleyen.size === 0) return;
+  const gonderilecek = [...gorevBekleyen.entries()];
+  gorevBekleyen.clear();
+  senkron.then((v) => {
+    if (!v) return;
+    for (const [olay, miktar] of gonderilecek) {
+      sunucuGonder('/api/gorev/olay', { olay, miktar }).then((sonuc) => {
+        if (sonuc && Array.isArray(sonuc.gorevler)) v.gorev = sonuc;
+      }).catch(() => {});
+    }
+  }).catch(() => { /* gorev sayaci oyunu bozmaz */ });
+}
+
+export function gorevOlay(olay, miktar = 1) {
+  gorevBekleyen.set(olay, (gorevBekleyen.get(olay) || 0) + miktar);
+  if (!gorevSaat) gorevSaat = setTimeout(gorevBosalt, 1500);
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => { if (document.hidden) gorevBosalt(); });
+  window.addEventListener('pagehide', gorevBosalt);
+}
+
+/* ---- Promosyon kodlari ----
+   Butun dogrulama sunucuda: kodun varligi, suresi, sahibe ait olup
+   olmadigi ve bir kez mi kullanilabilecegi. Burada yalnizca kopru var;
+   istemcinin kod listesini gormesine gerek yok ve gormemeli - liste
+   istemciye inseydi herkes sahip kodlarini okurdu. */
+
+export async function promoKullan(kod) {
+  const v = await senkron;
+  if (!v) return { ok: false, reason: 'misafir' };
+  const sonuc = await sunucuGonder('/api/promo', { kod });
+  if (!sonuc) return { ok: false, reason: 'ag' };
+  if (sonuc.ok) {
+    if (typeof sonuc.total === 'number') v.points = sonuc.total;
+    if (typeof sonuc.energy === 'number') v.energy = sonuc.energy;
+  }
+  return sonuc;
+}
+
+/* Ejderha varliklarini tasiyan kutu. Okumak ayni anda BOSALTIYOR, bu
+   yuzden cagiran taraf aldigini hemen uygulamali ve kaydetmeli. */
+export async function promoKutuAl() {
+  const v = await senkron;
+  if (!v) return [];
+  const sonuc = await sunucuGonder('/api/promo/kutu', {});
+  return Array.isArray(sonuc?.parcalar) ? sonuc.parcalar : [];
+}
+
+export async function promoBekleyenVar() {
+  const v = await senkron;
+  return !!(v && v.promoBekleyen > 0);
+}
+
+// Liderlik tablosu panele her acilista sunucuya gitmesin diye 4 saat
+// istemci tarafinda onbelleklendiriliyor - gorunur bir geri sayim yok,
+// sadece istek sayisini azaltmak icin. localStorage'da tutuluyor ki
+// sayfa yeniden acilinca da onbellek gecerli kalsin.
+const LIDER_ONBELLEK_ANAHTARI = 'mh_lider_cache';
+const LIDER_ONBELLEK_SURESI = 4 * 3600 * 1000;
+
+// LIDER_ONBELLEK_SURUM'u artirmak, suredolumunu beklemeden HERKESIN
+// onbellegini bir kerelik gecersiz kilar (surum uyusmuyorsa onbellek yok
+// sayilir) - sonraki her acilis yine normal 4 saatlik dongude kalir. Duzenli
+// bir yenileme mekanizmasi degil, sadece "bu surum icin bir kerelik zorla
+// tazele" anahtari.
+const LIDER_ONBELLEK_SURUM = 2;
+
+export async function liderTablosu() {
+  const v = await senkron;
+  if (!v) return null;
+
+  try {
+    const ham = localGet(LIDER_ONBELLEK_ANAHTARI);
+    if (ham) {
+      const onbellek = JSON.parse(ham);
+      if (onbellek && onbellek.surum === LIDER_ONBELLEK_SURUM &&
+          Date.now() - onbellek.zaman < LIDER_ONBELLEK_SURESI) {
+        return onbellek.veri;
+      }
+    }
+  } catch {
+  }
+
+  const veri = await sunucuGonder('/api/leaderboard', {});
+  if (veri) {
+    try {
+      localSet(LIDER_ONBELLEK_ANAHTARI, JSON.stringify({ surum: LIDER_ONBELLEK_SURUM, zaman: Date.now(), veri }));
+    } catch {
+    }
+  }
+  return veri;
+}
+
+export async function referralOzeti() {
+  const v = await senkron;
+  if (!v) return null;
+  return sunucuGonder('/api/referral', {});
+}
+
+export async function getSpin() {
+  const v = await senkron;
+  if (!v) return MISAFIR.spin;
+  return v.spin;
+}
+
+export async function refreshDaily() {
+  const v = await senkron;
+  if (!v) return;
+  const veri = await sunucuGonder('/api/sync', {
+    points: Number(localGet('hub_points')) || 0,
+    state: yerelAnlikGoruntu(),
+  });
+  if (!veri) return;
+  v.energy = Number(veri.energy) || 0;
+  v.energyNextMs = Number(veri.energyNextMs) || 0;
+  if (veri.energyRefill && typeof veri.energyRefill === 'object') v.energyRefill = veri.energyRefill;
+  if (veri.streak && typeof veri.streak === 'object') v.streak = veri.streak;
+  if (veri.gorev && typeof veri.gorev === 'object') v.gorev = veri.gorev;
+  v.promoBekleyen = Number(veri.promoBekleyen) || 0;
+  if (veri.spin && typeof veri.spin === 'object') v.spin = veri.spin;
+}
+
+export async function spinWheel() {
+  const v = await senkron;
+  if (!v) return { ok: false, reason: 'misafir' };
+  const sonuc = await sunucuGonder('/api/spin', {});
+  if (!sonuc) return { ok: false, reason: 'ag' };
+  if (sonuc.ok) {
+    v.points = sonuc.total;
+    v.energy = sonuc.energy;
+    if (v.spin) v.spin = { ...v.spin, ...(sonuc.durum || { canSpin: false }) };
+  }
+  return sonuc;
+}
+
+export async function spendPoints(amount) {
+  const n = Math.max(0, Math.round(Number(amount) || 0));
+  const v = await senkron;
+  if (!v) return spendPointsYerel(n);
+
+  const sonuc = await sunucuGonder('/api/points/spend', { opId: uuid(), amount: n });
+  if (!sonuc) {
+    return { ok: false, total: v.points };
+  }
+  v.points = sonuc.total;
+  return sonuc;
 }
 
 export async function getBest(game) {

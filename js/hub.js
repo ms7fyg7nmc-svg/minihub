@@ -1,19 +1,19 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v227';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v228';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, enerjiBosMu, bakimListesi,
    getGorev, gorevAl, promoKullan,
-} from './store.js?v227';
-import { enerjiBosOnayi } from './onay.js?v227';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v227';
+} from './store.js?v228';
+import { enerjiBosOnayi } from './onay.js?v228';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v228';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniBaslat, iz } from './tani.js?v227';
+import { taniBaslat, iz } from './tani.js?v228';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -581,7 +581,7 @@ function buildWheel(prizes) {
       const simge = isEnergy
          ? `<image href="assets/wheel/energy.webp" x="-5" y="4" width="10" height="16"
                    style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))"/>`
-         : `<image href="assets/coin.png" x="-7" y="4" width="14" height="14"
+         : `<image href="assets/coin-128.webp" x="-7" y="4" width="14" height="14"
                    style="filter:drop-shadow(0 1px 3px rgba(0,0,0,.55))"/>`;
 
       html += `
@@ -897,11 +897,36 @@ function renderEnergyRefillRow(energy) {
       : t('hub.energy.limitReached');
 }
 
+/* Adsgram SDK'si TALEP UZERINE yukleniyor.
+
+   Eskiden index.html'de sabit bir <script> idi: 188 KB'lik ucuncu parti
+   bir betik, hub'in her acilisinda, telefonda ayristirilarak - ve su an
+   kapali olan bir ozellik icin. Hub'in toplam yukunun ucte birinden
+   fazlasiydi.
+
+   Bir kez yuklenip hatirlaniyor; ikinci cagri aynı sozü donuyor. Yukleme
+   basarisiz olursa false doniyor ve cagiran taraf oyuncuya normal hata
+   mesajini gosteriyor - sayfa calismaya devam ediyor. */
+let adsgramSozu = null;
+function adsgramYukle() {
+   if (window.Adsgram) return Promise.resolve(true);
+   if (adsgramSozu) return adsgramSozu;
+   adsgramSozu = new Promise((coz) => {
+      const el = document.createElement('script');
+      el.src = 'https://sad.adsgram.ai/js/sad.min.js';
+      el.async = true;
+      el.onload = () => coz(!!window.Adsgram);
+      el.onerror = () => { adsgramSozu = null; coz(false); };   /* tekrar denenebilsin */
+      document.head.appendChild(el);
+   });
+   return adsgramSozu;
+}
+
 async function watchAdForEnergy() {
    const btn = document.getElementById('energy-ad-btn');
    if (!btn || btn.disabled) return;
 
-   if (!window.Adsgram || ADSGRAM_BLOCK_ID.startsWith('REPLACE_')) {
+   if (ADSGRAM_BLOCK_ID.startsWith('REPLACE_') || !(await adsgramYukle())) {
       showDailyToast(t('hub.energy.actionFailed'));
       return;
    }
@@ -969,7 +994,7 @@ async function renderStreakSection() {
       return `
       <div class="streak-pill ${durum}${jackpot}">
         <span class="day">${gun}</span>
-        <span class="amt"><img class="amt-coin" src="assets/coin.png" alt="">${odul}</span>
+        <span class="amt"><img class="amt-coin" src="assets/coin-128.webp" alt="">${odul}</span>
       </div>`;
    }).join('');
 

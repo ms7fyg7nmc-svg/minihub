@@ -63,3 +63,20 @@ siteden düşer.
 Görseller `?v` etiketi **almıyor** (bkz. `surum-damgala.mjs`). Bir
 görseli değiştirmek istiyorsan **yeni bir dosya adı** ya da yeni bir
 klasör kullan, yoksa oyuncunun telefonunda eski hali asılı kalır.
+
+## `_kaynak/` — yayinlanmayan orijinaller
+
+Her gorselin WebP surumu uretildikten sonra ORIJINAL PNG'si duruyor ama
+artik `_kaynak/` altinda. Sebep: alt cizgiyle baslayan klasorleri GitHub
+Pages yayinlamiyor (bkz. yukarisi), yani dosyalar git'te kaliyor ama
+siteye cikmiyor.
+
+Tasinmadan once 3,7 MB'lik 16 PNG yayinlanan klasorlerde duruyordu.
+Hicbiri koddan cagrilmiyordu - yani oyuncunun telefonuna inmiyorlardi -
+ama depoyu ve her klonu sisiriyorlardi.
+
+Silinmiyorlar: WebP'den geri donmek gerekirse kaynak bunlar.
+
+Kontrol: bir PNG'yi yayinlanan bir klasorde tutmak icin kodda adinin
+gectiginden emin ol. `assets/coin.png` ornegin GERCEKTEN kullaniliyor,
+bu yuzden yerinde duruyor.
