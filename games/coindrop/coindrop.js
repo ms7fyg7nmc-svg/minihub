@@ -1,11 +1,12 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v220';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v220';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v220';
-import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v220';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v221';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, oynanabilirMi } from '../../js/store.js?v221';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v221';
+import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v221';
 /* Sesler artik sentezlenmis degil, Dragon Island ornekleri (bkz. ses.js).
    Ses dugmesi ayni sessizlik anahtarini kullandigi icin degismedi. */
-import { SFX } from './ses.js?v220';
+import { SFX } from './ses.js?v221';
+import { yarimBirakmaOnayi, onayAcik } from '../../js/onay.js?v221';
 
 const GAME_ID = 'coindrop';
 
@@ -163,7 +164,15 @@ document.getElementById('back-link').addEventListener('click', (e) => {
 document.getElementById('new-game').addEventListener('click', async () => {
   if (!(await oynanabilirMi())) { haptic.error(); goHome(); return; }
   haptic.tap();
-  if (!over) { await endGame(false); return; }
+  if (!over) {
+    /* Onay: "Yeni oyun" oyunun ortasinda basildiginda kosuyu bitiriyor.
+       Dugme ekranin altinda, bastan sona parmaga yakin duruyor ve bir
+       yanlis dokunus on dakikalik bir oyunu goturebiliyor. Soru sadece
+       oyun DEVAM EDERKEN cikiyor; bitmis oyunda dogrudan calisiyor. */
+    if (!(await yarimBirakmaOnayi(t))) return;
+    await endGame(false);
+    return;
+  }
   startNewGame();
 });
 
@@ -547,7 +556,8 @@ function dongu(ts) {
   let dt = (ts - sonKare) / 1000;
   sonKare = ts;
   if (dt > 0.05) dt = 0.05;
-  if (dt > 0) simule(dt);
+  /* Onay penceresi acikken fizik dursun (bkz. js/onay.js). */
+  if (dt > 0 && !onayAcik()) simule(dt);
   ciz();
 }
 

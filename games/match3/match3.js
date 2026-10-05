@@ -1,8 +1,9 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v220';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun, oynanabilirMi } from '../../js/store.js?v220';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v220';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v220';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v221';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun, oynanabilirMi } from '../../js/store.js?v221';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v221';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v221';
+import { yarimBirakmaOnayi } from '../../js/onay.js?v221';
 
 const GAME_ID = 'match3';
 const SIZE = 8;
@@ -73,7 +74,15 @@ document.getElementById('back-link').addEventListener('click', (e) => {
 document.getElementById('new-game').addEventListener('click', async () => {
   if (!(await oynanabilirMi())) { haptic.error(); goHome(); return; }
   haptic.tap();
-  if (!over) { await endGame(); return; }
+  if (!over) {
+    /* Onay: "Yeni oyun" oyunun ortasinda basildiginda kosuyu bitiriyor.
+       Dugme ekranin altinda, bastan sona parmaga yakin duruyor ve bir
+       yanlis dokunus on dakikalik bir oyunu goturebiliyor. Soru sadece
+       oyun DEVAM EDERKEN cikiyor; bitmis oyunda dogrudan calisiyor. */
+    if (!(await yarimBirakmaOnayi(t))) return;
+    await endGame();
+    return;
+  }
   startNewGame();
 });
 

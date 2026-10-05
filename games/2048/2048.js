@@ -1,9 +1,10 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v220';
-import { getBest, saveState, loadState, clearState, startRun, finishRunOrLegacy, yerelTohum, oynanabilirMi } from '../../js/store.js?v220';
-import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v220';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v220';
-import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v220';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v221';
+import { getBest, saveState, loadState, clearState, startRun, finishRunOrLegacy, yerelTohum, oynanabilirMi } from '../../js/store.js?v221';
+import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v221';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v221';
+import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v221';
+import { yarimBirakmaOnayi } from '../../js/onay.js?v221';
 
 const GAME_ID = '2048';
 const POINTS_DIVISOR = 23;
@@ -53,7 +54,15 @@ document.getElementById('new-game').addEventListener('click', async () => {
    // Oyun devam ederken "Yeni Oyun"a basmak = yarida birakma: dogal
    // game-over ile AYNI ekrani (skor/rekor/kazanc) gosterip oradan
    // "Yeniden oyna"ya basinca yeni oyuna geciyoruz - sessizce atlamiyoruz.
-   if (!over) { await endGame(); return; }
+   if (!over) {
+      /* Onay: "Yeni oyun" oyunun ortasinda basildiginda kosuyu bitiriyor.
+         Dugme ekranin altinda, bastan sona parmaga yakin duruyor ve bir
+         yanlis dokunus on dakikalik bir oyunu goturebiliyor. Soru sadece
+         oyun DEVAM EDERKEN cikiyor; bitmis oyunda dogrudan calisiyor. */
+      if (!(await yarimBirakmaOnayi(t))) return;
+      await endGame();
+      return;
+   }
    await startNewGame();
 });
 

@@ -1,9 +1,10 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v220';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy, startRun, finishRun, yerelTohum, oynanabilirMi } from '../../js/store.js?v220';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v220';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v220';
-import { generatePuzzle } from './logic.js?v220';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v221';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState, spendRestartEnergy, startRun, finishRun, yerelTohum, oynanabilirMi } from '../../js/store.js?v221';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v221';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v221';
+import { generatePuzzle } from './logic.js?v221';
+import { yenidenKurmaOnayi } from '../../js/onay.js?v221';
 
 const GAME_ID = 'flow';
 const POINTS_PER_LEVEL = 48;
@@ -61,6 +62,9 @@ document.getElementById('back-link').addEventListener('click', (e) => {
 document.getElementById('new-game').addEventListener('click', async () => {
   if (!(await oynanabilirMi())) { haptic.error(); goHome(); return; }
   haptic.tap();
+  /* Flow'da "Yeniden"in bedeli iki katli: cizilen yollar siliniyor VE
+     bir enerji gidiyor. Onay burada her zaman cikiyor. */
+  if (!(await yenidenKurmaOnayi(t))) return;
   await spendRestartEnergy();
   buildLevel();
 });
