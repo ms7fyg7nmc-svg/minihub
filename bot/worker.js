@@ -77,7 +77,10 @@ const SPIN_PRIZES = [
   { tur: 'coin',   miktar: 2500,        agirlik: 5   },
 ];
 
-const MAX_EARN_PER_REQUEST = 10000;
+/* MAX_EARN_PER_REQUEST KALDIRILDI: istek basi tavan artik oyunun kendi
+   skor tavanindan geliyor (OYUN_ODEME -> tavan / bolucu). Tek tip bir
+   sayi, oyunlarin olcekleri birbirinden cok farkli oldugu icin zaten
+   anlamli bir sinir degildi. */
 const DAILY_EARN_CAP = 30000;
 
 const MAX_SPEND_PER_REQUEST = 100000;
@@ -1629,7 +1632,9 @@ async function handleBest(env, playerId, body) {
 // mantigini tanimlar; ortak kosu(run)/idempotent-kredi iskeleti asagida.
 const RUN_MAX_MOVES = 20000;
 // games/2048/2048.js'teki POINTS_DIVISOR ile AYNI olmali.
-const GAME_2048_DIVISOR = 23;
+/* Bolucu tek yerde: OYUN_ODEME. Burasi yalnizca eski adi koruyor ki
+   baska bir yerde kullanilirsa kopukluk olmasin. */
+const GAME_2048_DIVISOR = OYUN_ODEME['2048'].bolucu;
 const GAME_2048_MOVE_CODES = new Set(Object.keys(CODES_2048));
 // games/flow/flow.js'teki POINTS_PER_LEVEL ile AYNI olmali.
 const FLOW_POINTS_PER_LEVEL = 48;
@@ -1672,9 +1677,13 @@ const GAME_RUNNERS = {
         return { ok: false, reason: 'gecersiz-hamle-listesi' };
       }
 
+      /* Skor TEKRAR OYNATILARAK dogrulandi, yani uydurma degil. Yine de
+         oyunun kendi tavanina kirpiliyor ve odeme ortak tablodan
+         hesaplaniyor (OYUN_ODEME) - bolucu iki ayri yerde yazili
+         kalmasin diye. */
       const { score: hamSkor } = replay2048(run.seed, movesGiris, RUN_MAX_MOVES);
-      const verifiedScore = guvenliSayi(hamSkor, MAX_BEST_SCORE);
-      const earnAmount = guvenliSayi(Math.floor(verifiedScore / GAME_2048_DIVISOR), MAX_EARN_PER_REQUEST);
+      const verifiedScore = guvenliSayi(hamSkor, oyunTavani('2048'));
+      const earnAmount = skorOdemesi('2048', verifiedScore);
       const { best, isRecord } = await upsertBestScore(env, playerId, '2048', verifiedScore);
       return { ok: true, score: verifiedScore, best, isRecord, earnAmount };
     },

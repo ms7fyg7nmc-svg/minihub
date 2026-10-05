@@ -1,6 +1,6 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v228';
-import { surumKontrol } from './guncel.js?v228';
+import { isTelegramUser, getInitData } from './tg.js?v229';
+import { surumKontrol } from './guncel.js?v229';
 
 /* Hub ve 12 oyunun hepsi bu modulu yukluyor, o yuzden surum tazeleyici
    buraya bagli: tek yerden hepsini kapsiyor. */
@@ -401,11 +401,10 @@ export async function enerjiBosMu() {
   return !enerji.kilitli && enerji.energy <= 0;
 }
 
-/* Eski ad, geriye donuk: artik HER ZAMAN true. Cagiran yerler
-   temizlenirken birakildi ki unutulan bir cagri oyunu kapatmasin. */
-export async function oynanabilirMi() {
-  return true;
-}
+/* oynanabilirMi() KALDIRILDI. Enerji kapi olmaktan cikinca her zaman
+   true donen bir fonksiyona donmustu; dokuz oyundan da cagrilari
+   silindi. Geride birakmak, bir gun yeniden "kapi" sanilmasina yol
+   acardi. */
 
 export async function adEnergyRefill() {
   const v = await senkron;
