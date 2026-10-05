@@ -1,9 +1,9 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v226';
-import { submitScore, addPoints, getBest, clearState, settleAbandonedRun } from '../../js/store.js?v226';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v226';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v226';
-import { yarimBirakmaOnayi, onayAcik } from '../../js/onay.js?v226';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v227';
+import { submitScore, getBest, clearState } from '../../js/store.js?v227';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v227';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v227';
+import { yarimBirakmaOnayi, onayAcik } from '../../js/onay.js?v227';
 
 const GAME_ID = 'snake';
 const INTRO_SEEN_KEY = 'mh_snake_seen';
@@ -379,12 +379,16 @@ async function crash(index) {
   render();
   if (cellEls[index]) cellEls[index].classList.add('crash');
 
-  const result = await submitScore(GAME_ID, score);
+  /* KAZANCI SUNUCU HESAPLIYOR. Bolucu burada da duruyor ama yalnizca
+     MISAFIR modu icin: sunucuya bagli bir hesapta gecerli sayi
+     submitScore'un dondurdugu `odeme` sozünden geliyor. Eskiden istemci
+     miktari kendisi soyluyordu ve sunucu ona inaniyordu. */
+  const yerelKazanc = Math.floor(score / POINTS_DIVISOR);
+  const result = await submitScore(GAME_ID, score, yerelKazanc);
   best = result.best;
   bestEl.textContent = format(best);
 
-  const earned = Math.floor(score / POINTS_DIVISOR);
-  if (earned > 0) await addPoints(earned);
+  const { earned } = await result.odeme;
 
   const lines = [t('yourScore', { score: format(score) }), t('reachedLevel', { level: format(level) })];
   if (result.isRecord) lines.push(t('newRecord'));

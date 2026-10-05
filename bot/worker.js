@@ -1381,6 +1381,77 @@ function iddiaMaliyeti(durum, hesapYasiGun) {
   return maliyet;
 }
 
+/* ---------------- OYUN ODEME TABLOSU ----------------
+
+   EN BUYUK ACIK BURADAYDI.
+
+   $MH bolucusu yalnizca ISTEMCIDE duruyordu (her oyunun kendi
+   POINTS_DIVISOR'u). Sunucu ise /api/points/earn'e gelen sayiya
+   inaniyordu: "bana 10.000 $MH ver". Oyun oynamaya hic gerek yoktu -
+   dogru adrese dogru govdeyi gondermek yetiyordu, gunluk tavana kadar.
+
+   Artik bolucu SUNUCUDA ve odemeyi sunucu hesapliyor. Istemci yalnizca
+   SKORU soyleyebiliyor; o skor da oyun basina gercekci bir tavana
+   kirpiliyor. Hile icin artik skoru da uydurmak gerekiyor, ve uydurulan
+   skorun ustune cikabilecegi bir tavan var.
+
+   tavan: TEK BIR KOSUDA ulasilabilecek en yuksek skor. Rekor da zaten
+   tek bir kosunun skoru oldugu icin ayni sayi ikisini birden kapiyor.
+   Sayilar GERCEKCI tutuldu, comert degil: tavan ayni zamanda tek bir
+   istekte alinabilecek en yuksek $MH'i belirliyor (tavan / bolucu).
+   10.000.000'luk tek tip tavan hicbir seyi kesmiyordu.
+
+   Bunun KAPATMADIGI sey: gunluk tavana kadar (DAILY_EARN_CAP) uydurma
+   skor gondermek hala mumkun. Onu tam kapatan tek sey her oyun icin
+   /api/game/start + /api/game/finish tekrar dogrulamasi - 2048 ve
+   flow'da oldugu gibi. Kalan yedi oyun icin yapilacak is bu. */
+
+const OYUN_ODEME = {
+  /* 2048 ve flow ZATEN dogrulaniyor (bkz. GAME_RUNNERS) - tavanlari
+     yalnizca akil disi degerlere karsi. */
+  '2048':     { bolucu: 23,  tavan: 300000 },
+  blockblast: { bolucu: 9,   tavan: 50000 },
+  coindrop:   { bolucu: 100, tavan: 60000 },
+  match3:     { bolucu: 19,  tavan: 60000 },
+  snake:      { bolucu: 5,   tavan: 15000 },
+  /* tripletile'in kendi SCORE_CAP'i 3600; tavan ondan geliyor. */
+  tripletile: { bolucu: 6,   tavan: 3600 },
+  wheelrush:  { bolucu: 10,  tavan: 60000 },
+  /* watersort'ta skor = ulasilan SEVIYE, odeme seviyeye gore bir formul. */
+  watersort:  { formul: 'watersort', tavan: 300 },
+  /* flow dogrulanmis yoldan (/api/game/finish) odeniyor; skor = seviye. */
+  flow:       { bolucu: 0,   tavan: 1000 },
+  /* Ejderha Adasi $MH KAZANDIRMIYOR - yalnizca harciyor. Skoru ayri bir
+     olcekte oldugu icin tavani da yuksek. */
+  dragon:     { bolucu: 0,   tavan: 100000000 },
+  pet:        { bolucu: 0,   tavan: 1000000 },
+};
+
+/* watersort'un odemesi istemcideki formulun aynisi (bkz.
+   games/watersort/watersort.js pointsFor). Seviye arttikca renk ve
+   kapasite artiyor, odeme de onunla. */
+function watersortOdeme(seviye) {
+  const lv = Math.max(1, Math.min(300, Math.round(seviye) || 1));
+  const renk = lv <= 13 ? Math.min(3 + Math.floor((lv - 1) / 2), 9)
+    : lv <= 24 ? 9
+      : Math.min(9 + Math.floor((lv - 25) / 3) + 1, 12);
+  const kapasite = lv < 14 ? 4 : Math.min(4 + Math.floor((lv - 14) / 4) + 1, 7);
+  return 90 + (renk - 3) * 5 + (kapasite - 4) * 8;
+}
+
+const oyunTavani = (game) => OYUN_ODEME[game]?.tavan ?? MAX_BEST_SCORE;
+
+/* Bir skorun kac $MH ettigi. Bilinmeyen oyun ya da odeme yapmayan oyun
+   icin 0 - "bilmiyorsam odeme yapma" tarafinda hata yapiyoruz. */
+function skorOdemesi(game, skor) {
+  const kural = OYUN_ODEME[game];
+  if (!kural) return 0;
+  const temiz = Math.max(0, Math.min(kural.tavan, Math.round(Number(skor) || 0)));
+  if (kural.formul === 'watersort') return temiz > 0 ? watersortOdeme(temiz) : 0;
+  if (!kural.bolucu) return 0;
+  return Math.floor(temiz / kural.bolucu);
+}
+
 const LIDER_LIMIT = 50;
 
 // Sahibin Telegram kimligi. Bakim kilidi ve liderlik tablosu ayni kaynagi
@@ -1508,7 +1579,8 @@ async function handleBest(env, playerId, body) {
   if (!GECERLI_OYUNLAR.has(game)) return { error: 'bilinmeyen oyun' };
   if (bakimdaMi(env, playerId, game)) return { error: 'bakimda' };
   const key = `best_${game}`;
-  const score = guvenliSayi(body.score, MAX_BEST_SCORE);
+  /* Tek tip 10.000.000 tavani yerine OYUNUN kendi tavani. */
+  const score = guvenliSayi(body.score, oyunTavani(game));
   const now = Date.now();
 
   const res = await env.DB.prepare(
@@ -1527,7 +1599,26 @@ async function handleBest(env, playerId, body) {
 
   await gorevKaydet(env, playerId, { oyunAdi: game, skor: score });
 
-  return { best, isRecord };
+  /* ODEMEYI SUNUCU YAPIYOR. Istemci artik ayrica /api/points/earn
+     cagirmiyor; kac $MH ettigini burada hesapliyoruz. opId kosuya degil
+     ISTEGE bagli (body.opId), yani ag tekrarinda ikinci kez odenmiyor. */
+  const kazanc = skorOdemesi(game, score);
+  let earn = null;
+  if (kazanc > 0) {
+    earn = await applyEarn(env, playerId, String(body.opId || '') || crypto.randomUUID(), kazanc);
+  }
+
+  /* Kazanc satirlari applyEarn'den oldugu gibi geciyor: `earned` yeni ad,
+     `credited`/`total`/`energy` eski sozlesmeyle ayni - istemcinin ve
+     testlerin iki ayri sekil ogrenmesine gerek yok. */
+  return {
+    best,
+    isRecord,
+    earned: earn ? (earn.credited || 0) : 0,
+    credited: earn ? (earn.credited || 0) : 0,
+    total: earn ? earn.total : undefined,
+    energy: earn ? earn.energy : undefined,
+  };
 }
 
 // Skor-sahteciligine karsi "replay"/"cozum dogrulama" olan oyunlar. Sunucu
@@ -1801,8 +1892,13 @@ async function handleApi(request, env, url) {
     switch (url.pathname) {
       case '/api/points/spend':
         return json(await applyDelta(env, playerId, body.opId, -guvenliSayi(body.amount, MAX_SPEND_PER_REQUEST)));
-      case '/api/points/earn':
-        return json(await applyEarn(env, playerId, body.opId, guvenliSayi(body.amount, MAX_EARN_PER_REQUEST)));
+      /* /api/points/earn KALDIRILDI.
+
+         Istemcinin "bana su kadar $MH ver" diyebildigi tek kapi oydu ve
+         oyun oynamaya hic gerek birakmiyordu: dogru govdeyi gondermek
+         gunluk tavana kadar para basiyordu. Kazanc artik SKORDAN,
+         sunucudaki bolucuyle hesaplaniyor (bkz. OYUN_ODEME, handleBest).
+         applyEarn duruyor ama yalnizca ICERDEN cagriliyor. */
       case '/api/energy/spend':
         return json(await handleEnergySpend(env, playerId, body.opId));
       case '/api/energy/ad-refill':

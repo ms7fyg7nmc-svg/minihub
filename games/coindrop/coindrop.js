@@ -1,12 +1,12 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v226';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v226';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v226';
-import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v226';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v227';
+import { submitScore, getBest, saveState, loadState, clearState } from '../../js/store.js?v227';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v227';
+import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v227';
 /* Sesler artik sentezlenmis degil, Dragon Island ornekleri (bkz. ses.js).
    Ses dugmesi ayni sessizlik anahtarini kullandigi icin degismedi. */
-import { SFX } from './ses.js?v226';
-import { yarimBirakmaOnayi, onayAcik } from '../../js/onay.js?v226';
+import { SFX } from './ses.js?v227';
+import { yarimBirakmaOnayi, onayAcik } from '../../js/onay.js?v227';
 
 const GAME_ID = 'coindrop';
 
@@ -749,12 +749,13 @@ async function endGame(kazanma) {
   if (kazanma) { haptic.success(); SFX.goldenPickup(); }
   else { haptic.error(); SFX.gameOver(); }
 
-  const sonuc = await submitScore(GAME_ID, score);
+  /* KAZANCI SUNUCU HESAPLIYOR; buradaki sayi yalnizca MISAFIR modu icin
+     (bkz. js/store.js submitScore). */
+  const sonuc = await submitScore(GAME_ID, score, Math.floor(score / POINTS_DIVISOR));
   best = sonuc.best;
   bestEl.textContent = bicim(best);
 
-  const kazanilan = Math.floor(score / POINTS_DIVISOR);
-  if (kazanilan > 0) await addPoints(kazanilan);
+  const { earned: kazanilan } = await sonuc.odeme;
 
   const satirlar = [t('yourScore', { score: bicim(score) })];
   if (kazanma) satirlar.push(t('wonText'));

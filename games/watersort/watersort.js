@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v226';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v226';
-import { registerTexts, t, applyStaticTexts, mhHtml } from '../../js/i18n-hook.js?v226';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v226';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v227';
+import { submitScore, getBest, saveState, loadState, clearState } from '../../js/store.js?v227';
+import { registerTexts, t, applyStaticTexts, mhHtml } from '../../js/i18n-hook.js?v227';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v227';
 
 const GAME_ID = 'watersort';
 const POINTS_PER_LEVEL = 90;
@@ -299,12 +299,13 @@ async function finishLevel() {
   SFX.goldenPickup();
   clearState(GAME_ID);
 
-  const result = await submitScore(GAME_ID, level);
+  /* KAZANCI SUNUCU HESAPLIYOR; buradaki sayi yalnizca MISAFIR modu icin
+     (bkz. js/store.js submitScore). */
+  const result = await submitScore(GAME_ID, level, pointsFor(level));
   bestLevel = result.best;
   bestEl.textContent = bestLevel;
 
-  const points = pointsFor(level);
-  await addPoints(points);
+  const { earned: points } = await result.odeme;
 
   const text = `${t('levelResult', { moves })} ${t('earnedPoints', { points })}`;
   showOverlay(t('levelDone'), text, t('nextLevel'), () => buildLevel(level + 1));

@@ -1,9 +1,9 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v226';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState, settleAbandonedRun } from '../../js/store.js?v226';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v226';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v226';
-import { yarimBirakmaOnayi } from '../../js/onay.js?v226';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v227';
+import { submitScore, getBest, saveState, loadState, clearState } from '../../js/store.js?v227';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v227';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v227';
+import { yarimBirakmaOnayi } from '../../js/onay.js?v227';
 
 const GAME_ID = 'tripletile';
 const POINTS_DIVISOR = 6;
@@ -349,12 +349,16 @@ async function endGame() {
   haptic.error();
   SFX.gameOver();
 
-  const result = await submitScore(GAME_ID, score);
+  /* KAZANCI SUNUCU HESAPLIYOR. Bolucu burada da duruyor ama yalnizca
+     MISAFIR modu icin: sunucuya bagli bir hesapta gecerli sayi
+     submitScore'un dondurdugu `odeme` sozünden geliyor. Eskiden istemci
+     miktari kendisi soyluyordu ve sunucu ona inaniyordu. */
+  const yerelKazanc = Math.floor(score / POINTS_DIVISOR);
+  const result = await submitScore(GAME_ID, score, yerelKazanc);
   best = result.best;
   bestEl.textContent = format(best);
 
-  const earned = Math.floor(score / POINTS_DIVISOR);
-  if (earned > 0) await addPoints(earned);
+  const { earned } = await result.odeme;
 
   const lines = [t('yourScore', { score: format(score) })];
   if (result.isRecord) lines.push(t('newRecord'));

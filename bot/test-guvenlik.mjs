@@ -55,6 +55,17 @@ function check(name, cond, detay = '') {
   else { failed++; console.log(`FAIL ${name} ${detay}`); }
 }
 
+/* /api/points/earn KALDIRILDI: istemcinin dogrudan miktar soyleyebildigi
+   kapi oydu. Kazanc artik SKORDAN hesaplaniyor, bu yuzden "su kadar
+   kazandir" demek icin skoru bolucuyle carpiyoruz. snake'in bolucusu 5.
+   Sayiyi yine KAYNAKTAN okuyoruz. */
+const SNAKE_BOLUCU = Number(WORKER_KAYNAK.match(/snake:\s*\{ bolucu: (\d+)/)[1]);
+const SNAKE_TAVAN = Number(WORKER_KAYNAK.match(/snake:\s*\{ bolucu: \d+,\s*tavan: (\d+)/)[1]);
+
+function kazandir(env, initData, miktar, opId) {
+  return api(env, 'best', { initData, game: 'snake', score: miktar * SNAKE_BOLUCU, opId });
+}
+
 async function api(env, path, body) {
   const res = await worker.default.fetch(
     new Request(`https://x/api/${path}`, {
@@ -107,15 +118,19 @@ check('odul merdiveni sunucudan geliyor',
       JSON.stringify(r.streak.rewards) === JSON.stringify(STREAK_BEKLENEN),
       `-> ${JSON.stringify(r.streak.rewards)} vs ${JSON.stringify(STREAK_BEKLENEN)}`);
 
-r = await api(env, 'points/earn', { initData, opId: 'atk-1', amount: 999999999 });
-check('dev miktar istek basi tavana kirpildi (10.000)', r.credited === 10000, `-> ${r.credited}`);
-check('dev miktar sonrasi bakiye 10.000', r.total === 10000, `-> ${r.total}`);
+/* Istek basi tavan artik OYUNUN SKOR TAVANINDAN geliyor: uydurma bir
+   skor gonderilse bile odeme tavan/bolucu'yu gecemiyor. */
+const ISTEK_TAVANI = Math.floor(SNAKE_TAVAN / SNAKE_BOLUCU);
+r = await kazandir(env, initData, 999999999, 'atk-1');
+check(`dev skor oyun tavanina kirpildi (${ISTEK_TAVANI})`, r.earned === ISTEK_TAVANI, `-> ${r.earned}`);
+check('dev skor sonrasi bakiye tavan kadar', r.total === ISTEK_TAVANI, `-> ${r.total}`);
 
-for (let i = 2; i <= 8; i++) {
-  r = await api(env, 'points/earn', { initData, opId: `atk-${i}`, amount: 999999999 });
+for (let i = 2; i <= 40 && r.total < 30000; i++) {
+  r = await kazandir(env, initData, 999999999, `atk-${i}`);
 }
 check('gunluk tavan tuttu: bakiye 30.000de kaldi', r.total === 30000, `-> ${r.total}`);
-check('tavan dolunca sonraki kazanc 0', r.credited === 0, `-> ${r.credited}`);
+r = await kazandir(env, initData, 999999999, 'atk-son');
+check('tavan dolunca sonraki kazanc 0', r.earned === 0, `-> ${r.earned}`);
 
 const DB2 = makeDb(); const env2 = { DB: DB2, BOT_TOKEN, BAKIM: '' }; const id2 = signedInitData(222);
 await api(env2, 'sync', { initData: id2, points: 0, state: {} });
@@ -125,14 +140,27 @@ async function hamApi(env, path, hamGovde) {
   }), env);
   return res.json();
 }
-r = await hamApi(env2, 'points/earn', `{"initData":${JSON.stringify(id2)},"opId":"inf","amount":1e400}`);
-check('ham JSON 1e400 (=Infinity) 0 sayildi, sunucu cokmedi', r.ok === true && r.credited === 0, `-> ${JSON.stringify(r)}`);
-r = await hamApi(env2, 'points/earn', `{"initData":${JSON.stringify(id2)},"opId":"buyuk","amount":1e308}`);
-check('devasa ama sonlu sayi tavana kirpildi', r.credited === 10000, `-> ${r.credited}`);
-r = await api(env2, 'points/earn', { initData: id2, opId: 'nan', amount: 'abc' });
-check('metin miktar 0 sayildi', r.credited === 0, `-> ${r.credited}`);
-r = await api(env2, 'points/earn', { initData: id2, opId: 'neg', amount: -5000 });
-check('negatif kazanc 0 sayildi (bakiye dusurulemedi)', r.credited === 0, `-> ${r.credited}`);
+r = await hamApi(env2, 'best', `{"initData":${JSON.stringify(id2)},"game":"snake","opId":"inf","score":1e400}`);
+check('ham JSON 1e400 (=Infinity) skor 0 sayildi, sunucu cokmedi',
+      r.earned === 0 && r.best === 0, `-> ${JSON.stringify(r)}`);
+r = await hamApi(env2, 'best', `{"initData":${JSON.stringify(id2)},"game":"snake","opId":"buyuk","score":1e308}`);
+check('devasa ama sonlu skor oyun tavanina kirpildi',
+      r.earned === Math.floor(SNAKE_TAVAN / SNAKE_BOLUCU), `-> ${r.earned}`);
+r = await api(env2, 'best', { initData: id2, game: 'snake', opId: 'nan', score: 'abc' });
+check('metin skor 0 sayildi', r.earned === 0, `-> ${r.earned}`);
+r = await api(env2, 'best', { initData: id2, game: 'snake', opId: 'neg', score: -5000 });
+check('negatif skor 0 sayildi (bakiye dusurulemedi)', r.earned === 0, `-> ${r.earned}`);
+
+/* Kaldirilan uc nokta gercekten kapali olmali - bu testin kendisi, acik
+   kalmis bir para muslugunu yakalayan sey. */
+const kaldirilan = await worker.default.fetch(new Request('https://x/api/points/earn', {
+  method: 'POST', headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ initData: id2, opId: 'kapali', amount: 9999 }),
+}), env2);
+const kaldirilanGovde = await kaldirilan.json();
+check('/api/points/earn kaldirildi (404)',
+      kaldirilan.status === 404 && kaldirilanGovde.error === 'bulunamadi',
+      `-> ${kaldirilan.status} ${JSON.stringify(kaldirilanGovde)}`);
 
 const DB3 = makeDb(); const env3 = { DB: DB3, BOT_TOKEN, BAKIM: '' }; const id3 = signedInitData(333);
 r = await api(env3, 'sync', { initData: id3, points: 999999999, state: {} });
@@ -194,9 +222,9 @@ r = await api(env3, 'state', { initData: id3, game: 'dragon', state: { level: 5 
 check('normal boyutlu durum hala yaziliyor', r.state?.level === 5, `-> ${JSON.stringify(r)}`);
 
 const sahte = new URLSearchParams({ user: JSON.stringify({ id: 555 }), auth_date: String(Math.floor(Date.now() / 1000)), hash: 'a'.repeat(64) }).toString();
-const sahteRes = await worker.default.fetch(new Request('https://x/api/points/earn', {
+const sahteRes = await worker.default.fetch(new Request('https://x/api/best', {
   method: 'POST', headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ initData: sahte, opId: 'x', amount: 1000 }),
+  body: JSON.stringify({ initData: sahte, game: 'snake', opId: 'x', score: 1000 }),
 }), env);
 check('sahte imza 401 ile reddedildi', sahteRes.status === 401, `-> ${sahteRes.status}`);
 
@@ -204,12 +232,12 @@ const DB5 = makeDb(); const env5 = { DB: DB5, BOT_TOKEN, BAKIM: '' }; const id5 
 await api(env5, 'sync', { initData: id5, points: 0, state: {} });
 let toplamKazanc = 0;
 for (let i = 0; i < MAX_ENERGY; i++) {
-  const rr = await api(env5, 'points/earn', { initData: id5, opId: `n-${i}`, amount: 100 });
+  const rr = await kazandir(env5, id5, 100, `n-${i}`);
   toplamKazanc += rr.credited;
 }
 check(`meshru oyun: ${MAX_ENERGY} tur tam odul aldi (${MAX_ENERGY * 100})`,
       toplamKazanc === MAX_ENERGY * 100, `-> ${toplamKazanc}`);
-r = await api(env5, 'points/earn', { initData: id5, opId: 'n-bos', amount: 100 });
+r = await kazandir(env5, id5, 100, 'n-bos');
 check('enerji bitince odul %25e dustu (25)', r.credited === 25, `-> ${r.credited}`);
 
 DB5.prepare('UPDATE players SET energy = 0, energy_at = ? WHERE id = ?')
@@ -221,7 +249,7 @@ DB5.prepare('UPDATE players SET energy = 0, energy_at = ? WHERE id = ?')
 re1 = await api(env5, 'sync', { initData: id5, points: 0, state: {} });
 check(`cok bekleyince tavanda duruyor (${MAX_ENERGY})`, re1.energy === MAX_ENERGY, `-> ${re1.energy}`);
 const oncekiBakiye = r.total;
-r = await api(env5, 'points/earn', { initData: id5, opId: 'n-bos', amount: 100 });
+r = await kazandir(env5, id5, 100, 'n-bos');
 check('ayni opId tekrar uygulanmadi', r.total === oncekiBakiye && r.credited === 0, `-> ${JSON.stringify(r)}`);
 r = await api(env5, 'streak/claim', { initData: id5 });
 check(`gunluk seri hala calisiyor (gun 1, ${STREAK_BEKLENEN[0]} jeton)`,
@@ -356,7 +384,7 @@ check('referral: komisyon oranlari sunucuyla ayni',
 const DB8 = makeDb(); const env8 = { DB: DB8, BOT_TOKEN, BAKIM: '' }; const id8 = signedInitData(999);
 await api(env8, 'sync', { initData: id8, points: 0, state: {} });
 
-r = await api(env8, 'points/earn', { initData: id8, opId: 'restart-earn-1', amount: 120 });
+r = await kazandir(env8, id8, 120, 'restart-earn-1');
 check('restart: skor puana cevrilip krediliyor', r.total === 120, `-> ${r.total}`);
 check(`restart: puan eklemek kendi enerjisini dusuyor (${MAX_ENERGY} -> ${MAX_ENERGY - 1})`,
       r.energy === MAX_ENERGY - 1, `-> ${r.energy}`);
@@ -492,7 +520,7 @@ await api(env9, 'sync', { initData: idC2, points: 0, state: {} });
 const once1001 = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first().points;
 const once2002 = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('2002').first().points;
 
-r = await api(env9, 'points/earn', { initData: idC2, opId: 'k-1', amount: 1000 });
+r = await kazandir(env9, idC2, 1000, 'k-1');
 check('referral: kazanan oyuncunun kendi kazanci kesilmedi (tam 1000)', r.credited === 1000, `-> ${r.credited}`);
 
 let p2002 = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('2002').first().points;
@@ -506,7 +534,7 @@ check(`referral: bir ust kademe ${yuzde(ORAN2)} aldi (${1000 * ORAN2})`,
    komisyon icin 1001'e AYRICA bir odeme yapilmamis olmali. Yukaridaki
    iki kontrol bunu zaten kanitliyor - fark tam olarak orani kadar. */
 
-r = await api(env9, 'points/earn', { initData: idC2, opId: 'k-1', amount: 1000 });
+r = await kazandir(env9, idC2, 1000, 'k-1');
 const p2002Tekrar = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('2002').first().points;
 check('referral: ayni opId tekrar gonderilince komisyon iki kez odenmiyor',
       p2002Tekrar === p2002, `-> ${p2002Tekrar} vs ${p2002}`);
@@ -514,7 +542,7 @@ check('referral: ayni opId tekrar gonderilince komisyon iki kez odenmiyor',
 /* Zincirin tepesindeki kisinin ustu yok: 2002 kazandiginda 1001
    dogrudan orani alir, daha yukarisi olmadigi icin baska odeme olmaz. */
 const once1001b = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first().points;
-await api(env9, 'points/earn', { initData: idA, opId: 'k-2', amount: 400 });
+await kazandir(env9, idA, 400, 'k-2');
 p1001 = DB9.prepare('SELECT points FROM players WHERE id = ?').bind('1001').first().points;
 check(`referral: zincirin tepesi dogrudan orani aliyor (${400 * ORAN1})`,
       p1001 - once1001b === 400 * ORAN1, `-> ${p1001 - once1001b}`);
@@ -523,7 +551,7 @@ check(`referral: zincirin tepesi dogrudan orani aliyor (${400 * ORAN1})`,
 const idYalniz = signedInitData(7007);
 await api(env9, 'sync', { initData: idYalniz, points: 0, state: {} });
 const oncePool = DB9.prepare("SELECT COALESCE(SUM(delta),0) AS t FROM spend_log WHERE op_id LIKE 'ref1:%' OR op_id LIKE 'ref2:%'").first().t;
-await api(env9, 'points/earn', { initData: idYalniz, opId: 'k-3', amount: 1000 });
+await kazandir(env9, idYalniz, 1000, 'k-3');
 const sonraPool = DB9.prepare("SELECT COALESCE(SUM(delta),0) AS t FROM spend_log WHERE op_id LIKE 'ref1:%' OR op_id LIKE 'ref2:%'").first().t;
 check('referral: daveti olmayan oyuncu komisyon uretmiyor', sonraPool === oncePool, `-> ${sonraPool} vs ${oncePool}`);
 
@@ -555,7 +583,7 @@ const DB11 = makeDb(); const env11 = { DB: DB11, BOT_TOKEN, BAKIM: '' }; const i
 const idNormal = signedInitData(5555);
 await api(env11, 'sync', { initData: idHaric, points: 0, state: {} });
 await api(env11, 'sync', { initData: idNormal, points: 0, state: {} });
-await api(env11, 'points/earn', { initData: idNormal, opId: 'lb-1', amount: 500 });
+await kazandir(env11, idNormal, 500, 'lb-1');
 
 r = await api(env11, 'leaderboard', { initData: idNormal });
 check('haric tutulan hesap listede gorunmuyor', !r.liste.some((x) => x.ben === true && x.kazanilan === 0) && r.toplam === 1,
@@ -797,7 +825,7 @@ async function gorevleriBitir(env, initData, liste) {
         await api(env, 'best', { initData, game: 'snake', score: 10 + i });
       }
     } else if (gr.id === 'mh') {
-      await api(env, 'points/earn', { initData, opId: `gv-${Math.random()}`, amount: gr.hedef });
+      await kazandir(env, initData, gr.hedef, `gv-${Math.random()}`);
     } else if (gr.id === 'cark') {
       await api(env, 'spin', { initData });
     } else if (gr.id === 'seri') {
@@ -944,6 +972,60 @@ await api(envP, 'promo', { initData: idSahipP, kod: 'MH-ENERJI' });
 const enerjiSon = DBP.prepare('SELECT energy FROM players WHERE id = ?').bind(SAHIP).first().energy;
 check(`promo: enerji sert tavani (${MAX_ENERGY + 3}) asilmiyor`,
       enerjiSon <= MAX_ENERGY + 3, `-> ${enerjiSon}`);
+
+/* ---------------- ODEMEYI SUNUCU HESAPLIYOR ---------------- */
+
+const DBO = makeDb(); const envO = { DB: DBO, BOT_TOKEN, BAKIM: '' };
+const idO = signedInitData(9700);
+await api(envO, 'sync', { initData: idO, points: 0, state: {} });
+
+/* Her oyunun kendi tavani var; tek tip 10.000.000 degil. Uydurma bir
+   skor gonderen oyunun tavanindan fazlasini alamiyor. */
+const tavanlar = {};
+for (const m of WORKER_KAYNAK.matchAll(/^\s+'?([a-z0-9]+)'?:\s+\{ (?:bolucu: (\d+)|formul: '[^']+'),\s+tavan: (\d+) \}/gm)) {
+  tavanlar[m[1]] = { bolucu: m[2] ? Number(m[2]) : null, tavan: Number(m[3]) };
+}
+check('odeme: tablo kaynaktan okunabildi', Object.keys(tavanlar).length >= 8,
+      `-> ${Object.keys(tavanlar).join(',')}`);
+
+const tt = await api(envO, 'best', { initData: idO, game: 'tripletile', opId: 'o-1', score: 999999 });
+check(`odeme: tripletile skoru tavana kirpildi (${tavanlar.tripletile.tavan})`,
+      tt.best === tavanlar.tripletile.tavan, `-> ${tt.best}`);
+check('odeme: tripletile kazanci tavan/bolucu',
+      tt.earned === Math.floor(tavanlar.tripletile.tavan / tavanlar.tripletile.bolucu), `-> ${tt.earned}`);
+
+/* Ayni skor iki oyunda ayni $MH'i vermemeli - bolucu sunucuda ve oyuna
+   gore. (Istemciye inansaydik bu fark hic olmazdi.) */
+const sn = await api(envO, 'best', { initData: idO, game: 'snake', opId: 'o-2', score: 1000 });
+const bb = await api(envO, 'best', { initData: idO, game: 'blockblast', opId: 'o-3', score: 1000 });
+check('odeme: ayni skor oyuna gore farkli $MH veriyor',
+      sn.earned === Math.floor(1000 / tavanlar.snake.bolucu)
+      && bb.earned === Math.floor(1000 / tavanlar.blockblast.bolucu),
+      `-> snake ${sn.earned}, blockblast ${bb.earned}`);
+
+/* Ejderha Adasi $MH KAZANDIRMIYOR - yalnizca harciyor. Skor yolundan
+   para alinamamali. */
+const dr = await api(envO, 'best', { initData: idO, game: 'dragon', opId: 'o-4', score: 5000000 });
+check('odeme: ejderha skoru $MH vermiyor', dr.earned === 0, `-> ${dr.earned}`);
+
+/* watersort seviyeye gore formulle odeniyor; seviye arttikca odeme artar. */
+const w1 = await api(envO, 'best', { initData: idO, game: 'watersort', opId: 'o-5', score: 1 });
+const w2 = await api(envO, 'best', { initData: idO, game: 'watersort', opId: 'o-6', score: 40 });
+check('odeme: watersort seviyesi arttikca odeme artiyor',
+      w1.earned > 0 && w2.earned > w1.earned, `-> ${w1.earned} vs ${w2.earned}`);
+
+/* Ayni opId ile tekrar gonderilen skor ikinci kez odeme yapmamali -
+   ag tekrarinda ya da kuyruk bosaltilirken bu olur. */
+const oncekiToplam = DBO.prepare('SELECT points FROM players WHERE id = ?').bind('9700').first().points;
+await api(envO, 'best', { initData: idO, game: 'snake', opId: 'o-2', score: 1000 });
+const sonrakiToplam = DBO.prepare('SELECT points FROM players WHERE id = ?').bind('9700').first().points;
+check('odeme: ayni opId ikinci kez odeme yapmiyor',
+      sonrakiToplam === oncekiToplam, `-> ${sonrakiToplam} vs ${oncekiToplam}`);
+
+/* Bilinmeyen oyun hic odeme yapmamali ve kaydi da reddetmeli. */
+const bilinmeyen = await api(envO, 'best', { initData: idO, game: 'uydurma', opId: 'o-7', score: 99999 });
+check('odeme: bilinmeyen oyun reddediliyor', bilinmeyen.error === 'bilinmeyen oyun',
+      `-> ${JSON.stringify(bilinmeyen)}`);
 
 console.log(`\n${passed} basarili, ${failed} basarisiz`);
 process.exit(failed > 0 ? 1 : 0);
