@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="224">
+  <meta name="surum" content="225">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MINI HUB GAMES</title>
   <!-- Cark rakamlari icin (bkz. js/hub.js WHEEL_FONT). Ejderha Adasi
@@ -47,7 +47,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v224">
+  <link rel="stylesheet" href="css/style.css?v225">
 </head>
 <body class="hub">
   <!-- ACILIS EKRANI
@@ -234,11 +234,11 @@
         </div>
 
         <div class="cuzdan-kutu cuzdan-gram">
-          <!-- GRAM simgesi. Resmi logo assets/currency/gram-64.webp olarak
-               projeye konunca kendiliginden devreye giriyor; dosya yoksa
-               yedek "g" harfi kaliyor (bkz. js/hub.js gramSimgesi). -->
+          <!-- Gram'in RESMI rozeti (ton.org/media -> Circular Badge).
+               Dosya gelmezse yedek "g" harfi kaliyor; bkz. js/hub.js
+               gramSimgesi. -->
           <span class="cuzdan-gram-simge" aria-hidden="true">
-            <img src="assets/currency/gram-64.webp" alt="" width="64" height="64" hidden>
+            <img src="assets/currency/gram-128.webp" alt="" width="128" height="128" hidden>
             <b>g</b>
           </span>
           <div class="cuzdan-deger" id="wallet-gram">0</div>
@@ -334,6 +334,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v224"></script>
+  <script type="module" src="js/hub.js?v225"></script>
 </body>
 </html>
