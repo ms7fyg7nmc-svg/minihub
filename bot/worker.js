@@ -59,15 +59,22 @@ const REFERRAL_RATE_INDIRECT = 0.05;
    Bu tavan dogrudan ve dolayli komisyonun TOPLAMI icin gunluktur. */
 const REFERRAL_DAILY_CAP = 50000;
 
+/* Carkin TABANI 50 $MH idi. Gunluk seri 200-2000, gorev sandigi 2000
+   verirken 50, odulden cok tesellidir - ve carkin dondugu an oyuncunun
+   gunde bir kez yasadigi tek "sans" ani. Merdivenin tamami yukseldi,
+   sekli (agirliklar) aynen korundu.
+
+   Beklenen deger ~162 $MH'den ~600'e cikti; gunluk serinin ortalamasi
+   (~757) ile gorev sandiginin (2000) arasinda duruyor. */
 const SPIN_PRIZES = [
-  { tur: 'coin',   miktar: 50,          agirlik: 260 },
-  { tur: 'coin',   miktar: 100,         agirlik: 250 },
-  { tur: 'coin',   miktar: 150,         agirlik: 200 },
-  { tur: 'coin',   miktar: 250,         agirlik: 150 },
-  { tur: 'coin',   miktar: 375,         agirlik: 80  },
-  { tur: 'coin',   miktar: 500,         agirlik: 45  },
+  { tur: 'coin',   miktar: 250,         agirlik: 260 },
+  { tur: 'coin',   miktar: 400,         agirlik: 250 },
+  { tur: 'coin',   miktar: 600,         agirlik: 200 },
+  { tur: 'coin',   miktar: 900,         agirlik: 150 },
+  { tur: 'coin',   miktar: 1200,        agirlik: 80  },
+  { tur: 'coin',   miktar: 1600,        agirlik: 45  },
   { tur: 'enerji', miktar: SPIN_ENERGY_REWARD, agirlik: 10 },
-  { tur: 'coin',   miktar: 750,         agirlik: 5   },
+  { tur: 'coin',   miktar: 2500,        agirlik: 5   },
 ];
 
 const MAX_EARN_PER_REQUEST = 10000;

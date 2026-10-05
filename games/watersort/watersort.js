@@ -1,8 +1,8 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v223';
-import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v223';
-import { registerTexts, t, applyStaticTexts, mhHtml } from '../../js/i18n-hook.js?v223';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v223';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v224';
+import { submitScore, addPoints, getBest, saveState, loadState, clearState } from '../../js/store.js?v224';
+import { registerTexts, t, applyStaticTexts, mhHtml } from '../../js/i18n-hook.js?v224';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v224';
 
 const GAME_ID = 'watersort';
 const POINTS_PER_LEVEL = 90;

@@ -1,6 +1,6 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v223';
-import { surumKontrol } from './guncel.js?v223';
+import { isTelegramUser, getInitData } from './tg.js?v224';
+import { surumKontrol } from './guncel.js?v224';
 
 /* Hub ve 12 oyunun hepsi bu modulu yukluyor, o yuzden surum tazeleyici
    buraya bagli: tek yerden hepsini kapsiyor. */
@@ -347,11 +347,14 @@ const MISAFIR = {
   gorev: null,
   streak: { count: 0, canClaim: false, nextDay: 1, nextReward: 100,
             nextInMs: 0, broken: false, rewards: [100, 150, 200, 300, 400, 500, 1000] },
+  /* Sunucudaki SPIN_PRIZES ile AYNI sirada ve ayni degerlerde olmali -
+     misafir carki dondurup sonra Telegram'dan girince baska sayilar
+     gormesin. */
   spin: { canSpin: false, nextInMs: 0, prizes: [
-    { tur: 'coin', miktar: 50 }, { tur: 'coin', miktar: 100 },
-    { tur: 'coin', miktar: 150 }, { tur: 'coin', miktar: 250 },
-    { tur: 'coin', miktar: 375 }, { tur: 'coin', miktar: 500 },
-    { tur: 'enerji', miktar: 24 }, { tur: 'coin', miktar: 750 },
+    { tur: 'coin', miktar: 250 }, { tur: 'coin', miktar: 400 },
+    { tur: 'coin', miktar: 600 }, { tur: 'coin', miktar: 900 },
+    { tur: 'coin', miktar: 1200 }, { tur: 'coin', miktar: 1600 },
+    { tur: 'enerji', miktar: 3 }, { tur: 'coin', miktar: 2500 },
   ] },
 };
 
