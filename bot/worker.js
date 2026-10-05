@@ -627,6 +627,237 @@ async function handleGorevAl(env, playerId) {
   return { ok: true, total: sonuc.total, ...gorevRapor(v) };
 }
 
+/* ---------------- PROMOSYON KODLARI ----------------
+
+   Kodlar BU DOSYADA tanimli, veritabaninda degil. Yeni bir kod eklemek
+   deploy gerektiriyor; bu bir eksiklik degil, tercih: kod listesi
+   sunucuda yazili oldugu surece kimse veritabanina satir ekleyerek
+   kendine $MH basamaz, ve her kod degisikligi git gecmisinde duruyor.
+
+   Iki cesit kod var:
+
+   - HALKA ACIK kodlar. Oyuncu basina BIR KEZ. Tekrar koruması
+     applyDelta'nin op_id'sinden geliyor (`promo:<KOD>`), yani ayni anda
+     iki kez gonderilse bile yalnizca biri geciyor.
+
+   - SAHIP kodlari (`sahip: true`). Yalnizca SAHIP_ID kullanabilir ve
+     TEKRAR TEKRAR kullanilabilir (`tekrarli: true`) - test ederken ayni
+     varligi defalarca almak gerekiyor. Kimlik Telegram initData'dan
+     dogrulanarak geldigi icin istemci kendini sahip ilan edemez.
+
+   SURE: `gun` alani kac gun gecerli oldugunu soyluyor; `baslar` da
+   baslangic ani. gun = 0 ise kodun suresi yok. Kalan sure cevapta
+   `kalanMs` olarak doniyor, arayuz geri sayimi ondan yaziyor. */
+
+const PROMO_GUN_MS = 86400000;
+
+/* Odul alanlari:
+     coin     $MH            (sunucuda, aninda)
+     enerji   enerji         (sunucuda, sert tavana kirpilir)
+     yem      ejderha yemi   (istemcide - Ejderha Adasi acilinca iner)
+     yildiz   yildiz         (istemcide)
+     nesneler izgara nesnesi (istemcide) [{ t:'egg'|'food'|'star', lv, adet }]
+
+   Ejderha tarafi neden istemcide: ejderha durumu sunucuda tek parca JSON
+   olarak duruyor, icindeki yem/yildiz/nesne alanlarini sunucu
+   yorumlamiyor. Odul bu yuzden bir "kutu"ya konuyor (player_data ->
+   promo_kutu) ve Ejderha Adasi acilinca oradan aliniyor. */
+
+const PROMO_KODLARI = {
+  /* --- Halka acik --- */
+  'HOSGELDIN': {
+    odul: { coin: 5000, enerji: 5 },
+    baslar: Date.parse('2026-10-05T00:00:00Z'),
+    gun: 7,
+  },
+
+  /* --- SAHIP kodlari: yalnizca SAHIP_ID, sinirsiz tekrar --- */
+  'MH-COIN-10K':    { sahip: true, tekrarli: true, odul: { coin: 10000 } },
+  'MH-COIN-100K':   { sahip: true, tekrarli: true, odul: { coin: 100000 } },
+  'MH-ENERJI':      { sahip: true, tekrarli: true, odul: { enerji: ENERGY_HARD_CAP } },
+
+  'DI-YEM-10K':     { sahip: true, tekrarli: true, odul: { yem: 10000 } },
+  'DI-YEM-1M':      { sahip: true, tekrarli: true, odul: { yem: 1000000 } },
+  'DI-YILDIZ-100':  { sahip: true, tekrarli: true, odul: { yildiz: 100 } },
+  'DI-YILDIZ-5K':   { sahip: true, tekrarli: true, odul: { yildiz: 5000 } },
+
+  'DI-YUMURTA-1':   { sahip: true, tekrarli: true, odul: { nesneler: [{ t: 'egg', lv: 1, adet: 6 }] } },
+  'DI-YUMURTA-4':   { sahip: true, tekrarli: true, odul: { nesneler: [{ t: 'egg', lv: 4, adet: 4 }] } },
+  'DI-YUMURTA-6':   { sahip: true, tekrarli: true, odul: { nesneler: [{ t: 'egg', lv: 6, adet: 3 }] } },
+  'DI-YUMURTA-8':   { sahip: true, tekrarli: true, odul: { nesneler: [{ t: 'egg', lv: 8, adet: 2 }] } },
+  'DI-KAP-1':       { sahip: true, tekrarli: true, odul: { nesneler: [{ t: 'food', lv: 1, adet: 4 }] } },
+  'DI-KAP-4':       { sahip: true, tekrarli: true, odul: { nesneler: [{ t: 'food', lv: 4, adet: 3 }] } },
+  'DI-YILDIZKAP-1': { sahip: true, tekrarli: true, odul: { nesneler: [{ t: 'star', lv: 1, adet: 4 }] } },
+  'DI-YILDIZKAP-4': { sahip: true, tekrarli: true, odul: { nesneler: [{ t: 'star', lv: 4, adet: 3 }] } },
+
+  /* Her seyden bol: hizli bir test kurulumu. */
+  'DI-HEPSI': {
+    sahip: true, tekrarli: true,
+    odul: {
+      coin: 100000, enerji: ENERGY_HARD_CAP, yem: 500000, yildiz: 2000,
+      nesneler: [
+        { t: 'egg', lv: 6, adet: 3 },
+        { t: 'egg', lv: 8, adet: 2 },
+        { t: 'food', lv: 4, adet: 2 },
+        { t: 'star', lv: 4, adet: 2 },
+      ],
+    },
+  },
+};
+
+/* Oyuncunun yazdigi seyi kod listesine uyduruyoruz: bosluklar atiliyor,
+   buyuk harfe ceviriliyor. "di yumurta 8" ile "DI-YUMURTA-8" ayni sey -
+   telefonda yazarken tire koymak zor. */
+function promoNormalle(ham) {
+  return String(ham || '').trim().toUpperCase().replace(/[\s_]+/g, '-').replace(/-+/g, '-');
+}
+
+function promoSure(kod, now) {
+  if (!kod.gun) return { basladi: true, bitti: false, kalanMs: 0 };
+  const bas = Number(kod.baslar) || 0;
+  const bitis = bas + kod.gun * PROMO_GUN_MS;
+  return { basladi: now >= bas, bitti: now >= bitis, kalanMs: Math.max(0, bitis - now) };
+}
+
+const PROMO_NESNE_TURLERI = new Set(['egg', 'food', 'star']);
+
+/* Odulun istemci tarafina ait parcasi (ejderha varliklari). Sunucu
+   bunlari yorumlamiyor ama GECERLILIGINI kontrol ediyor - kutuya
+   yalnizca tanidigi sekilde veri giriyor. */
+function promoIstemciParcasi(odul) {
+  const parca = {};
+  if (odul.yem > 0) parca.yem = Math.min(10000000, Math.round(odul.yem));
+  if (odul.yildiz > 0) parca.yildiz = Math.min(1000000, Math.round(odul.yildiz));
+  if (Array.isArray(odul.nesneler)) {
+    const temiz = odul.nesneler
+      .filter((n) => n && PROMO_NESNE_TURLERI.has(n.t))
+      .map((n) => ({
+        t: n.t,
+        lv: Math.max(1, Math.min(n.t === 'egg' ? 8 : 4, Math.round(Number(n.lv) || 1))),
+        adet: Math.max(1, Math.min(20, Math.round(Number(n.adet) || 1))),
+      }));
+    if (temiz.length) parca.nesneler = temiz;
+  }
+  return Object.keys(parca).length ? parca : null;
+}
+
+async function promoKutuyaKoy(env, playerId, parca, now) {
+  for (let deneme = 0; deneme < 3; deneme++) {
+    const row = await env.DB.prepare(
+      "SELECT value, version FROM player_data WHERE player_id = ? AND key = 'promo_kutu'",
+    ).bind(playerId).first();
+
+    if (!row) {
+      const res = await env.DB.prepare(
+        `INSERT OR IGNORE INTO player_data (player_id, key, value, version, updated_at)
+         VALUES (?, 'promo_kutu', ?, 1, ?)`,
+      ).bind(playerId, JSON.stringify([parca]), now).run();
+      if (res.meta.changes > 0) return true;
+      continue;                         /* araya baskasi girdi, bastan oku */
+    }
+
+    let liste = [];
+    try { liste = JSON.parse(row.value); } catch { liste = []; }
+    if (!Array.isArray(liste)) liste = [];
+    /* Kutu sinirsiz buyumesin: hic acmayan bir hesapta birikmesin. */
+    if (liste.length >= 50) liste.shift();
+    liste.push(parca);
+
+    const res = await env.DB.prepare(
+      `UPDATE player_data SET value = ?, version = version + 1, updated_at = ?
+       WHERE player_id = ? AND key = 'promo_kutu' AND version = ?`,
+    ).bind(JSON.stringify(liste), now, playerId, row.version).run();
+    if (res.meta.changes > 0) return true;
+  }
+  return false;
+}
+
+/* Kutuyu OKUYUP AYNI ANDA bosaltiyor. Iki ayri cagri olsaydi (once oku,
+   sonra sil) arada kopan bir baglanti odulu iki kez verdirirdi. */
+async function handlePromoKutu(env, playerId) {
+  const now = Date.now();
+  for (let deneme = 0; deneme < 3; deneme++) {
+    const row = await env.DB.prepare(
+      "SELECT value, version FROM player_data WHERE player_id = ? AND key = 'promo_kutu'",
+    ).bind(playerId).first();
+    if (!row) return { ok: true, parcalar: [] };
+
+    let liste = [];
+    try { liste = JSON.parse(row.value); } catch { liste = []; }
+    if (!Array.isArray(liste) || liste.length === 0) return { ok: true, parcalar: [] };
+
+    const res = await env.DB.prepare(
+      `UPDATE player_data SET value = '[]', version = version + 1, updated_at = ?
+       WHERE player_id = ? AND key = 'promo_kutu' AND version = ?`,
+    ).bind(now, playerId, row.version).run();
+    if (res.meta.changes > 0) return { ok: true, parcalar: liste };
+  }
+  return { ok: false, reason: 'yeniden dene', parcalar: [] };
+}
+
+async function handlePromo(env, playerId, body) {
+  const ad = promoNormalle(body.kod);
+  if (!ad || ad.length > 40) return { ok: false, reason: 'gecersiz' };
+
+  const kod = PROMO_KODLARI[ad];
+  if (!kod) return { ok: false, reason: 'gecersiz' };
+
+  /* Sahip kontrolu kimlige bagli: initData Telegram tarafindan
+     imzalaniyor, istemci kendini sahip ilan edemiyor. */
+  if (kod.sahip && String(playerId) !== SAHIP_ID) return { ok: false, reason: 'gecersiz' };
+
+  const now = Date.now();
+  const sure = promoSure(kod, now);
+  if (!sure.basladi) return { ok: false, reason: 'henuz-baslamadi' };
+  if (sure.bitti) return { ok: false, reason: 'suresi-doldu' };
+
+  const opId = kod.tekrarli ? `promo:${ad}:${crypto.randomUUID()}` : `promo:${ad}`;
+
+  if (!kod.tekrarli) {
+    const once = await env.DB.prepare(
+      'SELECT 1 FROM spend_log WHERE player_id = ? AND op_id = ?',
+    ).bind(playerId, opId).first();
+    if (once) return { ok: false, reason: 'kullanilmis' };
+  }
+
+  const odul = kod.odul || {};
+  const coin = Math.max(0, Math.min(10000000, Math.round(Number(odul.coin) || 0)));
+
+  /* applyDelta op_id'yi ATOMIK olarak sahipleniyor; iki es zamanli istek
+     gelse bile yalnizca biri odulu veriyor. coin 0 olsa bile cagriliyor,
+     cunku "bu kod kullanildi" isaretini o satir tutuyor. */
+  const sonuc = await applyDelta(env, playerId, opId, coin);
+
+  let enerji = null;
+  const istenenEnerji = Math.max(0, Math.min(ENERGY_HARD_CAP, Math.round(Number(odul.enerji) || 0)));
+  if (istenenEnerji > 0) {
+    const row = await env.DB.prepare('SELECT energy, energy_at FROM players WHERE id = ?')
+      .bind(playerId).first();
+    const tz = row ? enerjiTazele(row, now) : null;
+    if (tz) {
+      const yeni = Math.min(ENERGY_HARD_CAP, tz.energy + istenenEnerji);
+      await env.DB.prepare('UPDATE players SET energy = ?, energy_at = ?, updated_at = ? WHERE id = ?')
+        .bind(yeni, tz.energyAt, now, playerId).run();
+      enerji = yeni;
+    }
+  }
+
+  const parca = promoIstemciParcasi(odul);
+  if (parca) await promoKutuyaKoy(env, playerId, parca, now);
+
+  return {
+    ok: true,
+    kod: ad,
+    odul: { coin, enerji: istenenEnerji, ...(parca || {}) },
+    total: sonuc.total,
+    energy: enerji,
+    /* Ejderha varligi varsa arayuz "Ejderha Adasi'nda seni bekliyor"
+       diyebilsin diye. */
+    ejderhada: !!parca,
+    kalanMs: sure.kalanMs,
+  };
+}
+
 function streakDurumu(row, now) {
   const sonAlim = row.last_claim_at || 0;
   const gecenSure = sonAlim ? now - sonAlim : Infinity;
@@ -750,10 +981,18 @@ async function handleSync(env, playerId, body, ad) {
   const state = {};
   const meta = {};
   let gorevSatiri = null;
+  let promoBekleyen = 0;
   for (const r of rows.results) {
     /* 'gorev' ham ilerleme sayaci - istemcinin isine yaramaz, asagida
        islenmis haliyle ayri bir alanda gidiyor. */
     if (r.key === 'gorev') { try { gorevSatiri = JSON.parse(r.value); } catch { gorevSatiri = null; } continue; }
+    /* promo_kutu Ejderha Adasi'nin alacagi ham odul listesi - hub'in
+       state'ine girmesinin anlami yok, yalnizca "bekleyen var mi"
+       bilgisi asagida gidiyor. */
+    if (r.key === 'promo_kutu') {
+      try { promoBekleyen = (JSON.parse(r.value) || []).length; } catch { promoBekleyen = 0; }
+      continue;
+    }
     state[r.key] = JSON.parse(r.value);
     meta[r.key] = r.version;
   }
@@ -782,6 +1021,7 @@ async function handleSync(env, playerId, body, ad) {
     },
     streak: streakDurumu(player, now),
     gorev: gorevRapor(gorevDurum),
+    promoBekleyen,
     spin: { ...spinDurumu(player, now), prizes: SPIN_PRIZES.map((p) => ({ tur: p.tur, miktar: p.miktar })) },
     state,
     meta,
@@ -1591,6 +1831,10 @@ async function handleApi(request, env, url) {
         return json(await handleGorevOlay(env, playerId, body));
       case '/api/gorev/al':
         return json(await handleGorevAl(env, playerId));
+      case '/api/promo':
+        return json(await handlePromo(env, playerId, body));
+      case '/api/promo/kutu':
+        return json(await handlePromoKutu(env, playerId));
       default:
         return json({ error: 'bulunamadi' }, 404);
     }
@@ -1689,3 +1933,9 @@ export default {
     return new Response('ok');
   },
 };
+
+/* Testin icerden gorebilmesi icin. Worker'in calismasini etkilemiyor -
+   Cloudflare yalnizca default export'a bakiyor. Sure mantigini aga
+   cikmadan dogrudan sinamak, kod listesindeki tarihlere bagli ve bir
+   gun kendiliginden kirilacak testler yazmaktan iyi. */
+export { PROMO_KODLARI, promoSure, promoNormalle };

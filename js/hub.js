@@ -1,19 +1,19 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v225';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v226';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, enerjiBosMu, bakimListesi,
-   getGorev, gorevAl,
-} from './store.js?v225';
-import { enerjiBosOnayi } from './onay.js?v225';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v225';
+   getGorev, gorevAl, promoKullan,
+} from './store.js?v226';
+import { enerjiBosOnayi } from './onay.js?v226';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v226';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniListesi, taniBaslat, taniHataVar, iz } from './tani.js?v225';
+import { taniBaslat, iz } from './tani.js?v226';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -306,8 +306,8 @@ wireDailyPanel();
 wireLiderPanel();
 wireFriendsPanel();
 basitPanel('settings-btn', 'settings-overlay', 'settings-close');
+wirePromo();
 basitPanel('wallet-btn', 'wallet-overlay', 'wallet-close', cuzdanTazele);
-wireTani();
 taniBaslat('hub');
 
 /* Her sey cizildi. Gorsellerin de inmesini bekliyoruz ki perde
@@ -1100,39 +1100,92 @@ function cuzdanTazele() {
    if (gram) gram.textContent = (0).toLocaleString(locale());
 }
 
-/* Tani kaydini Ayarlar'da gosteriyor. Gecici: donma hatasi bulununca
-   hem bu hem js/tani.js kalkacak. Oyuncunun telefondan okuyup bize
-   iletebilmesi icin kopyalama dugmesi de var. */
-function wireTani() {
-   const ac = document.getElementById('tani-ac');
-   const kutu = document.getElementById('tani-kutu');
-   const kopya = document.getElementById('tani-kopya');
-   if (!ac || !kutu) return;
+/* PROMOSYON KODU
 
-   /* Kayitta hata varsa Ayarlar dugmesine nokta koyuyoruz. Oyuncunun
-      donunca ne yapacagini hatirlamasi gerekmiyor - uygulama kendisi
-      "burada bir sey oldu" diyor. */
-   if (taniHataVar()) {
-      document.getElementById('settings-btn')?.classList.add('var-haber');
-      ac.classList.add('var-haber');
+   Dogrulamanin tamami sunucuda (bkz. bot/worker.js handlePromo); burada
+   yalnizca yazilan sey gonderiliyor ve cevap yaziliyor. Kod listesi
+   istemciye HIC inmiyor - inseydi sahip kodlari herkesin gozu onunde
+   olurdu. */
+const PROMO_SEBEP = {
+   gecersiz: 'hub.promo.gecersiz',
+   kullanilmis: 'hub.promo.kullanilmis',
+   'suresi-doldu': 'hub.promo.suresiDoldu',
+   'henuz-baslamadi': 'hub.promo.henuzBaslamadi',
+   misafir: 'hub.promo.misafir',
+   ag: 'hub.promo.ag',
+};
+
+/* "6 gun" / "4 saat". Saniye yazmiyoruz: kod suresi gun olcegindeki bir
+   sey, saniyeye kadar inen bir geri sayim gereksiz bir aciliyet yaratir. */
+function promoSureYazi(ms) {
+   const saat = Math.floor(ms / 3600000);
+   if (saat >= 24) return t('hub.promo.gun', { n: Math.floor(saat / 24) });
+   return t('hub.promo.saat', { n: Math.max(1, saat) });
+}
+
+function promoOdulYazi(odul) {
+   const parcalar = [];
+   if (odul.coin > 0) parcalar.push(mhHtml(`+${odul.coin.toLocaleString(locale())} $MH`));
+   if (odul.enerji > 0) parcalar.push(`+${odul.enerji} \u26A1`);
+   if (odul.yem > 0) parcalar.push(`+${odul.yem.toLocaleString(locale())} \u{1F356}`);
+   if (odul.yildiz > 0) parcalar.push(`+${odul.yildiz.toLocaleString(locale())} \u2B50`);
+   if (Array.isArray(odul.nesneler)) {
+      for (const n of odul.nesneler) parcalar.push(`${n.adet}\u00D7 Lv.${n.lv}`);
+   }
+   return parcalar.join(' \u00B7 ');
+}
+
+function wirePromo() {
+   const giris = document.getElementById('promo-giris');
+   const btn = document.getElementById('promo-btn');
+   const sonucEl = document.getElementById('promo-sonuc');
+   if (!giris || !btn || !sonucEl) return;
+
+   const yaz = (metin, sinif) => {
+      sonucEl.innerHTML = metin;
+      sonucEl.className = `promo-sonuc ${sinif}`;
+      sonucEl.hidden = false;
+   };
+
+   async function gonder() {
+      const kod = giris.value.trim();
+      if (!kod) return;
+      /* Dugme ANINDA kapaniyor: cift dokunus iki istek atmasin. Sunucu
+         zaten op_id ile korumali, bu sadece arayuzun yalan soylememesi
+         icin. */
+      btn.disabled = true;
+      sonucEl.hidden = true;
+      try {
+         const sonuc = await promoKullan(kod);
+         if (sonuc?.ok) {
+            haptic.success();
+            giris.value = '';
+            const satirlar = [t('hub.promo.ok', { odul: promoOdulYazi(sonuc.odul || {}) })];
+            if (sonuc.ejderhada) satirlar.push(t('hub.promo.dragon'));
+            if (sonuc.kalanMs > 0) satirlar.push(t('hub.promo.left', { sure: promoSureYazi(sonuc.kalanMs) }));
+            yaz(satirlar.join('<br>'), 'is-ok');
+            renderProfile();
+            renderEnergyCard();
+            renderDailyCard();
+         } else {
+            haptic.error();
+            yaz(t(PROMO_SEBEP[sonuc?.reason] || 'hub.promo.gecersiz'), 'is-hata');
+         }
+      } finally {
+         btn.disabled = false;
+      }
    }
 
-   ac.addEventListener('click', () => {
-      const satirlar = taniListesi();
-      kutu.textContent = satirlar.length ? satirlar.join('\n') : '—';
-      kutu.hidden = false;
-      if (kopya) kopya.hidden = false;
-      haptic.tap();
-   });
-
-   kopya?.addEventListener('click', async () => {
-      try {
-         await navigator.clipboard.writeText(kutu.textContent);
-         kopya.textContent = '✓';
-         setTimeout(() => { kopya.textContent = t('hub.settings.diagCopy'); }, 1500);
-      } catch { /* pano yoksa oyuncu elle secebilir */ }
-   });
+   btn.addEventListener('click', gonder);
+   giris.addEventListener('keydown', (e) => { if (e.key === 'Enter') gonder(); });
 }
+
+/* TANI KAYDI ARTIK EKRANDA DEGIL.
+
+   Ayarlar'daki "Kayit" satiri donma hatasini telefonda yakalamak icin
+   gecici konmustu ve isini gordu (bkz. js/tani.js). Panel kaldirildi;
+   KAYDEDICI duruyor ve sessizce calismaya devam ediyor - sorun geri
+   gelirse satiri geri koymak tek commit. */
 
 function wireLiderPanel() {
    const card = document.getElementById('lider-card');

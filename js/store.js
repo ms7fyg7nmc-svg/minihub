@@ -1,6 +1,6 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v225';
-import { surumKontrol } from './guncel.js?v225';
+import { isTelegramUser, getInitData } from './tg.js?v226';
+import { surumKontrol } from './guncel.js?v226';
 
 /* Hub ve 12 oyunun hepsi bu modulu yukluyor, o yuzden surum tazeleyici
    buraya bagli: tek yerden hepsini kapsiyor. */
@@ -229,6 +229,7 @@ async function senkronDene() {
       energyRefill: veri.energyRefill && typeof veri.energyRefill === 'object' ? veri.energyRefill : null,
       streak: veri.streak && typeof veri.streak === 'object' ? veri.streak : null,
       gorev: veri.gorev && typeof veri.gorev === 'object' ? veri.gorev : null,
+      promoBekleyen: Number(veri.promoBekleyen) || 0,
       spin: veri.spin && typeof veri.spin === 'object' ? veri.spin : null,
       state: veri.state && typeof veri.state === 'object' ? veri.state : {},
       meta: veri.meta && typeof veri.meta === 'object' ? veri.meta : {},
@@ -500,6 +501,38 @@ if (typeof document !== 'undefined') {
   window.addEventListener('pagehide', gorevBosalt);
 }
 
+/* ---- Promosyon kodlari ----
+   Butun dogrulama sunucuda: kodun varligi, suresi, sahibe ait olup
+   olmadigi ve bir kez mi kullanilabilecegi. Burada yalnizca kopru var;
+   istemcinin kod listesini gormesine gerek yok ve gormemeli - liste
+   istemciye inseydi herkes sahip kodlarini okurdu. */
+
+export async function promoKullan(kod) {
+  const v = await senkron;
+  if (!v) return { ok: false, reason: 'misafir' };
+  const sonuc = await sunucuGonder('/api/promo', { kod });
+  if (!sonuc) return { ok: false, reason: 'ag' };
+  if (sonuc.ok) {
+    if (typeof sonuc.total === 'number') v.points = sonuc.total;
+    if (typeof sonuc.energy === 'number') v.energy = sonuc.energy;
+  }
+  return sonuc;
+}
+
+/* Ejderha varliklarini tasiyan kutu. Okumak ayni anda BOSALTIYOR, bu
+   yuzden cagiran taraf aldigini hemen uygulamali ve kaydetmeli. */
+export async function promoKutuAl() {
+  const v = await senkron;
+  if (!v) return [];
+  const sonuc = await sunucuGonder('/api/promo/kutu', {});
+  return Array.isArray(sonuc?.parcalar) ? sonuc.parcalar : [];
+}
+
+export async function promoBekleyenVar() {
+  const v = await senkron;
+  return !!(v && v.promoBekleyen > 0);
+}
+
 // Liderlik tablosu panele her acilista sunucuya gitmesin diye 4 saat
 // istemci tarafinda onbelleklendiriliyor - gorunur bir geri sayim yok,
 // sadece istek sayisini azaltmak icin. localStorage'da tutuluyor ki
@@ -565,6 +598,7 @@ export async function refreshDaily() {
   if (veri.energyRefill && typeof veri.energyRefill === 'object') v.energyRefill = veri.energyRefill;
   if (veri.streak && typeof veri.streak === 'object') v.streak = veri.streak;
   if (veri.gorev && typeof veri.gorev === 'object') v.gorev = veri.gorev;
+  v.promoBekleyen = Number(veri.promoBekleyen) || 0;
   if (veri.spin && typeof veri.spin === 'object') v.spin = veri.spin;
 }
 

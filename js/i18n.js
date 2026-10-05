@@ -42,6 +42,20 @@ const DICT = {
     'hub.gorev.seri': 'Claim your daily reward',
     'hub.gorev.al': 'Open the chest · +{n} $MH',
     'hub.gorev.alindi': "Today's chest is open",
+    'hub.promo.title': 'Promo code',
+    'hub.promo.placeholder': 'Enter a code',
+    'hub.promo.use': 'Redeem',
+    'hub.promo.ok': 'Code accepted. {odul}',
+    'hub.promo.dragon': 'Your Dragon Island reward is waiting inside the game.',
+    'hub.promo.left': 'Valid for another {sure}.',
+    'hub.promo.gecersiz': 'That code is not valid.',
+    'hub.promo.kullanilmis': 'You have already used this code.',
+    'hub.promo.suresiDoldu': 'This code has expired.',
+    'hub.promo.henuzBaslamadi': 'This code is not active yet.',
+    'hub.promo.misafir': 'Open the app in Telegram to use codes.',
+    'hub.promo.ag': 'No connection. Try again.',
+    'hub.promo.gun': '{n}d',
+    'hub.promo.saat': '{n}h',
 
     /* "Yeni oyun" onayi - butun oyunlarda ortak (bkz. js/onay.js) */
     'ortak.onay.devam': 'Keep playing',
@@ -384,6 +398,7 @@ const DICT = {
     'dragon.tabTasks': 'Tasks',
     'dragon.tabTrader': 'Trader',
     'dragon.gridGrew': 'Your hatchery grew! New cells opened on the left and top.',
+    'dragon.promoGeldi': 'Your code reward has arrived!',
     'dragon.traderName': 'The Trading Wizard',
     'dragon.traderIntro': 'Bring me what I ask for and I will pay well.',
     'dragon.traderNote': 'Every order you fill pays more than cracking the eggs yourself.',
@@ -594,6 +609,20 @@ const DICT = {
     'hub.gorev.seri': 'Günlük ödülünü al',
     'hub.gorev.al': 'Sandığı aç · +{n} $MH',
     'hub.gorev.alindi': 'Bugünkü sandık alındı',
+    'hub.promo.title': 'Promosyon kodu',
+    'hub.promo.placeholder': 'Kodu yaz',
+    'hub.promo.use': 'Kullan',
+    'hub.promo.ok': 'Kod kabul edildi. {odul}',
+    'hub.promo.dragon': 'Ejderha Adası ödülün oyunun içinde seni bekliyor.',
+    'hub.promo.left': 'Kod {sure} daha geçerli.',
+    'hub.promo.gecersiz': 'Bu kod geçerli değil.',
+    'hub.promo.kullanilmis': 'Bu kodu zaten kullandın.',
+    'hub.promo.suresiDoldu': 'Bu kodun süresi dolmuş.',
+    'hub.promo.henuzBaslamadi': 'Bu kod henüz başlamadı.',
+    'hub.promo.misafir': 'Kod kullanmak için uygulamayı Telegram\'da aç.',
+    'hub.promo.ag': 'Bağlantı yok. Tekrar dene.',
+    'hub.promo.gun': '{n} gün',
+    'hub.promo.saat': '{n} saat',
 
     /* "Yeni oyun" onayi - butun oyunlarda ortak (bkz. js/onay.js) */
     'ortak.onay.devam': 'Devam et',
@@ -936,6 +965,7 @@ const DICT = {
     'dragon.tabTasks': 'Görevler',
     'dragon.tabTrader': 'Tüccar',
     'dragon.gridGrew': 'Ocak büyüdü! Sol ve üst tarafta yeni hücreler açıldı.',
+    'dragon.promoGeldi': 'Kod ödülün geldi!',
     'dragon.traderName': 'Tüccar Büyücü',
     'dragon.traderIntro': 'İstediğimi getir, karşılığını iyi veririm.',
     'dragon.traderNote': 'Teslim ettiğin her sipariş, yumurtayı kendin kırmaktan daha çok kazandırır.',
@@ -1146,6 +1176,20 @@ const DICT = {
     'hub.gorev.seri': 'Recoge tu recompensa diaria',
     'hub.gorev.al': 'Abrir el cofre · +{n} $MH',
     'hub.gorev.alindi': 'El cofre de hoy ya está abierto',
+    'hub.promo.title': 'Código promocional',
+    'hub.promo.placeholder': 'Escribe un código',
+    'hub.promo.use': 'Canjear',
+    'hub.promo.ok': 'Código aceptado. {odul}',
+    'hub.promo.dragon': 'Tu recompensa de Dragon Island te espera dentro del juego.',
+    'hub.promo.left': 'El código vale {sure} más.',
+    'hub.promo.gecersiz': 'Ese código no es válido.',
+    'hub.promo.kullanilmis': 'Ya has usado este código.',
+    'hub.promo.suresiDoldu': 'Este código ha caducado.',
+    'hub.promo.henuzBaslamadi': 'Este código aún no está activo.',
+    'hub.promo.misafir': 'Abre la app en Telegram para usar códigos.',
+    'hub.promo.ag': 'Sin conexión. Inténtalo de nuevo.',
+    'hub.promo.gun': '{n} d',
+    'hub.promo.saat': '{n} h',
 
     /* "Yeni oyun" onayi - butun oyunlarda ortak (bkz. js/onay.js) */
     'ortak.onay.devam': 'Seguir jugando',
@@ -1488,6 +1532,7 @@ const DICT = {
     'dragon.tabTasks': 'Tareas',
     'dragon.tabTrader': 'Mercader',
     'dragon.gridGrew': '¡Tu criadero creció! Se abrieron celdas nuevas a la izquierda y arriba.',
+    'dragon.promoGeldi': '¡Llegó la recompensa de tu código!',
     'dragon.traderName': 'El mago mercader',
     'dragon.traderIntro': 'Tráeme lo que te pido y te pagaré bien.',
     'dragon.traderNote': 'Cada pedido que entregas paga más que romper los huevos tú mismo.',
@@ -1698,6 +1743,20 @@ const DICT = {
     'hub.gorev.seri': 'Заберите ежедневную награду',
     'hub.gorev.al': 'Открыть сундук · +{n} $MH',
     'hub.gorev.alindi': 'Сегодняшний сундук открыт',
+    'hub.promo.title': 'Промокод',
+    'hub.promo.placeholder': 'Введите код',
+    'hub.promo.use': 'Применить',
+    'hub.promo.ok': 'Код принят. {odul}',
+    'hub.promo.dragon': 'Награда для Dragon Island ждёт вас внутри игры.',
+    'hub.promo.left': 'Код действует ещё {sure}.',
+    'hub.promo.gecersiz': 'Этот код недействителен.',
+    'hub.promo.kullanilmis': 'Вы уже использовали этот код.',
+    'hub.promo.suresiDoldu': 'Срок действия кода истёк.',
+    'hub.promo.henuzBaslamadi': 'Код ещё не активен.',
+    'hub.promo.misafir': 'Откройте приложение в Telegram, чтобы использовать коды.',
+    'hub.promo.ag': 'Нет соединения. Попробуйте снова.',
+    'hub.promo.gun': '{n} д',
+    'hub.promo.saat': '{n} ч',
 
     /* "Yeni oyun" onayi - butun oyunlarda ortak (bkz. js/onay.js) */
     'ortak.onay.devam': 'Продолжить игру',
@@ -2040,6 +2099,7 @@ const DICT = {
     'dragon.tabTasks': 'Задания',
     'dragon.tabTrader': 'Торговец',
     'dragon.gridGrew': 'Инкубатор вырос! Слева и сверху открылись новые клетки.',
+    'dragon.promoGeldi': 'Награда по коду получена!',
     'dragon.traderName': 'Волшебник-торговец',
     'dragon.traderIntro': 'Принеси то, что я прошу, и я хорошо заплачу.',
     'dragon.traderNote': 'Каждый выполненный заказ приносит больше, чем если разбить яйца самому.',
@@ -2275,6 +2335,11 @@ export function applyTranslations(root = document) {
 
   root.querySelectorAll('[data-i18n]').forEach((el) => {
     el.innerHTML = mhHtml(t(el.dataset.i18n));
+  });
+
+  /* Yer tutucu metinler: innerHTML ile verilemezler, ayri geciyorlar. */
+  root.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
   });
 }
 

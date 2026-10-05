@@ -1828,3 +1828,63 @@ body.hub::before {
 .gorev-al:active { transform: scale(0.985); }
 .gorev-al:disabled { background: rgba(255, 255, 255, 0.07); color: var(--muted); cursor: default; }
 .gorev-al:disabled:active { transform: none; }
+
+/* --- PROMOSYON KODU (Ayarlar) --- */
+
+.promo { margin-top: 14px; }
+
+.promo-etiket {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.promo-satir { display: flex; gap: 8px; }
+
+.promo-giris {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--cizgi-soft);
+  background: var(--yuzey);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  /* Kodlar buyuk harf; kucuk yazilsa da boyle gorunsun ki yazarken
+     sunucudaki haliyle ayni sey oldugu belli olsun. */
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.promo-giris::placeholder { font-weight: 600; letter-spacing: 0; color: var(--muted); opacity: 0.8; }
+.promo-giris:focus { outline: none; border-color: var(--accent); }
+
+.promo-btn {
+  flex: none;
+  padding: 11px 18px;
+  border: 0;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--accent-text);
+  background: var(--accent);
+  cursor: pointer;
+}
+.promo-btn:active { transform: scale(0.97); }
+.promo-btn:disabled { opacity: 0.45; cursor: default; }
+.promo-btn:disabled:active { transform: none; }
+
+.promo-sonuc {
+  margin: 9px 0 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.promo-sonuc[hidden] { display: none; }
+.promo-sonuc.is-ok { color: #58d08a; }
+.promo-sonuc.is-hata { color: #ff9c8d; }

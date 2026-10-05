@@ -1,29 +1,29 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v225';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v225';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v226';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v226';
 
-import { CONFIG, gorselSeviye } from './config.js?v225';
-import { bakimdaMi } from '../../js/store.js?v225';
+import { CONFIG, gorselSeviye } from './config.js?v226';
+import { bakimdaMi } from '../../js/store.js?v226';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
          ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA,
-         izgarayiGenislet, genislemeHakki } from './model.js?v225';
-import { dragonSvg, dragonAssetUrls } from './art.js?v225';
-import { turCek, turYolu, turBul } from './turler.js?v225';
-import { taniBaslat, iz } from '../../js/tani.js?v225';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v225';
+         izgarayiGenislet, genislemeHakki } from './model.js?v226';
+import { dragonSvg, dragonAssetUrls } from './art.js?v226';
+import { turCek, turYolu, turBul } from './turler.js?v226';
+import { taniBaslat, iz } from '../../js/tani.js?v226';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v226';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
          kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
          PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
-         partnerKademe } from './gorevler.js?v225';
-import { getBest, gorevOlay } from '../../js/store.js?v225';
-import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v225';
+         partnerKademe } from './gorevler.js?v226';
+import { getBest, gorevOlay, promoKutuAl } from '../../js/store.js?v226';
+import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v226';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v225';
+         kilitliMi, nesneMi } from './grid.js?v226';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v225';
-import { createTutorial, pozListesi } from './tutorial.js?v225';
+         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v226';
+import { createTutorial, pozListesi } from './tutorial.js?v226';
 
 const GAME_ID = 'dragon';
 
@@ -335,6 +335,11 @@ async function basla() {
     setTimeout(() => odulUcur(t('refundMsg', { n: bicim(n) }), true), 600);
   }
 
+  /* Hub'da girilen promosyon kodunun ejderha tarafi burada iniyor.
+     Perde kalktiktan SONRA cagriliyor: aga cikiyor ve acilisi
+     bekletmesinin anlami yok. */
+  promoKutusunuBosalt();
+
   showBackButton(hubaDon);
   backToHubOnResume();
   window.addEventListener('resize', () => tut?.yenidenKonumla());
@@ -499,6 +504,37 @@ function birlesti(yeni) {
      bu yuzden bildiriliyor. Cevap beklenmiyor (bkz. store.gorevOlay). */
   gorevOlay('merge');
   iz('merge.bitti');
+}
+
+/* PROMOSYON KUTUSU
+
+   Hub'daki kod ekranindan girilen kodun $MH ve enerji kismini sunucu
+   kendisi veriyor; yem/yildiz/nesne kismi burayi bekliyor, cunku ejderha
+   durumu sunucuda yorumlanmayan tek parca bir JSON.
+
+   Kutuyu OKUMAK ayni anda BOSALTIYOR (bkz. worker.js handlePromoKutu) -
+   bu yuzden alinan sey hemen uygulanip kaydediliyor. Iki ayri cagri
+   olsaydi (oku, sonra sil) arada kopan bir baglanti odulu iki kez
+   verdirirdi; bu yonde hata yapmak, bir kez kaybetmekten kotu. */
+async function promoKutusunuBosalt() {
+  let parcalar = [];
+  try { parcalar = await promoKutuAl(); } catch { return; }
+  if (!parcalar.length) return;
+
+  const odul = { food: 0, stars: 0, items: [] };
+  for (const p of parcalar) {
+    if (p?.yem > 0) odul.food += p.yem;
+    if (p?.yildiz > 0) odul.stars += p.yildiz;
+    for (const n of (p?.nesneler || [])) {
+      const adet = Math.max(1, Math.min(20, Number(n.adet) || 1));
+      for (let i = 0; i < adet; i++) odul.items.push({ t: n.t, lv: n.lv });
+    }
+  }
+
+  odulVer(odul, resFood);
+  kaydet();                 /* odulVer nesneler icin kaydediyor, yem/yildiz icin degil */
+  kaynakTazele(true);
+  odulUcur(t('promoGeldi'), true);
 }
 
 /* ---------- TUCCAR ----------

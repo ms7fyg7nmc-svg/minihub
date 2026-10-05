@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="225">
+  <meta name="surum" content="226">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MINI HUB GAMES</title>
   <!-- Cark rakamlari icin (bkz. js/hub.js WHEEL_FONT). Ejderha Adasi
@@ -47,7 +47,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v225">
+  <link rel="stylesheet" href="css/style.css?v226">
 </head>
 <body class="hub">
   <!-- ACILIS EKRANI
@@ -202,18 +202,24 @@
           <span class="ayar-ad" data-i18n="hub.settings.version">Sürüm</span>
           <span class="ayar-deger" data-i18n="hub.version">Version 0.1</span>
         </div>
-
-        <!-- Donma hatasini telefonda yakalamak icin gecici. Oyuncu
-             burayi acip bize okuyor; hata bulununca kaldirilacak. -->
-        <div class="ayar-satir">
-          <span class="ayar-ad" data-i18n="hub.settings.diag">Kayıt</span>
-          <button class="tani-btn" id="tani-ac" data-i18n="hub.settings.diagShow">Göster</button>
-        </div>
       </div>
 
-      <pre class="tani-kutu" id="tani-kutu" hidden></pre>
-      <button class="tani-btn tani-kopya" id="tani-kopya" hidden
-              data-i18n="hub.settings.diagCopy">Kopyala</button>
+      <!-- PROMOSYON KODU. Dogrulamanin tamami sunucuda; buradaki tek is
+           yaziyi gondermek ve cevabi gostermek. -->
+      <div class="promo">
+        <label class="promo-etiket" for="promo-giris" data-i18n="hub.promo.title">Promosyon kodu</label>
+        <div class="promo-satir">
+          <!-- lang="en" SART: sayfa dili Turkce oldugunda CSS'in
+               text-transform:uppercase kurali "di" yazisini "Dİ" yapiyor
+               (Turkce noktali I). Gonderilen deger dogru ama ekranda
+               kodun yanlis yazildigi izlenimi doguyor. -->
+          <input class="promo-giris" id="promo-giris" type="text" inputmode="latin" lang="en"
+                 autocomplete="off" autocapitalize="characters" spellcheck="false"
+                 maxlength="40" data-i18n-placeholder="hub.promo.placeholder">
+          <button class="promo-btn" id="promo-btn" data-i18n="hub.promo.use">Kullan</button>
+        </div>
+        <p class="promo-sonuc" id="promo-sonuc" hidden></p>
+      </div>
     </div>
   </div>
 
@@ -334,6 +340,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v225"></script>
+  <script type="module" src="js/hub.js?v226"></script>
 </body>
 </html>
