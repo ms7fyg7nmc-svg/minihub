@@ -896,13 +896,13 @@ check('promo: baslangici gelecekte olan kod henuz baslamamis',
 check('promo: bosluk ve kucuk harf normalize ediliyor',
       promoNormalle('  di yumurta 8 ') === 'DI-YUMURTA-8', `-> ${promoNormalle('  di yumurta 8 ')}`);
 
-/* Sahip kodlarinin tamami gercekten sahibe kilitli ve tekrarli olmali -
-   biri yanlislikla halka acik birakilirsa herkes $MH basardi. */
-const sahipKodlari = Object.entries(PROMO_KODLARI).filter(([, k]) => k.sahip);
-check('promo: sahip kodlarinin hepsi tekrarli',
-      sahipKodlari.every(([, k]) => k.tekrarli === true), `-> ${sahipKodlari.length} kod`);
-check('promo: $MH basan her kod ya sureli ya sahibe kilitli',
-      Object.entries(PROMO_KODLARI).every(([, k]) => !k.odul?.coin || k.sahip || k.gun > 0));
+/* EN ONEMLI KURAL: halka acik VE sinirsiz tekrarlanan bir kod olmamali.
+   Kodlar sizar - biri ekran goruntusu alip bir gruba dusurur. Tek
+   seferlik bir kodun sizmasi "herkes bir kez alir" demek; sinirsiz
+   tekrarlanani sizarsa ekonominin sonu ve geri donusu yok. */
+const tehlikeli = Object.entries(PROMO_KODLARI).filter(([, k]) => k.tekrarli === true && !k.sahip);
+check('promo: halka acik + sinirsiz tekrar eden kod YOK',
+      tehlikeli.length === 0, `-> ${tehlikeli.map(([a]) => a).join(', ')}`);
 
 const DBP = makeDb(); const envP = { DB: DBP, BOT_TOKEN, BAKIM: '' };
 const idYabanci = signedInitData(9500);
@@ -913,20 +913,26 @@ await api(envP, 'sync', { initData: idSahipP, points: 0, state: {} });
 check('promo: bilinmeyen kod reddediliyor',
       (await api(envP, 'promo', { initData: idYabanci, kod: 'UYDURMA-KOD' })).reason === 'gecersiz');
 
-/* Sahip kodu baskasinda calismamali - ve "bu kod sahibe ait" diye
-   bilgi de sizdirmamali, ayni 'gecersiz' cevabi donuyor. */
-const yabanciDeneme = await api(envP, 'promo', { initData: idYabanci, kod: 'MH-COIN-100K' });
-check('promo: sahip kodu baskasinda calismiyor',
-      yabanciDeneme.ok === false && yabanciDeneme.reason === 'gecersiz', `-> ${JSON.stringify(yabanciDeneme)}`);
+/* Varlik kodlari HERKESE ACIK - sahibi olmayan bir hesapta da calisiyor. */
+const y1 = await api(envP, 'promo', { initData: idYabanci, kod: 'MH-COIN-100K' });
+check('promo: varlik kodu herkeste calisiyor', y1.ok === true, `-> ${JSON.stringify(y1)}`);
 const yabanciPuan = DBP.prepare('SELECT points FROM players WHERE id = ?').bind('9500').first().points;
-check('promo: basarisiz denemede puan degismiyor', yabanciPuan === 0, `-> ${yabanciPuan}`);
+check('promo: kod puani gercekten yazdi (100000)', yabanciPuan === 100000, `-> ${yabanciPuan}`);
 
-/* Sahip kodu sahibinde calisiyor VE tekrar tekrar calisiyor. */
+/* ...ama oyuncu basina BIR KEZ. Sizan bir kodun zarari boylece sinirli. */
+const y2 = await api(envP, 'promo', { initData: idYabanci, kod: 'mh coin 100k' });   /* normalize */
+const yabanciPuan2 = DBP.prepare('SELECT points FROM players WHERE id = ?').bind('9500').first().points;
+check('promo: ayni kod ikinci kez calismiyor',
+      y2.ok === false && y2.reason === 'kullanilmis', `-> ${JSON.stringify(y2)}`);
+check('promo: ikinci deneme puan eklemedi', yabanciPuan2 === 100000, `-> ${yabanciPuan2}`);
+
+/* SAHIP ISTISNASI: kodlari o tanimliyor, test ederken tekrar tekrar
+   kullanabilmeli. */
 const p1 = await api(envP, 'promo', { initData: idSahipP, kod: 'MH-COIN-10K' });
-const p2 = await api(envP, 'promo', { initData: idSahipP, kod: 'mh coin 10k' });   /* normalize */
+const p2 = await api(envP, 'promo', { initData: idSahipP, kod: 'mh coin 10k' });
 const sahipPuan = DBP.prepare('SELECT points FROM players WHERE id = ?').bind(SAHIP).first().points;
 check('promo: sahip kodu calisiyor', p1.ok === true, `-> ${JSON.stringify(p1)}`);
-check('promo: sahip kodu tekrar kullanilabiliyor (2 x 10000)',
+check('promo: sahip ayni kodu tekrar kullanabiliyor (2 x 10000)',
       p2.ok === true && sahipPuan === 20000, `-> ${sahipPuan}`);
 
 /* Ejderha varliklari kutuya giriyor, kutu bir kez okununca bosaliyor. */
@@ -948,23 +954,49 @@ check('promo: istemci kutuyu /api/state ile yazamiyor',
 
 /* Halka acik kod: oyuncu basina BIR KEZ. Kodun suresi dolmussa test
    bunu da dogru kabul ediyor (listeye bagli kalmamak icin). */
-const acikAd = Object.keys(PROMO_KODLARI).find((k) => !PROMO_KODLARI[k].sahip);
+const acikAd = Object.keys(PROMO_KODLARI).find((k) => PROMO_KODLARI[k].gun > 0);
+const idUcuncu = signedInitData(9501);
+await api(envP, 'sync', { initData: idUcuncu, points: 0, state: {} });
 if (acikAd) {
   const gecerli = !promoSure(PROMO_KODLARI[acikAd], Date.now()).bitti;
-  const a1 = await api(envP, 'promo', { initData: idYabanci, kod: acikAd });
-  const a2 = await api(envP, 'promo', { initData: idYabanci, kod: acikAd });
+  const a1 = await api(envP, 'promo', { initData: idUcuncu, kod: acikAd });
+  const a2 = await api(envP, 'promo', { initData: idUcuncu, kod: acikAd });
   if (gecerli) {
     check(`promo: halka acik kod (${acikAd}) bir kez calisiyor`, a1.ok === true, `-> ${JSON.stringify(a1)}`);
     check('promo: ayni kod ikinci kez kullanilamiyor',
           a2.ok === false && a2.reason === 'kullanilmis', `-> ${JSON.stringify(a2)}`);
-    const tekPuan = DBP.prepare('SELECT points FROM players WHERE id = ?').bind('9500').first().points;
-    check('promo: ikinci deneme puan eklemiyor',
+    const tekPuan = DBP.prepare('SELECT points FROM players WHERE id = ?').bind('9501').first().points;
+    check('promo: sureli kodda ikinci deneme puan eklemiyor',
           tekPuan === (PROMO_KODLARI[acikAd].odul.coin || 0), `-> ${tekPuan}`);
   } else {
     check(`promo: suresi dolmus kod (${acikAd}) reddediliyor`,
           a1.ok === false && a1.reason === 'suresi-doldu', `-> ${JSON.stringify(a1)}`);
   }
 }
+
+
+/* Kod kayitlari: kim ne kullandi. Ayri bir tablo yok - spend_log zaten
+   tutuyordu, bu okuma yolu. */
+const kayitYabanci = await api(envP, 'promo/kayit', { initData: idYabanci });
+check('promo: kod kayitlarini baskasi okuyamiyor',
+      kayitYabanci.error === 'yetki yok', `-> ${JSON.stringify(kayitYabanci)}`);
+
+const kayit = await api(envP, 'promo/kayit', { initData: idSahipP });
+check('promo: sahip kod kayitlarini okuyabiliyor', kayit.ok === true, `-> ${JSON.stringify(kayit.error)}`);
+check('promo: kayitta kullanan oyuncu ve kod var',
+      kayit.kayitlar.some((k) => k.oyuncu === '9500' && k.kod === 'MH-COIN-100K'),
+      `-> ${JSON.stringify(kayit.kayitlar.slice(0, 3))}`);
+check('promo: tekrarli kullanim isaretleniyor',
+      kayit.kayitlar.filter((k) => k.oyuncu === SAHIP && k.kod === 'MH-COIN-10K').every((k) => k.tekrar === true),
+      `-> ${JSON.stringify(kayit.kayitlar.filter((k) => k.kod === 'MH-COIN-10K'))}`);
+check('promo: ozet kod basina sayiyor',
+      kayit.ozet['MH-COIN-10K'] === 2, `-> ${JSON.stringify(kayit.ozet)}`);
+
+const suzulmus = await api(envP, 'promo/kayit', { initData: idSahipP, kod: 'mh coin 10k' });
+check('promo: kayit tek koda suzulebiliyor',
+      suzulmus.kayitlar.length === 2 && suzulmus.kayitlar.every((k) => k.kod === 'MH-COIN-10K'),
+      `-> ${suzulmus.kayitlar.length}`);
+
 
 /* Enerji odulu sert tavani asmamali. */
 await api(envP, 'promo', { initData: idSahipP, kod: 'MH-ENERJI' });

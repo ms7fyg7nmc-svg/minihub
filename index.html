@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="229">
+  <meta name="surum" content="230">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MINI HUB GAMES</title>
   <!-- Cark rakamlari icin (bkz. js/hub.js WHEEL_FONT). Ejderha Adasi
@@ -50,7 +50,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v229">
+  <link rel="stylesheet" href="css/style.css?v230">
 </head>
 <body class="hub">
   <!-- ACILIS EKRANI
@@ -222,6 +222,14 @@
           <button class="promo-btn" id="promo-btn" data-i18n="hub.promo.use">Kullan</button>
         </div>
         <p class="promo-sonuc" id="promo-sonuc" hidden></p>
+
+        <!-- SAHIBE OZEL: kim hangi kodu kullandi. Sunucu sync cevabinda
+             "sahip" diyorsa goruntuleniyor; okuma yetkisi ayrica
+             sunucuda kontrol ediliyor. -->
+        <div class="promo-kayit" id="promo-kayit" hidden>
+          <button class="promo-kayit-ac" id="promo-kayit-ac" data-i18n="hub.promo.logShow">Kod kayıtları</button>
+          <div class="promo-kayit-liste" id="promo-kayit-liste" hidden></div>
+        </div>
       </div>
     </div>
   </div>
@@ -343,6 +351,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v229"></script>
+  <script type="module" src="js/hub.js?v230"></script>
 </body>
 </html>

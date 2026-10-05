@@ -8,14 +8,25 @@ Yazarken büyük/küçük harf ve tire önemli değil — `di yumurta 8`,
 
 ---
 
-## Sahip kodları (sadece sen)
+## Varlık kodları (herkese açık)
 
-Bu kodlar **yalnızca senin Telegram hesabında** çalışır ve **sınırsız
-tekrar** kullanılabilir. Başkası yazarsa "Bu kod geçerli değil" der —
-kodun var olduğunu bile söylemez.
+Bu kodları **herhangi bir hesap** kullanabilir, ama **oyuncu başına bir
+kez**.
 
-Kimlik kontrolü Telegram'ın imzaladığı `initData`'dan geliyor, yani
-kimse kendini sahip ilan edemez.
+**Sen istisnasın:** senin hesabında hepsi sınırsız tekrar çalışır, çünkü
+test eden sensin. Kimlik kontrolü Telegram'ın imzaladığı `initData`'dan
+geliyor, kimse kendini sahip ilan edemez.
+
+### Neden tek seferlik?
+
+Kodlar bir şekilde sızar — biri ekran görüntüsü alır, bir gruba düşürür.
+Tek seferlik bir kodun sızması "herkes bir kez alır" demek. **Sınırsız
+tekrarlanan** bir kodun sızması ekonominin sonu demek ve geri dönüşü yok:
+dağılan $MH insanların bakiyesinde kalır.
+
+Bu yüzden `tekrarli: true` ile `sahip: false` birlikte kullanılmamalı.
+Test bunu kontrol ediyor (`promo: halka açık + sınırsız tekrar eden kod
+YOK`).
 
 ### $MH ve enerji (anında gelir)
 
@@ -23,7 +34,7 @@ kimse kendini sahip ilan edemez.
 |---|---|
 | `MH-COIN-10K` | 10.000 $MH |
 | `MH-COIN-100K` | 100.000 $MH |
-| `MH-ENERJI` | Enerjiyi tavana çıkarır (15) |
+| `MH-ENERJI` | **Enerjiyi tavana çıkarır (15)** |
 
 ### Ejderha Adası — yem ve yıldız
 
@@ -70,6 +81,20 @@ Oyuncu başına **bir kez** kullanılabilir ve bir **süresi** vardır.
 
 ---
 
+## Kim hangi kodu kullandı
+
+**Hub → Ayarlar → Kod kayıtları.** Bu satır yalnızca senin hesabında
+görünür; başkası doğrudan sunucuya sorsa bile "yetki yok" cevabı alır.
+
+Listede her kullanım için: oyuncunun adı, Telegram kimliği, hangi kod,
+ne zaman, ve tekrar kullanım mı. En üstte kod başına kaç kez
+kullanıldığının özeti var.
+
+Kayıt için **ayrı bir tablo açılmadı** — her kullanım zaten `spend_log`'a
+düşüyordu, çünkü "bu kodu bir kez kullandın" koruması oradan geliyor.
+Yani kayıt en baştan beri tutuluyordu; eklenen şey onu okuma yoluydu.
+Geçmişe dönük kayıtlar da listede görünür.
+
 ## Yeni kod eklemek
 
 `bot/worker.js` → `PROMO_KODLARI`. Ekledikten sonra **deploy gerekiyor**
@@ -98,7 +123,10 @@ kalır.
 
 **Dikkat:** `tekrarli: true` ile `sahip: false` birlikte kullanılmamalı —
 herkesin sınırsız $MH basabileceği bir kod olur. Test bunu kontrol
-ediyor (`promo: $MH basan her kod ya süreli ya sahibe kilitli`).
+ediyor (`promo: halka açık + sınırsız tekrar eden kod YOK`).
+
+Varsayılanlar zaten doğru: hiçbir bayrak yazmazsan kod **herkese açık ve
+oyuncu başına bir kez** olur, senin hesabında ise sınırsız.
 
 Yumurta seviyesi 1–8, kap seviyesi 1–4 ile sınırlı; sunucu bunun dışına
 çıkan değerleri kırpıyor.

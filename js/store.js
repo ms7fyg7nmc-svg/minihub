@@ -1,6 +1,6 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v229';
-import { surumKontrol } from './guncel.js?v229';
+import { isTelegramUser, getInitData } from './tg.js?v230';
+import { surumKontrol } from './guncel.js?v230';
 
 /* Hub ve 12 oyunun hepsi bu modulu yukluyor, o yuzden surum tazeleyici
    buraya bagli: tek yerden hepsini kapsiyor. */
@@ -230,6 +230,7 @@ async function senkronDene() {
       streak: veri.streak && typeof veri.streak === 'object' ? veri.streak : null,
       gorev: veri.gorev && typeof veri.gorev === 'object' ? veri.gorev : null,
       promoBekleyen: Number(veri.promoBekleyen) || 0,
+      sahip: !!veri.sahip,
       spin: veri.spin && typeof veri.spin === 'object' ? veri.spin : null,
       state: veri.state && typeof veri.state === 'object' ? veri.state : {},
       meta: veri.meta && typeof veri.meta === 'object' ? veri.meta : {},
@@ -539,6 +540,22 @@ export async function promoKutuAl() {
   return Array.isArray(sonuc?.parcalar) ? sonuc.parcalar : [];
 }
 
+/* Sahip miyim? Arayuzde sahibe ozel satirlari gostermek icin. Yalan
+   soylemenin bir anlami yok: sunucu her sahip islemini AYRICA kimlikten
+   geciriyor. */
+export async function sahipMiyim() {
+  const v = await senkron;
+  return !!(v && v.sahip);
+}
+
+/* Kod kayitlari - yalnizca sahip okuyabiliyor (sunucu reddediyor). */
+export async function promoKayit(kod = '') {
+  const v = await senkron;
+  if (!v) return null;
+  const sonuc = await sunucuGonder('/api/promo/kayit', { kod, limit: 200 });
+  return sonuc?.ok ? sonuc : null;
+}
+
 export async function promoBekleyenVar() {
   const v = await senkron;
   return !!(v && v.promoBekleyen > 0);
@@ -610,6 +627,7 @@ export async function refreshDaily() {
   if (veri.streak && typeof veri.streak === 'object') v.streak = veri.streak;
   if (veri.gorev && typeof veri.gorev === 'object') v.gorev = veri.gorev;
   v.promoBekleyen = Number(veri.promoBekleyen) || 0;
+  v.sahip = !!veri.sahip;
   if (veri.spin && typeof veri.spin === 'object') v.spin = veri.spin;
 }
 

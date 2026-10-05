@@ -11,7 +11,7 @@ const DICT = {
     'hub.title': 'MINI HUB GAMES',
     'hub.subtitle': 'Play the games, earn $MH, and be part of our ecosystem.',
     'hub.gamesTitle': 'Games',
-    'hub.version': 'Version 1.89',
+    'hub.version': 'Version 1.90',
     'hub.sync.guest': 'Not connected',
     'hub.settings.title': 'Settings',
     'hub.settings.language': 'Language',
@@ -56,6 +56,8 @@ const DICT = {
     'hub.promo.ag': 'No connection. Try again.',
     'hub.promo.gun': '{n}d',
     'hub.promo.saat': '{n}h',
+    'hub.promo.logShow': 'Code usage log',
+    'hub.promo.logEmpty': 'No codes used yet.',
 
     /* "Yeni oyun" onayi - butun oyunlarda ortak (bkz. js/onay.js) */
     'ortak.onay.devam': 'Keep playing',
@@ -578,7 +580,7 @@ const DICT = {
     'hub.title': 'MINI HUB GAMES',
     'hub.subtitle': 'Oyunları oyna, $MH kazan ve ekosistemimizin bir parçası ol.',
     'hub.gamesTitle': 'Oyunlar',
-    'hub.version': 'Sürüm 1.89',
+    'hub.version': 'Sürüm 1.90',
     'hub.sync.guest': 'Bağlı değil',
     'hub.settings.title': 'Ayarlar',
     'hub.settings.language': 'Dil',
@@ -623,6 +625,8 @@ const DICT = {
     'hub.promo.ag': 'Bağlantı yok. Tekrar dene.',
     'hub.promo.gun': '{n} gün',
     'hub.promo.saat': '{n} saat',
+    'hub.promo.logShow': 'Kod kayıtları',
+    'hub.promo.logEmpty': 'Henüz kod kullanılmamış.',
 
     /* "Yeni oyun" onayi - butun oyunlarda ortak (bkz. js/onay.js) */
     'ortak.onay.devam': 'Devam et',
@@ -1145,7 +1149,7 @@ const DICT = {
     'hub.title': 'MINI HUB GAMES',
     'hub.subtitle': 'Juega, gana $MH y forma parte de nuestro ecosistema.',
     'hub.gamesTitle': 'Juegos',
-    'hub.version': 'Versión 1.89',
+    'hub.version': 'Versión 1.90',
     'hub.sync.guest': 'Sin conexión',
     'hub.settings.title': 'Ajustes',
     'hub.settings.language': 'Idioma',
@@ -1190,6 +1194,8 @@ const DICT = {
     'hub.promo.ag': 'Sin conexión. Inténtalo de nuevo.',
     'hub.promo.gun': '{n} d',
     'hub.promo.saat': '{n} h',
+    'hub.promo.logShow': 'Registro de códigos',
+    'hub.promo.logEmpty': 'Aún no se ha usado ningún código.',
 
     /* "Yeni oyun" onayi - butun oyunlarda ortak (bkz. js/onay.js) */
     'ortak.onay.devam': 'Seguir jugando',
@@ -1712,7 +1718,7 @@ const DICT = {
     'hub.title': 'MINI HUB GAMES',
     'hub.subtitle': 'Играй, зарабатывай $MH и стань частью нашей экосистемы.',
     'hub.gamesTitle': 'Игры',
-    'hub.version': 'Версия 1.89',
+    'hub.version': 'Версия 1.90',
     'hub.sync.guest': 'Нет подключения',
     'hub.settings.title': 'Настройки',
     'hub.settings.language': 'Язык',
@@ -1757,6 +1763,8 @@ const DICT = {
     'hub.promo.ag': 'Нет соединения. Попробуйте снова.',
     'hub.promo.gun': '{n} д',
     'hub.promo.saat': '{n} ч',
+    'hub.promo.logShow': 'Журнал кодов',
+    'hub.promo.logEmpty': 'Коды ещё не использовались.',
 
     /* "Yeni oyun" onayi - butun oyunlarda ortak (bkz. js/onay.js) */
     'ortak.onay.devam': 'Продолжить игру',

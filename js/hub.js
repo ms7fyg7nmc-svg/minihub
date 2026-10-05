@@ -1,19 +1,19 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v229';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v230';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, enerjiBosMu, bakimListesi,
-   getGorev, gorevAl, promoKullan,
-} from './store.js?v229';
-import { enerjiBosOnayi } from './onay.js?v229';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v229';
+   getGorev, gorevAl, promoKullan, promoKayit, sahipMiyim,
+} from './store.js?v230';
+import { enerjiBosOnayi } from './onay.js?v230';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v230';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniBaslat, iz } from './tani.js?v229';
+import { taniBaslat, iz } from './tani.js?v230';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -1203,6 +1203,64 @@ function wirePromo() {
 
    btn.addEventListener('click', gonder);
    giris.addEventListener('keydown', (e) => { if (e.key === 'Enter') gonder(); });
+
+   wireKodKayit();
+}
+
+/* KOD KAYITLARI - yalnizca sahipte.
+
+   Kayit zaten en basindan beri tutuluyordu (her kullanim spend_log'a
+   dusuyor, tekrar korumasi oradan geliyor); burasi yalnizca onu
+   okunabilir hale getiriyor. Gorunurluk sunucunun soyledigine bagli,
+   ama okuma yetkisi AYRICA sunucuda kontrol ediliyor - istemcinin
+   kendini sahip ilan etmesi bir ise yaramiyor. */
+async function wireKodKayit() {
+   const kap = document.getElementById('promo-kayit');
+   const ac = document.getElementById('promo-kayit-ac');
+   const liste = document.getElementById('promo-kayit-liste');
+   if (!kap || !ac || !liste) return;
+
+   if (!(await sahipMiyim())) return;
+   kap.hidden = false;
+
+   ac.addEventListener('click', async () => {
+      if (!liste.hidden) { liste.hidden = true; return; }
+      haptic.tap();
+      ac.disabled = true;
+      try {
+         const sonuc = await promoKayit();
+         liste.innerHTML = '';
+         const kayitlar = sonuc?.kayitlar || [];
+         if (!kayitlar.length) {
+            liste.innerHTML = `<p class="promo-kayit-bos">${t('hub.promo.logEmpty')}</p>`;
+         } else {
+            /* Once kod basina ozet, sonra tek tek kullanimlar. */
+            const ozet = Object.entries(sonuc.ozet || {}).sort((a, b) => b[1] - a[1]);
+            for (const [kod, adet] of ozet) {
+               const el = document.createElement('div');
+               el.className = 'promo-kayit-satir';
+               el.innerHTML = `<b></b><b class="an"></b>`;
+               el.querySelector('b').textContent = kod;
+               el.querySelector('.an').textContent = `${adet}\u00D7`;
+               liste.appendChild(el);
+            }
+            for (const k of kayitlar) {
+               const el = document.createElement('div');
+               el.className = 'promo-kayit-satir';
+               /* Iki sutun, iki satir: ad | kod / kimlik | tarih */
+               el.innerHTML = `<b></b><b class="an"></b><span></span><span class="an"></span>`;
+               el.children[0].textContent = k.ad || k.oyuncu;
+               el.children[1].textContent = k.kod;
+               el.children[2].textContent = `#${k.oyuncu}${k.tekrar ? ' \u00B7 tekrar' : ''}`;
+               el.children[3].textContent = new Date(k.an).toLocaleString(locale());
+               liste.appendChild(el);
+            }
+         }
+         liste.hidden = false;
+      } finally {
+         ac.disabled = false;
+      }
+   });
 }
 
 /* TANI KAYDI ARTIK EKRANDA DEGIL.

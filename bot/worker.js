@@ -637,16 +637,22 @@ async function handleGorevAl(env, playerId) {
    sunucuda yazili oldugu surece kimse veritabanina satir ekleyerek
    kendine $MH basamaz, ve her kod degisikligi git gecmisinde duruyor.
 
-   Iki cesit kod var:
+   KURAL: her kod herkese acik, OYUNCU BASINA BIR KEZ.
 
-   - HALKA ACIK kodlar. Oyuncu basina BIR KEZ. Tekrar koruması
-     applyDelta'nin op_id'sinden geliyor (`promo:<KOD>`), yani ayni anda
-     iki kez gonderilse bile yalnizca biri geciyor.
+   Tekrar korumasi applyDelta'nin op_id'sinden geliyor (`promo:<KOD>`),
+   yani ayni anda iki kez gonderilse bile yalnizca biri geciyor.
 
-   - SAHIP kodlari (`sahip: true`). Yalnizca SAHIP_ID kullanabilir ve
-     TEKRAR TEKRAR kullanilabilir (`tekrarli: true`) - test ederken ayni
-     varligi defalarca almak gerekiyor. Kimlik Telegram initData'dan
-     dogrulanarak geldigi icin istemci kendini sahip ilan edemez.
+   SAHIP ISTISNASI: SAHIP_ID her kodu istedigi kadar tekrar kullanabilir.
+   Kodlari o tanimliyor ve test ederken ayni varligi defalarca almasi
+   gerekiyor. Kimlik Telegram initData'dan dogrulanarak geldigi icin
+   istemci kendini sahip ilan edemez.
+
+   NEDEN HERKESE ACIK AMA TEK SEFERLIK: kodlar bir sekilde sizar - biri
+   ekran goruntusu alir, bir gruba dusurur. Tek seferlik bir kodun
+   sizmasi "herkes bir kez alir" demek; SINIRSIZ tekrarlanan bir kodun
+   sizmasi ekonominin sonu demek ve geri alinamaz. `tekrarli: true` ile
+   `sahip: false` bu yuzden BIRLIKTE KULLANILMAMALI; test bunu kontrol
+   ediyor.
 
    SURE: `gun` alani kac gun gecerli oldugunu soyluyor; `baslar` da
    baslangic ani. gun = 0 ise kodun suresi yok. Kalan sure cevapta
@@ -667,35 +673,34 @@ const PROMO_GUN_MS = 86400000;
    promo_kutu) ve Ejderha Adasi acilinca oradan aliniyor. */
 
 const PROMO_KODLARI = {
-  /* --- Halka acik --- */
   'HOSGELDIN': {
     odul: { coin: 5000, enerji: 5 },
     baslar: Date.parse('2026-10-05T00:00:00Z'),
     gun: 7,
   },
 
-  /* --- SAHIP kodlari: yalnizca SAHIP_ID, sinirsiz tekrar --- */
-  'MH-COIN-10K':    { sahip: true, tekrarli: true, odul: { coin: 10000 } },
-  'MH-COIN-100K':   { sahip: true, tekrarli: true, odul: { coin: 100000 } },
-  'MH-ENERJI':      { sahip: true, tekrarli: true, odul: { enerji: ENERGY_HARD_CAP } },
 
-  'DI-YEM-10K':     { sahip: true, tekrarli: true, odul: { yem: 10000 } },
-  'DI-YEM-1M':      { sahip: true, tekrarli: true, odul: { yem: 1000000 } },
-  'DI-YILDIZ-100':  { sahip: true, tekrarli: true, odul: { yildiz: 100 } },
-  'DI-YILDIZ-5K':   { sahip: true, tekrarli: true, odul: { yildiz: 5000 } },
+  /* --- Varlik kodlari: herkese acik, oyuncu basina bir kez --- */
+  'MH-COIN-10K':    { odul: { coin: 10000 } },
+  'MH-COIN-100K':   { odul: { coin: 100000 } },
+  'MH-ENERJI':      { odul: { enerji: ENERGY_HARD_CAP } },
 
-  'DI-YUMURTA-1':   { sahip: true, tekrarli: true, odul: { nesneler: [{ t: 'egg', lv: 1, adet: 6 }] } },
-  'DI-YUMURTA-4':   { sahip: true, tekrarli: true, odul: { nesneler: [{ t: 'egg', lv: 4, adet: 4 }] } },
-  'DI-YUMURTA-6':   { sahip: true, tekrarli: true, odul: { nesneler: [{ t: 'egg', lv: 6, adet: 3 }] } },
-  'DI-YUMURTA-8':   { sahip: true, tekrarli: true, odul: { nesneler: [{ t: 'egg', lv: 8, adet: 2 }] } },
-  'DI-KAP-1':       { sahip: true, tekrarli: true, odul: { nesneler: [{ t: 'food', lv: 1, adet: 4 }] } },
-  'DI-KAP-4':       { sahip: true, tekrarli: true, odul: { nesneler: [{ t: 'food', lv: 4, adet: 3 }] } },
-  'DI-YILDIZKAP-1': { sahip: true, tekrarli: true, odul: { nesneler: [{ t: 'star', lv: 1, adet: 4 }] } },
-  'DI-YILDIZKAP-4': { sahip: true, tekrarli: true, odul: { nesneler: [{ t: 'star', lv: 4, adet: 3 }] } },
+  'DI-YEM-10K':     { odul: { yem: 10000 } },
+  'DI-YEM-1M':      { odul: { yem: 1000000 } },
+  'DI-YILDIZ-100':  { odul: { yildiz: 100 } },
+  'DI-YILDIZ-5K':   { odul: { yildiz: 5000 } },
+
+  'DI-YUMURTA-1':   { odul: { nesneler: [{ t: 'egg', lv: 1, adet: 6 }] } },
+  'DI-YUMURTA-4':   { odul: { nesneler: [{ t: 'egg', lv: 4, adet: 4 }] } },
+  'DI-YUMURTA-6':   { odul: { nesneler: [{ t: 'egg', lv: 6, adet: 3 }] } },
+  'DI-YUMURTA-8':   { odul: { nesneler: [{ t: 'egg', lv: 8, adet: 2 }] } },
+  'DI-KAP-1':       { odul: { nesneler: [{ t: 'food', lv: 1, adet: 4 }] } },
+  'DI-KAP-4':       { odul: { nesneler: [{ t: 'food', lv: 4, adet: 3 }] } },
+  'DI-YILDIZKAP-1': { odul: { nesneler: [{ t: 'star', lv: 1, adet: 4 }] } },
+  'DI-YILDIZKAP-4': { odul: { nesneler: [{ t: 'star', lv: 4, adet: 3 }] } },
 
   /* Her seyden bol: hizli bir test kurulumu. */
   'DI-HEPSI': {
-    sahip: true, tekrarli: true,
     odul: {
       coin: 100000, enerji: ENERGY_HARD_CAP, yem: 500000, yildiz: 2000,
       nesneler: [
@@ -798,6 +803,52 @@ async function handlePromoKutu(env, playerId) {
   return { ok: false, reason: 'yeniden dene', parcalar: [] };
 }
 
+/* KIM HANGI KODU KULLANDI
+
+   Ayri bir tablo gerekmedi: her kullanim zaten spend_log'a dusuyor,
+   cunku tekrar korumasi oradan geliyor (op_id = `promo:<KOD>` ya da
+   tekrarli kullanimda `promo:<KOD>:<uuid>`). Yani kayit en basindan
+   beri tutuluyordu; eksik olan OKUMA yoluydu.
+
+   Yalnizca sahip okuyabiliyor. Baskasina kim ne kullanmis bilgisi
+   verilmez - oyuncu listesi, isimler ve davranis gecmisi bu. */
+async function handlePromoKayit(env, playerId, body) {
+  if (String(playerId) !== SAHIP_ID) return { error: 'yetki yok' };
+
+  const limit = Math.max(1, Math.min(500, Math.round(Number(body.limit) || 200)));
+  const suzgec = promoNormalle(body.kod || '');
+
+  const satirlar = await env.DB.prepare(
+    `SELECT s.player_id, s.op_id, s.delta, s.created_at, p.name
+     FROM spend_log s LEFT JOIN players p ON p.id = s.player_id
+     WHERE s.op_id LIKE 'promo:%'
+     ORDER BY s.created_at DESC LIMIT ?`,
+  ).bind(limit).all();
+
+  const kayitlar = [];
+  for (const r of satirlar.results) {
+    /* op_id = promo:<KOD> ya da promo:<KOD>:<uuid> */
+    const parcalar = String(r.op_id).split(':');
+    const kod = parcalar[1] || '';
+    if (suzgec && kod !== suzgec) continue;
+    kayitlar.push({
+      kod,
+      oyuncu: r.player_id,
+      ad: r.name || '',
+      coin: r.delta,
+      an: r.created_at,
+      tekrar: parcalar.length > 2,
+    });
+  }
+
+  /* Kod basina kac kez kullanildigi - listeyi okumadan once gorulecek
+     ozet. */
+  const ozet = {};
+  for (const k of kayitlar) ozet[k.kod] = (ozet[k.kod] || 0) + 1;
+
+  return { ok: true, kayitlar, ozet, toplam: kayitlar.length };
+}
+
 async function handlePromo(env, playerId, body) {
   const ad = promoNormalle(body.kod);
   if (!ad || ad.length > 40) return { ok: false, reason: 'gecersiz' };
@@ -805,18 +856,23 @@ async function handlePromo(env, playerId, body) {
   const kod = PROMO_KODLARI[ad];
   if (!kod) return { ok: false, reason: 'gecersiz' };
 
-  /* Sahip kontrolu kimlige bagli: initData Telegram tarafindan
-     imzalaniyor, istemci kendini sahip ilan edemiyor. */
-  if (kod.sahip && String(playerId) !== SAHIP_ID) return { ok: false, reason: 'gecersiz' };
+  /* Sahibe kilitli bir kod tanimlanirsa (su an yok) baskasina ayni
+     'gecersiz' cevabi doner - kodun varligini bile sizdirmaz. */
+  const sahipMi = String(playerId) === SAHIP_ID;
+  if (kod.sahip && !sahipMi) return { ok: false, reason: 'gecersiz' };
 
   const now = Date.now();
   const sure = promoSure(kod, now);
   if (!sure.basladi) return { ok: false, reason: 'henuz-baslamadi' };
   if (sure.bitti) return { ok: false, reason: 'suresi-doldu' };
 
-  const opId = kod.tekrarli ? `promo:${ad}:${crypto.randomUUID()}` : `promo:${ad}`;
+  /* Sahip her kodu tekrar kullanabiliyor; herkes icin oyuncu basina
+     bir kez. Her tekrarli kullanim benzersiz bir op_id aliyor ki
+     idempotentlik tekrar engeline donusmesin. */
+  const tekrarEdebilir = kod.tekrarli === true || sahipMi;
+  const opId = tekrarEdebilir ? `promo:${ad}:${crypto.randomUUID()}` : `promo:${ad}`;
 
-  if (!kod.tekrarli) {
+  if (!tekrarEdebilir) {
     const once = await env.DB.prepare(
       'SELECT 1 FROM spend_log WHERE player_id = ? AND op_id = ?',
     ).bind(playerId, opId).first();
@@ -1023,6 +1079,10 @@ async function handleSync(env, playerId, body, ad) {
       starPrice: ENERGY_REFILL_STAR_PRICE,
     },
     streak: streakDurumu(player, now),
+    /* Arayuz sahibe ozel satirlari (kod kayitlari) gosterebilsin diye.
+       Istemcinin bu bayragi yalan soylemesinin bir anlami yok: her
+       sahip islemi sunucuda AYRICA kimlik kontrolunden geciyor. */
+    sahip: String(playerId) === SAHIP_ID,
     gorev: gorevRapor(gorevDurum),
     promoBekleyen,
     spin: { ...spinDurumu(player, now), prizes: SPIN_PRIZES.map((p) => ({ tur: p.tur, miktar: p.miktar })) },
@@ -1940,6 +2000,8 @@ async function handleApi(request, env, url) {
         return json(await handlePromo(env, playerId, body));
       case '/api/promo/kutu':
         return json(await handlePromoKutu(env, playerId));
+      case '/api/promo/kayit':
+        return json(await handlePromoKayit(env, playerId, body));
       default:
         return json({ error: 'bulunamadi' }, 404);
     }
