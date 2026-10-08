@@ -10,22 +10,42 @@
      bekliyor, yani oyuncu birlestirip yer acmaya zorlaniyor. */
 
 /* Yumurta kirilinca tukenir: bekleme sayaci yok, tek seferde odulunu verir.
-   Her kademe bir oncekinin yaklasik uc kati; iki yumurtayi birlestirmek
-   ikisini ayri ayri kirmaktan her zaman karli. */
+
+   SAYILAR REFERANS OYUNUN MATEMATIGINDEN TURETILDI (Duck My Duck'in
+   kendi yumurta tablosu cozulerek). Uc kural:
+
+     1. Orta deger = taban x 2,2^(sv-1).  Her kademe bir oncekinin 2,2
+        kati. (Bizde once 3 kati idi; ust kademeler o yuzden sisiyordu.)
+     2. Aralik = orta degerin %85'i ile %115'i.
+     3. Jackpot carpani DUSUYOR: alt kademede orta degerin ~26 kati,
+        ust kademede ~6 kati. Bizde her kademede sabit ~18 katti ve
+        jackpotlar bu yuzden fazla geliyordu - Sv.10'da 3,2 milyondan
+        83 bine indi.
+
+   Ucuncu kural tasarimin asil fikri: alt seviye yumurta bir piyango,
+   ust seviye yumurta duzenli gelir. Oyuncu asagida sans, yukarida
+   istikrar aliyor.
+
+   Taban Sv.1'de 11,5 olarak BIZIM olcegimizde birakildi (eski 8-15'in
+   ortasi), cunku besleme maliyeti, sandiklar ve gorev hedefleri ona
+   gore ayarli.
+
+   DIKKAT: 2,2 merdiveninde birlestirme kari 1,02-1,11 kat, yani
+   neredeyse basa bas. Referans oyunda yukari cikmanin odulu yem degil
+   daha iyi ordek; bizde ejderha orani tersine cevrildigi icin o odul
+   yok. Birlestirmenin kalan sebepleri: tuccar siparisleri (kirmaya gore
+   1,7 kat odiyor) ve izgarada yer acmak. */
 export const YUMURTA = {
-  1:  { az: 8,      cok: 15,     jackpot: 150,     sans: 0.03 },
-  2:  { az: 25,     cok: 45,     jackpot: 600,     sans: 0.03 },
-  3:  { az: 80,     cok: 140,    jackpot: 2000,    sans: 0.03 },
-  4:  { az: 240,    cok: 400,    jackpot: 6000,    sans: 0.03 },
-  5:  { az: 700,    cok: 1200,   jackpot: 18000,   sans: 0.035 },
-  6:  { az: 2000,   cok: 3400,   jackpot: 50000,   sans: 0.035 },
-  7:  { az: 6000,   cok: 9000,   jackpot: 140000,  sans: 0.04 },
-  8:  { az: 18000,  cok: 28000,  jackpot: 400000,  sans: 0.04 },
-  /* Zincir 8'den 10'a uzatildi. Ayni kural: her kademe bir oncekinin
-     yaklasik uc kati, boylece birlestirmek kirmaktan karli kaliyor
-     (iki Lv9 ~225k, birlesmis Lv10 ~340k). */
-  9:  { az: 52000,  cok: 80000,  jackpot: 1100000, sans: 0.045 },
-  10: { az: 150000, cok: 230000, jackpot: 3200000, sans: 0.05 },
+  1:  { az: 10,    cok: 13,    jackpot: 300,   sans: 0.03 },
+  2:  { az: 22,    cok: 29,    jackpot: 550,   sans: 0.03 },
+  3:  { az: 47,    cok: 64,    jackpot: 1000,  sans: 0.03 },
+  4:  { az: 104,   cok: 141,   jackpot: 2000,  sans: 0.03 },
+  5:  { az: 229,   cok: 310,   jackpot: 3500,  sans: 0.035 },
+  6:  { az: 504,   cok: 682,   jackpot: 6500,  sans: 0.035 },
+  7:  { az: 1108,  cok: 1499,  jackpot: 13000, sans: 0.04 },
+  8:  { az: 2438,  cok: 3299,  jackpot: 24000, sans: 0.04 },
+  9:  { az: 5364,  cok: 7257,  jackpot: 44000, sans: 0.045 },
+  10: { az: 11801, cok: 15966, jackpot: 83000, sans: 0.045 },
 };
 
 export const EN_UST_YUMURTA = 10;
@@ -81,11 +101,17 @@ export const SANDIK_MERDIVEN = {
     3: [[250, 400, 50], [401, 450, 30], [451, 480, 15], [481, 500, 5]],
     4: [[1200, 1800, 50], [1801, 2100, 30], [2101, 2350, 15], [2351, 2500, 5]],
   },
+  /* Yumurta tablosu referans matematigine gecince (bkz. YUMURTA) ust
+     kademeler onda bire indi; sandiklar eski olcekte kalsaydi bir Sv.4
+     sandik en ust yumurtanin 15 katini verirdi. Bantlarin KENDI oranlari
+     (.519/.889/1.185/1.363/1.481) aynen korundu, yalnizca orta degerler
+     yeni olcege tasindi - yani "bu sandik kabaca su kademe yumurta eder"
+     iliskisi degismedi. */
   food: {
-    1: [[1750, 3000, 50], [3001, 4000, 30], [4001, 4600, 15], [4601, 5000, 5]],
-    2: [[7000, 12000, 50], [12001, 16000, 30], [16001, 18500, 15], [18501, 20000, 5]],
-    3: [[28000, 48000, 50], [48001, 64000, 30], [64001, 74000, 15], [74001, 80000, 5]],
-    4: [[110000, 190000, 50], [190001, 255000, 30], [255001, 296000, 15], [296001, 320000, 5]],
+    1: [[370, 630, 50], [631, 830, 30], [831, 960, 15], [961, 1000, 5]],
+    2: [[1000, 1800, 50], [1801, 2300, 30], [2301, 2700, 15], [2701, 2900, 5]],
+    3: [[2800, 4800, 50], [4801, 6400, 30], [6401, 7400, 15], [7401, 8000, 5]],
+    4: [[7200, 12500, 50], [12501, 16500, 30], [16501, 19000, 15], [19001, 20500, 5]],
   },
 };
 
@@ -246,9 +272,9 @@ export function ejderhaSansi(lv) {
 /* Yedi gunluk seri. Gun atlanirsa seri basa doner; yedinci gunden sonra
    yeniden birinci gunden basliyor. */
 export const GUNLUK_ODULLER = [
-  { food: 200 },
+  { food: 85 },
   { stars: 1 },
-  { food: 600 },
+  { food: 190 },
   { item: { t: 'food', lv: 1 } },
   { stars: 3 },
   { item: { t: 'egg', lv: 4 } },
