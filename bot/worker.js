@@ -694,6 +694,8 @@ const PROMO_KODLARI = {
   'DI-YUMURTA-4':   { odul: { nesneler: [{ t: 'egg', lv: 4, adet: 4 }] } },
   'DI-YUMURTA-6':   { odul: { nesneler: [{ t: 'egg', lv: 6, adet: 3 }] } },
   'DI-YUMURTA-8':   { odul: { nesneler: [{ t: 'egg', lv: 8, adet: 2 }] } },
+  'DI-YUMURTA-9':   { odul: { nesneler: [{ t: 'egg', lv: 9, adet: 2 }] } },
+  'DI-YUMURTA-10':  { odul: { nesneler: [{ t: 'egg', lv: 10, adet: 1 }] } },
   'DI-KAP-1':       { odul: { nesneler: [{ t: 'food', lv: 1, adet: 4 }] } },
   'DI-KAP-4':       { odul: { nesneler: [{ t: 'food', lv: 4, adet: 3 }] } },
   'DI-YILDIZKAP-1': { odul: { nesneler: [{ t: 'star', lv: 1, adet: 4 }] } },
@@ -706,6 +708,7 @@ const PROMO_KODLARI = {
       nesneler: [
         { t: 'egg', lv: 6, adet: 3 },
         { t: 'egg', lv: 8, adet: 2 },
+        { t: 'egg', lv: 10, adet: 1 },
         { t: 'food', lv: 4, adet: 2 },
         { t: 'star', lv: 4, adet: 2 },
       ],
@@ -741,7 +744,10 @@ function promoIstemciParcasi(odul) {
       .filter((n) => n && PROMO_NESNE_TURLERI.has(n.t))
       .map((n) => ({
         t: n.t,
-        lv: Math.max(1, Math.min(n.t === 'egg' ? 8 : 4, Math.round(Number(n.lv) || 1))),
+        /* Yumurta zinciri 10 kademeye cikti (bkz. ekonomi.js
+           EN_UST_YUMURTA). Buradaki tavan onunla ayni olmali, yoksa
+           Sv.9-10 odulleri sessizce 8'e kirpilir. */
+        lv: Math.max(1, Math.min(n.t === 'egg' ? 10 : 4, Math.round(Number(n.lv) || 1))),
         adet: Math.max(1, Math.min(20, Math.round(Number(n.adet) || 1))),
       }));
     if (temiz.length) parca.nesneler = temiz;

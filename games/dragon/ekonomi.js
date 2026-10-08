@@ -13,17 +13,22 @@
    Her kademe bir oncekinin yaklasik uc kati; iki yumurtayi birlestirmek
    ikisini ayri ayri kirmaktan her zaman karli. */
 export const YUMURTA = {
-  1: { az: 8,     cok: 15,    jackpot: 150,    sans: 0.03 },
-  2: { az: 25,    cok: 45,    jackpot: 600,    sans: 0.03 },
-  3: { az: 80,    cok: 140,   jackpot: 2000,   sans: 0.03 },
-  4: { az: 240,   cok: 400,   jackpot: 6000,   sans: 0.03 },
-  5: { az: 700,   cok: 1200,  jackpot: 18000,  sans: 0.035 },
-  6: { az: 2000,  cok: 3400,  jackpot: 50000,  sans: 0.035 },
-  7: { az: 6000,  cok: 9000,  jackpot: 140000, sans: 0.04 },
-  8: { az: 18000, cok: 28000, jackpot: 400000, sans: 0.04 },
+  1:  { az: 8,      cok: 15,     jackpot: 150,     sans: 0.03 },
+  2:  { az: 25,     cok: 45,     jackpot: 600,     sans: 0.03 },
+  3:  { az: 80,     cok: 140,    jackpot: 2000,    sans: 0.03 },
+  4:  { az: 240,    cok: 400,    jackpot: 6000,    sans: 0.03 },
+  5:  { az: 700,    cok: 1200,   jackpot: 18000,   sans: 0.035 },
+  6:  { az: 2000,   cok: 3400,   jackpot: 50000,   sans: 0.035 },
+  7:  { az: 6000,   cok: 9000,   jackpot: 140000,  sans: 0.04 },
+  8:  { az: 18000,  cok: 28000,  jackpot: 400000,  sans: 0.04 },
+  /* Zincir 8'den 10'a uzatildi. Ayni kural: her kademe bir oncekinin
+     yaklasik uc kati, boylece birlestirmek kirmaktan karli kaliyor
+     (iki Lv9 ~225k, birlesmis Lv10 ~340k). */
+  9:  { az: 52000,  cok: 80000,  jackpot: 1100000, sans: 0.045 },
+  10: { az: 150000, cok: 230000, jackpot: 3200000, sans: 0.05 },
 };
 
-export const EN_UST_YUMURTA = 8;
+export const EN_UST_YUMURTA = 10;
 export const EN_UST_SANDIK = 4;
 
 /* ---------- KAP ACMA SURELERI ----------
@@ -203,19 +208,33 @@ export function yuvaFiyati(sira) {
 
 /* ---------- EJDERHA SANSI ----------
 
-   Ejderha artik GARANTI DEGIL. Onceden Sv.8 yumurta kirmak kesin bir
-   ejderha veriyordu; 128 Sv.1 yumurtaya denk gelen bir birlestirme
-   zinciri bunu birkac gunde garanti ediyordu ve ejderha siradanlasiyordu.
+   KURAL: oran her kademede %5'in ALTINDA ve seviye yukseldikce DUSUYOR.
 
-   Artik yuksek seviye yumurta bir ZAR ATIYOR. Cikmazsa yumurta yine
-   normal yem odulunu veriyor, yani emek bosa gitmiyor - sadece ejderha
-   bir surpriz oluyor.
+   Bu, ilk bakista ters gelebilir - normalde pahali olan daha cok verir.
+   Burada tersi kasitli: ejderha YUKSEK seviyeden degil, COK yumurta
+   kirmaktan geliyor. Boylece iki ayri oyun tarzi doguyor:
 
-   Sv.8'de dortte bir: ortalama dort Sv.8 yumurta, yani ~512 Sv.1
-   yumurtalik emek. Ikinci yol ciftlesme (bkz. CIFTLESME). */
+     - Sv.1'leri hizla kirip sans denemek (ejderha yolu)
+     - Birlestirip yukari cikmak (yem yolu, ustte getiri cok daha yuksek)
+
+   Oran her kademede bir oncekinin %80'i. Taban Sv.1'de %0,20: bir
+   ejderha ortalama 500 Sv.1 yumurtaya mal oluyor, yani bugunku maliyetle
+   (Sv.8'de %25 = 512 taban yumurta) asagi yukari AYNI. Ejderhayi daha
+   bol ya da daha nadir yapmak icin degistirilecek tek sayi Sv.1'inki;
+   geri kalani ondan tureyen bir egri.
+
+   Cikmazsa yumurta yine normal yem odulunu veriyor - emek bosa gitmiyor. */
 export const EJDERHA_SANSI = {
-  7: 0.05,
-  8: 0.25,
+  1:  0.0020,
+  2:  0.0016,
+  3:  0.0013,
+  4:  0.0010,
+  5:  0.0008,
+  6:  0.00065,
+  7:  0.00052,
+  8:  0.00042,
+  9:  0.00034,
+  10: 0.00027,
 };
 
 export function ejderhaSansi(lv) {

@@ -1,10 +1,10 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v230';
-import { submitScore, getBest, saveState, loadState, clearState, spendRestartEnergy, startRun, finishRun, yerelTohum } from '../../js/store.js?v230';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v230';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v230';
-import { generatePuzzle } from './logic.js?v230';
-import { yenidenKurmaOnayi } from '../../js/onay.js?v230';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v231';
+import { submitScore, getBest, saveState, loadState, clearState, spendRestartEnergy, startRun, finishRun, yerelTohum } from '../../js/store.js?v231';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v231';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v231';
+import { generatePuzzle } from './logic.js?v231';
+import { yenidenKurmaOnayi } from '../../js/onay.js?v231';
 
 const GAME_ID = 'flow';
 const POINTS_PER_LEVEL = 48;
