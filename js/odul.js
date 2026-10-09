@@ -17,7 +17,7 @@
    yerinde bosluk kalir ama rakam goruntulenir ve kapanis yine calisir.
    Odul ani, bir dosyanin inmesine bagli olamaz. */
 
-import { haptic } from './tg.js?v239';
+import { haptic } from './tg.js?v240';
 
 const GORSEL = new URL('../assets/icons/sandik-acik.webp', document.baseURI).href;
 

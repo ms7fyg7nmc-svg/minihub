@@ -44,8 +44,20 @@ for (const yol of dosyalariTara('.', ['.html'])) {
 
 for (const yol of dosyalariTara('.', ['.js'])) {
   const eski = readFileSync(yol, 'utf8');
-  const yeni = eski.replace(
+  /* IKI KALIP birden: statik `from './x.js'` ve DINAMIK `import('./x.js')`.
+     Uzun sure yalnizca ilki vardi ve js/store.js icindeki
+     `import('./tani.js?v210')` yirmi dokuz surum boyunca v210'da asili
+     kaldi. Kimse fark etmedi cunku dosya sorgu dizesinden bagimsiz
+     servis ediliyor - yani kod CALISIYORDU; bozulan sey onbellek
+     kirilmasiydi. Tarayicisinda v210 duran oyuncu, telefonda ne
+     oldugunu anlatmasi gereken tani kaydinin eski kopyasini
+     calistirmaya devam ediyordu. */
+  let yeni = eski.replace(
     /(from\s+['"])(\.[^'"]*?\.js)(\?v\d+)?(['"])/g,
+    `$1$2?v${surum}$4`,
+  );
+  yeni = yeni.replace(
+    /(import\s*\(\s*['"])(\.[^'"]*?\.js)(\?v\d+)?(['"])/g,
     `$1$2?v${surum}$4`,
   );
   if (yeni !== eski) { writeFileSync(yol, yeni); degisen++; }
