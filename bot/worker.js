@@ -1551,12 +1551,26 @@ const LIDER_HARIC = new Set([SAHIP_ID]);
 // widget bos/tire kalmasin diye sabit bir siralama numarasi gosteriliyor.
 const HARIC_GOSTERILEN_SIRA = 99;
 
+/* YALNIZCA GERCEK HESAPLAR.
+   Oyuncu kimligi Telegram'in imzaladigi initData'dan geliyor ve her zaman
+   SAYISAL. Elle eklenmis bir satir - ornegin bir test kaydi - bu kalibi
+   tutturamaz.
+   Bunun bir kurala baglanmasinin sebebi: 16 Agustos'ta elle atilmis
+   'test_leaderboard_v' adli bir satir, sahip listeden gizlendigi icin
+   tablonun BIRINCI sirasinda oturuyordu. Kimsenin kazanmadigi 23.525
+   puanla, iki ay boyunca. Tek tek kimlik karalistesi ayni seyin bir
+   dahaki sefere tekrarlanmasini engellemez; bu kalip engeller.
+   GLOB kullaniliyor cunku SQLite'in LIKE'inda karakter sinifi yok. */
+const LIDER_GERCEK_ID = "p.id NOT GLOB '*[^0-9]*' AND p.id <> ''";
+
 async function handleLeaderboard(env, playerId) {
   const kazanc = `p.points + COALESCE((SELECT -SUM(s.delta) FROM spend_log s
                     WHERE s.player_id = p.id AND s.delta < 0), 0)`;
 
   const haric = [...LIDER_HARIC];
-  const haricSql = haric.length ? `WHERE p.id NOT IN (${haric.map(() => '?').join(',')})` : '';
+  const kosullar = [LIDER_GERCEK_ID];
+  if (haric.length) kosullar.push(`p.id NOT IN (${haric.map(() => '?').join(',')})`);
+  const haricSql = `WHERE ${kosullar.join(' AND ')}`;
 
   const rows = await env.DB.prepare(
     `SELECT p.id, p.name, ${kazanc} AS kazanilan
@@ -2111,4 +2125,4 @@ export default {
    Cloudflare yalnizca default export'a bakiyor. Sure mantigini aga
    cikmadan dogrudan sinamak, kod listesindeki tarihlere bagli ve bir
    gun kendiliginden kirilacak testler yazmaktan iyi. */
-export { PROMO_KODLARI, promoSure, promoNormalle };
+export { PROMO_KODLARI, promoSure, promoNormalle, LIDER_GERCEK_ID };

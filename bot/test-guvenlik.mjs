@@ -1059,5 +1059,39 @@ const bilinmeyen = await api(envO, 'best', { initData: idO, game: 'uydurma', opI
 check('odeme: bilinmeyen oyun reddediliyor', bilinmeyen.error === 'bilinmeyen oyun',
       `-> ${JSON.stringify(bilinmeyen)}`);
 
+/* LIDERLIK TABLOSU: elle eklenmis satirlar gorunmemeli.
+
+   16 Agustos 2026'da veritabanina elle 'test_leaderboard_v' adli bir
+   satir atilmis ve iki ay boyunca tablonun BIRINCI sirasinda oturmus -
+   sahip zaten gizlendigi icin en ustte o kalmis. Oyuncu kimligi her
+   zaman Telegram'in imzaladigi SAYISAL id; sayisal olmayan hicbir satir
+   gercek bir oyuncu degil.
+
+   Puan uzerinden dogrulaniyor, ad uzerinden degil: /api/leaderboard
+   cagrisi cagiranin adini initData'dan tazeliyor. */
+{
+  const DBL = makeDb(); const envL = { DB: DBL, BOT_TOKEN, BAKIM: '' };
+  const ekle = (id, ad, puan, kayit) => DBL.prepare(
+    'INSERT INTO players (id, name, points, created_at, updated_at) VALUES (?,?,?,?,?)',
+  ).bind(id, ad, puan, kayit, kayit).run();
+
+  ekle('5001', 'Gercek1', 100, 1);
+  ekle('5002', 'Gercek2', 50, 2);
+  ekle('test_leaderboard_v', 'V', 999999, 3);
+  ekle('seed_bot', 'Bot', 888888, 4);
+
+  const tablo = await api(envL, 'leaderboard', { initData: signedInitData('5001') });
+  const puanlar = (tablo.liste || []).map((x) => x.kazanilan);
+
+  check('liderlik: elle eklenmis satir listede yok',
+        !puanlar.includes(999999) && !puanlar.includes(888888),
+        `-> ${JSON.stringify(puanlar)}`);
+  check('liderlik: gercek oyuncularin hepsi duruyor',
+        puanlar.includes(100) && puanlar.includes(50), `-> ${JSON.stringify(puanlar)}`);
+  check('liderlik: en ust sira gercek oyuncu',
+        tablo.liste?.[0]?.kazanilan === 100 && tablo.liste?.[0]?.sira === 1,
+        `-> ${JSON.stringify(tablo.liste?.[0])}`);
+}
+
 console.log(`\n${passed} basarili, ${failed} basarisiz`);
 process.exit(failed > 0 ? 1 : 0);
