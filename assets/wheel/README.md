@@ -50,3 +50,19 @@ Kesim tam temiz değil: kafa halkanın bandının üstünde duruyordu ve bandın
 altın kenarı kafayla aynı tonda, otomatik ayırma ikisini ayıramadı. Alt
 yanlarda birkaç piksel bant kırıntısı kaldı. Ekranda 26–35px'te
 görünmüyorlar, siluete karışıyorlar — büyütülecekse yeniden kesilmeli.
+
+## stone-v2.webp (9 Ekim 2026)
+
+`stone.webp` dosyasinin 19-20. sutunlarinda, tas halkanin ~50px solunda,
+goruntunun neredeyse tamamini kat eden 2px'lik gri (64,64,64 / alfa 102)
+bir sizinti vardi - uretimden kalma bir artik. Koyu zeminde fark
+edilmiyordu; Telegram'in gunduz temasinda carkin solunda duz bir cizgi
+olarak goründü.
+
+Temizlik: halkanin gercek sol siniri x=33. x<33 aralığındaki alfa
+sifirlandi, baska hicbir piksele dokunulmadi. Ham dosya
+`_kaynak/stone-cizgili-ham.webp` olarak duruyor.
+
+Dosya YENI ISIMLE kondu (`stone-v2.webp`): goruntuler surum damgasi
+almiyor, ayni isimle uzerine yazsaydik mevcut oyuncular tarayici
+onbelleginden cizgili olani gormeye devam ederdi.

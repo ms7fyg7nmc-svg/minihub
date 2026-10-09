@@ -42,6 +42,11 @@
   --gold-yazi-parlak: #ffe9b3;
   --pembe-yazi: #ec8cb0;
 
+  /* Basari/hata yazisi. Ayni gerekce: dolgusuz, dogrudan zemin uzerine
+     yazilan yesil ve kirmizi gunduz temasinda soluk kaliyordu. */
+  --ok-yazi: #58d08a;
+  --hata-yazi: #ff9c8d;
+
   /* Hub'in renk paleti: arka plan lekeleri, baslik gecisi, kart seritleri */
   --c-blue: #5b8cff;
   --c-violet: #c079f2;
@@ -60,6 +65,12 @@
   --gold-yazi: #ad7208;
   --gold-yazi-parlak: #c28a12;
   --pembe-yazi: #b23566;
+  --ok-yazi: #117a46;
+  --hata-yazi: #c33527;
+}
+
+:root[data-tg-theme="light"] .wheel-wrap {
+  --cark-golge: drop-shadow(0 8px 16px rgba(52, 38, 84, 0.26));
 }
 
 /* color-mix() destekleyen motorlarda (guncel Chrome/Safari/Firefox) daha
@@ -79,6 +90,8 @@
     --gold-yazi: color-mix(in srgb, var(--gold), var(--tg-text-color, #fff) 38%);
     --gold-yazi-parlak: color-mix(in srgb, #ffe28a, var(--tg-text-color, #fff) 48%);
     --pembe-yazi: color-mix(in srgb, var(--c-pink), var(--tg-text-color, #fff) 26%);
+    --ok-yazi: color-mix(in srgb, #2fc47c, var(--tg-text-color, #fff) 26%);
+    --hata-yazi: color-mix(in srgb, #ff6a57, var(--tg-text-color, #fff) 26%);
   }
 }
 
@@ -1216,7 +1229,12 @@ body.hub::before {
 .daily-section.is-orta h3 { margin-bottom: 22px; }
 
 /* Cark artik bir CERCEVENIN icinde oturuyor: taslardan orulmus, rune
-   kazinmis, dort altin mizrakli bir halka (assets/wheel/stone.webp).
+   kazinmis, dort altin mizrakli bir halka (assets/wheel/stone-v2.webp).
+   (-v2: ilk dosyada, halkanin 50px solunda, uretimden kalma 2px'lik
+   dikey gri bir sizinti vardi. Koyu zeminde gorunmuyordu, gunduz
+   temasinda carkin solunda bir cizgi olarak ortaya cikti. Goruntuler
+   surum damgasi almadigi icin temizlenmis dosya YENI ISIMLE kondu,
+   yoksa tarayici eskisini onbellekten verirdi.)
    Eskiden yerinde conic-gradient ile cizilmis 7px'lik duz bir altin
    serit vardi.
 
@@ -1229,8 +1247,14 @@ body.hub::before {
    ETRAFINA oturuyor: ayni dis olcuyle devam etseydik cark 120px'e
    dusup rakamlar okunmaz olurdu. */
 .wheel-wrap {
-  --cark-cerceve: url("../assets/wheel/stone.webp");
+  --cark-cerceve: url("../assets/wheel/stone-v2.webp");
   --cark-delik: 0.547;
+
+  /* Cercevenin golgesi. Koyu temada agir siyah dogru duruyordu; gunduz
+     temasinda modal beyaza donunce ayni golge carkin altinda kirli gri
+     bir leke birakiyordu. Degisken [data-tg-theme="light"] altinda
+     yumusatiliyor. */
+  --cark-golge: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.5));
 
   position: relative;
   width: 300px;
@@ -1241,12 +1265,35 @@ body.hub::before {
   place-items: center;
 }
 
+/* Carkin ARKASINDAKI disk. Eskiden yoktu: cark dogrudan modal zemininin
+   uzerinde duruyordu ve gunduz temasinda bembeyaz bir bosluga asili
+   kaliyordu - tas halkanin uzerindeki acik firca izleri de zeminle
+   karisip cerceveyi delik gibi gosteriyordu. Disk mor/lacivert, carktan
+   biraz genis ve kenari tamamen seffafa gidiyor; iki temada da carki
+   zemine baglıyor. */
+.wheel-wrap::after {
+  content: '';
+  position: absolute;
+  /* Disk cerceveden GENIS: son durak %96'da, yani halkanin mizraklari
+     bittikten sonra. Daha dar tutuldugunda isiginin kesildigi yer
+     gorunur bir halka olarak okunuyordu. */
+  inset: -12%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 48%,
+    rgba(98, 68, 162, 0.28) 0%,
+    rgba(86, 62, 142, 0.21) 48%,
+    rgba(76, 56, 126, 0.09) 74%,
+    rgba(76, 56, 126, 0) 96%);
+  pointer-events: none;
+  z-index: 0;              /* carkin da cercevenin de ALTINDA */
+}
+
 .wheel-wrap::before {
   content: '';
   position: absolute;
   inset: 0;
   background: var(--cark-cerceve) center / contain no-repeat;
-  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.5));
+  filter: var(--cark-golge);
   pointer-events: none;
   z-index: 2;              /* cerceve carkin USTUNDE: kenarlari ortuyor */
 }
@@ -1757,14 +1804,23 @@ body.hub::before {
 
 /* --- GUNLUK GOREVLER ---
    Uc satir, her birinde minik bir ilerleme cubugu. Cubuklar bilerek ince:
-   kart oyunlarin ustunde duruyor ve dikkati oradan calmamali. */
+   kart oyunlarin ustunde duruyor ve dikkati oradan calmamali.
+
+   TEMA: bu kart bir sure sabit koyu renklerle yaziliydi (koyu degrade +
+   beyaz alfali cizgiler). Telegram'in gunduz temasinda sayfa beyaza
+   donuyor, kart koyu bir ada olarak kaliyor ve icindeki yazi --text ile
+   geldigi icin SIYAH oluyordu: koyu zeminde siyah yazi. Artik kart da
+   hub'in geri kalani gibi --yuzey/--cizgi uzerinden gidiyor; menekse
+   tonu bu yuzeyin USTUNE yaziliyor, yerine degil. */
 
 .gorev-kart {
   margin: 0 0 14px;
   padding: 13px 14px 12px;
   border-radius: 16px;
-  background: linear-gradient(160deg, rgba(42, 46, 68, 0.62), rgba(24, 26, 38, 0.62));
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background:
+    linear-gradient(160deg, rgba(111, 125, 255, 0.15), rgba(169, 139, 255, 0.05)),
+    var(--yuzey);
+  border: 1px solid var(--cizgi-soft);
 }
 
 .gorev-kart[hidden] { display: none; }
@@ -1793,7 +1849,7 @@ body.hub::before {
 
 /* Cubuk ucuncu sutunun ALTINDA degil, tum satirin altinda: metin uzadiginda
    cubugun boyu degismesin. */
-.gorev-bar { grid-column: 2 / -1; height: 4px; border-radius: 3px; background: rgba(255, 255, 255, 0.09); overflow: hidden; }
+.gorev-bar { grid-column: 2 / -1; height: 4px; border-radius: 3px; background: var(--yuzey-orta); overflow: hidden; }
 .gorev-bar b { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #6f7dff, #a98bff); }
 
 .gorev-tik {
@@ -1801,13 +1857,13 @@ body.hub::before {
   display: grid; place-items: center;
   border-radius: 50%;
   font-size: 10px; font-weight: 900;
-  color: #8e93ad;
-  border: 1.5px solid rgba(255, 255, 255, 0.16);
+  color: var(--muted);
+  border: 1.5px solid var(--cizgi);
 }
 
 .gorev-sayi { font-size: 11.5px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
 
-.gorev-satir.is-bitti .gorev-ad { color: var(--muted); text-decoration: line-through; text-decoration-color: rgba(255, 255, 255, 0.28); }
+.gorev-satir.is-bitti .gorev-ad { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--yuzey-guclu); }
 .gorev-satir.is-bitti .gorev-tik { color: #0d1018; background: #58d08a; border-color: #58d08a; }
 .gorev-satir.is-bitti .gorev-bar b { background: linear-gradient(90deg, #45c489, #58d08a); }
 
@@ -1826,7 +1882,7 @@ body.hub::before {
 }
 .gorev-al[hidden] { display: none; }
 .gorev-al:active { transform: scale(0.985); }
-.gorev-al:disabled { background: rgba(255, 255, 255, 0.07); color: var(--muted); cursor: default; }
+.gorev-al:disabled { background: var(--yuzey); color: var(--muted); cursor: default; }
 .gorev-al:disabled:active { transform: none; }
 
 /* --- PROMOSYON KODU (Ayarlar) --- */
@@ -1886,8 +1942,8 @@ body.hub::before {
   color: var(--muted);
 }
 .promo-sonuc[hidden] { display: none; }
-.promo-sonuc.is-ok { color: #58d08a; }
-.promo-sonuc.is-hata { color: #ff9c8d; }
+.promo-sonuc.is-ok { color: var(--ok-yazi); }
+.promo-sonuc.is-hata { color: var(--hata-yazi); }
 
 /* Kod kayitlari - yalnizca sahipte gorunuyor. */
 .promo-kayit { margin-top: 12px; }
