@@ -1,9 +1,9 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v236';
-import { submitScore, getBest, saveState, loadState, clearState } from '../../js/store.js?v236';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v236';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v236';
-import { yarimBirakmaOnayi } from '../../js/onay.js?v236';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v237';
+import { submitScore, getBest, saveState, loadState, clearState } from '../../js/store.js?v237';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v237';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v237';
+import { yarimBirakmaOnayi } from '../../js/onay.js?v237';
 
 const GAME_ID = 'tripletile';
 const POINTS_DIVISOR = 6;
@@ -30,18 +30,57 @@ registerTexts(GAME_ID, {
   earnedPoints: '+{points} $MH kazandın.',
 });
 
+/* TASLARIN YUZU
+   Onceki surumde bunlar EMOJI'ydi: tas renkli bir kare, ustunde bir
+   emoji karakteri. Iki sorun vardi. Birincisi emoji yazi tipi cihazin:
+   ayni oyun iPhone'da, Android'de ve masaustunde birbirine benzemeyen
+   uc farkli set gosteriyordu. Ikincisi okunurluk - ustunde baska tas
+   olan taslar brightness(0.45) ile karartiliyor ve kucucuk, ince
+   detayli emoji o karartmada kayboluyordu.
+
+   Artik hepsi tek sayfada, ayni elden cikma cizimler (assets/tripletile).
+   Kalin siyah konturlu, iki-uc tonlu, 30 piksele kuculdugunde bile
+   silueti okunan ikonlar - karartildiginda da duruyorlar.
+
+   RENK SECIMI tesaduf degil. Karo rengi ikonun rengine yakin secildi
+   ("kirmizi olan elma"), AMA hicbiri koyu degil: koyu bir karo zaten
+   karartilinca siyaha dusuyordu. Iki yeni oge bu yuzden tersine gitti -
+   altin sikke INDIGO uzerinde, mavi yumurta TERRAKOTA uzerinde; kendi
+   renklerinin zittina oturduklari icin karartilmis halde bile
+   secilebiliyorlar.
+
+   SIRA onemli: kindCountFor() ilk N turu kullaniyor, yani bastaki
+   dortlu her oyunda goruluyor. O dortlu (kirmizi/turkuaz/amber/mor)
+   birbirinden en uzak renkler olacak sekilde dizildi; $MH sikkesi
+   7. seviyede, ejderha yumurtasi 10. seviyede devreye giriyor. */
 const KINDS = [
-  { color: '#e2544e', icon: '🍎' },
-  { color: '#f5b942', icon: '🍋' },
-  { color: '#c079f2', icon: '🍇' },
-  { color: '#4ecb8b', icon: '🥑' },
-  { color: '#f2884b', icon: '🍊' },
-  { color: '#5b8cff', icon: '💎' },
-  { color: '#e2679c', icon: '🌸' },
-  { color: '#3fc7d4', icon: '🔔' },
-  { color: '#9aa87a', icon: '🍀' },
-  { color: '#b0763f', icon: '⭐' },
+  { color: '#e2544e', img: 'apple' },
+  { color: '#3fc7d4', img: 'bell' },
+  { color: '#f5b942', img: 'lemon' },
+  { color: '#c079f2', img: 'grape' },
+  { color: '#4ecb8b', img: 'avocado' },
+  { color: '#6c5ce7', img: 'mh' },       /* $MH sikkesi */
+  { color: '#c9654f', img: 'egg' },      /* ejderha yumurtasi */
+  { color: '#e2679c', img: 'flower' },
+  { color: '#f2884b', img: 'orange' },
+  { color: '#5b8cff', img: 'gem' },
+  { color: '#8fbf3f', img: 'clover' },
+  { color: '#b0763f', img: 'star' },
 ];
+
+/* Gorsel yolu bir kez hesaplaniyor. document.baseURI uzerinden, cunku
+   bu dosya games/tripletile/ altinda duruyor ve bagil bir yol CSS'e
+   girdiginde yanlis coze biliyor (bkz. projedeki url()/var() tuzagi). */
+const kindUrl = (i) => `url("${new URL(`../../assets/tripletile/${KINDS[i].img}.webp`, document.baseURI).href}")`;
+
+/* Ilk kare cizilirken ikonlar henuz inmemis olmasin diye hepsi onceden
+   istenir. Basarisiz olursa oyun yine calisir, sadece ikon gec gelir. */
+function ikonlariOnYukle() {
+  for (let i = 0; i < KINDS.length; i++) {
+    const im = new Image();
+    im.src = new URL(`../../assets/tripletile/${KINDS[i].img}.webp`, document.baseURI).href;
+  }
+}
 
 const FIELD_W = 10;
 const FIELD_H = 8;
@@ -105,6 +144,7 @@ document.addEventListener('langchange', () => applyStaticTexts());
 document.querySelector('.head-right').insertAdjacentHTML('afterbegin', soundToggleHtml());
 mountSoundToggle(document.getElementById('sound-toggle'));
 
+ikonlariOnYukle();
 bootstrap();
 
 async function bootstrap() {
@@ -395,7 +435,7 @@ function renderAll() {
     el.className = 'tile';
     el.style.zIndex = String(tile.z + 1);
     el.style.backgroundColor = KINDS[tile.kind].color;
-    el.textContent = KINDS[tile.kind].icon;
+    el.style.backgroundImage = kindUrl(tile.kind);
     el.addEventListener('click', () => onTileClick(index));
     tile.el = el;
     boardEl.appendChild(el);
@@ -426,7 +466,7 @@ function renderSlots(clearing = []) {
     if (filled) {
       el.classList.add('filled');
       el.style.backgroundColor = KINDS[filled.kind].color;
-      el.textContent = KINDS[filled.kind].icon;
+      el.style.backgroundImage = kindUrl(filled.kind);
       if (clearing.includes(i)) el.classList.add('clearing');
     }
     slotsEl.appendChild(el);

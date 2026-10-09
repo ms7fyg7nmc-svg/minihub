@@ -44,7 +44,13 @@ Hub'ın ilk izlenimi bu ızgara. Yedi kare tek sayfada üretilebilir.
 
 **1 sayfa · 13 CU**
 
-### 1.2 Yeni özelliklerin ikonları
+### ~~1.2 Üçlü Eşleştir'in taşları~~ ✅ 9 Ekim · 14 CU
+
+Oyunun on taşı **emoji** idi — cihazdan cihaza değişiyor ve alt kattaki
+taşlar karartılınca kayboluyordu. On ikiye çıkarıldı (biri $MH sikkesi,
+biri ejderha yumurtası), hepsi tek kolajdan. `assets/tripletile/`.
+
+### 1.3 Yeni özelliklerin ikonları
 
 Son günlerde eklenen ve hiç görseli olmayan ekranlar:
 
@@ -128,7 +134,9 @@ olmayan kare şimdiden üretilebilir.
 
 | Öncelik | Sayfa / görsel | CU |
 |---|---|---|
-| 1 — Her gün görülen | 2 sayfa | 26 |
+| ~~1 — oyun kareleri~~ | ✅ yapıldı | — |
+| ~~1 — Üçlü Eşleştir taşları~~ | ✅ 9 Ekim | 14 |
+| 1 — yeni özellik ikonları | 1 sayfa | 13 |
 | 2 — Sosyal ve duyuru | 11 görsel | 143 |
 | 3 — Gelecek | 4 sayfa | 52 |
 | **Toplam** | | **221 CU** |
