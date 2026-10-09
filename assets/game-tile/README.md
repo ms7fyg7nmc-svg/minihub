@@ -24,6 +24,18 @@ Ikinci tur once oyunlar ACILIP bakilarak yazildi:
 Yilan ilk turdan KALDI: o ikon zaten dogruydu ve ikinci kolajda model
 yedi yerine alti panel uretti. Tek kare icin 13 CU vermeye degmedi.
 
+## Kirpma: panelin KENDI icerigine gore ortala
+
+Model paneli istenen yukseklikte degil, sanati ortada bir banda koyarak
+donderebiliyor; ustelik band her panelde ayni yerde degil. Kareyi
+goruntunun dikey ortasindan kirpmak icerigi kaydiriyor - ilk turda alti
+panelin ALTISI birden 4 ile 69 piksel arasinda yukari kaymisti ve
+"match candy yukari tasmis" sikayeti buydu.
+
+Dogrusu: her panelin kenar enerjisinden (bulanik gri + fark) icerik
+sinirini bul, kareyi O merkeze gore kirp. Esik `max * 0.25`; daha
+dusuk esik gradyanin kendi gurultusunu icerik saniyor.
+
 ## Uretim
 
 Tek sayfada alti-yedi kare, GPT Image 2.5 Flare, 3584x512 istendi.
