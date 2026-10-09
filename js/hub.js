@@ -1,19 +1,19 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v237';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v238';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, enerjiBosMu, bakimListesi,
    getGorev, gorevAl, promoKullan, promoKayit, sahipMiyim,
-} from './store.js?v237';
-import { enerjiBosOnayi } from './onay.js?v237';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v237';
+} from './store.js?v238';
+import { enerjiBosOnayi } from './onay.js?v238';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v238';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniBaslat, iz } from './tani.js?v237';
+import { taniBaslat, iz } from './tani.js?v238';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -181,7 +181,7 @@ function gameList() {
          desc: t('game.tripletile.desc'),
          icon: ICONS.tripletile,
          url: 'games/tripletile/index.html',
-         foto: 'assets/game-tile/tripletile.webp',
+         foto: 'assets/game-tile/tripletile-v2.webp',
          gradient: 'linear-gradient(145deg, #ffdd92 0%, #f5b23f 48%, #e07a2c 100%)',
          accent: '#f5b942',
          ready: true,

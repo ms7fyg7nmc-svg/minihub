@@ -9,7 +9,11 @@
 # karo renkleri, oyundakiyle ayni kose yariciligi. Uretim gerekmiyor,
 # 0 CU, ve oyunun taslari degisirse bu betik tekrar calistirilir.
 #
-# Calistir: python3 ciz.py  ->  tripletile-1024.png + tripletile.webp
+# Dosya adinda -v2 var cunku goruntuler surum damgasi almiyor: eski
+# isimle uzerine yazsaydik mevcut oyuncular tarayici onbelleginden eski
+# limonu gormeye devam ederdi. js/hub.js bu ada bakiyor.
+#
+# Calistir: python3 ciz.py  ->  tripletile-1024.png + tripletile-v2.webp
 from PIL import Image, ImageDraw, ImageFilter
 import numpy as np
 import os
@@ -18,12 +22,17 @@ S = 4
 N = 1024 * S
 IK = os.path.join(os.path.dirname(__file__), '../../../tripletile')
 
-# UCU DE AYNI TAS. Once uc farkli oge (elma/can/limon) denendi ve
-# oyunun cesitliligini gosteriyordu, ama karenin anlatmasi gereken sey
-# cesitlilik degil MEKANIK: "ayni seyden uc tane topla". Tek bakista
-# bunu soyleyen sey ucunun de ayni olmasi.
-# Limon, KINDS[2] - oyunun kendi dosyasi, oyunun kendi karo rengi.
-TASLAR = [('lemon', '#f5b942')] * 3
+# UC FARKLI TAS: oyunun ilk uc turu (KINDS[0..2]).
+#
+# Once ucu de LIMON yapildi - "ayni seyden uc tane topla" mekanigini
+# tek bakista anlatsin diye. Fikir dogruydu, 46 PIKSELDE COKTU: hub
+# izgarasindaki gercek olcu bu ve orada ayni renkten uc karo tek bir
+# sari lekeye donusuyor. Eski kare de ayni dertten muzdaripti. Yan
+# komsu Match Candy'nin okunmasinin sebebi tam tersi: dort AYRI renk.
+#
+# Match Candy'den ayrisma renkle degil DIZILIMLE: o duz bir 2x2 izgara,
+# bu ustuste binen egik bir yigin - oyunun rafina giden tas yigini.
+TASLAR = [('apple', '#e2544e'), ('bell', '#3fc7d4'), ('lemon', '#f5b942')]
 hx = lambda c: tuple(int(c[i:i+2], 16) for i in (1, 3, 5))
 
 def rr(d, k, r, **kw):
@@ -80,10 +89,11 @@ def tas(ad, renk, px):
 # --- uc tas, hafif donuk, ustuste binen bir yigin ---
 # Aci ve konum elle secildi: ucu de tam gorunuyor, hicbiri digerinin
 # ikonunu kapatmiyor.
-# Karolar kadraji DOLDURUYOR. Ilk denemede 0.545 idi ve etrafinda genis
-# bos zemin kaliyordu; 72 piksele indiginde tas kalmiyordu geriye.
-PX = int(N * 0.615)
-YER = [(-8, (-0.045, -0.020)), (9, (0.395, -0.055)), (-3, (0.175, 0.370))]
+# Olcu ve egim 46 pikselde secildi, 256'da degil. Buyuk egim (8-9
+# derece) buyukte hos duruyor ama kucukte karolarin kenarlarini
+# bulaniklastirip yigini tek bir kutleye ceviriyor.
+PX = int(N * 0.585)
+YER = [(-4, (-0.010, 0.000)), (4, (0.420, -0.030)), (-2, (0.200, 0.390))]
 for (ad, renk), (aci, (fx, fy)) in zip(TASLAR, YER):
     kare = tas(ad, renk, PX)
     golge = kat(PX, lambda d: rr(d, (0, 0, PX - 1, PX - 1), int(PX * 0.13),
@@ -103,5 +113,5 @@ im = Image.alpha_composite(im, par.filter(ImageFilter.GaussianBlur(N * 0.022)))
 son = im.convert('RGB').resize((1024, 1024), Image.LANCZOS)
 son.save(os.path.join(os.path.dirname(__file__), 'tripletile-1024.png'))
 son.resize((256, 256), Image.LANCZOS).save(
-    os.path.join(os.path.dirname(__file__), 'tripletile.webp'), 'WEBP', quality=90, method=6)
-print('tripletile.webp hazir')
+    os.path.join(os.path.dirname(__file__), 'tripletile-v2.webp'), 'WEBP', quality=90, method=6)
+print('tripletile-v2.webp hazir')
