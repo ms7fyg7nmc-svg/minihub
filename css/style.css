@@ -1827,14 +1827,28 @@ body.hub::before {
 
 .gorev-bas {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
+  align-items: center;
+  gap: 7px;
   margin-bottom: 9px;
 }
 
 .gorev-bas strong { font-size: 14px; font-weight: 800; color: var(--text); }
-.gorev-yenilen { font-size: 11px; color: var(--muted); }
+/* Sagdaki "yarin yenilenir" bosluga itiliyor; basliktan ONCE gelen
+   ikon da solda, basliga yapisik kalsin diye space-between birakildi. */
+.gorev-yenilen { margin-left: auto; font-size: 11px; color: var(--muted); }
+
+/* Baslik ikonu: kart ve etiket basliklarinda kullanilan kucuk cizim.
+   Olcu 17-19px - bu boyutta ancak silueti okunuyor, o yuzden ayrintiya
+   degil tanimaya calisiyor (parsomen rulosu, bilet). */
+.bas-ikon {
+  flex: none;
+  width: 19px;
+  height: 19px;
+  object-fit: contain;
+  /* Gunduz temasinda beyaz zemine oturduklarinda kenarlari kayboluyordu;
+     hafif bir golge ikisinde de siluetin bitisini belli ediyor. */
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
 
 .gorev-liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 
@@ -1888,6 +1902,10 @@ body.hub::before {
 /* --- PROMOSYON KODU (Ayarlar) --- */
 
 .promo { margin-top: 14px; }
+
+/* Ikonlu etiket: ikon ve yazi ayni satirda, ortalanmis. */
+.promo-etiket-ikonlu { display: flex; align-items: center; gap: 6px; }
+.promo-etiket-ikonlu .bas-ikon { width: 17px; height: 17px; }
 
 .promo-etiket {
   display: block;

@@ -1,10 +1,10 @@
 
-import { loadState, saveState } from '../../js/store.js?v238';
+import { loadState, saveState } from '../../js/store.js?v239';
 import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_TAVANI,
          GENISLEME_N, GENISLEME_KILITLERI, GENISLEME_YUVA,
-         bostaHesapla } from './ekonomi.js?v238';
-import { CONFIG, eskiToplamHarcama } from './config.js?v238';
-import { turCek, turBul } from './turler.js?v238';
+         bostaHesapla } from './ekonomi.js?v239';
+import { CONFIG, eskiToplamHarcama } from './config.js?v239';
+import { turCek, turBul } from './turler.js?v239';
 
 const OYUN_ID = 'dragon';
 const SURUM = 7;

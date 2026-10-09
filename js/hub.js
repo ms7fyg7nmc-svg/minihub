@@ -1,19 +1,20 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v238';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v239';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, enerjiBosMu, bakimListesi,
    getGorev, gorevAl, promoKullan, promoKayit, sahipMiyim,
-} from './store.js?v238';
-import { enerjiBosOnayi } from './onay.js?v238';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v238';
+} from './store.js?v239';
+import { enerjiBosOnayi } from './onay.js?v239';
+import { odulGoster, odulOnYukle } from './odul.js?v239';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v239';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniBaslat, iz } from './tani.js?v238';
+import { taniBaslat, iz } from './tani.js?v239';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -697,6 +698,10 @@ async function renderGorevKart() {
       return;
    }
    alBtn.hidden = false;
+   /* Sandik gorseli, dugme GORUNUR OLDUGU anda isteniyor - oyuncunun
+      dokunmasini beklemeden. Odul ani bir dosyanin inmesini bekleyerek
+      baslamasin. */
+   odulOnYukle();
    alBtn.disabled = !!durum.alindi;
    alBtn.innerHTML = durum.alindi
       ? t('hub.gorev.alindi')
@@ -713,7 +718,16 @@ document.getElementById('gorev-al')?.addEventListener('click', async () => {
    haptic.tap();
    const sonuc = await gorevAl();
    if (sonuc?.ok) {
-      haptic.success();
+      /* Odul ani ONCE, bakiye tazelemesi SONRA. Sira onemli: perde
+         acikken arkadaki sayinin degismesini kimse gormuyor, ve perde
+         kapandiginda yeni bakiye zaten yerinde oluyor.
+         Gosterim beklenir ama SONUCU degistirmez - perde bir sebeple
+         acilamazsa bile odul alinmis durumda ve kart tazeleniyor. */
+      await odulGoster({
+         baslik: t('hub.odul.sandik'),
+         tutar: `+${Number(sonuc.odul || 0).toLocaleString(locale())} $MH`,
+         kapat: t('hub.odul.kapat'),
+      }).catch(() => {});
       await renderProfile();
    }
    await renderGorevKart();

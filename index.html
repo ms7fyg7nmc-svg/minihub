@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="238">
+  <meta name="surum" content="239">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MINI HUB GAMES</title>
   <!-- Cark rakamlari icin (bkz. js/hub.js WHEEL_FONT). Ejderha Adasi
@@ -50,7 +50,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v238">
+  <link rel="stylesheet" href="css/style.css?v239">
 </head>
 <body class="hub">
   <!-- ACILIS EKRANI
@@ -160,6 +160,9 @@
          bakmak oluyor. Misafirde gizli kaliyor (ilerleme sunucuda). -->
     <section class="gorev-kart" id="gorev-kart" hidden>
       <div class="gorev-bas">
+        <!-- Ikon data-i18n'in DISINDA: i18n cevirirken elemanin
+             innerHTML'ini bastan yaziyor, iceri konan her sey silinir. -->
+        <img class="bas-ikon" src="assets/icons/gorev.webp" alt="" width="19" height="19">
         <strong data-i18n="hub.gorev.title">Günlük Görevler</strong>
         <span class="gorev-yenilen" data-i18n="hub.gorev.yenilen">Yarın yenilenir</span>
       </div>
@@ -210,7 +213,10 @@
       <!-- PROMOSYON KODU. Dogrulamanin tamami sunucuda; buradaki tek is
            yaziyi gondermek ve cevabi gostermek. -->
       <div class="promo">
-        <label class="promo-etiket" for="promo-giris" data-i18n="hub.promo.title">Promosyon kodu</label>
+        <label class="promo-etiket promo-etiket-ikonlu" for="promo-giris">
+          <img class="bas-ikon" src="assets/icons/promo.webp" alt="" width="17" height="17">
+          <span data-i18n="hub.promo.title">Promosyon kodu</span>
+        </label>
         <div class="promo-satir">
           <!-- lang="en" SART: sayfa dili Turkce oldugunda CSS'in
                text-transform:uppercase kurali "di" yazisini "Dİ" yapiyor
@@ -351,6 +357,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v238"></script>
+  <script type="module" src="js/hub.js?v239"></script>
 </body>
 </html>

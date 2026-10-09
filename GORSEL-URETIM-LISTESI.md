@@ -50,19 +50,37 @@ Oyunun on taşı **emoji** idi — cihazdan cihaza değişiyor ve alt kattaki
 taşlar karartılınca kayboluyordu. On ikiye çıkarıldı (biri $MH sikkesi,
 biri ejderha yumurtası), hepsi tek kolajdan. `assets/tripletile/`.
 
-### 1.3 Yeni özelliklerin ikonları
+### ~~1.3 Yeni özelliklerin ikonları~~ ✅ 10 Ekim · 13 CU
 
-Son günlerde eklenen ve hiç görseli olmayan ekranlar:
+Tek kolajdan 8 ikon: görev parşömeni, tüccar tezgahı, promosyon bileti,
+açık sandık, kapalı sandık, rozet, hediye, kese. `assets/icons/`.
 
-- **Günlük görevler** — hub kartının ikonu yok
-- **Tüccar** — şu an tutorial büyücüsünün kırpılmış yüzü kullanılıyor,
-  kendi sekmesi için ikon yok
-- **Promosyon kodu** — Ayarlar'da sade bir kutu
-- **Sandık açılışı** — ödül anının görseli yok
+Bağlananlar:
 
-Dördü + yedek birkaçı tek sayfada.
+- **Günlük görevler** — kart başlığına parşömen ikonu
+- **Promosyon kodu** — Ayarlar'daki etiketin başına bilet ikonu
+- **Tüccar** — Ejderha Adası'nın sekme çubuğunda büyücünün tüm portresi
+  26 piksele sıkışıyordu; yerine tezgah ikonu. Büyücünün kendisi tüccar
+  ekranının başında duruyor, karakter kaybolmadı.
+- **Sandık açılışı** — asıl eksik buradaydı. "Sandığı aç"a basınca
+  ekranda hiçbir şey olmuyordu: düğme "alındı"ya dönüyor, bakiye sessizce
+  artıyordu. Artık perde + açılan sandık + kazanılan miktar
+  (`js/odul.js`).
 
-**1 sayfa · 13 CU**
+Yedekte kalanlar: kapalı sandık, rozet, hediye, kese.
+
+### Match Candy'nin taşları — ÜRETİLDİ, KULLANILMADI · 13 CU
+
+8 şeker üretildi (nane, karamela, lolipop, sakız, jelibon, mor şeker,
+trüf, kalp). **Sahibin kararı: oyun olduğu gibi kalsın** — renk ayrımı
+net, nesneler okunabiliyor, Candy formatından çıkarmaya gerek yok.
+
+Dosyalar silinmedi, `assets/match3/_kaynak/kesim/` altında duruyor
+(`_` ile başladığı için yayınlanmıyor). Ayrıntı: `assets/match3/README.md`.
+
+**Kural olarak kalsın:** Scenario kullanılacaksa oyunun şu anki
+karakterine benzer bir yapı kurulmalı. Şekerler bu yüzden tutmadı.
+
 
 ---
 
@@ -136,7 +154,8 @@ olmayan kare şimdiden üretilebilir.
 |---|---|---|
 | ~~1 — oyun kareleri~~ | ✅ yapıldı | — |
 | ~~1 — Üçlü Eşleştir taşları~~ | ✅ 9 Ekim | 14 |
-| 1 — yeni özellik ikonları | 1 sayfa | 13 |
+| ~~1 — yeni özellik ikonları~~ | ✅ 10 Ekim | 13 |
+| ~~Match Candy şekerleri~~ | üretildi, kullanılmadı | 13 |
 | 2 — Sosyal ve duyuru | 11 görsel | 143 |
 | 3 — Gelecek | 4 sayfa | 52 |
 | **Toplam** | | **221 CU** |
