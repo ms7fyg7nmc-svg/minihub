@@ -1,19 +1,19 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v232';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v233';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, enerjiBosMu, bakimListesi,
    getGorev, gorevAl, promoKullan, promoKayit, sahipMiyim,
-} from './store.js?v232';
-import { enerjiBosOnayi } from './onay.js?v232';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v232';
+} from './store.js?v233';
+import { enerjiBosOnayi } from './onay.js?v233';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v233';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniBaslat, iz } from './tani.js?v232';
+import { taniBaslat, iz } from './tani.js?v233';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -150,6 +150,7 @@ function gameList() {
          gradient: 'linear-gradient(145deg, #ffcd8a 0%, #f2834f 48%, #d94f3d 100%)',
          accent: '#f2884b',
          url: 'games/2048/index.html',
+         foto: 'assets/game-tile/2048.webp',
          ready: true,
       },
       {
@@ -158,6 +159,7 @@ function gameList() {
          desc: t('game.blockblast.desc'),
          icon: ICONS.blockblast,
          url: 'games/blockblast/index.html',
+         foto: 'assets/game-tile/blockblast.webp',
          gradient: 'linear-gradient(145deg, #9db7ff 0%, #5e74ff 48%, #3f3fd0 100%)',
          accent: '#5b8cff',
          ready: true,
@@ -168,6 +170,7 @@ function gameList() {
          desc: t('game.match3.desc'),
          icon: ICONS.match3,
          url: 'games/match3/index.html',
+         foto: 'assets/game-tile/match3.webp',
          gradient: 'linear-gradient(145deg, #ffa3c8 0%, #e56a9f 48%, #b8407c 100%)',
          accent: '#e2679c',
          ready: true,
@@ -178,6 +181,7 @@ function gameList() {
          desc: t('game.tripletile.desc'),
          icon: ICONS.tripletile,
          url: 'games/tripletile/index.html',
+         foto: 'assets/game-tile/tripletile.webp',
          gradient: 'linear-gradient(145deg, #ffdd92 0%, #f5b23f 48%, #e07a2c 100%)',
          accent: '#f5b942',
          ready: true,
@@ -188,6 +192,7 @@ function gameList() {
          desc: t('game.flow.desc'),
          icon: ICONS.flow,
          url: 'games/flow/index.html',
+         foto: 'assets/game-tile/flow.webp',
          gradient: 'linear-gradient(145deg, #86efe2 0%, #37bed2 48%, #2272a0 100%)',
          accent: '#3fc7d4',
          bestKey: 'hub.level',
@@ -199,6 +204,7 @@ function gameList() {
          desc: t('game.snake.desc'),
          icon: ICONS.snake,
          url: 'games/snake/index.html',
+         foto: 'assets/game-tile/snake.webp',
          gradient: 'linear-gradient(145deg, #95f2bd 0%, #45c489 48%, #23865c 100%)',
          accent: '#4ecb8b',
          ready: true,
@@ -209,6 +215,7 @@ function gameList() {
          desc: t('game.coindrop.desc'),
          icon: ICONS.coindrop,
          url: 'games/coindrop/index.html',
+         foto: 'assets/game-tile/coindrop.webp',
          gradient: 'linear-gradient(145deg, #ffe9a6 0%, #f3c257 48%, #bd8420 100%)',
          accent: '#f5b942',
          ready: true,
