@@ -84,36 +84,42 @@ karakterine benzer bir yapı kurulmalı. Şekerler bu yüzden tutmadı.
 
 ---
 
-## Öncelik 2 — Sosyal medya ve duyuru · 143 CU
+## ~~Öncelik 2 — Sosyal medya ve duyuru~~ ✅ 10 Ekim · 84 CU
 
-Şu an elimizde **tek bir sosyal görsel** var: `davet-arkadas`. Telegram
-kanalı ve duyurular için kullanılabilecek başka hiçbir şey yok.
+Listede 143 CU yazıyordu; **84 CU'ya bitti.** Fark, dördünün
+üretilmeyip oyunun kendi varlıklarından kurulmasından geliyor.
 
-Bunlar kolaj yapılamıyor — her biri tam bir kompozisyon, ayrı üretim
-gerekiyor.
+### Üretilen 8 görsel · 84 CU · `assets/_sosyal/`
 
-### 2.1 Oyun içi etkinlik duyuruları · 7 görsel · ~91 CU
-
-| Görsel | Ne için |
+| Görsel | Nerede |
 |---|---|
-| **Günlük görevler** | Üç görev + sandık; "her gün yeni görev" duyurusu |
-| **Tüccar geldi** | Büyücü tezgahının başında, önünde yumurtalar |
-| **On kademe yumurta** | Yeni zincirin tanıtımı — kabuktan taşa |
-| **Ejderha yakalandı** | Nadir anın kutlaması; oyuncu paylaşsın diye |
-| **Haftalık liderlik** | Sıralama duyurusu şablonu |
-| **Enerji / ödül çarkı** | Günlük geri dönüş hatırlatması |
-| **Promosyon kodu** | Kod dağıtım duyurusu şablonu |
+| `kanal-kapagi` | Telegram kanalının üst görseli |
+| `miniapp-onizleme` | Telegram'daki oyun kartı |
+| `minihub-nedir` | Sabitlenmiş tanıtım gönderisi |
+| `tuccar-geldi` | Tüccar / sipariş duyurusu |
+| `ejderha-yakalandi` | Nadir an kutlaması |
+| `odul-carki` | Günlük dönüş hatırlatması |
+| `promosyon-kodu` | Kod dağıtım duyurusu |
+| `bos-afis` | Boş şablon |
 
-### 2.2 Kanal ve mağaza · 4 görsel · ~52 CU
+### Kodla kurulan 4 görsel · 0 CU
 
-| Görsel | Ne için |
-|---|---|
-| **Telegram kanal kapağı** | Kanalın üst görseli |
-| **Sabitlenmiş gönderi** | "Minihub nedir" tanıtımı |
-| **Mini App önizleme** | Telegram'da oyunun kartı |
-| **Genel güncelleme afişi** | Üzerine yazı eklenebilen boş şablon |
+`on-kademe-yumurta`, `gunluk-gorevler`, `haftalik-liderlik`,
+`genel-afis` — zemin `bos-afis`, üzerindekiler oyunun gerçek dosyaları
+(`assets/_sosyal/_kodla/ciz.py`).
 
----
+### Bu turda öğrenilen: referans görsel
+
+Sekiz görselin aynı dünyada durmasını sağlayan şey prompt değil,
+**`davet-arkadas.webp`'in `referenceImages` olarak verilmesi** oldu.
+Metinle "sıcak resimsi fantezi" demek yetmiyor; referansla birlikte
+hepsi aynı büyücüyü, aynı altın ışığı ve aynı yarasa amblemli
+sandıkları taşıyor. Yeni sosyal görselde **aynı referansı ver.**
+
+Hiçbirinin içinde yazı yok — başlık sonradan, istenen dilde konuyor.
+Dört dile dört görsel üretmek hem pahalı hem her metin değişikliğinde
+yeniden üretim demek.
+
 
 ## Öncelik 3 — Geleceği düşünerek · 52 CU
 
@@ -156,7 +162,7 @@ olmayan kare şimdiden üretilebilir.
 | ~~1 — Üçlü Eşleştir taşları~~ | ✅ 9 Ekim | 14 |
 | ~~1 — yeni özellik ikonları~~ | ✅ 10 Ekim | 13 |
 | ~~Match Candy şekerleri~~ | üretildi, kullanılmadı | 13 |
-| 2 — Sosyal ve duyuru | 11 görsel | 143 |
+| ~~2 — Sosyal ve duyuru~~ | ✅ 10 Ekim · 8 üretildi + 4 kodla | 84 |
 | 3 — Gelecek | 4 sayfa | 52 |
 | **Toplam** | | **221 CU** |
 

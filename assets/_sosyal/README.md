@@ -1,40 +1,75 @@
-# Sosyal medya görselleri
+# Sosyal medya ve duyuru görselleri
 
-Telegram kanalı ve sosyal paylaşımlar için üretilen görseller. **Oyunun
-içinde kullanılmıyorlar.**
+Bu klasör **oyuna inmiyor.** `_` ile başladığı için GitHub Pages burayı
+yayınlamıyor — dosyalar Telegram kanalına, duyurulara ve paylaşımlara
+elle konmak için duruyor.
 
-Klasör adı alt çizgiyle başlıyor, bu yüzden GitHub Pages bunları
-yayınlamıyor (bkz. `assets/README.md`) — git'te duruyorlar ama oyuncunun
-telefonuna inmiyorlar. Pazarlama görselleri megabaytlarca yer tutar,
-siteye çıkmalarının bir anlamı yok.
-
-| Dosya | Konu | Boyut |
+| Dosya | Ölçü | Nerede kullanılır |
 |---|---|---|
-| `davet-arkadas.{jpg,webp}` | Arkadaş davet — iki büyücü el sıkışıyor | 2048×2048 |
+| `kanal-kapagi.webp` | 1536×864 | Telegram kanalının üst görseli |
+| `miniapp-onizleme.webp` | 1280×720 | Telegram'da oyunun önizleme kartı |
+| `minihub-nedir.webp` | 1536×864 | Sabitlenmiş tanıtım gönderisi |
+| `tuccar-geldi.webp` | 1536×864 | Tüccar / sipariş duyurusu |
+| `ejderha-yakalandi.webp` | 1536×864 | Nadir an kutlaması, oyuncu paylaşsın diye |
+| `odul-carki.webp` | 1536×864 | Günlük dönüş / enerji hatırlatması |
+| `promosyon-kodu.webp` | 1536×864 | Kod dağıtım duyurusu |
+| `bos-afis.webp` | 1536×864 | Üzerine yazı eklenebilen boş şablon |
+| `davet-arkadas.webp` | 2048×2048 | Arkadaş davet görseli (daha eski) |
 
-JPG her yere yüklenir; WebP Telegram için daha küçük ve aynı kalitede.
+Bunlar **üretilmedi, kodla kuruldu** (`_kodla/ciz.py`, 0 CU) — zemin
+`bos-afis.webp`, üzerindeki her şey oyunun kendi dosyası:
 
-## Üretim notu
+| Dosya | Ölçü | Nerede kullanılır |
+|---|---|---|
+| `on-kademe-yumurta.webp` | 1536×864 | Yumurta zincirinin tanıtımı — Lv.1'den Lv.10'a |
+| `gunluk-gorevler.webp` | 1536×864 | "Her gün yeni görev" duyurusu |
+| `haftalik-liderlik.webp` | 1536×864 | Haftalık sıralama şablonu |
+| `genel-afis.webp` | 1536×864 | Nesneli genel duyuru şablonu |
 
-Büyücü, `assets/tutorial/wizard-greet.png` **referans görsel olarak
-Scenario'ya verilerek** üretildi — tarif tek başına aynı yüzü getirmiyor
-(bkz. `assets/tutorial/README.md`).
+Taşlar, sandıklar ya da yumurtalar değişirse `python3 _kodla/ciz.py`
+yeniden kurar. Üretim gerekmiyor çünkü bu dördü kompozisyon, sahne
+değil — oyunun varlıklarını diziyorlar.
 
-Görsellerde **yazı yok**, bilerek. Yapay zeka metinde güvenilir değil ve
-gömülü yazı dört dile çevrilemez. Başlık/çağrı metni paylaşırken
-gönderinin kendisine yazılmalı, ya da üstüne ayrı bir katman olarak
-eklenmeli.
+Hepsinde **yazı için boşluk** var ve hiçbirinin içinde yazı yok —
+başlığı sonradan, istediğin dilde koyabilirsin. Dört dilde ayrı görsel
+üretmek yerine tek görsel + sonradan yazı, hem ucuz hem esnek.
 
-`davet-arkadas` üç turda oturdu, her turda bir öncekini **referans
-görsel** olarak verip yalnızca düzeltilecek şeyi tarif ederek:
+## Üretim (10 Ekim 2026)
 
-1. İlk üretim. Üç ejderha silüeti çıktı; üçüncüsü koddan silindi
-   (gökyüzü düz bir geçiş, yatay enterpolasyonla iz bırakmadan kapandı).
-2. Sandıklardaki yıldızlar yarım/bozuk geliyordu ve amblem bizimkine
-   benzemiyordu. Mevcut görsel + `assets/packs` künyesi birlikte referans
-   verilince ikisi de düzeldi — ama ejderhalar öne gelip büyüdü.
-3. Yalnızca ejderha boyutuna odaklanan son tur. Ejderhalar ufka döndü,
-   geri kalan her şey korundu.
+Sekizi tek oturumda, **GPT Image 2.5 Flare** ile, toplam **~84 CU**.
+Ham dosyalar `_kaynak/` altında; yayına giren kopyalar kalite 88'e
+sıkıştırıldı (10,6 MB → 1,4 MB, sosyal medyada fark edilmiyor).
 
-**Ders:** tek seferde üç şeyi birden düzelttirmek, düzeltilmesi
-istenmeyen şeyi bozuyor. Her tur tek bir konuya odaklanmalı.
+### Karakteri tutturan şey: referans görsel
+
+Asıl numara prompt değil, **`davet-arkadas.webp`'in referans görsel
+olarak verilmesi** oldu. Tek başına metinle "sıcak resimsi fantezi"
+demek yetmiyor; sekiz görsel sekiz ayrı dünyada çıkıyor. Referansla
+birlikte hepsi aynı büyücüyü, aynı altın ışığı, aynı yarasa amblemli
+sandıkları ve aynı fırça dokusunu taşıyor.
+
+Bu, sahibin koyduğu kuralın uygulaması: *"Eğer scenario kullanacaksan
+oyunun şuanki karakterine benzer bir yapı oluştur."* Yeni bir sosyal
+görsel gerektiğinde **aynı referansı ver**, yoksa set dağılır.
+
+Referans yüklemesi: `upload_asset` → parçayı `curl -T` ile PUT et →
+`upload_asset_complete`. Dönen `asset_id` `referenceImages` dizisine
+konuyor (tek görsel için bile dizi olmak zorunda).
+
+### Promptlarda sabit kalan kısım
+
+Her promptun başında şu duruyor:
+
+> Keep the exact art style of the reference image: warm painterly
+> storybook fantasy illustration, soft golden light, rounded friendly
+> character shapes, rich saturated colours. Same world, same palette,
+> same brushwork.
+
+ve sonunda:
+
+> No text, no letters, no numbers, no logo, no watermark anywhere.
+
+Ortadaki sahne tarifi her görselde değişiyor. Oyunun gerçek
+kaynakları tarife açıkça yazılıyor — altın yıldız, kırmızı et, yarasa
+kanatlı amblemli sikke, pullu yumurta — yoksa model genel fantezi
+nesneleri koyuyor ve görsel oyunla bağını kaybediyor.
