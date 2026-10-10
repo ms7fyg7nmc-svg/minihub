@@ -1,29 +1,29 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v249';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v249';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v251';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v251';
 
-import { CONFIG, gorselSeviye } from './config.js?v249';
-import { bakimdaMi } from '../../js/store.js?v249';
+import { CONFIG, gorselSeviye } from './config.js?v251';
+import { bakimdaMi } from '../../js/store.js?v251';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
          ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA,
-         izgarayiGenislet, genislemeHakki } from './model.js?v249';
-import { dragonSvg, dragonAssetUrls } from './art.js?v249';
-import { turCek, turYolu, turBul } from './turler.js?v249';
-import { taniBaslat, iz } from '../../js/tani.js?v249';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v249';
+         izgarayiGenislet, genislemeHakki } from './model.js?v251';
+import { dragonSvg, dragonAssetUrls } from './art.js?v251';
+import { turCek, turYolu, turBul } from './turler.js?v251';
+import { taniBaslat, iz } from '../../js/tani.js?v251';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v251';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
          kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
          PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
-         partnerKademe } from './gorevler.js?v249';
-import { getBest, gorevOlay, promoKutuAl } from '../../js/store.js?v249';
-import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v249';
+         partnerKademe } from './gorevler.js?v251';
+import { getBest, gorevOlay, promoKutuAl } from '../../js/store.js?v251';
+import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v251';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v249';
+         kilitliMi, nesneMi } from './grid.js?v251';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v249';
-import { createTutorial, pozListesi } from './tutorial.js?v249';
+         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v251';
+import { createTutorial, pozListesi } from './tutorial.js?v251';
 
 const GAME_ID = 'dragon';
 
@@ -254,6 +254,9 @@ const simdi = () => Date.now();
 /* Kap adi kademesine gore degisiyor: kese, sepet, sandik, usta sandigi. */
 function nesneAdi(h) {
   if (!h) return '';
+  /* Kilitli hucrenin odulu artik bir NESNE olmayabilir: uc kilit
+     dogrudan yildiz veriyor (bkz. ekonomi.js YILDIZ_ODULU). */
+  if (h.stars) return t('gotStars', { n: bicim(h.stars) });
   if (h.t === 'egg') return t('eggName', { lv: h.lv });
   const kademe = Math.min(4, Math.max(1, h.lv));
   return t(`${h.t === 'star' ? 'packStar' : 'packFood'}${kademe}`);
@@ -844,8 +847,16 @@ function kilidiAc(i) {
   oyuncu.stars -= hucre.fiyat;
   oyuncu.sayaclar.unlocks += 1;
   const odul = hucre.odul;
-  oyuncu.grid.cells[i] = { t: odul.t, lv: odul.lv };
-  if (odul.t === 'egg') oyuncu.sayaclar.maxEggLv = Math.max(oyuncu.sayaclar.maxEggLv, odul.lv);
+  if (odul.stars) {
+    /* Dogrudan yildiz: hucre bos kaliyor, izgaraya bir kap konmuyor. */
+    oyuncu.stars += odul.stars;
+    oyuncu.grid.cells[i] = null;
+    kazanimUcur(board.hucreKutusu(i), 'star', 5);
+    odulUcur(t('gotStars', { n: bicim(odul.stars) }), true);
+  } else {
+    oyuncu.grid.cells[i] = { t: odul.t, lv: odul.lv };
+    if (odul.t === 'egg') oyuncu.sayaclar.maxEggLv = Math.max(oyuncu.sayaclar.maxEggLv, odul.lv);
+  }
   kaydet();
   board.ciz(); board.sec(i);
   kaynakTazele(true);
@@ -1457,7 +1468,7 @@ function partnerSayfaCiz() {
       <span>${t('grandNote')}</span>
     </div>
     <div class="buyuk-oduller">
-      ${PARTNER_BUYUK_ODUL.map((o) => `<img src="${gorselYolu(o)}" alt="">`).join('')}
+      ${PARTNER_BUYUK_ODUL.map((o) => `<img src="${o.stars ? '../../assets/currency/star-64.webp' : gorselYolu(o)}" alt="">`).join('')}
     </div>
     <button class="act-btn primary buyuk-al"${buyukHazir ? '' : ' disabled'}>
       ${oyuncu.partner.buyukOdul ? t('questDone') : t('questClaim')}
@@ -1466,7 +1477,10 @@ function partnerSayfaCiz() {
   buyuk.querySelector('button').addEventListener('click', () => {
     if (!buyukOdulHazirMi() || oyuncu.partner.buyukOdul) return;
     oyuncu.partner.buyukOdul = true;
-    for (const o of PARTNER_BUYUK_ODUL) odulVer({ item: { ...o } }, buyuk.querySelector('button'));
+    /* Listede artik hem nesne hem dogrudan yildiz olabiliyor. */
+    for (const o of PARTNER_BUYUK_ODUL) {
+      odulVer(o.stars ? { stars: o.stars } : { item: { ...o } }, buyuk.querySelector('button'));
+    }
     kaydet();
     haptic.success();
     partnerSayfaCiz();

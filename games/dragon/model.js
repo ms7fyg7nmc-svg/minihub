@@ -1,10 +1,10 @@
 
-import { loadState, saveState } from '../../js/store.js?v249';
+import { loadState, saveState } from '../../js/store.js?v251';
 import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_TAVANI,
          GENISLEME_N, GENISLEME_KILITLERI, GENISLEME_YUVA,
-         bostaHesapla } from './ekonomi.js?v249';
-import { CONFIG, eskiToplamHarcama } from './config.js?v249';
-import { turCek, turBul } from './turler.js?v249';
+         bostaHesapla } from './ekonomi.js?v251';
+import { CONFIG, eskiToplamHarcama } from './config.js?v251';
+import { turCek, turBul } from './turler.js?v251';
 
 const OYUN_ID = 'dragon';
 const SURUM = 7;
@@ -117,6 +117,15 @@ function yeniOyuncu() {
 function hucreDuzelt(c) {
   if (!c) return null;
   if (c.kilit) {
+    /* Kilit odulu iki sekilde olabiliyor: bir NESNE ({t, lv}) ya da
+       DOGRUDAN YILDIZ ({stars}). Ikincisi eklendiginde burasi yalnizca
+       nesne sekli taniyordu ve kayit her yuklendiginde {stars: 1800}
+       sessizce {t:'egg', lv:1}'e donuyordu - yani uc kilidin odulu
+       kayboluyordu. */
+    if (c.odul?.stars) {
+      return { kilit: true, fiyat: Number(c.fiyat) || 0,
+               odul: { stars: Math.max(0, Math.round(Number(c.odul.stars) || 0)) } };
+    }
     return {
       kilit: true,
       fiyat: Number(c.fiyat) || 0,

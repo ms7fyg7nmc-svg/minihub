@@ -94,7 +94,44 @@ export function atlamaFiyati(kalanMs) {
    ya birlestirmeyle ya da yildizla acilan kilitli hucrelerden geliyor.
 
    Her satir: [en az, en cok, yuzde]. Yuzdeler 100'e tamamlaniyor. */
+/* YILDIZ KABI IZGARADAN KALDIRILDI (10 Ekim 2026).
+
+   Yildiz sandigi uc ayri sekilde kiriktir ve ucu de ayni koke baglidir:
+   ODEDIGIN PARAYLA ALDIGIN PARA AYNI.
+
+   1. Atlama bir gider degil gelirdi. atlamaFiyati() yalnizca kalan
+      SUREYE bakiyor, icindekine bakmiyor; 90 dakikalik bir usta sandigi
+      icinde 1.790 yildiz varken 13 yildiza aciliyordu. x137.
+   2. Acmak hicbir zaman dogru hamle degildi. Iki kap birlesip bir ust
+      kademe oluyor ve sekiz keseyi usta sandigina cikarmak, sekizini
+      acmaktan 25 kat fazla veriyordu. Karar diye bir sey yoktu, tek
+      dogru cevap vardi ve oyun onu soylemiyordu.
+   3. Kilit merdiveni yildiz yemiyor, uretiyordu: 16 kilit 3.470 yildiz
+      tutuyor, uc tanesi Lv4 yildiz sandigi veriyordu (~5.371), net
+      +1.901.
+
+   Cozum KAYNAGI kapatmak oldu, elde olani almak degil. Yildiz hala
+   odul, ama artik dogrudan veriliyor - izgarada bekleyen, sayac isleyen,
+   birlestirilen bir nesne degil. Yem sandiklari aynen duruyor: orada
+   atlama gercekten bir gider, cunku yildiz odeyip YEM aliyorsun.
+
+   OYUNCULARIN ELINDEKILERE DOKUNULMADI. Izgarasinda yildiz kabi olan
+   bir kayit yuklendiginde kap yerinde duruyor ve eskisi gibi calisiyor.
+   Kazanilmis bir sey geri alinmaz; sayilari da sinirli ve artmiyor.
+
+   Asagidaki miktarlar eski kademelerin beklenen degerinden geliyor
+   (8,8 / 51,4 / 384,5 / 1.790,3), yuvarlanmis haliyle. Rastgelelik
+   kalktigi icin yuvarlak sayi daha dogru: oyuncuya "10 yildiz" demek
+   "8 ile 12 arasi bir sey" demekten iyi. */
+export const YILDIZ_ODULU = { 1: 10, 2: 50, 3: 400, 4: 1800 };
+
 export const SANDIK_MERDIVEN = {
+  /* Yildiz merdiveni CANLI KALIYOR. Yeni yildiz kabi uretilmiyor ama
+     oyuncularin izgarasinda halihazirda duranlar aynen calismaya devam
+     ediyor: birlestiriliyor, sayaci isliyor, aciliyor. Kaldirilmadilar
+     cunku oyuncunun kazandigi bir sey geri alinmaz - elindekiler hediye.
+     Sayilari sinirli ve artmiyor, yani ekonomiye etkisi kendiliginden
+     tukeniyor. */
   star: {
     1: [[7, 8, 50], [9, 10, 30], [11, 11, 15], [12, 12, 5]],
     2: [[30, 45, 50], [46, 65, 30], [66, 85, 15], [86, 100, 5]],
@@ -170,7 +207,7 @@ export const KILITLI_HUCRELER = {
   12: { fiyat: 85,  odul: { t: 'egg',  lv: 7 } },
   13: { fiyat: 120, odul: { t: 'egg',  lv: 8 } },
   14: { fiyat: 160, odul: { t: 'egg',  lv: 8 } },
-  15: { fiyat: 220, odul: { t: 'star', lv: 4 } },
+  15: { fiyat: 220, odul: { stars: 1800 } },
 };
 
 /* ---------- IZGARA GENISLEMESI ----------
@@ -193,10 +230,10 @@ export const GENISLEME_KILITLERI = {
   10: { fiyat: 130, odul: { t: 'food', lv: 4 } },
   2:  { fiyat: 180, odul: { t: 'egg',  lv: 8 } },
   15: { fiyat: 240, odul: { t: 'egg',  lv: 8 } },
-  3:  { fiyat: 320, odul: { t: 'star', lv: 4 } },
+  3:  { fiyat: 320, odul: { stars: 1800 } },
   20: { fiyat: 420, odul: { t: 'egg',  lv: 8 } },
   4:  { fiyat: 560, odul: { t: 'food', lv: 4 } },
-  0:  { fiyat: 760, odul: { t: 'star', lv: 4 } },
+  0:  { fiyat: 760, odul: { stars: 1800 } },
 };
 
 /* Genisleme hangi yuva sayisinda aciliyor. */
@@ -278,7 +315,7 @@ export const GUNLUK_ODULLER = [
   { item: { t: 'food', lv: 1 } },
   { stars: 3 },
   { item: { t: 'egg', lv: 4 } },
-  { item: { t: 'star', lv: 1 } },
+  { stars: 10 },
 ];
 
 /* Gorev haritasi gorevler.js'e tasindi: uc kademeli yapi ve partner

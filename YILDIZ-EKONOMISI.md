@@ -1,5 +1,9 @@
 # Yıldız ekonomisi raporu
 
+> **10 Ekim 2026 — UYGULANDI.** Yıldız sandığı ızgaradan kaldırıldı.
+> Aşağıdaki teşhis olduğu gibi duruyor; sonunda ne yapıldığı var.
+
+
 Ejderha Adası · 10 Ekim 2026 · kaynak: `games/dragon/ekonomi.js`,
 `gorevler.js`, `siparis.js`, `dragon.js`
 
@@ -173,3 +177,68 @@ arayüz.
   `max(1, min(3, ceil(lv/2)))` yıldız koyuyor, yani 1–3 ★ — tablodaki
   sayıların yanında ihmal edilebilir ama hep artı yönde.
 - Partner görevleri bir kez alınabiliyor kabul edildi.
+
+
+---
+
+# Ne yapıldı
+
+**Yıldız kabı ızgaradan kaldırıldı** (sürüm 2.11). Üç kırığın da kökü
+aynıydı — *ödediğin parayla aldığın para aynı* — ve kaynağı kapatmak
+üçünü birden kapattı.
+
+Yıldız hâlâ ödül, ama artık **doğrudan veriliyor**: ızgarada bekleyen,
+sayacı işleyen, birleştirilen bir nesne değil. Miktarlar eski
+kademelerin beklenen değerinden geliyor, yuvarlanmış haliyle:
+
+| Eski kap | Yeni ödül |
+|---|---|
+| Lv1 kese (8,8 ★) | **10 ★** |
+| Lv2 sepet (51,4 ★) | **50 ★** |
+| Lv3 sandık (384,5 ★) | **400 ★** |
+| Lv4 usta sandığı (1.790,3 ★) | **1.800 ★** |
+
+Rastgelelik kalktığı için yuvarlak sayı daha dürüst: oyuncuya "10
+yıldız" demek "8 ile 12 arası bir şey" demekten iyi.
+
+Değişen yerler: üç kilit ödülü (`KILITLI_HUCRELER[15]`,
+`GENISLEME_KILITLERI[3]` ve `[0]`), günlük ödülün 7. günü, beş görev
+(`o2`, `p2`, `p5`, `p7`, partner) ve partner büyük ödülü.
+
+## Mevcut oyunculara dokunulmadı
+
+Izgarasında yıldız kabı olan bir kayıt yüklendiğinde **kap yerinde
+duruyor ve eskisi gibi çalışıyor** — birleşiyor, sayacı işliyor,
+açılıyor. Aynı şekilde mevcut kayıtlardaki kilitler de eski ödüllerini
+koruyor: o kilitler kayıtta saklı, yeni tablo yalnızca yeni ızgaralara
+uygulanıyor.
+
+Kazanılmış bir şey geri alınmaz. Sayıları da sınırlı ve artmıyor, yani
+ekonomiye etkisi kendiliğinden tükeniyor.
+
+## Yol boyunca çıkan iki hata
+
+**Kilit ödülü her kayıt turunda siliniyordu.** `model.js` →
+`hucreDuzelt` kilit ödülünü yalnızca nesne şekliyle tanıyordu
+(`{t, lv}`); `{stars: 1800}` sessizce `{t:'egg', lv:1}`'e dönüyordu.
+Yani üç kilidin ödülü ilk yeniden yüklemede kayboluyordu. Kayıt-yükleme
+turu testle doğrulandı.
+
+**Kilidin arkasındaki görsel bozuktu.** `gorselYolu` `{stars}` şeklini
+tanımayınca `meat-undefined-192.webp` üretiyordu ve kilidin arkası
+bomboş çıkıyordu. Yıldız simgesine bağlandı.
+
+İkincisi bir de önbellek dersi verdi: `grid.js`'i düzelttim ama sürüm
+numarasını artırmadım, tarayıcı eski kopyayı sunmaya devam etti ve 404
+sürüyor sandım. Görsel değişikliklerde yeni dosya adı, **kod
+değişikliklerinde yeni sürüm numarası** şart.
+
+## Hâlâ açık
+
+Raporun (b) önerisi uygulanmadı: kilit merdiveni **hâlâ net yıldız
+üretiyor**. Üç kilit 1.800 ★ veriyor (toplam 5.400), merdivenin tamamı
+3.470 ★ tutuyor — net **+1.930 ★**. Sandık kalktığı için artık
+birleştirilip katlanamıyor, ama tahtayı açmak yine de kâr.
+
+Düşürülmek istenirse ödülü 1.800 yerine **400** yapmak yeterli:
+3 × 400 = 1.200 ★, merdiven **−2.270 ★** net olur.

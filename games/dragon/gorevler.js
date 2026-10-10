@@ -50,7 +50,7 @@ export const GOREV_HARITASI = {
      kilitli hucre ve kap birlestirme gibi ileri mekaniklere giriyor. */
   orta: [
     { id: 'o1', tip: 'merge',   hedef: 80,  odul: { food: 800, items: [{ t: 'food', lv: 1 }, { t: 'food', lv: 1 }] } },
-    { id: 'o2', tip: 'feed',    hedef: 50,  odul: { item: { t: 'star', lv: 1 } } },
+    { id: 'o2', tip: 'feed',    hedef: 50,  odul: { stars: 10 } },
     { id: 'o3', tip: 'collect', hedef: 90,  odul: { item: { t: 'food', lv: 1 } } },
     { id: 'o4', tip: 'egglv',   hedef: 5,   odul: { item: { t: 'egg', lv: 4 } } },
     { id: 'o5', tip: 'unlock',  hedef: 1,   odul: { food: 1400, items: [{ t: 'food', lv: 2 }] } },
@@ -62,12 +62,12 @@ export const GOREV_HARITASI = {
      bir Pro gorevi bitirmek gunler suruyor. */
   pro: [
     { id: 'p1', tip: 'merge',   hedef: 250, odul: { item: { t: 'food', lv: 2 } } },
-    { id: 'p2', tip: 'feed',    hedef: 200, odul: { item: { t: 'star', lv: 2 } } },
+    { id: 'p2', tip: 'feed',    hedef: 200, odul: { stars: 50 } },
     { id: 'p3', tip: 'collect', hedef: 300, odul: { item: { t: 'egg', lv: 6 } } },
     { id: 'p4', tip: 'egglv',   hedef: 7,   odul: { item: { t: 'food', lv: 3 } } },
-    { id: 'p5', tip: 'unlock',  hedef: 4,   odul: { item: { t: 'star', lv: 2 } } },
+    { id: 'p5', tip: 'unlock',  hedef: 4,   odul: { stars: 50 } },
     { id: 'p6', tip: 'packlv',  hedef: 3,   odul: { item: { t: 'egg', lv: 7 } } },
-    { id: 'p7', tip: 'egglv',   hedef: 8,   odul: { item: { t: 'star', lv: 3 }, food: 9900 } },
+    { id: 'p7', tip: 'egglv',   hedef: 8,   odul: { stars: 400, food: 9900 } },
   ],
 };
 
@@ -114,12 +114,12 @@ export const PARTNER_ODULLERI = [
   { food: 470 },
   { food: 800, items: [{ t: 'food', lv: 1 }] },
   { food: 1800, items: [{ t: 'food', lv: 1 }, { t: 'food', lv: 1 }] },
-  { item: { t: 'star', lv: 2 } },
+  { stars: 50 },
 ];
 
 /* Sekiz oyunun da 4. kademesini bitirene. Oyunun en buyuk tek odulu. */
 export const PARTNER_BUYUK_ODUL = [
-  { t: 'star', lv: 4 },
+  { stars: 1800 },
   { t: 'food', lv: 4 },
   { t: 'food', lv: 4 },
   { t: 'egg', lv: 8 },

@@ -4,9 +4,9 @@
    seviye oluyor. Kilitli hucreler yildizla aciliyor ve icindeki odulu
    dogrudan oyuncuya veriyor. */
 
-import { EN_UST_YUMURTA, EN_UST_SANDIK, kapSuresi } from './ekonomi.js?v249';
-import { belir, zipla, AKIS } from './canlandir.js?v249';
-import { iz } from '../../js/tani.js?v249';
+import { EN_UST_YUMURTA, EN_UST_SANDIK, kapSuresi } from './ekonomi.js?v251';
+import { belir, zipla, AKIS } from './canlandir.js?v251';
+import { iz } from '../../js/tani.js?v251';
 
 /* Kap gorselleri v2: kaplar artik ACIK ve iceriklerini gosteriyor.
    Eski set sekiz kabin da ayni kirmizi kutu olmasi yuzunden 64 pikselde
@@ -24,6 +24,11 @@ const SANDIK_ADI = { 1: 'pouch', 2: 'sack', 3: 'chest', 4: 'royal' };
    ayni netlik, 1.8 kat az cozme isi. */
 export function gorselYolu(hucre) {
   if (!hucre) return '';
+  /* Dogrudan yildiz odulu bir NESNE degil - kilitli hucrenin arkasinda
+     ne durdugunu gosterirken onun da bir resmi olmasi gerekiyor.
+     Olmadiginda `meat-undefined-192.webp` gibi bozuk bir yol uretiliyor
+     ve kilidin arkasi bombos cikiyordu. */
+  if (hucre.stars) return '../../assets/currency/star-128.webp';
   if (hucre.t === 'egg') return `assets/eggs/egg-${Math.min(EN_UST_YUMURTA, hucre.lv)}-192.webp`;
   const onek = hucre.t === 'star' ? 'star' : 'meat';
   return `../../assets/packs/v2/${onek}-${SANDIK_ADI[Math.min(EN_UST_SANDIK, hucre.lv)]}-192.webp`;
