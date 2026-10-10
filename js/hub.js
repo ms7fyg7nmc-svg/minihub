@@ -1,20 +1,20 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v241';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v242';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, enerjiBosMu, bakimListesi,
    getGorev, gorevAl, promoKullan, promoKayit, sahipMiyim,
-} from './store.js?v241';
-import { enerjiBosOnayi } from './onay.js?v241';
-import { odulGoster, odulOnYukle } from './odul.js?v241';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v241';
+} from './store.js?v242';
+import { enerjiBosOnayi } from './onay.js?v242';
+import { odulGoster, odulOnYukle } from './odul.js?v242';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v242';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniBaslat, iz } from './tani.js?v241';
+import { taniBaslat, iz } from './tani.js?v242';
 
 const BOT_USERNAME = 'minihubgames_bot';
 

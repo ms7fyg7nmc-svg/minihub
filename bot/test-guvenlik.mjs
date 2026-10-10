@@ -1040,11 +1040,20 @@ check('odeme: ayni skor oyuna gore farkli $MH veriyor',
 const dr = await api(envO, 'best', { initData: idO, game: 'dragon', opId: 'o-4', score: 5000000 });
 check('odeme: ejderha skoru $MH vermiyor', dr.earned === 0, `-> ${dr.earned}`);
 
-/* watersort seviyeye gore formulle odeniyor; seviye arttikca odeme artar. */
+/* WATERSORT YAYINDAN KALDIRILDI (games/_watersort). Oyun erisilemiyorsa
+   oraya gelen her skor uydurma demektir, o yuzden odeme sifir. Skorun
+   KAYDI hala kabul ediliyor - eskiden kuyruga girmis bir gonderim
+   "bilinmeyen oyun" hatasi almasin diye. */
 const w1 = await api(envO, 'best', { initData: idO, game: 'watersort', opId: 'o-5', score: 1 });
 const w2 = await api(envO, 'best', { initData: idO, game: 'watersort', opId: 'o-6', score: 40 });
-check('odeme: watersort seviyesi arttikca odeme artiyor',
-      w1.earned > 0 && w2.earned > w1.earned, `-> ${w1.earned} vs ${w2.earned}`);
+check('odeme: yayindan kaldirilan watersort $MH vermiyor',
+      w1.earned === 0 && w2.earned === 0, `-> ${w1.earned} / ${w2.earned}`);
+check('kayit: watersort skoru yine de kaydediliyor',
+      w2.best === 40 && !w2.error, `-> ${JSON.stringify({ best: w2.best, error: w2.error })}`);
+
+/* pet de kaldirildi ve zaten odeme yapmiyordu. */
+const pt = await api(envO, 'best', { initData: idO, game: 'pet', opId: 'o-5b', score: 900 });
+check('odeme: yayindan kaldirilan pet $MH vermiyor', pt.earned === 0, `-> ${pt.earned}`);
 
 /* Ayni opId ile tekrar gonderilen skor ikinci kez odeme yapmamali -
    ag tekrarinda ya da kuyruk bosaltilirken bu olur. */

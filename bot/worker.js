@@ -1486,18 +1486,34 @@ const OYUN_ODEME = {
   /* tripletile'in kendi SCORE_CAP'i 3600; tavan ondan geliyor. */
   tripletile: { bolucu: 6,   tavan: 3600 },
   wheelrush:  { bolucu: 10,  tavan: 60000 },
-  /* watersort'ta skor = ulasilan SEVIYE, odeme seviyeye gore bir formul. */
-  watersort:  { formul: 'watersort', tavan: 300 },
+  /* WATERSORT VE PET YAYINDAN KALDIRILDI (10 Ekim 2026).
+
+     Klasorleri games/_watersort ve games/_pet oldu; alt cizgiyle
+     basladiklari icin GitHub Pages onlari servis etmiyor. Hub'in oyun
+     listesinde zaten yoklardi ama dosyalar yayinlaniyordu, yani linki
+     bilen herkes aciyordu.
+
+     Oyun erisilemiyorsa oraya gelen her skor TANIMI GEREGI uydurma.
+     watersort'un odemesi bu yuzden sifirlandi - tavani 300'du, yani
+     acik buyuk degildi, ama kapali bir oyundan para cikmasinin hicbir
+     mesru yolu yok. Kayit yine kabul ediliyor: eskiden kuyruga girmis
+     bir skor "bilinmeyen oyun" hatasi almasin, sadece odeme yapmasin.
+
+     Oyun geri yayina alinirsa: klasorun basindaki alt cizgiyi kaldir,
+     hub.js'teki listeye ekle, ve burayi
+     `{ formul: 'watersort', tavan: 300 }` haline dondur. */
+  watersort:  { bolucu: 0,   tavan: 300 },
   /* flow dogrulanmis yoldan (/api/game/finish) odeniyor; skor = seviye. */
   flow:       { bolucu: 0,   tavan: 1000 },
   /* Ejderha Adasi $MH KAZANDIRMIYOR - yalnizca harciyor. Skoru ayri bir
      olcekte oldugu icin tavani da yuksek. */
   dragon:     { bolucu: 0,   tavan: 100000000 },
+  /* pet zaten odeme yapmiyordu; yayindan kaldirildi (yukariya bak). */
   pet:        { bolucu: 0,   tavan: 1000000 },
 };
 
 /* watersort'un odemesi istemcideki formulun aynisi (bkz.
-   games/watersort/watersort.js pointsFor). Seviye arttikca renk ve
+   games/_watersort/watersort.js pointsFor). Seviye arttikca renk ve
    kapasite artiyor, odeme de onunla. */
 function watersortOdeme(seviye) {
   const lv = Math.max(1, Math.min(300, Math.round(seviye) || 1));

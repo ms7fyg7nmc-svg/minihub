@@ -10,7 +10,12 @@ if (!surum) {
 
 function dosyalariTara(dizin, uzantilar, sonuc = []) {
   for (const ad of readdirSync(dizin)) {
-    if (ad.startsWith('.') || ad === 'node_modules') continue;
+    /* Alt cizgiyle baslayan klasorleri GitHub Pages yayinlamiyor
+       (bkz. assets/README.md). Oradaki dosyalar oyuncuya hic inmedigi
+       icin onbellek damgasina da ihtiyaclari yok; damgalamak sadece
+       git farkini gurultuye bogardi. games/_pet ve games/_watersort
+       bu yuzden atlaniyor. */
+    if (ad.startsWith('.') || ad.startsWith('_') || ad === 'node_modules') continue;
     /* bot/: Cloudflare Worker esbuild ile derleniyor, ?vNN import'u bozar.
        standalone-apps/: ayri paketlenen kopyalar, hub surumunden bagimsiz. */
     if (dizin === '.' && (ad === 'bot' || ad === 'standalone-apps')) continue;
