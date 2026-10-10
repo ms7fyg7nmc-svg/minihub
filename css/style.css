@@ -71,6 +71,12 @@
 
 :root[data-tg-theme="light"] .wheel-wrap {
   --cark-golge: drop-shadow(0 8px 16px rgba(52, 38, 84, 0.26));
+  /* Gunduz temasinda isik degil GOLGE: ayni huzme deseni, ama zeminden
+     koyu sicak bir ton. Boylece cark iki temada da zemine baglaniyor ve
+     desen ikisinde de ayni yonde okunuyor. */
+  --cark-isik-ic: rgba(118, 78, 28, 0.17);
+  --cark-isik-dis: rgba(118, 78, 28, 0.09);
+  --cark-huzme: rgba(104, 68, 24, 0.08);
 }
 
 /* color-mix() destekleyen motorlarda (guncel Chrome/Safari/Firefox) daha
@@ -1265,6 +1271,15 @@ body.hub::before {
      yumusatiliyor. */
   --cark-golge: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.5));
 
+  /* Arkadaki isigin ve huzmelerin rengi. Koyu temada carktan DISA
+     vuran altin bir isik; gunduz temasinda ayni sey gorunmez oluyor
+     (beyaz uzerinde %10 altin yok hukmunde) ve cark yine bos bir
+     kagida asili kaliyor. Orada tam tersi gerekiyor: zeminden KOYU,
+     sicak bir golge. Ikisi de asagida tema basina tanimli. */
+  --cark-isik-ic: rgba(255, 214, 120, 0.20);
+  --cark-isik-dis: rgba(245, 185, 66, 0.11);
+  --cark-huzme: rgba(255, 220, 140, 0.10);
+
   position: relative;
   width: 300px;
   max-width: 100%;
@@ -1283,16 +1298,32 @@ body.hub::before {
 .wheel-wrap::after {
   content: '';
   position: absolute;
-  /* Disk cerceveden GENIS: son durak %96'da, yani halkanin mizraklari
-     bittikten sonra. Daha dar tutuldugunda isiginin kesildigi yer
-     gorunur bir halka olarak okunuyordu. */
-  inset: -12%;
+  /* Carkin arkasindan cikan ISIK HUZMELERI.
+
+     Once duz mor bir disk vardi: carki zemine bagliyordu ama kendisi
+     bir leke gibi duruyordu, ve hub morudan sicak tona gectikten sonra
+     (bkz. .hero) tek basina soguk kaliyordu.
+
+     Huzmeler repeating-conic-gradient ile ciziliyor - gorsel dosya yok.
+     Kenarda kesilmesinler diye radyal bir MASKE ile disa dogru
+     soduruluyorlar; maske olmadan huzmeler kutunun sinirinda birden
+     bitiyor ve dairenin kenari cizgi cizgi goruluyordu.
+
+     Huzme araligi 14 derece: 26 huzme. Daha sik oldugunda kucuk
+     ekranda titriyor (moire), daha seyrek oldugunda carkin kendi sekiz
+     dilimiyle yarisiyor. */
+  inset: -22%;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 48%,
-    rgba(98, 68, 162, 0.28) 0%,
-    rgba(86, 62, 142, 0.21) 48%,
-    rgba(76, 56, 126, 0.09) 74%,
-    rgba(76, 56, 126, 0) 96%);
+  background:
+    radial-gradient(circle at 50% 48%,
+      var(--cark-isik-ic) 0%,
+      var(--cark-isik-dis) 46%,
+      transparent 74%),
+    repeating-conic-gradient(from 8deg at 50% 48%,
+      var(--cark-huzme) 0deg 7deg,
+      transparent 7deg 14deg);
+  -webkit-mask-image: radial-gradient(circle at 50% 48%, #000 26%, rgba(0, 0, 0, 0.45) 58%, transparent 80%);
+  mask-image: radial-gradient(circle at 50% 48%, #000 26%, rgba(0, 0, 0, 0.45) 58%, transparent 80%);
   pointer-events: none;
   z-index: 0;              /* carkin da cercevenin de ALTINDA */
 }
