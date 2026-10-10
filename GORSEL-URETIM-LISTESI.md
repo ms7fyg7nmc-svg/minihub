@@ -121,38 +121,58 @@ Dört dile dört görsel üretmek hem pahalı hem her metin değişikliğinde
 yeniden üretim demek.
 
 
-## Öncelik 3 — Geleceği düşünerek · 52 CU
+## ~~Öncelik 3 — Geleceği düşünerek~~ ✅ 10 Ekim · 39 CU
 
-Henüz yapılmamış ama yol haritasında olan şeyler. Scenario sıfırlanmadan
-stoklamaya değer — özellik geldiğinde görsel hazır olur.
+Listede 52 CU (4 sayfa) yazıyordu; **39 CU'ya bitti** — dördüncü sayfa
+üretilmedi, aşağıda sebebi var.
 
-### 3.1 Ejderha çiftleştirme · 1 sayfa · 13 CU
+### 3.1 Büyücü pozları · 13 CU ✅
 
-Uzun süredir ertelenen özellik. Gerekecek görseller: çiftleştirme ekranı
-arka planı, yuva/ısıtma görseli, "yeni yumurta geldi" anı.
+Dört yeni poz: `stall` (tezgahının başında), `think` (şaşkın),
+`point` (işaret ediyor), `sleep` (uyuyor). Mevcut `wizard-greet`
+referans verilerek üretildi — aynı karakter, kitabın kapağındaki
+yarasa amblemi dahil.
 
-### 3.2 Büyücü pozları · 1 sayfa · 13 CU
+`stall` **hemen kullanıldı**: Ejderha Adası'nın tüccar ekranının
+başında el sallayan karşılama pozu duruyordu, oysa adamın tezgahının
+başında durması gerekiyordu. Diğer üçü `_alternatifler/`'de.
 
-Elimizde üç poz var (karşılama, anlatma, tebrik). Eksikler:
+Dördü de **ayakta duran pozların boyuna göre** ölçeklendi. `stall`ın
+kutusuna tezgah da giriyor; ölçeği ondan alsaydık büyücü diğerlerinden
+%15 küçük çıkardı ve aynı diyalog kutusunda yüzü küçülüp büyürdü.
 
-- **tezgah başında** — tüccar rolü
-- **düşünür/şaşkın** — başarısızlık anı
-- **işaret eden** — yönlendirme
-- **uyuyan** — enerji bitti
+### 3.2 Ejderha çiftleştirme · 13 CU ✅
 
-Tek karakterin dört pozu, tek sayfada ve stil tutarlı.
+Sekiz nesne: yuva, dolu yuva, ocak, çatlayan yumurta, çiftleşme
+amblemi (iki ejderha kalp oluşturuyor), kum saati, madalyon, soy
+kitabı. Hepsi `assets/ciftlestirme/_alternatifler/`.
 
-### 3.3 Sezon / etkinlik çerçeveleri · 1 sayfa · 13 CU
+**Ekran arka planı üretilmedi**, bilerek: özellik yapılmadı, arayüzü
+tasarlanmadı. Şimdi üretilen bir ekran tasarımı, ekran gerçekten
+yapıldığında büyük ihtimalle uymazdı. Nesneler ise arayüz ne olursa
+olsun kullanılabilir.
 
-Kış, yaz, yılbaşı gibi dönemsel etkinlikler için çerçeve ve rozet seti.
-Şimdi üretilirse etkinlik zamanı beklemeden açılır.
+### 3.3 Sezon çerçeveleri · 13 CU ✅
 
-### 3.4 Yeni oyun kareleri (boş şablon) · 1 sayfa · 13 CU
+Altı çerçeve: kış, ilkbahar, yaz, sonbahar, yılbaşı, yıldönümü.
+`assets/frames/_alternatifler/`.
 
-Hub'a ileride oyun eklenirse kare lazım olacak. Üç–dört nötr, türü belli
-olmayan kare şimdiden üretilebilir.
+**Hepsi oyun tahtası kenarlığı olamaz.** Mevcut çerçeveler CSS
+`border-image` ile kullanılıyor, yani kenarların ortası gerilip
+uzatılıyor. Süsü köşede olan çerçeve bunu kaldırıyor (sonbahar,
+yılbaşı), süsü kenar ortasında olan kaldırmıyor (yaz'ın güneşi,
+yıldönümü'nün kurdelesi, kış'ın buz sarkıtları). Ayrıntı ve ölçülen
+`border-image-slice` değerleri klasörün README'sinde.
 
----
+### ~~3.4 Yeni oyun kareleri (boş şablon)~~ — ÜRETİLMEDİ
+
+13 CU harcanmadı. Gerekçe: bu klasörün kendi kuralı, **hub karesinin
+oyunun KENDİ parçalarını göstermesi** (bkz. `assets/game-tile/README.md`).
+"Türü belli olmayan nötr kare" tanımı gereği bu kuralı çiğniyor — yani
+üretseydik kullanamayacağımız bir şey üretmiş olurduk. Yeni bir oyun
+eklendiğinde karesi o oyunun taşlarından yapılır; Üçlü Eşleştir'de ve
+Bağlan'da olduğu gibi, çoğu zaman üretim bile gerekmiyor.
+
 
 ## Toplam
 
@@ -163,7 +183,7 @@ olmayan kare şimdiden üretilebilir.
 | ~~1 — yeni özellik ikonları~~ | ✅ 10 Ekim | 13 |
 | ~~Match Candy şekerleri~~ | üretildi, kullanılmadı | 13 |
 | ~~2 — Sosyal ve duyuru~~ | ✅ 10 Ekim · 8 üretildi + 4 kodla | 84 |
-| 3 — Gelecek | 4 sayfa | 52 |
+| ~~3 — Gelecek~~ | ✅ 10 Ekim · 3 sayfa (4.'sü iptal) | 39 |
 | **Toplam** | | **221 CU** |
 
 Düzeltme turları için **%30 pay** eklemek gerek — bugün yumurtalarda üç

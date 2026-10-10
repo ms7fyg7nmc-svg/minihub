@@ -36,13 +36,16 @@ bir tasarım kararı değişirse yeniden üretmek yerine oradan alınır.
 | `dragon-tile/` | Dragon Island karesinin zemini ve logosu | `run`, `catlak`, `girdap` — üç zemin alternatifi |
 | `hero/` | Hub başlığının dönen afişleri (üçü de canlı) | `ufuk.webp` — dördüncü tasarım |
 | `widget/` | Dört widget çizimi (günlük ödül, liderlik, enerji, davet) | — |
-| `tutorial/` | Büyücü dede, üç poz — künyesi klasörün README'sinde | — |
+| `tutorial/` | Büyücü dede, dört poz (karşılama, anlatma, tebrik, tezgah) | `think`, `point`, `sleep` — üç poz daha |
 | `currency/` | $MH logosu ve yıldız | Üç para tasarımı + kaynak kolajlar |
+| `frames/` | Dört oyun çerçevesi (CSS border-image) | Altı sezon çerçevesi |
+| `ciftlestirme/` | — (özellik yapılmadı) | Sekiz nesne, hepsi bekliyor |
+| `_sosyal/` | Sosyal medya ve duyuru görselleri — oyuna hiç inmiyor | — |
 | `food/` | Et | Üç yem tasarımı |
 | `packs/` | Market paketleri | Kaynak kolajlar |
 | `ui/` | Arayüz ikonları — ayarlar, cüzdan, butonlar | Üç ikon işlemi (`-1`, `-2`, `-4`) |
-| `frames/`, `icons/`, `bg/`, `board/` | Oyun içi arayüz parçaları | — |
-| `_sosyal/` | Sosyal medya görselleri (siteye çıkmaz) | — |
+| `icons/` | Arayüz ikonları — görev, tüccar, promo, açık sandık | `sandik-kapali`, `rozet`, `hediye`, `kese` |
+| `bg/`, `board/` | Oyun içi arayüz parçaları | — |
 
 ## Karakterler
 
