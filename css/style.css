@@ -1479,49 +1479,72 @@ body.hub::before {
 }
 
 /* Kaide. Yuksekligi sirayi anlatiyor - sayiyi okumadan once kimin
-   onde oldugu goruluyor. */
+   onde oldugu goruluyor.
+
+   Kaideler artik CSS degradesi degil CIZIM (assets/widget/podyum/).
+   Yukseklik de CSS'ten degil GORSELIN KENDI ORANINDAN geliyor:
+   aspect-ratio her kaideye kendi w/h degerini veriyor, genislik de
+   izgara hucresinin tamami. Boylece panel ne kadar genis olursa olsun
+   uc kaide dogru oranda kaliyor ve sabit piksel yuksekligi tutturmaya
+   calismak gerekmiyor.
+
+   flex: none hala SART. Kaide bir flex ogesi; varsayilan
+   `flex-shrink: 1` sabit yukseklikleri eziyordu ve birinci ile ikinci
+   neredeyse ayni boya dusuyordu. aspect-ratio ile de ayni sey olur. */
 .podyum-kaide {
   display: grid;
   place-items: center;
-  /* flex: none SART. Kaidenin TEK isi yukseklik farkiyla sirayi
-     anlatmak; flex ogesi oldugu icin varsayilan `flex-shrink: 1`
-     62/44/34'u 44/35/30'a eziyordu ve birinci ile ikinci neredeyse
-     ayni boya duser, podyum podyum olmaktan cikardi. */
   flex: none;
-  width: 100%;
+  /* GENISLIK sabit, yukseklik aspect-ratio'dan. Tersi denendi (genislik
+     %100) ve kaideler 155 piksele cikip paneli yuttu: sutun ~144px
+     genis, cizimin orani ~0.92, yani yukseklik otomatik olarak sutun
+     genisligi kadar oluyordu. Gercek bir podyumda uc blok AYNI
+     GENISLIKTE, farkli yuksekliktedir - sabit genislik tam olarak onu
+     veriyor ve boy farki cizimin kendi oranindan geliyor. */
+  width: min(88px, 100%);
   margin-top: 4px;
-  border-radius: 10px 10px 0 0;
-  font-size: 15px;
+  /* Sayi gorselin ortasina degil ON YUZUNE oturmali. Cizimde on yuz
+     %5-78 arasinda, altta bir taban cikintisi var; alt dolgu sayiyi o
+     cikintinin uzerine itiyor. */
+  padding-bottom: 17%;
+  background: center / 100% 100% no-repeat;
+  font-size: 21px;
   font-weight: 900;
-  color: rgba(255, 255, 255, 0.85);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  /* Altin/gumus/bronz metalin uzerinde koyu yazi - rozetlerdeki ile
+     ayni cozum. Beyaz yazi gumus kaidede kayboluyordu. Ilk denemede
+     15px'ti ve metalin dokusunda eriyordu; bu olcude okunuyor. */
+  color: #2a1c00;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 6px rgba(255, 255, 255, 0.3);
 }
+
+.yer-1 .podyum-kaide { aspect-ratio: 0.921; background-image: url("../assets/widget/podyum/kaide-1.webp"); }
+.yer-2 .podyum-kaide { aspect-ratio: 1.139; background-image: url("../assets/widget/podyum/kaide-2.webp"); }
+.yer-3 .podyum-kaide { aspect-ratio: 1.481; background-image: url("../assets/widget/podyum/kaide-3.webp"); }
 
 .yer-1 .podyum-rozet { background: linear-gradient(160deg, #fff3c4, #f5b942 45%, #a9761a); width: 52px; height: 52px; font-size: 21px; }
 .yer-2 .podyum-rozet { background: linear-gradient(160deg, #ffffff, #c8ccd6 45%, #7d8390); }
 .yer-3 .podyum-rozet { background: linear-gradient(160deg, #f8d5a8, #cd7f32 45%, #7d4a17); }
-
-.yer-1 .podyum-kaide { height: 62px; background: linear-gradient(180deg, #f5b942, #a9761a); }
-.yer-2 .podyum-kaide { height: 44px; background: linear-gradient(180deg, #c8ccd6, #7d8390); }
-.yer-3 .podyum-kaide { height: 34px; background: linear-gradient(180deg, #cd7f32, #7d4a17); }
 
 .yer-1 .podyum-ad { font-size: 13px; }
 
 /* Oyuncunun kendisi podyumdaysa: adi vurgulaniyor ve kaidenin etrafi
    isiliyor. Listedeki .benim ile ayni fikir. */
 .podyum-basamak.benim .podyum-ad { color: var(--accent); }
-.podyum-basamak.benim .podyum-kaide { box-shadow: inset 0 0 0 2px var(--accent); }
+/* Kaide artik bir cizim: ic kenarlik dikdortgen cizer ve kaidenin
+   silueti disinda kalir. drop-shadow alfayi takip ediyor. */
+.podyum-basamak.benim .podyum-kaide { filter: drop-shadow(0 0 5px var(--accent)); }
 
 /* Birincinin tepesindeki tac. CSS ile ciziliyor: uc ucgen ve bir taban,
    hepsi tek elemanda. Gorsel dosya koymadik - 16 piksellik bir sey icin
    indirme yapmaya degmez ve bu haliyle altin rengini --gold'dan aliyor. */
+/* Birincinin tacı. Once clip-path ile cizilmisti; kaideler cizime
+   gecince yanlarinda duz bir ucgen silueti ucuz kaliyordu. */
 .podyum-tac {
-  width: 22px;
-  height: 14px;
-  margin-bottom: -2px;
-  background: linear-gradient(180deg, #ffe28a, var(--gold));
-  clip-path: polygon(0% 100%, 0% 22%, 25% 55%, 50% 0%, 75% 55%, 100% 22%, 100% 100%);
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+  width: 26px;
+  aspect-ratio: 1.338;
+  margin-bottom: -3px;
+  background: url("../assets/widget/podyum/tac.webp") center / contain no-repeat;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
 }
 
 @media (max-width: 360px) {
