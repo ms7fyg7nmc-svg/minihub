@@ -1,6 +1,6 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v243';
-import { surumKontrol } from './guncel.js?v243';
+import { isTelegramUser, getInitData } from './tg.js?v244';
+import { surumKontrol } from './guncel.js?v244';
 
 /* Hub ve 12 oyunun hepsi bu modulu yukluyor, o yuzden surum tazeleyici
    buraya bagli: tek yerden hepsini kapsiyor. */
@@ -792,7 +792,7 @@ const kayitBekleyen = new Map();  /* key -> son state */
    ogrenebiliyoruz - masaustunde hic olmuyor. */
 async function taniYaz(olay, ayrinti) {
   try {
-    const m = await import('./tani.js?v243');
+    const m = await import('./tani.js?v244');
     m.iz(olay, ayrinti);
   } catch { /* tani yoksa sessiz */ }
 }

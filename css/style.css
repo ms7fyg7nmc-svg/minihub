@@ -1409,6 +1409,129 @@ body.hub::before {
   vertical-align: middle;
 }
 
+/* --- LIDERLIK PODYUMU ---
+
+   Ilk uc sira artik listenin icinde degil, uzerinde bir podyumda
+   duruyor: ikinci solda, BIRINCI ORTADA ve en yuksekte, ucuncu sagda.
+   Tabloyu acan oyuncunun ilk sordugu sey "kim birinci"; podyum bunu
+   okumadan once soyluyor.
+
+   Renkler SABIT (altin/gumus/bronz), tema degiskeni degil - madalya
+   rengi madalyanin kendisi, Telegram'in gunduz temasinda soluklasmasi
+   dogru olmaz. Ama uzerindeki YAZI --text'ten geliyor, cunku o zemine
+   degil sayfaya ait. */
+
+.lider-podyum {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: end;
+  gap: 8px;
+  margin: 4px 0 14px;
+}
+
+/* Tek ya da iki oyuncu varsa olmayan basamak hic cizilmiyor; kalanlar
+   ortalansin diye sutun sayisi icerige gore daraliyor.
+
+   :has() desteklemeyen eski bir motorda bu iki kural dusuyor ve izgara
+   uc sutun kalir - tek oyuncu ortada degil solda durur. Cirkin ama
+   bozuk degil; podyum yine dogru ciziliyor. */
+.lider-podyum:has(> :last-child:nth-child(1)) { grid-template-columns: 1fr; max-width: 160px; margin-inline: auto; }
+.lider-podyum:has(> :last-child:nth-child(2)) { grid-template-columns: repeat(2, 1fr); max-width: 300px; margin-inline: auto; }
+
+.podyum-basamak {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;             /* uzun ad sutunu genisletmesin */
+  position: relative;
+}
+
+.podyum-rozet {
+  display: grid;
+  place-items: center;
+  flex: none;               /* flex ogesi varsayilan olarak kuculur */
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  font-size: 18px;
+  font-weight: 900;
+  color: #2a1c00;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4), inset 0 -2px 5px rgba(0, 0, 0, 0.28);
+}
+
+.podyum-ad {
+  max-width: 100%;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.podyum-puan {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold-yazi);
+  white-space: nowrap;
+}
+
+/* Kaide. Yuksekligi sirayi anlatiyor - sayiyi okumadan once kimin
+   onde oldugu goruluyor. */
+.podyum-kaide {
+  display: grid;
+  place-items: center;
+  /* flex: none SART. Kaidenin TEK isi yukseklik farkiyla sirayi
+     anlatmak; flex ogesi oldugu icin varsayilan `flex-shrink: 1`
+     62/44/34'u 44/35/30'a eziyordu ve birinci ile ikinci neredeyse
+     ayni boya duser, podyum podyum olmaktan cikardi. */
+  flex: none;
+  width: 100%;
+  margin-top: 4px;
+  border-radius: 10px 10px 0 0;
+  font-size: 15px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.yer-1 .podyum-rozet { background: linear-gradient(160deg, #fff3c4, #f5b942 45%, #a9761a); width: 52px; height: 52px; font-size: 21px; }
+.yer-2 .podyum-rozet { background: linear-gradient(160deg, #ffffff, #c8ccd6 45%, #7d8390); }
+.yer-3 .podyum-rozet { background: linear-gradient(160deg, #f8d5a8, #cd7f32 45%, #7d4a17); }
+
+.yer-1 .podyum-kaide { height: 62px; background: linear-gradient(180deg, #f5b942, #a9761a); }
+.yer-2 .podyum-kaide { height: 44px; background: linear-gradient(180deg, #c8ccd6, #7d8390); }
+.yer-3 .podyum-kaide { height: 34px; background: linear-gradient(180deg, #cd7f32, #7d4a17); }
+
+.yer-1 .podyum-ad { font-size: 13px; }
+
+/* Oyuncunun kendisi podyumdaysa: adi vurgulaniyor ve kaidenin etrafi
+   isiliyor. Listedeki .benim ile ayni fikir. */
+.podyum-basamak.benim .podyum-ad { color: var(--accent); }
+.podyum-basamak.benim .podyum-kaide { box-shadow: inset 0 0 0 2px var(--accent); }
+
+/* Birincinin tepesindeki tac. CSS ile ciziliyor: uc ucgen ve bir taban,
+   hepsi tek elemanda. Gorsel dosya koymadik - 16 piksellik bir sey icin
+   indirme yapmaya degmez ve bu haliyle altin rengini --gold'dan aliyor. */
+.podyum-tac {
+  width: 22px;
+  height: 14px;
+  margin-bottom: -2px;
+  background: linear-gradient(180deg, #ffe28a, var(--gold));
+  clip-path: polygon(0% 100%, 0% 22%, 25% 55%, 50% 0%, 75% 55%, 100% 22%, 100% 100%);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+}
+
+@media (max-width: 360px) {
+  .podyum-rozet { width: 40px; height: 40px; font-size: 16px; }
+  .yer-1 .podyum-rozet { width: 46px; height: 46px; font-size: 18px; }
+  .podyum-ad { font-size: 11px; }
+  .yer-1 .podyum-ad { font-size: 12px; }
+  .podyum-puan { font-size: 10px; }
+}
+
 .lider-liste { display: flex; flex-direction: column; }
 
 .lider-satir {

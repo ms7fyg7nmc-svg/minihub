@@ -1,20 +1,20 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v243';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v244';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, enerjiBosMu, bakimListesi,
    getGorev, gorevAl, promoKullan, promoKayit, sahipMiyim,
-} from './store.js?v243';
-import { enerjiBosOnayi } from './onay.js?v243';
-import { odulGoster, odulOnYukle } from './odul.js?v243';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v243';
+} from './store.js?v244';
+import { enerjiBosOnayi } from './onay.js?v244';
+import { odulGoster, odulOnYukle } from './odul.js?v244';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v244';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniBaslat, iz } from './tani.js?v243';
+import { taniBaslat, iz } from './tani.js?v244';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -327,7 +327,7 @@ await Promise.race([
       'assets/currency/mh-logo-128.webp',
       'assets/dragon-tile/pul.webp',
       'assets/dragon-tile/logo.webp',
-      'assets/widget/daily.webp', 'assets/widget/lider-v2.webp',
+      'assets/widget/daily.webp', 'assets/widget/lider-v3.webp',
       'assets/widget/energy.webp', 'assets/widget/friends.webp',
    ])]),
    /* Bekleme sinirli: ag yavassa perde yine de kalkiyor. Widget'lar o
@@ -1313,14 +1313,36 @@ async function acLiderPanel() {
    haptic.tap();
 
    const veri = await liderTablosu();
+   const podyum = document.getElementById('lider-podyum');
    const liste = document.getElementById('lider-liste');
+   podyum.textContent = '';
+   podyum.hidden = true;
    liste.textContent = '';
    if (!veri) return;
 
-   for (const s of veri.liste) {
+   /* ILK UC PODYUMDA, GERISI LISTEDE.
+
+      Eskiden on uc satirin hepsi ayni listede akiyordu; ilk uce renkli
+      bir madalya ve hafif bir zemin tonu veriliyordu ama yine de
+      satirdi. Liderlik tablosunu acan oyuncunun ilk sordugu sey "kim
+      birinci" - podyum bunu okumadan once soyluyor. */
+   const ucu = veri.liste.filter((x) => x.sira <= 3);
+   const gerisi = veri.liste.filter((x) => x.sira > 3);
+
+   if (ucu.length) {
+      podyum.hidden = false;
+      /* Ekranda 2 - 1 - 3 sirasiyla duruyorlar, veri sirasiyla degil:
+         birinci ORTADA ve en yuksekte. Oyuncu sayisi ucten azsa olmayan
+         basamak hic cizilmiyor - bos kaide birakmiyoruz. */
+      for (const yer of [2, 1, 3]) {
+         const s = ucu.find((x) => x.sira === yer);
+         if (s) podyum.appendChild(podyumBasamagi(s));
+      }
+   }
+
+   for (const s of gerisi) {
       const satir = document.createElement('div');
-      satir.className = 'lider-satir' + (s.ben ? ' benim' : '') +
-         (s.sira <= 3 ? ` tepe tepe-${s.sira}` : '');
+      satir.className = 'lider-satir' + (s.ben ? ' benim' : '');
 
       const sira = document.createElement('span');
       sira.className = 'lider-no';
@@ -1353,6 +1375,46 @@ async function acLiderPanel() {
    } else {
       kendi.hidden = true;
    }
+}
+
+/* Podyumun tek bir basamagi: rozet, ad, puan, ve uzerinde durdugu kaide.
+
+   Avatar yerine adin ILK HARFI kullaniliyor. Telegram'in profil
+   fotografi initData'da gelmiyor, sunucu da saklamiyor; harf, elimizde
+   olan tek kisisel iz ve uc oyuncuyu birbirinden ayirmaya yetiyor. */
+function podyumBasamagi(s) {
+   const ad = s.ad || t('hub.player');
+   const basamak = document.createElement('div');
+   basamak.className = `podyum-basamak yer-${s.sira}` + (s.ben ? ' benim' : '');
+
+   const rozet = document.createElement('span');
+   rozet.className = 'podyum-rozet';
+   /* Ilk harf: bosluklari atip ilk GORUNUR karakteri aliyoruz, yoksa
+      " Ali" gibi bir adda bos bir daire cikardi. Buyutme locale'e bagli
+      (Turkce'de i -> I degil I'dir; toLocaleUpperCase bunu biliyor). */
+   rozet.textContent = (ad.trim()[0] || '?').toLocaleUpperCase(locale());
+
+   const tac = document.createElement('i');
+   tac.className = 'podyum-tac';
+   tac.setAttribute('aria-hidden', 'true');
+
+   const isim = document.createElement('span');
+   isim.className = 'podyum-ad';
+   isim.textContent = ad;
+
+   const puan = document.createElement('span');
+   puan.className = 'podyum-puan';
+   puan.innerHTML = mhHtml(`${s.kazanilan.toLocaleString(locale())} $MH`);
+
+   const kaide = document.createElement('span');
+   kaide.className = 'podyum-kaide';
+   kaide.textContent = s.sira;
+
+   /* Tac yalnizca birincide. Ikinci ve ucuncude de olsaydi "birinci"
+      olmanin gorsel karsiligi kalmazdi. */
+   if (s.sira === 1) basamak.appendChild(tac);
+   basamak.append(rozet, isim, puan, kaide);
+   return basamak;
 }
 
 function davetLinki() {

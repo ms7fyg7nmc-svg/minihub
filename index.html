@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="243">
+  <meta name="surum" content="244">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MINI HUB GAMES</title>
   <!-- Cark rakamlari icin (bkz. js/hub.js WHEEL_FONT). Ejderha Adasi
@@ -50,7 +50,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v243">
+  <link rel="stylesheet" href="css/style.css?v244">
 </head>
 <body class="hub">
   <!-- ACILIS EKRANI
@@ -137,7 +137,7 @@
 
       <div class="widgets-col">
         <button class="daily-card lider-card widget-left" id="lider-card" hidden>
-          <img class="widget-icon" src="assets/widget/lider-v2.webp" alt="" aria-hidden="true" width="108" height="108">
+          <img class="widget-icon" src="assets/widget/lider-v3.webp" alt="" aria-hidden="true" width="108" height="108">
           <div class="daily-card-info">
             <strong data-i18n="hub.rank.title">Liderlik Tablosu</strong>
             <span class="card-energy" id="lider-sira"><span class="rank-dash"></span></span>
@@ -335,6 +335,8 @@
       <button class="daily-close" id="lider-close" aria-label="Kapat">✕</button>
       <p class="daily-intro" data-i18n="hub.rank.intro"></p>
       <p class="daily-card-hint" data-i18n="hub.rank.refreshNote"></p>
+      <!-- Ilk uc PODYUMA cikiyor, dorduncuden itibaren asagidaki liste. -->
+      <div class="lider-podyum" id="lider-podyum" hidden></div>
       <div class="lider-liste" id="lider-liste"></div>
       <div class="lider-kendi" id="lider-kendi" hidden></div>
     </div>
@@ -357,6 +359,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v243"></script>
+  <script type="module" src="js/hub.js?v244"></script>
 </body>
 </html>
