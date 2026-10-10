@@ -1,12 +1,12 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v246';
-import { submitScore, getBest, saveState, loadState, clearState } from '../../js/store.js?v246';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v246';
-import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v246';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v247';
+import { submitScore, getBest, saveState, loadState, clearState } from '../../js/store.js?v247';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v247';
+import { soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v247';
 /* Sesler artik sentezlenmis degil, Dragon Island ornekleri (bkz. ses.js).
    Ses dugmesi ayni sessizlik anahtarini kullandigi icin degismedi. */
-import { SFX } from './ses.js?v246';
-import { yarimBirakmaOnayi, onayAcik } from '../../js/onay.js?v246';
+import { SFX } from './ses.js?v247';
+import { yarimBirakmaOnayi, onayAcik } from '../../js/onay.js?v247';
 
 const GAME_ID = 'coindrop';
 
@@ -118,6 +118,7 @@ const nextChipEl = document.getElementById('next-chip');
 const ladderEl = document.getElementById('ladder');
 const overlayEl = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
+const overlayIkon = document.getElementById('overlay-ikon');
 const overlayText = document.getElementById('overlay-text');
 const overlayBtn = document.getElementById('overlay-btn');
 
@@ -762,10 +763,17 @@ async function endGame(kazanma) {
   if (sonuc.isRecord) satirlar.push(t('newRecord'));
   if (kazanilan > 0) satirlar.push(t('earnedPoints', { points: bicim(kazanilan) }));
 
-  showOverlay(kazanma ? t('wonTitle') : t('gameOver'), satirlar.join(' · '), t('playAgain'), startNewGame);
+  /* Iki bitis de kasayla ilgili: kazanirken dolduruyorsun, kaybederken
+     tasiriyorsun. Ikisinde de tasan sandik dogru resim. */
+  showOverlay(kazanma ? t('wonTitle') : t('gameOver'), satirlar.join(' · '), t('playAgain'), startNewGame,
+              sonuc.isRecord ? 'rekor' : 'kasa');
 }
 
-function showOverlay(baslik, metin, dugme, islem) {
+/* `ikon` perdenin DURUMUNU anlatiyor: bitti / tamam / rekor / sure /
+   kaza / kasa / seviye. Varsayilani 'bitti' - cagiran taraf bir sey
+   soylemezse perde yine aciliyor, sadece notr ikonla. */
+function showOverlay(baslik, metin, dugme, islem, ikon = 'bitti') {
+  overlayIkon.className = `overlay-ikon ik-${ikon}`;
   overlayTitle.textContent = baslik;
   overlayText.innerHTML = mhHtml(metin);
   overlayBtn.textContent = dugme;

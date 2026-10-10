@@ -1330,6 +1330,23 @@ async function handleStarInvoice(env, playerId) {
       provider_token: '',
       currency: 'XTR',
       prices: [{ label: `+${ENERGY_REFILL_AMOUNT} Energy`, amount: ENERGY_REFILL_STAR_PRICE }],
+      /* URUN GORSELI. Telegram'in odeme sayfasi photo_url destekliyor ve
+         biz vermiyorduk: oyuncunun GERCEK PARA harcadigi tek an duz bir
+         metin olarak aciliyordu.
+
+         Botun kendi banner'i kullaniliyor - ayri bir gorsel uretmedik.
+         Zaten herkese acik bir adreste duruyor, markanin dilinde, ve
+         Telegram bu fotografi kucuk gosteriyor; enerjiye ozel bir afis
+         farki goturmezdi.
+
+         photo_url'in DISARIDAN ERISILEBILIR olmasi sart - Telegram'in
+         sunuculari indiriyor. BANNER_URL GitHub Pages'te; alt cizgiyle
+         baslayan bir klasore koysaydik (ornegin assets/_sosyal/)
+         yayinlanmaz ve fotograf sessizce dusup fatura yine yazisiz
+         acilirdi. */
+      photo_url: BANNER_URL,
+      photo_width: 1200,
+      photo_height: 630,
     }),
   });
   const data = await res.json().catch(() => null);

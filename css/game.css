@@ -157,6 +157,64 @@
 }
 
 .overlay[hidden] { display: none; }
+
+/* PERDENIN IKONU
+
+   Dokuz oyun ayni perdeyi kullaniyordu ve perdede bir baslik, bir satir
+   yazi, bir dugmeden baska hicbir sey yoktu. On dakikalik bir kosunun
+   sonu da, yeni bir rekorun da gorunusu ayniydi.
+
+   Ikon perdenin DURUMUNU tasiyor; sinifi showOverlay'in `ikon`
+   parametresinden geliyor. Dosyalar assets/perde/ altinda ve hepsi
+   oyunun kendi klasorunun DISINDA - dokuz oyun ayni sekiz gorseli
+   paylasiyor, tarayici bir kez indiriyor.
+
+   Olcu 76px: perdenin en genis oldugu yer dar ekranda ~280px ve ikonun
+   basligi ezmemesi, ama "bir sey oldu" demesi gerekiyor. */
+.overlay-ikon {
+  width: 76px;
+  height: 76px;
+  margin-bottom: 2px;
+  background: center / contain no-repeat;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5));
+  animation: perde-ikon 0.42s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+.ik-bitti  { background-image: url("../assets/perde/bitti.webp"); }
+.ik-tamam  { background-image: url("../assets/perde/tamam.webp"); }
+.ik-rekor  { background-image: url("../assets/perde/rekor.webp"); }
+.ik-sure   { background-image: url("../assets/perde/sure.webp"); }
+.ik-kaza   { background-image: url("../assets/perde/kaza.webp"); }
+.ik-kasa   { background-image: url("../assets/perde/kasa.webp"); }
+.ik-seviye { background-image: url("../assets/perde/seviye.webp"); }
+.ik-bonus  { background-image: url("../assets/perde/bonus.webp"); }
+
+/* Rekor ANIN kendisi - ikonun arkasindan altin bir isik aciliyor.
+   Yalnizca rekorda; her bitiste parlasaydi rekorun anlami kalmazdi. */
+.ik-rekor {
+  position: relative;
+  filter: drop-shadow(0 4px 12px rgba(245, 185, 66, 0.5));
+}
+.ik-rekor::before {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 214, 120, 0.34), rgba(245, 185, 66, 0) 68%);
+  z-index: -1;
+  animation: perde-isik 0.7s ease-out both;
+}
+
+@keyframes perde-ikon { from { opacity: 0; transform: scale(0.55) translateY(10px); } }
+@keyframes perde-isik { from { opacity: 0; transform: scale(0.5); } }
+
+@media (max-width: 360px) {
+  .overlay-ikon { width: 64px; height: 64px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay-ikon, .ik-rekor::before { animation: none; }
+}
 /* Overlay arka plani temadan bagimsiz hep koyu - yazi rengi de oyle sabitlenmeli,
    yoksa acik Telegram temasinda --text/--muted koyulasip okunmaz oluyor. */
 .overlay h2 { margin: 0; font-size: 23px; color: #ffffff; }

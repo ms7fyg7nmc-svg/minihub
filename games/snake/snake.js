@@ -1,9 +1,9 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v246';
-import { submitScore, getBest, clearState } from '../../js/store.js?v246';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v246';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v246';
-import { yarimBirakmaOnayi, onayAcik } from '../../js/onay.js?v246';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v247';
+import { submitScore, getBest, clearState } from '../../js/store.js?v247';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v247';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v247';
+import { yarimBirakmaOnayi, onayAcik } from '../../js/onay.js?v247';
 
 const GAME_ID = 'snake';
 const INTRO_SEEN_KEY = 'mh_snake_seen';
@@ -51,6 +51,7 @@ const bestEl = document.getElementById('best');
 const startEl = document.getElementById('start');
 const overlayEl = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
+const overlayIkon = document.getElementById('overlay-ikon');
 const overlayText = document.getElementById('overlay-text');
 const overlayBtn = document.getElementById('overlay-btn');
 
@@ -394,7 +395,8 @@ async function crash(index) {
   if (result.isRecord) lines.push(t('newRecord'));
   if (earned > 0) lines.push(t('earnedPoints', { points: format(earned) }));
 
-  showOverlay(t('gameOver'), lines.join(' · '), t('playAgain'), resetGame);
+  showOverlay(t('gameOver'), lines.join(' · '), t('playAgain'), resetGame,
+              result.isRecord ? 'rekor' : 'bitti');
 }
 
 function buildBoard() {
@@ -516,7 +518,11 @@ swipeEl.addEventListener('pointermove', (e) => {
 swipeEl.addEventListener('pointerup', () => { touchStart = null; });
 swipeEl.addEventListener('pointercancel', () => { touchStart = null; });
 
-function showOverlay(title, text, buttonLabel, action) {
+/* `ikon` perdenin DURUMUNU anlatiyor: bitti / tamam / rekor / sure /
+   kaza / kasa / seviye. Varsayilani 'bitti' - cagiran taraf bir sey
+   soylemezse perde yine aciliyor, sadece notr ikonla. */
+function showOverlay(title, text, buttonLabel, action, ikon = 'bitti') {
+  overlayIkon.className = `overlay-ikon ik-${ikon}`;
   overlayTitle.textContent = title;
   overlayText.innerHTML = mhHtml(text);
   overlayBtn.textContent = buttonLabel;

@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="246">
+  <meta name="surum" content="247">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Coin Drop</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -13,10 +13,10 @@
       if (sessionStorage.getItem('mh_hub_open') !== '1') location.replace('../../index.html');
     } catch (e) {}
   </script>
-  <link rel="stylesheet" href="../../css/style.css?v246">
-  <link rel="stylesheet" href="../../css/game.css?v246">
-  <link rel="stylesheet" href="coindrop.css?v246">
-  <link rel="stylesheet" href="../../css/cerceve.css?v246">
+  <link rel="stylesheet" href="../../css/style.css?v247">
+  <link rel="stylesheet" href="../../css/game.css?v247">
+  <link rel="stylesheet" href="coindrop.css?v247">
+  <link rel="stylesheet" href="../../css/cerceve.css?v247">
 </head>
 <body class="game" data-i18n-title="title">
   <div class="app game-app">
@@ -57,6 +57,7 @@
           <canvas id="cv"></canvas>
 
           <div class="overlay" id="overlay" hidden>
+            <i class="overlay-ikon" id="overlay-ikon" aria-hidden="true"></i>
             <h2 id="overlay-title"></h2>
             <p id="overlay-text"></p>
             <button class="btn primary" id="overlay-btn"></button>
@@ -76,6 +77,6 @@
 
   </div>
 
-  <script type="module" src="coindrop.js?v246"></script>
+  <script type="module" src="coindrop.js?v247"></script>
 </body>
 </html>

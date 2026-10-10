@@ -1,10 +1,10 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v246';
-import { submitScore, getBest, saveState, loadState, clearState, spendRestartEnergy, startRun, finishRun, yerelTohum } from '../../js/store.js?v246';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v246';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v246';
-import { generatePuzzle } from './logic.js?v246';
-import { yenidenKurmaOnayi } from '../../js/onay.js?v246';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v247';
+import { submitScore, getBest, saveState, loadState, clearState, spendRestartEnergy, startRun, finishRun, yerelTohum } from '../../js/store.js?v247';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v247';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v247';
+import { generatePuzzle } from './logic.js?v247';
+import { yenidenKurmaOnayi } from '../../js/onay.js?v247';
 
 const GAME_ID = 'flow';
 const POINTS_PER_LEVEL = 48;
@@ -35,6 +35,7 @@ const bestEl = document.getElementById('best');
 const undoBtn = document.getElementById('undo');
 const overlayEl = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
+const overlayIkon = document.getElementById('overlay-ikon');
 const overlayText = document.getElementById('overlay-text');
 const overlayBtn = document.getElementById('overlay-btn');
 
@@ -292,7 +293,7 @@ async function finishLevel() {
   bestEl.textContent = bestLevel;
 
   const text = `${t('levelResult', { moves })} ${t('earnedPoints', { points: earned })}`;
-  showOverlay(t('levelDone'), text, t('nextLevel'), () => { level += 1; buildLevel(); });
+  showOverlay(t('levelDone'), text, t('nextLevel'), () => { level += 1; buildLevel(); }, 'seviye');
 }
 
 function persist() {
@@ -413,7 +414,11 @@ boardEl.addEventListener('pointerleave', () => {
   if (drag) endDrag();
 });
 
-function showOverlay(title, text, buttonLabel, action) {
+/* `ikon` perdenin DURUMUNU anlatiyor: bitti / tamam / rekor / sure /
+   kaza / kasa / seviye. Varsayilani 'bitti' - cagiran taraf bir sey
+   soylemezse perde yine aciliyor, sadece notr ikonla. */
+function showOverlay(title, text, buttonLabel, action, ikon = 'bitti') {
+  overlayIkon.className = `overlay-ikon ik-${ikon}`;
   overlayTitle.textContent = title;
   overlayText.innerHTML = mhHtml(text);
   overlayBtn.textContent = buttonLabel;

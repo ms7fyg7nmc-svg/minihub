@@ -1,10 +1,10 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v246';
-import { getBest, saveState, loadState, clearState, startRun, finishRunOrLegacy, yerelTohum } from '../../js/store.js?v246';
-import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v246';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v246';
-import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v246';
-import { yarimBirakmaOnayi } from '../../js/onay.js?v246';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v247';
+import { getBest, saveState, loadState, clearState, startRun, finishRunOrLegacy, yerelTohum } from '../../js/store.js?v247';
+import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v247';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v247';
+import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v247';
+import { yarimBirakmaOnayi } from '../../js/onay.js?v247';
 
 const GAME_ID = '2048';
 const POINTS_DIVISOR = 23;
@@ -16,6 +16,7 @@ const scoreEl = document.getElementById('score');
 const bestEl = document.getElementById('best');
 const overlayEl = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
+const overlayIkon = document.getElementById('overlay-ikon');
 const overlayText = document.getElementById('overlay-text');
 const overlayBtn = document.getElementById('overlay-btn');
 
@@ -226,7 +227,7 @@ function move(direction) {
    if (won && !wonShown) {
       wonShown = true;
       haptic.success();
-      showOverlay('2048!', t('g2048.wonText'), t('g2048.continue'), hideOverlay);
+      showOverlay('2048!', t('g2048.wonText'), t('g2048.continue'), hideOverlay, 'tamam');
    } else if (boardIsOver(board)) {
       endGame();
    }
@@ -317,7 +318,8 @@ async function endGame() {
    const earned = result?.earned || 0;
    if (earned > 0) lines.push(t('g2048.pointsEarned', { earned: earned.toLocaleString(locale()) }));
 
-   showOverlay(t('g2048.gameOver'), lines.join(' · '), t('g2048.playAgain'), startNewGame);
+   showOverlay(t('g2048.gameOver'), lines.join(' · '), t('g2048.playAgain'), startNewGame,
+               result?.isRecord ? 'rekor' : 'bitti');
 }
 
 function layout() {
@@ -408,7 +410,11 @@ function overlayVisible() {
    return !overlayEl.hidden;
 }
 
-function showOverlay(title, text, buttonLabel, action) {
+/* `ikon` perdenin DURUMUNU anlatiyor: bitti / tamam / rekor / sure /
+   kaza / kasa / seviye. Varsayilani 'bitti' - cagiran taraf bir sey
+   soylemezse perde yine aciliyor, sadece notr ikonla. */
+function showOverlay(title, text, buttonLabel, action, ikon = 'bitti') {
+  overlayIkon.className = `overlay-ikon ik-${ikon}`;
    overlayTitle.textContent = title;
    overlayText.innerHTML = mhHtml(text, '../../assets/coin-128.webp');
    overlayBtn.textContent = buttonLabel;
