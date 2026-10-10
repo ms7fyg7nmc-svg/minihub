@@ -352,8 +352,12 @@ body.hub::before {
    Yazi DOM'da kaldigi icin dort dile de cevriliyor; afisin kendisinde
    tek bir harf yok.
 
-   Dorduncu tasarim assets/hero/_alternatifler icinde (ufuk); degistirmek
-   asagidaki tek satir. */
+   10 Ekim 2026'da ucu de DEGISTI. Eskiler soyut mor/uzay desenleriydi -
+   bulutsu, takimyildiz, cam kartlar - ve oyunun dunyasiyla hicbir
+   baglari yoktu: ne ejderha, ne hazine, ne yumurta. Yenileri oyunun
+   kendi konusundan: kor isiginda bir ejderha, tasan bir hazine sandigi,
+   catlayip isiyan yumurtalar. Mor set assets/hero/_alternatifler'de
+   (`mor-*`), dorduncu eski tasarim da orada (`ufuk`). */
 .hero {
   position: relative;
   overflow: hidden;
@@ -361,7 +365,10 @@ body.hub::before {
   padding: 16px 16px 15px;
   border-radius: 20px;
   border: 1px solid var(--cizgi-soft);
-  background-color: #0e0b18;
+  /* SICAK siyah, mor-siyah degil. Zemin ve asagidaki perde #0e0b18'di
+     (mor); yeni afisler kor tonunda ve o mor tul hepsinin uzerine
+     soguk bir katman atiyordu. */
+  background-color: #140d0a;
   /* Soldan gelen perde afisin UZERINDE duruyor: Rusca gibi uzun bir
      cevirinin alt satiri susleme bolgesine girdiginde bile yazi koyu
      bir zeminde kaliyor. Perde olmadan "ekosistemimizin parcasi ol"
@@ -370,29 +377,31 @@ body.hub::before {
      ile soyluyor; burada sadece o degiskeni okuyoruz, boylece perde
      tek bir yerde tanimli kaliyor. Ozellik tanimsiz kalirsa (betik
      calismadiysa) varsayilan devreye giriyor. */
-  --afis: url("../assets/hero/takim.webp");
+  --afis: url("../assets/hero/ejderha.webp");
   background-image:
-    linear-gradient(90deg, rgba(14, 11, 24, 0.93) 0%, rgba(14, 11, 24, 0.80) 44%, rgba(14, 11, 24, 0) 72%),
+    linear-gradient(90deg, rgba(20, 13, 10, 0.93) 0%, rgba(20, 13, 10, 0.80) 44%, rgba(20, 13, 10, 0) 72%),
     var(--afis);
   background-size: cover, cover;
   background-position: center, right center;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
-:root[data-afis="isik"] .hero { --afis: url("../assets/hero/isik.webp"); }
-:root[data-afis="takim"] .hero { --afis: url("../assets/hero/takim.webp"); }
-:root[data-afis="kart"] .hero { --afis: url("../assets/hero/kart.webp"); }
+:root[data-afis="ejderha"] .hero { --afis: url("../assets/hero/ejderha.webp"); }
+:root[data-afis="hazine"] .hero  { --afis: url("../assets/hero/hazine.webp"); }
+:root[data-afis="yumurta"] .hero { --afis: url("../assets/hero/yumurta.webp"); }
 
 /* Afis her iki temada da koyu - yazilar temadan bagimsiz acik.
    Baslikta renk gecisi duruyor ama tek basina kullanildigindaki kadar
    koyu degil: afisin uzerinde mavi uc okunmuyordu, o yuzden gecis
-   mordan altina, yani afisin kendi renk ailesinden geciyor. */
+   afisin kendi renk ailesinden geciyor. Afisler morken gecis de
+   mordan altina gidiyordu; artik kor tonunda oldugu icin kremden
+   altina, oradan sicak kirmiziya. */
 .hero h1 {
   margin: 0 0 6px;
   font-size: 27px;
   line-height: 1.15;
   letter-spacing: -0.5px;
-  background: linear-gradient(100deg, #cdb9ff, #e39ad2 42%, #ffd37a);
+  background: linear-gradient(100deg, #ffe9c4, #ffd37a 42%, #ff9f6b);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
