@@ -46,6 +46,53 @@ tek ürettirmemiz.
 
 ---
 
+## DMD bunu nasıl yapıyor
+
+Sahibin gözlemi: *"İnternet kötü olduğunda render'da kel ördeği
+görebiliyorum."*
+
+**Bu, sorunun cevabı.** Kel ördek görmek iki şeyi birden kanıtlıyor:
+
+1. **Katmanlar istemcide, çalışma anında birleştiriliyor.** Tek parça
+   hazır görsel olsaydı ya hiçbir şey görünürdü ya da tam ördek; gövde
+   gelip aksesuarların sonra gelmesi ancak ayrı dosyalar üst üste
+   bindiriliyorsa olur.
+2. **Daha önemlisi:** yüklenemeyen katman **eksik** görünüyor, *yanlış
+   yerde* değil. Şapka ördeğin yanında havada asılı kalmıyor, hiç
+   gelmiyor. Yani yüklenen katmanlar her zaman doğru yerde — çünkü
+   konum dosyanın **içinde**.
+
+Yani DMD'de her aksesuar, **gövdeyle aynı boyutta, çoğu saydam, parça
+kendi son konumuna çizilmiş** bir dosya. İstemci hiçbir hesap yapmıyor,
+sadece üst üste koyuyor. Sektör standardının ta kendisi — ve bizim
+yapmadığımız şey.
+
+(DMD'nin dosyalarını doğrudan inceleyemedim: `game.duckmyduck.com`
+Telegram dışına 503 dönüyor, `api.duckmyduck.com` kimlik istiyor.
+Telegram hesabına girerek bakmak söz konusu değil. Ama kel ördek
+gözlemi zaten yeterli kanıt.)
+
+### "Tam tuval" pahalı değil
+
+İlk akla gelen itiraz: *1024'lük tuvalin çoğu boşsa dosya şişmez mi?*
+Kendi parçalarımızla ölçtüm:
+
+| Parça | Kırpılmış | Tam tuval | Fark |
+|---|---|---|---|
+| `crown-celestial` | 11 KB | 10 KB | **−2 KB** |
+| `wing-flame` | 17 KB | 19 KB | +2 KB |
+| `tail-lightning` | 16 KB | 19 KB | +2 KB |
+| `necklace-royal` | 14 KB | 16 KB | +2 KB |
+| `face-kingmark` | 9 KB | 12 KB | +2 KB |
+
+**Parça başına +2 KB.** WebP boş saydam alanı sıkıştırıp yok ediyor.
+38 parçanın tamamı ~590 KB.
+
+Yani yöntemin "pahalı" görünen kısmı bedava, ve karşılığında çalışma
+anındaki bütün hizalama matematiği ortadan kalkıyor.
+
+---
+
 ## Üç yol
 
 ### A. Mevcut 38 parçayı kalibre et · **0 CU**
@@ -118,7 +165,27 @@ Eylülde denenen de buydu ve bırakılmıştı — haklı olarak.
 
 ## Önerim
 
-**Önce A, kalanlara B.**
+**DMD'nin yolu: konumu dosyaya göm.**
+
+Bu, A'nın daha iyi bir biçimi. Çapa tablosunu **çalışma anında**
+kullanmak yerine **bir kez, üretim aşamasında** uygula ve sonucu tam
+tuvale yazdır:
+
+1. Her parçayı içerik kutusuna kırp.
+2. Çapa tablosuyla gövdeye göre yerine koy, ince ayarını yap.
+3. **1024×1024 saydam tuvale, son konumunda kaydet.**
+4. Oyun kodu hiçbir hesap yapmaz — sadece `egg → wing → body → tail →
+   crown → face → necklace` sırasıyla üst üste bindirir.
+
+Neden bu daha iyi:
+
+- Oyun kodu aptal kalıyor; hizalama hatası çalışma anında oluşamaz.
+- Çapa tablosu bir üretim aracı olur, bir çalışma-anı bağımlılığı değil.
+- Yeni parça eklendiğinde tek yapılacak iş onu doğru yere yerleştirip
+  kaydetmek — kodda hiçbir şey değişmez.
+- DMD'nin yaptığı bu, ve sahibin kel ördek gördüğü an bunun kanıtı.
+
+**Sonra kalanlara B.**
 
 1. **A'yı bitir (0 CU).** Parça başına ince ayarlı çapa tablosu yaz.
    38 parçanın çoğu öteleme + ölçekle kurtulur; gövde ve parçalar aynı
