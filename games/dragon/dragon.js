@@ -1,29 +1,29 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v253';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v253';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v254';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v254';
 
-import { CONFIG, gorselSeviye } from './config.js?v253';
-import { bakimdaMi } from '../../js/store.js?v253';
+import { CONFIG, gorselSeviye } from './config.js?v254';
+import { bakimdaMi } from '../../js/store.js?v254';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
          ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA,
-         izgarayiGenislet, genislemeHakki } from './model.js?v253';
-import { dragonSvg, dragonAssetUrls } from './art.js?v253';
-import { turCek, turYolu, turBul } from './turler.js?v253';
-import { taniBaslat, iz } from '../../js/tani.js?v253';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v253';
+         izgarayiGenislet, genislemeHakki } from './model.js?v254';
+import { dragonSvg, dragonAssetUrls } from './art.js?v254';
+import { turCek, turYolu, turBul } from './turler.js?v254';
+import { taniBaslat, iz } from '../../js/tani.js?v254';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v254';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
          kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
          PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
-         partnerKademe } from './gorevler.js?v253';
-import { getBest, gorevOlay, promoKutuAl } from '../../js/store.js?v253';
-import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v253';
+         partnerKademe } from './gorevler.js?v254';
+import { getBest, gorevOlay, promoKutuAl, sahipMiyim } from '../../js/store.js?v254';
+import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v254';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v253';
+         kilitliMi, nesneMi } from './grid.js?v254';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v253';
-import { createTutorial, pozListesi } from './tutorial.js?v253';
+         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v254';
+import { createTutorial, pozListesi } from './tutorial.js?v254';
 
 const GAME_ID = 'dragon';
 
@@ -373,8 +373,24 @@ function ekranGoster(ad) {
   if (ad === 'dragon') ejderhaCiz();
   if (ad === 'tasks') { gunlukCiz(); questOzetCiz(); partnerOzetCiz(); }
   if (ad === 'trader') siparisCiz();
+  if (ad === 'generator') generatorAc();
   tut?.yenidenKonumla();
 }
+
+/* ---------- GENERATOR (sahip) ---------- */
+
+/* Sekme sunucu "sahip" demedikce gorunmuyor ve modul hic indirilmiyor.
+   Istemci kendini sahip ilan edemez: sahiplik sunucudan geliyor. */
+let generatorKurulu = false;
+async function generatorAc() {
+  if (generatorKurulu) return;
+  generatorKurulu = true;
+  const { generatorKur } = await import('./generator.js?v254');
+  await generatorKur($('gen-kok'));
+}
+
+sahipMiyim().then((e) => { if (e) $('tab-generator').hidden = false; })
+  .catch(() => {});
 
 tabbar.addEventListener('click', (e) => {
   const btn = e.target.closest('.tab');

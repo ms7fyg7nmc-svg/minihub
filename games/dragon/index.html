@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="253">
+  <meta name="surum" content="254">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Dragon Island</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -15,9 +15,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;800&display=swap">
-  <link rel="stylesheet" href="../../css/style.css?v253">
-  <link rel="stylesheet" href="../../css/game.css?v253">
-  <link rel="stylesheet" href="dragon.css?v253">
+  <link rel="stylesheet" href="../../css/style.css?v254">
+  <link rel="stylesheet" href="../../css/game.css?v254">
+  <link rel="stylesheet" href="dragon.css?v254">
 </head>
 <body class="game dragon-app" data-i18n-title="title">
 
@@ -187,6 +187,13 @@
         </button>
       </section>
 
+      <!-- GENERATOR — yalnizca sahip gorur; sekmesi dragon.js'te
+           sunucunun "sahip" cevabina gore aciliyor. -->
+      <section class="screen" id="screen-generator" data-screen="generator" hidden>
+        <div id="gen-kok" class="gen-kok"></div>
+      </section>
+
+
     </main>
 
     <!-- GENISLEYEN PANEL: gorev haritasi ve partner gorevleri tam
@@ -222,6 +229,10 @@
         <span data-i18n="tabTrader">Tüccar</span>
         <i class="tab-dot" id="trader-dot" hidden></i>
       </button>
+      <button class="tab" data-go="generator" id="tab-generator" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h7v10H4zM13 4h7v6h-7zM13 13h7v7h-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        <span>Generator</span>
+      </button>
       <button class="tab" data-go="tasks">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M9 11h7M9 15h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <span data-i18n="tabTasks">Gorevler</span>
@@ -246,6 +257,6 @@
     </div>
   </div>
 
-  <script type="module" src="dragon.js?v253"></script>
+  <script type="module" src="dragon.js?v254"></script>
 </body>
 </html>

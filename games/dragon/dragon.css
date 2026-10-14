@@ -2387,3 +2387,48 @@ body[data-screen="tasks"] .sky::after {
 .siparis-alt .act-btn { flex: 1; }
 
 .tuccar-not { margin: 2px 0 0; font-size: 11.5px; line-height: 1.45; color: var(--muted, #a9adc4); text-align: center; }
+
+/* ---------- GENERATOR (yalnizca sahip) ---------- */
+
+.gen-kok { padding: 10px 2px 24px; }
+
+.gen-sahne {
+  display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap;
+  justify-content: center; margin-bottom: 14px;
+}
+.gen-yigin {
+  position: relative; flex: none; border-radius: 14px; overflow: hidden;
+  background: var(--yuzey); border: 1px solid var(--cizgi);
+}
+.gen-yigin img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.gen-yigin.buyuk { width: min(300px, 66vw); aspect-ratio: 1; }
+.gen-yigin.kucuk { width: 192px; height: 192px; }
+.gen-kucuk-sar small {
+  display: block; text-align: center; margin-top: 6px;
+  font-size: 11px; color: var(--soluk);
+}
+
+.gen-dugmeler { display: flex; gap: 8px; margin-bottom: 14px; }
+.gen-dugmeler .btn { flex: 1; }
+
+.gen-panel {
+  display: grid; gap: 9px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+.gen-yuva label {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 11px; color: var(--soluk); margin-bottom: 3px;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.gen-yuva label i { font-style: normal; text-transform: none; opacity: .6; }
+.gen-yuva select {
+  width: 100%; padding: 8px 9px; border-radius: 9px; font-size: 13px;
+  border: 1px solid var(--cizgi); background: var(--yuzey); color: var(--text);
+}
+/* Cakisma yuzunden o an cizilmeyen yuva soluyor - secim duruyor, sadece
+   gizlendigi belli oluyor. */
+.gen-yuva.gizli { opacity: .38; }
+
+.gen-not {
+  margin: 16px 2px 0; font-size: 11.5px; line-height: 1.6; color: var(--soluk);
+}
+.gen-not b { color: var(--vurgu, #e0a055); }

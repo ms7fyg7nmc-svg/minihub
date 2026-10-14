@@ -216,3 +216,121 @@ düşürüyor — yani A'nın emeğini ve B'nin maliyetini birlikte azaltıyor.
 - [Inpainting, Outpainting, and Bounding Box — Invoke](https://support.invoke.ai/support/solutions/articles/151000096702-inpainting-outpainting-and-bounding-box)
 - [Beginner's guide to inpainting — Stable Diffusion Art](https://stable-diffusion-art.com/inpainting_basics/)
 - [Multiple character combine (mask/control) — Civitai](https://civitai.com/models/1445366/multiple-character-combine-mask-control?modelVersionId=1657623)
+
+---
+
+# 11 Ekim — çözüm bulundu ve kapsam ölçüldü
+
+## Maskeli üretim çalışıyor (3 test, 33 CU)
+
+| Test | Maske | Sonuç |
+|---|---|---|
+| Kanat | iki omuz, gövdeyle örtüşen elips | ✅ omuz eklemiyle gerçekten bağlı |
+| Kafa (geniş) | %55'e kadar bütün kafa | ❌ ifade değişti ama **kimlik kaydı** |
+| Yüz (dar) | sadece kaş/göz/burun/ağız | ✅ boynuz ve kafatası aynen, yalnız ifade değişti |
+
+**Kural: maske ne kadar darsa kimlik o kadar korunur.** Değişmeyecek
+her piksel maskenin dışında kalmalı.
+
+**Katman çıkarma yöntemi:** katmanın alfası = maskenin açıklığı (ters
+alfa) × çıktının kendi alfası. Maske yumuşak kenarlı olduğu için katman
+da geçişli bitiyor; birleşme çizgisi oluşmuyor. 3× büyütmede ağız/çene
+ve kaş/boynuz geçişlerinde dikiş görünmüyor.
+
+Kanıt: `games/dragon/assets/_kaynak/maske/`
+
+## Kalibrasyonla kurtulanlar — 22 parça, 0 CU
+
+Ölçerek düzeltildi (`hizala.py` içinde her satırın sebebi yazılı):
+
+- **Taçlar (8):** kafatasının 12–17 px üstünde havada duruyorlardı.
+  Her biri ~14 px gömülecek şekilde indirildi.
+- **Kolyeler (6):** zincirin üst kemeri çene hattını 36–75 px aşıyor,
+  bazısı ağzın üstünden geçiyordu. Her biri kendi aşımı kadar indirildi;
+  artık zincir boyunda, kolye göğüste.
+- **Yüz işaretleri (8):** zaten alında ve ortada, sorun yoktu.
+
+Ayrıca **temas gölgesi** eklendi: taç ve kolyenin altına, kendi
+siluetinden üretilip gövdeyle kesilen yumuşak bir gölge katmanın içine
+pişiriliyor. Oyun kodu fazladan iş yapmıyor.
+
+## Kurtulamayanlar — 16 parça, ~176 CU
+
+**Kanatlar (8) ve kuyruklar (8).** Gerçek boyda (192 px) bakıldığında
+hâlâ gövdenin yanında asılı duruyorlar; omuz veya kalça eklemi yok.
+Öteleme ve ölçek bunu düzeltemez — belgenin başında yazdığı gibi,
+perspektif uyumsuzluğu hizalamayla çözülmez. Maskeli üretim kanat
+testinde bunu çözdüğünü kanıtladı.
+
+## Güncel tablo
+
+| | Parça | Durum | Maliyet |
+|---|---|---|---|
+| Taç | 8 | ✅ kalibre edildi | 0 |
+| Yüz işareti | 8 | ✅ sorunsuz | 0 |
+| Kolye | 6 | ✅ kalibre edildi | 0 |
+| Kanat | 8 | ⬜ maskeli üretim gerekli | ~88 CU |
+| Kuyruk | 8 | ⬜ maskeli üretim gerekli | ~88 CU |
+| Yüz ifadesi | ? | ⬜ ifade başına | ~11 CU |
+
+İlk tahmin 418 CU'ydu; ölçüm sonrası **176 CU**.
+
+---
+
+# 11 Ekim, ikinci tur — kök hizalaması
+
+Sahibin iki uyarısı doğruydu ve ikisi de bedava çözüldü.
+
+## 1. Kanatlar tersti
+
+`hizala.py` ham kanadı **sola**, aynasını **sağa** koyuyordu. Oysa
+çizimin kökü sol altta, ucu sağ üstte — o kanat **sağ** tarafa ait.
+İkisi de ters takılıyordu: kol kemiği altta, pençe aşağı bakıyordu.
+
+`x: 0.15 → 0.85`. Tek satır. 8 kanadın hepsi düzeldi.
+
+Aynı hata maskeli üretimde de vardı: model, gövdeden başka referans
+görmediği için kanadın yapısını uydurdu ve ters çizdi. Elimizde doğru
+çizilmiş 8 kanat dururken hiçbiri referans verilmemişti.
+
+## 2. Parçalar milimetrik oturmuyordu
+
+Eski yöntem parçayı **kendi içerik kutusunun köşesinden** yerleştiriyordu.
+Ama kutunun köşesi kanadın kökü değil — her çizimde kök farklı yerde, o
+yüzden hiçbiri aynı noktaya oturmuyordu. Parça başına el ayarı da bunu
+kapatmıyordu, sadece gizliyordu.
+
+**Yeni yöntem — `EKLEM` tablosu + `koke_gore_yerlestir()`:**
+
+1. Parçanın **kök ucunu** bul (kalın olan uç; bu setin hepsinde sol).
+2. O ucun **ağırlık merkezini** ve **kalınlığını** ölç.
+3. Ölçeği, kök kalınlığı hedef eklem kalınlığına eşit olacak şekilde seç.
+4. Toplam açıklığa **tavan** koy — ince kökten geniş açıklık çıkan
+   çizimler (celestial, demon, lightning) yoksa kafayı aşıyor.
+5. Kök merkezini gövdedeki sabit ekleme noktasına oturt, 30 px gövdenin
+   içine sok ki kök silueti ardında kalsın.
+
+```python
+EKLEM = {
+    'wing': dict(x=0.80, y=0.60, kalinlik=0.072, ic=30, maks_en=0.60),
+    'tail': dict(x=0.74, y=0.86, kalinlik=0.115, ic=34, maks_en=0.72),
+}
+```
+
+Parça başına ince ayar tablosu **tamamen silindi** — gerek kalmadı.
+
+## 3. Kanat ve kuyruk gövdenin ARKASINA alındı
+
+Önde çizilince kökleri gövdeye sert bir kenarla biniyordu. Arkaya
+alınınca kök gövdenin ardında kalıyor ve parça gerçekten arkadan
+çıkıyormuş gibi okunuyor. Katman sırası:
+
+`kanat → kuyruk → GÖVDE → taç → yüz → kolye`
+
+## Sonuç
+
+3× büyütmede dört farklı kanadın omuz eklemi aynı noktada, boşluksuz ve
+dikişsiz. 16 parça kurtarıldı, **0 CU harcandı.** Önerdiğim 176 CU'luk
+maskeli üretim gereksiz çıktı.
+
+Kanıt: `_kaynak/maske/SON-KANAT.png`, `SON-KUYRUK.png`, `EKLEM-YAKIN.png`

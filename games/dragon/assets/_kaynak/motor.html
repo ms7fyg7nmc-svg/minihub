@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ejderha Kombinasyon Motoru</title>
+<style>
+  :root{
+    --zemin:#f7f5f2; --kart:#ffffff; --yazi:#2a211a; --soluk:#8b7f73;
+    --cizgi:#e4ded6; --vurgu:#c1762a; --uyari:#b3451f;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-tema="acik"]){
+      --zemin:#17130f; --kart:#211b16; --yazi:#f0e7dc; --soluk:#9d8f80;
+      --cizgi:#352c24; --vurgu:#e0a055; --uyari:#e07a4f;
+    }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--zemin); color:var(--yazi);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  header{padding:22px 16px 6px; max-width:1180px; margin:0 auto}
+  h1{font-size:20px; margin:0 0 4px}
+  header p{margin:0; color:var(--soluk); font-size:13px}
+  .sayac{color:var(--vurgu); font-weight:600}
+
+  .duzen{
+    max-width:1180px; margin:0 auto; padding:18px 16px 60px;
+    display:grid; gap:18px; grid-template-columns:minmax(0,1fr) 320px;
+    align-items:start;
+  }
+  .sahne{grid-column:1} .panel{grid-column:2} .izgara{grid-column:1 / -1}
+  /* Telefonda: once onizleme, HEMEN ALTINDA kontroller, en sonda izgara.
+     Kontrol paneli 12'lik izgaranin arkasinda kalirsa ulasilmiyor. */
+  @media (max-width:860px){
+    .duzen{grid-template-columns:1fr}
+    .sahne,.panel,.izgara{grid-column:1}
+    .sahne{order:1} .panel{order:2} .izgara{order:3}
+    .yigin.buyuk{width:min(300px,68vw)}
+    .sahne{gap:14px; justify-content:center}
+  }
+
+  .sahne{
+    background:var(--kart); border:1px solid var(--cizgi); border-radius:16px;
+    padding:18px; display:flex; gap:22px; align-items:flex-start; flex-wrap:wrap;
+  }
+  .yigin{position:relative; flex:none; background:
+      conic-gradient(from 0deg, #0000 0 25%, #00000008 0 50%) 0 0/28px 28px;
+    border-radius:12px; overflow:hidden}
+  .yigin img{position:absolute; inset:0; width:100%; height:100%;
+    image-rendering:auto; display:block}
+  .yigin.buyuk{width:min(420px,78vw); aspect-ratio:1}
+  .gercek{flex:none; text-align:center}
+  .gercek .yigin{width:192px; height:192px}
+  .gercek small, .buyukbaslik{display:block; color:var(--soluk); font-size:12px;
+    margin-top:8px; letter-spacing:.02em}
+
+  .panel{background:var(--kart); border:1px solid var(--cizgi);
+    border-radius:16px; padding:16px}
+  .yuva{margin-bottom:14px}
+  .yuva label{display:flex; justify-content:space-between; align-items:baseline;
+    font-size:12px; color:var(--soluk); margin-bottom:5px; letter-spacing:.04em;
+    text-transform:uppercase}
+  .yuva select{width:100%; padding:9px 10px; border-radius:9px;
+    border:1px solid var(--cizgi); background:var(--zemin); color:var(--yazi);
+    font-size:14px}
+  .rozet{font-size:11px; padding:1px 7px; border-radius:999px;
+    text-transform:none; letter-spacing:0}
+  .ok{background:#2e7d3220; color:#4e9a51}
+  .sorun{background:#b3451f20; color:var(--uyari)}
+
+  .dugmeler{display:flex; gap:8px; margin-top:4px}
+  button{flex:1; padding:11px 10px; border-radius:10px; cursor:pointer;
+    border:1px solid var(--cizgi); background:var(--zemin); color:var(--yazi);
+    font-size:14px; font-weight:500}
+  button.ana{background:var(--vurgu); border-color:var(--vurgu); color:#22160a}
+  button:active{transform:translateY(1px)}
+
+  .not{margin-top:14px; padding-top:14px; border-top:1px solid var(--cizgi);
+    font-size:12px; color:var(--soluk)}
+  .not code{background:var(--zemin); padding:1px 5px; border-radius:5px}
+  .ad{margin-top:10px; font-size:12px; color:var(--soluk); word-break:break-all}
+  .izgara{display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr));
+    gap:10px; margin-top:16px}
+  .izgara .yigin{width:100%; aspect-ratio:1; cursor:pointer}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Ejderha Kombinasyon Motoru</h1>
+  <p>Katmanlar <code>katman/</code> klasöründen geliyor, tarayıcıda üst üste
+     bindiriliyor — oyunun yapacağı işin aynısı.
+     Kâğıt üzerinde <span class="sayac" id="sayac">—</span> gerçekten
+     kullanılabilir kombinasyon var.</p>
+</header>
+
+<div class="duzen">
+    <div class="sahne">
+      <div>
+        <div class="yigin buyuk" id="buyuk"></div>
+        <span class="buyukbaslik">yakından</span>
+      </div>
+      <div class="gercek">
+        <div class="yigin" id="kucuk"></div>
+        <small>192 px — oyundaki gerçek boy</small>
+      </div>
+    </div>
+
+  <div class="panel" id="panel">
+    <div class="dugmeler" style="margin-bottom:10px">
+      <button class="ana" id="rastgele">Rastgele</button>
+      <button id="ciplak">Çıplak</button>
+    </div>
+    <div class="dugmeler" style="margin-bottom:16px">
+      <button id="yenile">Aşağıdaki 12'yi yenile</button>
+    </div>
+    <div id="yuvalar"></div>
+    <div class="not" id="not"></div>
+    <div class="ad" id="ad"></div>
+  </div>
+
+  <div class="izgara" id="izgara"></div>
+</div>
+
+<script>
+// Kanat ve kuyruk artik KOK HIZALAMASI ile yerlesiyor: her parcanin
+// kok ucu bulunup govdedeki sabit ekleme noktasina oturtuluyor, olcek
+// de kok kalinligi hedef eklem kalinligina esit olacak sekilde
+// seciliyor (toplam acikliga tavan konarak). Boylece 8 kanadin hepsi
+// AYNI omuzdan, AYNI kalinlikta cikiyor.
+const YUVALAR = [
+  { id:'wing',     ad:'Kanat',        durum:'ok', aciklama:'kök hizalaması' },
+  { id:'tail',     ad:'Kuyruk',       durum:'ok', aciklama:'kök hizalaması' },
+  { id:'crown',    ad:'Taç',          durum:'ok', aciklama:'kalibre edildi' },
+  { id:'face',     ad:'Yüz işareti',  durum:'ok', aciklama:'sorunsuz' },
+  { id:'necklace', ad:'Kolye',        durum:'ok', aciklama:'kalibre edildi' },
+];
+const SAGLAM = YUVALAR.filter(y => !y.kirik).map(y => y.id);
+
+const PARCALAR = {
+  wing: ['wing-celestial','wing-crystal','wing-demon','wing-flame','wing-king',
+         'wing-leather','wing-lightning','wing-phoenix'],
+  tail: ['tail-basic','tail-celestial','tail-crystal','tail-demon','tail-flame',
+         'tail-king','tail-lightning','tail-spiked'],
+  crown:['crown-bronze','crown-celestial','crown-flame','crown-golden','crown-ice',
+         'crown-king','crown-silver','crown-tiny'],
+  face: ['face-darkmark','face-demon','face-flame','face-kingmark','face-rune',
+         'face-scar','face-twinscar','face-warpaint'],
+  necklace:['necklace-bronze','necklace-celestial','necklace-fang','necklace-flame',
+            'necklace-royal','necklace-sapphire'],
+};
+
+// Maskeli uretimle cikan katmanlar: ayni tuval, ayni yontem, farkli klasor.
+// Kalibre edilmis parcalarla yan yana denenebilsin diye listeye ekleniyor.
+// Maskeli kanat da KIRIK: govdeye dogru bagleniyor ama anatomisi ters.
+// Dogru kanatta kalin kol kemigi USTTE (on kenar), pence kanadin dis
+// ucunda yukarida, zar asagi sarkar. Bizimkinde ust kenar kemiksiz bir
+// zar yayi, kemikler omuzdan asagi aciliyor, pence asagi bakiyor.
+// Sebep: modele referans olarak yalnizca GOVDE verildi, kanadin yapisi
+// yaziyla anlatildi - model yapiyi uydurdu. Sonraki denemede dogru
+// cizilmis bir kanat da referans olarak verilecek.
+const MASKELI = {
+  wing: [['maske/katman-kanat-temiz.png', '✗ maskeli kanat — ANATOMİSİ TERS']],
+  face: [['maske/katman-yuz-kizgin.png',  '★ kızgın yüz (maskeli)']],
+};
+
+const yol = (p) => p.includes('/') ? p : `katman/${p}.webp`;
+const etiket = (p) => p.split('-').slice(1).join('-');
+
+// Kanat ve kuyruk GOVDENIN ARKASINDA; geri kalani onunde.
+// One cizilince kokleri govdeye sert bir kenarla biniyordu.
+const ARKA = ['wing','tail'];
+const ON   = ['crown','face','necklace'];
+const SIRA = [...ARKA, ...ON];
+
+const secim = {};
+const buyuk = document.getElementById('buyuk');
+const kucuk = document.getElementById('kucuk');
+
+function kur(){
+  const kap = document.getElementById('yuvalar');
+  YUVALAR.forEach(y => {
+    const d = document.createElement('div');
+    d.className = 'yuva';
+    const ek = (MASKELI[y.id] || []).map(([v,a]) => `<option value="${v}">${a}</option>`).join('');
+    d.innerHTML = `
+      <label>${y.ad}
+        <span class="rozet ${y.durum}">${y.aciklama}</span>
+      </label>
+      <select data-yuva="${y.id}">
+        <option value="">— yok —</option>
+        ${ek}
+        ${PARCALAR[y.id].map(p => `<option value="${p}">${etiket(p)}</option>`).join('')}
+      </select>`;
+    kap.appendChild(d);
+  });
+  kap.addEventListener('change', e => {
+    secim[e.target.dataset.yuva] = e.target.value;
+    ciz();
+  });
+
+  document.getElementById('rastgele').onclick = rastgele;
+  document.getElementById('ciplak').onclick = () => {
+    SIRA.forEach(s => secim[s] = '');
+    senkronla(); ciz();
+  };
+  document.getElementById('yenile').onclick = izgaraKur;
+
+  // Kagit uzerindeki sayi ile gercekten kullanilabilir sayi ayni degil.
+  const kagit = YUVALAR.reduce((a,y) => a * (PARCALAR[y.id].length + 1), 1) - 1;
+  const gercek = SAGLAM.reduce((a,s) => a * (PARCALAR[s].length + 1), 1)
+                 * 2 - 1;       // + maskeli yuz var/yok
+  document.getElementById('sayac').innerHTML =
+    `<s style="opacity:.55;font-weight:400">${kagit.toLocaleString('tr-TR')}</s>
+     &nbsp;${gercek.toLocaleString('tr-TR')}`;
+
+  document.getElementById('not').innerHTML =
+    `Katman sırası:
+     <code>kanat → kuyruk → <b>gövde</b> → taç → yüz → kolye</code>.
+     Kanat ve kuyruk gövdenin <b>arkasında</b>: önde çizilince kökleri
+     gövdeye sert bir kenarla biniyordu.
+     <br><br>
+     Kanat ve kuyruk artık <b>kök hizalaması</b> ile yerleşiyor — parçanın
+     kök ucu bulunup gövdedeki sabit ekleme noktasına oturtuluyor, ölçek
+     de kök kalınlığı eklem kalınlığına eşit olacak şekilde seçiliyor.
+     Hepsi aynı omuzdan, aynı kalınlıkta çıkıyor.
+     <br><br>
+     Her dosya gövdeyle aynı 1024 px tuvalde, kendi son konumunda duruyor;
+     motor hiçbir hesap yapmıyor, sadece üst üste koyuyor.
+     ★ çalışan maskeli katman, ✗ maskeli ama anatomisi ters.`;
+
+  rastgele();
+  izgaraKur();
+}
+
+function senkronla(){
+  document.querySelectorAll('select[data-yuva]').forEach(s => {
+    s.value = secim[s.dataset.yuva] || '';
+  });
+}
+
+function rastgeleSecim(){
+  const sec = {};
+  SIRA.forEach(s => sec[s] = '');
+  SAGLAM.forEach(s => {
+    const l = PARCALAR[s];
+    sec[s] = Math.random() < 0.2 ? '' : l[Math.floor(Math.random()*l.length)];
+  });
+  // Maskeli KANAT rastgeleye girmiyor: anatomisi ters. Yuz calisiyor.
+  if (Math.random() < 0.35) sec.face = MASKELI.face[0][0];
+  return sec;
+}
+
+function rastgele(){
+  Object.assign(secim, rastgeleSecim());
+  senkronla();
+  ciz();
+}
+
+function yiginHTML(sec){
+  let h = '';
+  ARKA.forEach(s => { if (sec[s]) h += `<img src="${yol(sec[s])}" alt="">`; });
+  h += `<img src="katman/base.webp" alt="">`;
+  ON.forEach(s => { if (sec[s]) h += `<img src="${yol(sec[s])}" alt="">`; });
+  return h;
+}
+
+function ciz(){
+  const h = yiginHTML(secim);
+  buyuk.innerHTML = h;
+  kucuk.innerHTML = h;
+  const secili = SIRA.filter(s => secim[s]).map(s => etiket(secim[s].split('/').pop().replace('.png','')));
+  document.getElementById('ad').textContent = secili.length ? secili.join(' · ') : 'çıplak gövde';
+}
+
+// Alt tarafta 12 rastgele kombinasyon; birine tiklayinca yukari gelir.
+function izgaraKur(){
+  const iz = document.getElementById('izgara');
+  iz.innerHTML = '';
+  for (let i = 0; i < 12; i++){
+    const sec = rastgeleSecim();
+    const d = document.createElement('div');
+    d.className = 'yigin';
+    d.innerHTML = yiginHTML(sec);
+    d.title = 'bu kombinasyonu yukarı al';
+    d.onclick = () => { Object.assign(secim, sec); senkronla(); ciz(); };
+    iz.appendChild(d);
+  }
+}
+
+kur();
+</script>
+</body>
+</html>

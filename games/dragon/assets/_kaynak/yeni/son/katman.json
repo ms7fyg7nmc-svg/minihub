@@ -1,0 +1,122 @@
+{
+ "tuval": [
+  1024,
+  1024
+ ],
+ "sira": [
+  "govde",
+  "ayak",
+  "bot",
+  "kol",
+  "bileklik",
+  "kafatasi",
+  "ibik_yan",
+  "yuz",
+  "boynuz",
+  "kolye",
+  "tac",
+  "sapka-admin"
+ ],
+ "yerler": {
+  "govde": [
+   0.31,
+   315,
+   492
+  ],
+  "yuz": [
+   0.1571,
+   293,
+   287
+  ],
+  "kafatasi": [
+   0.2549,
+   255,
+   193
+  ],
+  "boynuz": [
+   0.2676,
+   293,
+   111
+  ],
+  "kol": [
+   0.2369,
+   248,
+   578
+  ],
+  "ayak": [
+   0.2295,
+   181,
+   796
+  ]
+ },
+ "capalar": {
+  "boyun": {
+   "x": 437,
+   "y": 511,
+   "genislik": 179,
+   "yukseklik": 46,
+   "alan": 6631
+  },
+  "omuz": {
+   "x": 519,
+   "y": 735,
+   "genislik": 323,
+   "yukseklik": 306,
+   "alan": 37147
+  },
+  "ayak_bilegi": {
+   "x": 508,
+   "y": 862,
+   "genislik": 301,
+   "yukseklik": 140,
+   "alan": 23700
+  },
+  "boynuz_dibi": {
+   "x": 446,
+   "y": 242,
+   "genislik": 319,
+   "yukseklik": 141,
+   "alan": 13515
+  },
+  "kafa_ust": {
+   "x": 441,
+   "y": 193,
+   "genislik": 206,
+   "yukseklik": 1,
+   "alan": 0
+  }
+ },
+ "dogrulama": {
+  "taban_vs_orijinal_fark": 0.0014,
+  "taban_acik_piksel": 36,
+  "katman_cop": 0,
+  "katman_delik": 0,
+  "yuzde_40_ustu_fark": 0.0
+ },
+ "aksesuarlar": {
+  "sapka-admin": {
+   "capa": "kafa_ust",
+   "yontem": "maskeli uretim -> Layerize ile isimle ayirma",
+   "not": "1) Maskeli uretim kepi kafanin USTUNE cizdi (oran ve stil dogru). 2) Seedream Flash Layerize, \"mavi ADMIN kepini ayir\" denerek kepi kendi konturundan temiz sayDam katman olarak cikardi ve altindaki kafayi yeniden kurdu. 3) Kepin konumu, kepli ve kepsiz ciktinin FARKINDAN bulundu. Elle esik/morfoloji yok."
+  },
+  "tac": {
+   "capa": "kafa_ust"
+  },
+  "kolye": {
+   "capa": "boyun"
+  },
+  "bileklik": {
+   "capa": "bilek",
+   "cift": true
+  },
+  "bot": {
+   "capa": "ayak_bilegi",
+   "cift": true
+  }
+ },
+ "notlar": {
+  "kol": "Kol DEGISTIRILEBILIR DEGIL: base ejderhada omuz yok, layerize deligi sade gobekle doldurdu. Poz varyantlari ayri govde olarak tutulmali. Denemeler _alternatifler/ icinde.",
+  "ibik_yan": "Kurtarma maskesinin tirtikli kesigi morfolojik olarak yumusatildi (closing/opening). Kafatasinin USTUNDE cizilir: altina alinca kafanin sag kontur cizgisi kayboluyor, cunku o cizgi bu katmanda.",
+  "layerize": "Layerize aksesuari YENIDEN CIZIYOR, piksel piksel kesmiyor. Cikan katman temiz ve yeniden kullanilabilir ama orijinaldeki oranini korumuyor; yerlesim govdenin kendi olculerine gore ayri yapilmali."
+ }
+}

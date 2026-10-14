@@ -1,0 +1,167 @@
+{
+ "tuval": [
+  1024,
+  1024
+ ],
+ "yuvalar": [
+  {
+   "ad": "govde",
+   "zorunlu": true,
+   "capa": null,
+   "parcalar": [
+    {
+     "ad": "govde",
+     "dosya": "govde.webp",
+     "kb": 26
+    }
+   ]
+  },
+  {
+   "ad": "ayak",
+   "zorunlu": true,
+   "capa": null,
+   "parcalar": [
+    {
+     "ad": "ayak",
+     "dosya": "ayak.webp",
+     "kb": 15
+    }
+   ]
+  },
+  {
+   "ad": "bot",
+   "zorunlu": false,
+   "capa": "ayak_bilegi",
+   "parcalar": [
+    {
+     "ad": "bot-kirmizi",
+     "dosya": "bot-kirmizi.webp",
+     "kb": 15
+    }
+   ]
+  },
+  {
+   "ad": "kol",
+   "zorunlu": true,
+   "capa": null,
+   "parcalar": [
+    {
+     "ad": "kol",
+     "dosya": "kol.webp",
+     "kb": 14
+    }
+   ]
+  },
+  {
+   "ad": "bileklik",
+   "zorunlu": false,
+   "capa": "bilek",
+   "parcalar": [
+    {
+     "ad": "bileklik-altin",
+     "dosya": "bileklik-altin.webp",
+     "kb": 7
+    }
+   ]
+  },
+  {
+   "ad": "kafatasi",
+   "zorunlu": true,
+   "capa": null,
+   "parcalar": [
+    {
+     "ad": "kafatasi",
+     "dosya": "kafatasi.webp",
+     "kb": 16
+    }
+   ]
+  },
+  {
+   "ad": "ibik",
+   "zorunlu": true,
+   "capa": null,
+   "parcalar": [
+    {
+     "ad": "ibik",
+     "dosya": "ibik.webp",
+     "kb": 23
+    }
+   ]
+  },
+  {
+   "ad": "yuz",
+   "zorunlu": true,
+   "capa": null,
+   "parcalar": [
+    {
+     "ad": "yuz-notr",
+     "dosya": "yuz-notr.webp",
+     "kb": 7
+    }
+   ]
+  },
+  {
+   "ad": "boynuz",
+   "zorunlu": true,
+   "capa": null,
+   "parcalar": [
+    {
+     "ad": "boynuz",
+     "dosya": "boynuz.webp",
+     "kb": 18
+    }
+   ]
+  },
+  {
+   "ad": "kolye",
+   "zorunlu": false,
+   "capa": "boyun",
+   "parcalar": [
+    {
+     "ad": "kolye-yakut",
+     "dosya": "kolye-yakut.webp",
+     "kb": 10
+    }
+   ]
+  },
+  {
+   "ad": "tac",
+   "zorunlu": false,
+   "capa": "kafa_ust",
+   "parcalar": [
+    {
+     "ad": "tac-altin",
+     "dosya": "tac-altin.webp",
+     "kb": 16
+    }
+   ]
+  },
+  {
+   "ad": "sapka",
+   "zorunlu": false,
+   "capa": "kafa_ust",
+   "parcalar": [
+    {
+     "ad": "sapka-admin",
+     "dosya": "sapka-admin.webp",
+     "kb": 22
+    }
+   ]
+  }
+ ],
+ "cakismalar": {
+  "sapka": {
+   "gizler": [
+    "boynuz"
+   ],
+   "birlikte_olamaz": [
+    "tac"
+   ]
+  },
+  "tac": {
+   "birlikte_olamaz": [
+    "sapka"
+   ]
+  }
+ }
+}
