@@ -1533,7 +1533,11 @@ body.hub::before {
 .lider-podyum {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  align-items: end;
+  /* stretch, end DEGIL. Basamaklar esit yukseklikte uzuyor; isim ve
+     puan satirlari ucunde de ayni hizaya oturuyor, kaideler ise kendi
+     icinde alta yasliyor. Eskiden butun basamak alta yaslaniyordu ve
+     kaide boylari farkli oldugu icin isimler zikzak yapiyordu. */
+  align-items: stretch;
   gap: 8px;
   margin: 4px 0 14px;
 }
@@ -1548,9 +1552,18 @@ body.hub::before {
 .lider-podyum:has(> :last-child:nth-child(2)) { grid-template-columns: repeat(2, 1fr); max-width: 300px; margin-inline: auto; }
 
 .podyum-basamak {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  /* Dort satir: rozet, ad, puan, kaide. Son satir 1fr - aradaki bosluk
+     orada toplaniyor ve kaide o satirin DIBINE yasliyor. Boylece uc
+     kaidenin alti ayni cizgide, ustleri farkli: gercek bir podyum. */
+  display: grid;
+  /* ILK SATIR SABIT. Uc basamak ayri birer izgara oldugu icin satir
+     yukseklikleri KENDILIGINDEN paylasilmiyor: birincinin rozeti 52,
+     otekilerin 44 piksel ve isimler bu yuzden zikzak yapiyordu.
+     Sabit 64 piksel hepsinde ayni, rozetler o satirin dibine yasliyor
+     - boylece isimler ve puanlar uc sutunda da tek cizgide. */
+  grid-template-rows: 64px auto auto 1fr;
+  justify-items: center;
+  align-content: start;
   gap: 4px;
   min-width: 0;             /* uzun ad sutunu genisletmesin */
   position: relative;
@@ -1567,7 +1580,29 @@ body.hub::before {
   font-weight: 900;
   color: #2a1c00;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4), inset 0 -2px 5px rgba(0, 0, 0, 0.28);
+
+  /* CERCEVE. Rozet duz bir daireydi ve madalya degil renk lekesi gibi
+     duruyordu. Cerceve tek bir cizgiyle olmuyor; madeni bir halkanin
+     okunmasi icin ust uste dort yuzuk gerekiyor:
+       1. ince koyu ayrac   - rozeti halkadan ayiriyor
+       2. METAL HALKA       - asil cerceve, sirasina gore renk aliyor
+       3. dis koyu kontur   - halkayi panelin zemininden kopariyor
+       4. yumusak golge     - rozeti yuzeyden kaldiriyor
+     Icerideki iki ic golge de kubbe hissini veriyor: ustte isik,
+     altta govde golgesi. */
+  --halka: #a9761a;
+  /* Satirin dibine, halkaya yer birakarak: halka box-shadow oldugu
+     icin yerlesime girmiyor, 7 piksel pay birakmazsa isim yazisinin
+     uzerine binerdi. */
+  align-self: end;
+  margin-bottom: 7px;
+  box-shadow:
+    0 0 0 1.5px rgba(0, 0, 0, 0.35),
+    0 0 0 4.5px var(--halka),
+    0 0 0 6px rgba(0, 0, 0, 0.45),
+    0 4px 10px rgba(0, 0, 0, 0.45),
+    inset 0 2px 4px rgba(255, 255, 255, 0.5),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.3);
 }
 
 .podyum-ad {
@@ -1581,10 +1616,15 @@ body.hub::before {
 }
 
 .podyum-puan {
-  font-size: 11px;
+  /* Dar sutunda 1.284.000 gibi bir sayi tasiyor; clamp ile kuculuyor.
+     tabular-nums: rakamlar esit genislikte, uc sutun birbirine gore
+     oynamiyor. */
+  font-size: clamp(9px, 2.7vw, 11px);
   font-weight: 700;
   color: var(--gold-yazi);
   white-space: nowrap;
+  max-width: 100%;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Kaide. Yuksekligi sirayi anlatiyor - sayiyi okumadan once kimin
@@ -1611,6 +1651,7 @@ body.hub::before {
      GENISLIKTE, farkli yuksekliktedir - sabit genislik tam olarak onu
      veriyor ve boy farki cizimin kendi oranindan geliyor. */
   width: min(88px, 100%);
+  align-self: end;          /* 1fr satirin DIBINE: kaidelerin alti ayni cizgide */
   margin-top: 4px;
   /* Sayi gorselin ortasina degil ON YUZUNE oturmali. Cizimde on yuz
      %5-78 arasinda, altta bir taban cikintisi var; alt dolgu sayiyi o
@@ -1630,9 +1671,11 @@ body.hub::before {
 .yer-2 .podyum-kaide { aspect-ratio: 1.139; background-image: url("../assets/widget/podyum/kaide-2.webp"); }
 .yer-3 .podyum-kaide { aspect-ratio: 1.481; background-image: url("../assets/widget/podyum/kaide-3.webp"); }
 
-.yer-1 .podyum-rozet { background: linear-gradient(160deg, #fff3c4, #f5b942 45%, #a9761a); width: 52px; height: 52px; font-size: 21px; }
-.yer-2 .podyum-rozet { background: linear-gradient(160deg, #ffffff, #c8ccd6 45%, #7d8390); }
-.yer-3 .podyum-rozet { background: linear-gradient(160deg, #f8d5a8, #cd7f32 45%, #7d4a17); }
+/* Halka rengi rozetin kendi metaline gore koyu ton: altin halka altin
+   rozeti cevreliyor, gumus gumusu, bronz bronzu. */
+.yer-1 .podyum-rozet { background: linear-gradient(160deg, #fff3c4, #f5b942 45%, #a9761a); --halka: #8a5e12; width: 52px; height: 52px; font-size: 21px; }
+.yer-2 .podyum-rozet { background: linear-gradient(160deg, #ffffff, #c8ccd6 45%, #7d8390); --halka: #6b7078; }
+.yer-3 .podyum-rozet { background: linear-gradient(160deg, #f8d5a8, #cd7f32 45%, #7d4a17); --halka: #8a5420; }
 
 .yer-1 .podyum-ad { font-size: 13px; }
 
@@ -1648,15 +1691,21 @@ body.hub::before {
    indirme yapmaya degmez ve bu haliyle altin rengini --gold'dan aliyor. */
 /* Birincinin tacı. Once clip-path ile cizilmisti; kaideler cizime
    gecince yanlarinda duz bir ucgen silueti ucuz kaliyordu. */
+/* Tac artik AKISIN DISINDA: basamak dort satirlik bir izgara ve tac
+   besinci bir satir acip rozeti asagi itiyordu. */
 .podyum-tac {
+  position: absolute;
+  top: -17px;
+  left: 50%;
+  transform: translateX(-50%);
   width: 26px;
   aspect-ratio: 1.338;
-  margin-bottom: -3px;
   background: url("../assets/widget/podyum/tac.webp") center / contain no-repeat;
   filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.5));
 }
 
 @media (max-width: 360px) {
+  .podyum-basamak { grid-template-rows: 56px auto auto 1fr; }
   .podyum-rozet { width: 40px; height: 40px; font-size: 16px; }
   .yer-1 .podyum-rozet { width: 46px; height: 46px; font-size: 18px; }
   .podyum-ad { font-size: 11px; }
