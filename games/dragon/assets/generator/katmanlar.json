@@ -36,17 +36,17 @@
     {
      "ad": "bot-kirmizi",
      "dosya": "bot-kirmizi.webp",
-     "kb": 21
+     "kb": 19
     },
     {
      "ad": "bot-mavi",
      "dosya": "bot-mavi.webp",
-     "kb": 25
+     "kb": 27
     },
     {
      "ad": "bot-yesil",
      "dosya": "bot-yesil.webp",
-     "kb": 22
+     "kb": 24
     }
    ]
   },
@@ -70,7 +70,7 @@
     {
      "ad": "bileklik-altin",
      "dosya": "bileklik-altin.webp",
-     "kb": 7
+     "kb": 12
     },
     {
      "ad": "bileklik-deri",
@@ -140,17 +140,17 @@
     {
      "ad": "kolye-dis",
      "dosya": "kolye-dis.webp",
-     "kb": 14
+     "kb": 10
     },
     {
      "ad": "kolye-yakut",
      "dosya": "kolye-yakut.webp",
-     "kb": 12
+     "kb": 10
     },
     {
      "ad": "kolye-zumrut",
      "dosya": "kolye-zumrut.webp",
-     "kb": 14
+     "kb": 10
     }
    ]
   },
@@ -162,17 +162,17 @@
     {
      "ad": "tac-alev",
      "dosya": "tac-alev.webp",
-     "kb": 23
+     "kb": 25
     },
     {
      "ad": "tac-altin",
      "dosya": "tac-altin.webp",
-     "kb": 17
+     "kb": 18
     },
     {
      "ad": "tac-buz",
      "dosya": "tac-buz.webp",
-     "kb": 24
+     "kb": 26
     }
    ]
   },
