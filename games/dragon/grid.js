@@ -4,9 +4,9 @@
    seviye oluyor. Kilitli hucreler yildizla aciliyor ve icindeki odulu
    dogrudan oyuncuya veriyor. */
 
-import { EN_UST_YUMURTA, EN_UST_SANDIK, kapSuresi } from './ekonomi.js?v262';
-import { belir, zipla, AKIS } from './canlandir.js?v262';
-import { iz } from '../../js/tani.js?v262';
+import { EN_UST_YUMURTA, EN_UST_SANDIK, kapSuresi } from './ekonomi.js?v263';
+import { belir, zipla, AKIS } from './canlandir.js?v263';
+import { iz } from '../../js/tani.js?v263';
 
 /* Kap gorselleri v2: kaplar artik ACIK ve iceriklerini gosteriyor.
    Eski set sekiz kabin da ayni kirmizi kutu olmasi yuzunden 64 pikselde
@@ -299,25 +299,57 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
     ciz();
   }
 
-  /* Bir surukleme en fazla bu kadar surer; otesi takilmis demektir.
-     8 saniyeydi. Telefondaki kayit, donma aninda HIC merge satiri
-     olmadigini gosterdi - yani birlestirme baslamiyor bile, dokunus
-     tahtaya hic ulasmiyor. Takilmis bir surukleme tam bunu yapiyor:
-     bitir() hic cagrilmazsa (Telegram sistem hareketini kapiyorsa
-     pointerup gelmeyebiliyor) `surukle` dolu kaliyor ve basla() her
-     dokunusu 8 saniye boyunca sessizce yutuyor. Gercek bir surukleme
-     bir saniyeyi gecmez; 1,2 saniye hem guvenli hem fark edilmez. */
-  const BAYAT = 1200;
+  /* TAKILMIS SURUKLEME NEDIR, NASIL ANLASILIR
+
+     Takilmis surukleme: bitir() hic cagrilmamis, `surukle` dolu kalmis.
+     Telegram sistem hareketini kapinca pointerup bize hic gelmeyebiliyor.
+     O halde basla() her dokunusu yutar ve tahta tepkisiz kalir.
+
+     Bunu SURE ile olcmek yanlisti. Olcut "surukleme 1,2 saniyeyi gecti
+     mi" idi ve asagidaki supurge, suresi dolan her suruklemeyi iptal
+     ediyordu - PARMAK HALA TAHTADAYKEN de. Oyuncu alti gozlu izgarada
+     nereye birakacagina karar verirken 1,2 saniye hic de uzun degil;
+     o an yumurta elinden aliniyor ve tahta donmus gibi goruluyor.
+     "Sureklerken donuyor" sikayetinin kaynagi buydu.
+
+     Dogru olcut SESSIZLIK: parmak tahtadaysa pointer olaylari akar.
+     Iki isarete birden bakiyoruz:
+
+       1. Yakalama hala bizde mi (el.hasPointerCapture). Bu dogruysa
+          parmak kesinlikle asagida - oyuncu hic kimildamadan bekliyor
+          olsa bile. Asla supurmuyoruz.
+       2. Yakalama yoksa (bazi WebView'larda setPointerCapture hata
+          firlatiyor) son pointer olayinin uzerinden ne kadar gecti.
+          SESSIZLIK'i asmissa gercekten takilmistir.
+
+     Boylece uzun suren gercek surukleme bozulmuyor, takilmis surukleme
+     yine de kendiliginden cozuluyor. */
+  const SESSIZLIK = 2500;
+
+  /* basla() ikinci bir parmagi ancak bu kadar sure yutar. Sureyi kisa
+     tutuyoruz: yanlis yutulan bir dokunus, oyuncunun gozunde yine
+     tepkisiz bir tahta demek. */
+  const YUTMA = 400;
+
+  /* Surukleme hala canli mi: parmak asagida ya da olaylar yeni kesildi. */
+  function canli(s) {
+    if (!s) return false;
+    if (s.pid !== undefined && el.hasPointerCapture?.(s.pid)) return true;
+    return Date.now() - (s.sonAn || s.bas || 0) < SESSIZLIK;
+  }
 
   function basla(e) {
     if (!grid) return;
 
     if (surukle) {
       const yas = Date.now() - (surukle.bas || 0);
-      /* Ayni parmak degilse ikinci dokunustur, yok sayiliyor.
+      /* Ayni parmak degilse ikinci dokunustur. Yalnizca onceki
+         surukleme GERCEKTEN canliysa ve daha yeniyse yutuyoruz; aksi
+         halde eski surukleme temizlenip yenisi basliyor.
          AYNI parmak yeniden basiyorsa onceki surukleme oluden
-         baskasi degil - hemen temizleniyor, yas beklenmiyor. */
-      if (yas < BAYAT && surukle.pid !== undefined && surukle.pid !== e.pointerId) {
+         baskasi degil - hemen temizleniyor. */
+      if (yas < YUTMA && canli(surukle)
+          && surukle.pid !== undefined && surukle.pid !== e.pointerId) {
         iz('surukle.yutuldu', `yas${yas}`);
         return;
       }
@@ -344,7 +376,7 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
     surukle = { i, hucre, ghost: hayalet(hucre, e.clientX, e.clientY),
                 tasidi: false, x0: e.clientX, y0: e.clientY,
                 sonX: e.clientX, sonY: e.clientY, wrap, bas: Date.now(),
-                pid: e.pointerId,
+                sonAn: Date.now(), pid: e.pointerId,
                 kutular: kutulariTara(), vurgu: -2, kare: 0,
                 kayma: window.scrollY + (el.closest('.screen')?.scrollTop || 0) };
     wrap.classList.add('dragging');
@@ -362,6 +394,8 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
     if (!surukle || surukle.kilitDokunus) return;
     surukle.sonX = e.clientX;
     surukle.sonY = e.clientY;
+    /* Supurgenin "takilmis mi" olcutu bu damga (bkz. canli). */
+    surukle.sonAn = Date.now();
 
     /* HAYALET DOGRUDAN TASINIYOR, rAF BEKLEMIYOR.
 
@@ -556,11 +590,11 @@ export function createBoard(el, { onMerge, onPick, onChange } = {}) {
   });
 
   /* Son emniyet: hicbir olay gelmese bile takilmis bir surukleme kendi
-     kendine cozulur. Saniyede bir bakmak bedava; BAYAT'i gecmis bir
-     surukleme oyuncunun bir daha dokunmasini beklemeden temizleniyor. */
+     kendine cozulur. Olcut SURE DEGIL SESSIZLIK (bkz. canli): parmak
+     tahtadayken supurmuyoruz, ne kadar uzun surerse sursun. */
   setInterval(() => {
-    if (surukle && Date.now() - (surukle.bas || 0) > BAYAT) {
-      iz('surukle.supurge');
+    if (surukle && !canli(surukle)) {
+      iz('surukle.supurge', `yas${Date.now() - (surukle.bas || 0)}`);
       iptal();
     }
   }, 1000);
