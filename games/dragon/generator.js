@@ -10,12 +10,19 @@
  */
 const KOK = 'assets/generator/';
 
+/* katmanlar.json'u surumle cagiriyoruz. Surum damgalayici yalnizca
+   .js ve .css'i damgaliyor; JSON damgasiz kalinca yeni parca ekledigimde
+   oyuncunun tarayicisi eski listeyi onbellekten veriyor ve yeni
+   aksesuarlar hic gorunmuyordu. Sayfanin kendi <meta name="surum">
+   degerini kullanmak bunu kendiliginden guncel tutuyor. */
+const SURUM = document.querySelector('meta[name="surum"]')?.content || '';
+
 let veri = null;          // katmanlar.json
 const secim = {};         // yuva adi -> dosya adi ('' = bos)
 
 async function yukle() {
   if (veri) return veri;
-  const r = await fetch(KOK + 'katmanlar.json');
+  const r = await fetch(KOK + 'katmanlar.json' + (SURUM ? '?v' + SURUM : ''));
   veri = await r.json();
   veri.yuvalar.forEach((y) => {
     secim[y.ad] = y.zorunlu && y.parcalar.length ? y.parcalar[0].dosya : '';
