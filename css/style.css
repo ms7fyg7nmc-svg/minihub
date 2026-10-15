@@ -76,7 +76,8 @@
      desen ikisinde de ayni yonde okunuyor. */
   --cark-isik-ic: rgba(118, 78, 28, 0.17);
   --cark-isik-dis: rgba(118, 78, 28, 0.09);
-  --cark-huzme: rgba(104, 68, 24, 0.08);
+  --cark-huzme: rgba(104, 68, 24, 0.10);
+  --cark-huzme-ince: rgba(104, 68, 24, 0.05);
 }
 
 /* color-mix() destekleyen motorlarda (guncel Chrome/Safari/Firefox) daha
@@ -1252,6 +1253,40 @@ body.hub::before {
 /* Baslik carkin ustune binmesin: ibre yukari tastigi icin ekstra pay */
 .daily-section.is-orta h3 { margin-bottom: 22px; }
 
+/* CARKIN SAHNESI. Cark uzun sure dogrudan panelin duz zemininin
+   uzerinde duruyordu; arkasindaki isik huzmeleri de o duz gri zemine
+   vurunca altin degil GRI okuyordu ve cark bosta asili gibi
+   goruluyordu.
+
+   Sahne uc katman: ortada sicak bir kor havuzu, kenarlarda koyulasan
+   bir vinyet, altta zemin. Vinyet onemli - onsuz kor havuzu panelin
+   icinde yuvarlak bir leke gibi duruyor; kenar koyulasinca havuz
+   "bir odanin ortasindaki isik" olarak okunuyor.
+
+   Zemin, hub'in geri kalaniyla ayni sicak siyah (bkz. .hero
+   background-color). Panelin kendi zemini mor-grimsi; cark morunun
+   yaninda o ton isigi soguk gosteriyordu. */
+.daily-section.is-orta {
+  position: relative;
+  padding: 14px 10px 12px;
+  border-radius: 20px;
+  /* Renkler TEMAYA GORE SECILMIYOR, ucu de saydam katman: ustte sicak
+     kor, altta notr bir vinyet, en altta temanin kendi hafif yuzeyi.
+     Boyle kurulmasinin sebebi olculdu: tarayicida [data-tg-theme]
+     "light" gelirken Telegram tema renkleri koyu yedege dusuyor
+     (--bg-soft #1c1e29). Temaya gore iki ayri palet yazilsaydi sahne
+     koyu panelin icinde krem bir dikdortgen olarak ciplak kalirdi -
+     bir kez oldu. Saydam katmanlar hangi zemin gelirse gelsin dogru
+     yonde calisiyor. */
+  background:
+    radial-gradient(84% 62% at 50% 58%, rgba(246, 155, 58, 0.19), transparent 70%),
+    radial-gradient(130% 110% at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.20)),
+    var(--yuzey-hafif);
+  box-shadow: inset 0 1px 0 var(--cizgi-soft);
+}
+
+
+
 /* Cark artik bir CERCEVENIN icinde oturuyor: taslardan orulmus, rune
    kazinmis, dort altin mizrakli bir halka (assets/wheel/stone-v2.webp).
    (-v2: ilk dosyada, halkanin 50px solunda, uretimden kalma 2px'lik
@@ -1285,9 +1320,10 @@ body.hub::before {
      (beyaz uzerinde %10 altin yok hukmunde) ve cark yine bos bir
      kagida asili kaliyor. Orada tam tersi gerekiyor: zeminden KOYU,
      sicak bir golge. Ikisi de asagida tema basina tanimli. */
-  --cark-isik-ic: rgba(255, 214, 120, 0.20);
-  --cark-isik-dis: rgba(245, 185, 66, 0.11);
-  --cark-huzme: rgba(255, 220, 140, 0.10);
+  --cark-isik-ic: rgba(255, 206, 110, 0.26);
+  --cark-isik-dis: rgba(242, 152, 54, 0.13);
+  --cark-huzme: rgba(255, 214, 128, 0.17);
+  --cark-huzme-ince: rgba(255, 228, 165, 0.09);
 
   position: relative;
   width: 300px;
@@ -1298,43 +1334,67 @@ body.hub::before {
   place-items: center;
 }
 
-/* Carkin ARKASINDAKI disk. Eskiden yoktu: cark dogrudan modal zemininin
-   uzerinde duruyordu ve gunduz temasinda bembeyaz bir bosluga asili
-   kaliyordu - tas halkanin uzerindeki acik firca izleri de zeminle
-   karisip cerceveyi delik gibi gosteriyordu. Disk mor/lacivert, carktan
-   biraz genis ve kenari tamamen seffafa gidiyor; iki temada da carki
-   zemine baglıyor. */
+/* Carkin ARKASINDAKI isik. Eskiden yoktu: cark dogrudan modal
+   zemininin uzerinde duruyordu ve gunduz temasinda bembeyaz bir
+   boslukta asili kaliyordu - tas halkanin uzerindeki acik firca izleri
+   de zeminle karisip cerceveyi delik gibi gosteriyordu.
+
+   Once duz mor bir disk vardi: carki zemine bagliyordu ama kendisi bir
+   leke gibi duruyordu ve hub morundan sicak tona gectikten sonra
+   (bkz. .hero) tek basina soguk kaliyordu. Sonra huzmeler geldi.
+
+   15 Ekim 2026 — huzmeler YENIDEN CIZILDI. Oncekiler
+   `var(--cark-huzme) 0deg 7deg, transparent 7deg 14deg` ile
+   ciziliyordu: her huzme KESKIN kenarli bir dilim. Koyu zeminde %10
+   altin gri okudugu icin sonuc, carkin arkasinda duran gri bir yelpaze
+   gibi goruluyordu - "kozmetik durmuyor" denen sey buydu. Uc degisiklik:
+
+   1. KENARLAR YUMUSAK. Her huzme artik saydamdan baslayip ortada
+      doluyor ve yine saydama iniyor (0deg -> 6deg -> 12deg). Tarayici
+      konik duraklar arasinda ara renk uretiyor, yani huzme bir
+      ucgen degil, sonen bir isik demeti oluyor.
+   2. IKI KATMAN, FARKLI SIKLIKTA. 20 genis + 36 ince demet, biri
+      otekine gore 9 derece kaydirilmis. Tek sikliktaki duzen goze
+      "desen" olarak carpiyordu; ikisi ust uste gelince duzen
+      okunmuyor, isik okunuyor.
+   3. COK YAVAS DONUYOR. 120 saniyede bir tur - bakarken hareket
+      sezilmiyor ama goruntu olu durmuyor. Hareketi azalt diyen
+      cihazlarda kapali.
+
+   Merkez artik 50%/50%: donus sirasinda 48%'lik kaciklik goruntuyu
+   salliyordu. Dikey kayma elemanin kendi inset'ine tasindi. */
 .wheel-wrap::after {
   content: '';
   position: absolute;
-  /* Carkin arkasindan cikan ISIK HUZMELERI.
-
-     Once duz mor bir disk vardi: carki zemine bagliyordu ama kendisi
-     bir leke gibi duruyordu, ve hub morudan sicak tona gectikten sonra
-     (bkz. .hero) tek basina soguk kaliyordu.
-
-     Huzmeler repeating-conic-gradient ile ciziliyor - gorsel dosya yok.
-     Kenarda kesilmesinler diye radyal bir MASKE ile disa dogru
-     soduruluyorlar; maske olmadan huzmeler kutunun sinirinda birden
-     bitiyor ve dairenin kenari cizgi cizgi goruluyordu.
-
-     Huzme araligi 14 derece: 26 huzme. Daha sik oldugunda kucuk
-     ekranda titriyor (moire), daha seyrek oldugunda carkin kendi sekiz
-     dilimiyle yarisiyor. */
-  inset: -22%;
+  inset: -26% -26% -18%;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 50% 48%,
+    radial-gradient(circle at 50% 50%,
       var(--cark-isik-ic) 0%,
-      var(--cark-isik-dis) 46%,
-      transparent 74%),
-    repeating-conic-gradient(from 8deg at 50% 48%,
-      var(--cark-huzme) 0deg 7deg,
-      transparent 7deg 14deg);
-  -webkit-mask-image: radial-gradient(circle at 50% 48%, #000 26%, rgba(0, 0, 0, 0.45) 58%, transparent 80%);
-  mask-image: radial-gradient(circle at 50% 48%, #000 26%, rgba(0, 0, 0, 0.45) 58%, transparent 80%);
+      var(--cark-isik-dis) 44%,
+      transparent 72%),
+    repeating-conic-gradient(from 9deg at 50% 50%,
+      transparent 0deg,
+      var(--cark-huzme-ince) 5deg,
+      transparent 10deg),
+    repeating-conic-gradient(from 0deg at 50% 50%,
+      transparent 0deg,
+      var(--cark-huzme) 9deg,
+      transparent 18deg);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 24%, rgba(0, 0, 0, 0.5) 56%, transparent 80%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 24%, rgba(0, 0, 0, 0.5) 56%, transparent 80%);
+  animation: cark-huzme 120s linear infinite;
+  /* Donen katman kendi dokusuna alinsin: konik gecis bir kez
+     rasterize edilip sadece dondurulur, her karede yeniden cizilmez. */
+  will-change: transform;
   pointer-events: none;
   z-index: 0;              /* carkin da cercevenin de ALTINDA */
+}
+
+@keyframes cark-huzme { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .wheel-wrap::after { animation: none; }
 }
 
 .wheel-wrap::before {
