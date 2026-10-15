@@ -4,14 +4,35 @@
     {
       "name": "minihub",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8765"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8765"
+      ],
       "port": 8765
     },
     {
       "name": "academykit",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "/Users/vtredi/academykit"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "/Users/vtredi/academykit"
+      ],
       "port": 3100
+    },
+    {
+      "name": "ejderha-nft",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8767",
+        "--directory",
+        "/Users/vtredi/ejderha-nft"
+      ],
+      "port": 8767
     }
   ]
 }
