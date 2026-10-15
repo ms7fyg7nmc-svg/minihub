@@ -363,7 +363,16 @@ body.hub::before {
    baglari yoktu: ne ejderha, ne hazine, ne yumurta. Yenileri oyunun
    kendi konusundan: kor isiginda bir ejderha, tasan bir hazine sandigi,
    catlayip isiyan yumurtalar. Mor set assets/hero/_alternatifler'de
-   (`mor-*`), dorduncu eski tasarim da orada (`ufuk`). */
+   (`mor-*`), dorduncu eski tasarim da orada (`ufuk`).
+
+   15 Ekim 2026: ucu de YENIDEN KADRAJLANDI (-v2). Ilk kirpmalar konunun
+   USTUNU kesiyordu - ejderhanin kafasi afisin disinda kaliyordu,
+   sandigin yarasa amblemi ve yumurtalarin tepesi de yarim. Gorsel
+   yeniden uretilmedi; _kaynak/ icindeki 1536x512 ham dosyalardan
+   yeniden kesildi, 0 CU. Ejderha ham dosyada 512'nin 487'sini
+   kapliyor - tam genislikten kesilen 335'lik pencereye sigmiyor, o
+   yuzden o afis kuculup SAGA yaslandi ve sol bosluk en sol serinin
+   gerilmesiyle dolduruldu (orasi zaten duz koyu gecis). */
 .hero {
   position: relative;
   overflow: hidden;
@@ -383,7 +392,7 @@ body.hub::before {
      ile soyluyor; burada sadece o degiskeni okuyoruz, boylece perde
      tek bir yerde tanimli kaliyor. Ozellik tanimsiz kalirsa (betik
      calismadiysa) varsayilan devreye giriyor. */
-  --afis: url("../assets/hero/ejderha.webp");
+  --afis: url("../assets/hero/ejderha-v2.webp");
   background-image:
     linear-gradient(90deg, rgba(20, 13, 10, 0.93) 0%, rgba(20, 13, 10, 0.80) 44%, rgba(20, 13, 10, 0) 72%),
     var(--afis);
@@ -392,9 +401,9 @@ body.hub::before {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
-:root[data-afis="ejderha"] .hero { --afis: url("../assets/hero/ejderha.webp"); }
-:root[data-afis="hazine"] .hero  { --afis: url("../assets/hero/hazine.webp"); }
-:root[data-afis="yumurta"] .hero { --afis: url("../assets/hero/yumurta.webp"); }
+:root[data-afis="ejderha"] .hero { --afis: url("../assets/hero/ejderha-v2.webp"); }
+:root[data-afis="hazine"] .hero  { --afis: url("../assets/hero/hazine-v2.webp"); }
+:root[data-afis="yumurta"] .hero { --afis: url("../assets/hero/yumurta-v2.webp"); }
 
 /* Afis her iki temada da koyu - yazilar temadan bagimsiz acik.
    Baslikta renk gecisi duruyor ama tek basina kullanildigindaki kadar

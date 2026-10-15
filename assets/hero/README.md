@@ -7,11 +7,39 @@ Aynı afiş üst üste iki kez gelmiyor.
 
 | Dosya | Ne |
 |---|---|
-| `ejderha.webp` | Kor ışığında bir kayanın üstünde ince, uzun boyunlu kırmızı ejderha |
-| `hazine.webp` | Yarasa amblemli, taşan hazine sandığı |
-| `yumurta.webp` | Çatlaklarından altın ışık sızan yumurtalar |
+| `ejderha-v2.webp` | Kor ışığında bir kayanın üstünde ince, uzun boyunlu kırmızı ejderha |
+| `hazine-v2.webp` | Yarasa amblemli, taşan hazine sandığı |
+| `yumurta-v2.webp` | Çatlaklarından altın ışık sızan yumurtalar |
 
-1280×279, ~13–26 KB.
+1280×279, ~17–24 KB.
+
+## Yeniden kadrajlama (15 Ekim 2026)
+
+İlk kırpmalar konunun **üstünü** kesiyordu: ejderhanın kafası afişin
+dışında kalıyordu, sandığın yarasa amblemi ve yumurtaların tepesi de
+yarımdı. Üçü de `_kaynak/` içindeki 1536×512 ham dosyalardan yeniden
+kesildi — **görsel yeniden üretilmedi, 0 CU.**
+
+Ham dosyada konunun kapladığı dikey alan:
+
+| | konu | tam genişlikten kesilebilen pencere |
+|---|---|---|
+| ejderha | y 13–511 (487 px) | 335 px |
+| hazine | y 21–506 (485 px) | 335 px |
+| yumurta | y 22–476 (454 px) | 335 px |
+
+Hiçbiri sığmıyor. Hazine ve yumurtada pencere **üstten** alındı: konunun
+tepesi görünüyor, altındaki sikke yığını ve yuva çerçevenin dışına
+taşıyor — afişte bu doğal durur. Ejderhada aynısı bacakları ortadan
+kesiyordu, o yüzden görsel küçültülüp **sağa yaslandı**; sol boşluk en
+sol şeridin yatayda gerilmesiyle dolduruldu (orası zaten düz koyu bir
+geçiş, dikiş görünmüyor).
+
+Görüntülenirken `cover` + `right center` uygulanıyor ve afişin solundaki
+%17 zaten hiç görünmüyor — sol boşluk bedava.
+
+Eski kırpmalar `_alternatifler/` altında (`ejderha.webp`, `hazine.webp`,
+`yumurta.webp`).
 
 ## Neden değiştirildi (10 Ekim 2026)
 
