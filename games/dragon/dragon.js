@@ -1,29 +1,29 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v257';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v257';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v258';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v258';
 
-import { CONFIG, gorselSeviye } from './config.js?v257';
-import { bakimdaMi } from '../../js/store.js?v257';
+import { CONFIG, gorselSeviye } from './config.js?v258';
+import { bakimdaMi } from '../../js/store.js?v258';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
          ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA,
-         izgarayiGenislet, genislemeHakki } from './model.js?v257';
-import { dragonSvg, dragonAssetUrls } from './art.js?v257';
-import { turCek, turYolu, turBul } from './turler.js?v257';
-import { taniBaslat, iz } from '../../js/tani.js?v257';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v257';
+         izgarayiGenislet, genislemeHakki } from './model.js?v258';
+import { dragonSvg, dragonAssetUrls } from './art.js?v258';
+import { turCek, turYolu, turBul } from './turler.js?v258';
+import { taniBaslat, iz } from '../../js/tani.js?v258';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v258';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
          kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
          PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
-         partnerKademe } from './gorevler.js?v257';
-import { getBest, gorevOlay, promoKutuAl, sahipMiyim } from '../../js/store.js?v257';
-import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v257';
+         partnerKademe } from './gorevler.js?v258';
+import { getBest, gorevOlay, promoKutuAl, sahipMiyim } from '../../js/store.js?v258';
+import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v258';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v257';
+         kilitliMi, nesneMi } from './grid.js?v258';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v257';
-import { createTutorial, pozListesi } from './tutorial.js?v257';
+         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v258';
+import { createTutorial, pozListesi } from './tutorial.js?v258';
 
 const GAME_ID = 'dragon';
 
@@ -385,7 +385,7 @@ let generatorKurulu = false;
 async function generatorAc() {
   if (generatorKurulu) return;
   generatorKurulu = true;
-  const { generatorKur } = await import('./generator.js?v257');
+  const { generatorKur } = await import('./generator.js?v258');
   await generatorKur($('gen-kok'));
 }
 
