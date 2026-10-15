@@ -1,6 +1,6 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v260';
-import { surumKontrol } from './guncel.js?v260';
+import { isTelegramUser, getInitData } from './tg.js?v261';
+import { surumKontrol } from './guncel.js?v261';
 
 /* Hub ve 12 oyunun hepsi bu modulu yukluyor, o yuzden surum tazeleyici
    buraya bagli: tek yerden hepsini kapsiyor. */
@@ -792,7 +792,7 @@ const kayitBekleyen = new Map();  /* key -> son state */
    ogrenebiliyoruz - masaustunde hic olmuyor. */
 async function taniYaz(olay, ayrinti) {
   try {
-    const m = await import('./tani.js?v260');
+    const m = await import('./tani.js?v261');
     m.iz(olay, ayrinti);
   } catch { /* tani yoksa sessiz */ }
 }
@@ -863,10 +863,31 @@ export function clearState(game) {
    BAKIMDAKI_OYUNLAR). Istemcide kimlik listesi tutmuyoruz. Sunucuya
    ulasilamazsa kapali kabul ediliyor: kim oldugunu dogrulayamadigimiz
    birine bakimdaki oyunu acmiyoruz. */
+const BAKIM_ONBELLEK = 'mh_bakim';
+
+/* Bakim listesi ONBELLEKTEN, beklemeden. Hub'in oyun kareleri bu
+   listeyi bekliyordu ve liste sunucu senkronundan geliyordu: telefonda
+   bu, kareler cizilmeden once tam bir gidis-donus demekti. Liste
+   SUSLEME - bakimdaki bir oyunu asil engelleyen sunucu (bkz.
+   worker.js handleGameStart, "bakimda"). Bu yuzden bir acilis eski
+   liste ile calismak guvenli. */
+export function bakimOnbellek() {
+  try {
+    const ham = localGet(BAKIM_ONBELLEK);
+    if (ham) return JSON.parse(ham);
+  } catch {
+  }
+  return [...BAKIM_VARSAYILAN];
+}
+
 export async function bakimListesi() {
   const v = await senkron;
-  if (!v) return [...BAKIM_VARSAYILAN];
-  return v.bakim || [];
+  const liste = v ? (v.bakim || []) : [...BAKIM_VARSAYILAN];
+  try {
+    localSet(BAKIM_ONBELLEK, JSON.stringify(liste));
+  } catch {
+  }
+  return liste;
 }
 
 export async function bakimdaMi(game) {

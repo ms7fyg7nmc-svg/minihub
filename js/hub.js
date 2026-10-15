@@ -1,20 +1,20 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v260';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v261';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
-   referralOzeti, adEnergyRefill, starEnergyInvoiceLink, enerjiBosMu, bakimListesi,
+   referralOzeti, adEnergyRefill, starEnergyInvoiceLink, enerjiBosMu, bakimListesi, bakimOnbellek,
    getGorev, gorevAl, promoKullan, promoKayit, sahipMiyim,
-} from './store.js?v260';
-import { enerjiBosOnayi } from './onay.js?v260';
-import { odulGoster, odulOnYukle } from './odul.js?v260';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v260';
+} from './store.js?v261';
+import { enerjiBosOnayi } from './onay.js?v261';
+import { odulGoster, odulOnYukle } from './odul.js?v261';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v261';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniBaslat, iz } from './tani.js?v260';
+import { taniBaslat, iz } from './tani.js?v261';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -288,9 +288,23 @@ applyTranslations();
 renderLangSwitcher(document.getElementById('lang-switcher'));
 
 /* Bakimdaki oyunlari sunucu belirliyor (bot/worker.js BAKIMDAKI_OYUNLAR).
-   Acilista bir kez okunup gameList()'e veriliyor; renderGames senkron kaliyor. */
+
+   Eskiden burada `await bakimListesi()` vardi ve oyun kareleri sunucu
+   cevap verene kadar CIZILMIYORDU - telefonda tam bir gidis-donus
+   boyunca bos ekran. Liste artik onbellekten, beklemeden aliniyor;
+   sunucunun cevabi gelince DEGISMISSE kareler yeniden ciziliyor.
+
+   Bu guvenli cunku liste SUSLEME: bakimdaki bir oyunu asil engelleyen
+   sunucu (bkz. worker.js handleGameStart -> 'bakimda'). En kotu durumda
+   oyuncu bir acilis boyunca kilidi gec gorur, oyun yine de acilmaz. */
 bootIlerle(0.4);
-const BAKIM = new Set(await bakimListesi());
+let BAKIM = new Set(bakimOnbellek());
+bakimListesi().then((liste) => {
+   const yeniSet = new Set(liste);
+   if (yeniSet.size === BAKIM.size && [...yeniSet].every((g) => BAKIM.has(g))) return;
+   BAKIM = yeniSet;
+   renderGames();
+}).catch(() => { /* sunucu yoksa onbellekteki liste gecerli kalir */ });
 bootIlerle(0.65);
 
 renderProfile();
