@@ -1,9 +1,9 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v259';
-import { submitScore, getBest, saveState, loadState, clearState } from '../../js/store.js?v259';
-import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v259';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v259';
-import { yarimBirakmaOnayi } from '../../js/onay.js?v259';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v260';
+import { submitScore, getBest, saveState, loadState, clearState } from '../../js/store.js?v260';
+import { registerTexts, t, applyStaticTexts, locale, mhHtml } from '../../js/i18n-hook.js?v260';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v260';
+import { yarimBirakmaOnayi } from '../../js/onay.js?v260';
 
 const GAME_ID = 'match3';
 const SIZE = 8;

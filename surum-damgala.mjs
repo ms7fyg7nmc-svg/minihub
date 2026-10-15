@@ -32,6 +32,11 @@ for (const yol of dosyalariTara('.', ['.html'])) {
   const eski = readFileSync(yol, 'utf8');
   let yeni = eski.replace(/(src="(?!https?:)[^"]*?\.js)(\?v\d+)?"/g, `$1?v${surum}"`);
   yeni = yeni.replace(/(href="(?!https?:)[^"]*?\.css)(\?v\d+)?"/g, `$1?v${surum}"`);
+  /* <link rel="modulepreload" href="...js"> de damgalanmali. Adres
+     import'takiyle HARFI HARFINE ayni olmazsa tarayici dosyayi IKI KEZ
+     indirir: bir kez on yukleme olarak, bir kez import icin. Yani
+     damgalanmamis bir preload hizlandirmak yerine yavaslatir. */
+  yeni = yeni.replace(/(href="(?!https?:)[^"]*?\.js)(\?v\d+)?"/g, `$1?v${surum}"`);
 
   /* Sayfa kendi surumunu tasiyor. js/guncel.js bunu sunucudaki
      surum.json ile karsilastirip eskiyse sayfayi tazeliyor - yoksa
