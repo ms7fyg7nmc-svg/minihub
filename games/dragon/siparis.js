@@ -19,7 +19,7 @@
       veriyor; siparis o degerin uzerine PRIM koyuyor. Aksi halde hicbir
       oyuncu teslim etmez, hepsi kirardi. */
 
-import { YUMURTA, EN_UST_YUMURTA } from './ekonomi.js?v273';
+import { YUMURTA, EN_UST_YUMURTA } from './ekonomi.js?v274';
 
 export const ACIK_SIPARIS = 2;
 

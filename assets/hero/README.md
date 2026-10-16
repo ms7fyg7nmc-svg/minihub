@@ -8,10 +8,28 @@ Aynı afiş üst üste iki kez gelmiyor.
 | Dosya | Ne |
 |---|---|
 | `ejderha-v2.webp` | Kor ışığında bir kayanın üstünde ince, uzun boyunlu kırmızı ejderha |
-| `hazine-v2.webp` | Yarasa amblemli, taşan hazine sandığı |
+| `hazine-v3.webp` | Yarasa amblemli, taşan hazine sandığı |
 | `yumurta-v2.webp` | Çatlaklarından altın ışık sızan yumurtalar |
 
 1280×279, ~17–24 KB.
+
+## Sandık küçültüldü (16 Ekim 2026)
+
+Afiş 1280×279, yani **4,59:1**. Telefonda kutu 343×108 oluyor — **3,18:1**.
+`cover` yüksekliği tutturmak için görseli büyütüyor ve **genişlikten**
+kesiyor; sandık görselin sağ ucunda ve kocaman olduğu için tam o kesilen
+yere denk geliyordu: kapağının sağı ve altındaki para yığını çerçevenin
+dışında kalıyordu.
+
+`hazine-v3.webp`'te sandık ham dosyadan **%55'e** küçültülüp sağ kenardan
+**55 px** içeri alındı. Boşalan yer ham dosyanın kendi koyu sol şeridinden
+gerildi, iki katman solda 170 px / sağda 22 px'lik yumuşak bir geçişle
+birleştirildi — dikiş yok. Artık sandığın dört yanında da pay var ve
+telefonda bütün görünüyor. **Yine 0 CU.**
+
+Eski kadraj: `_alternatifler/hazine-v2.webp`.
+
+Not: aynı sıkışma ejderha ve yumurtada yok, onlar v2 kadrajında kaldı.
 
 ## Yeniden kadrajlama (15 Ekim 2026)
 

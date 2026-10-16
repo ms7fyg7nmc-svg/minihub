@@ -1,5 +1,5 @@
 
-import { t } from './i18n.js?v273';
+import { t } from './i18n.js?v274';
 
 export const tg = window.Telegram?.WebApp ?? null;
 
@@ -107,17 +107,30 @@ window.visualViewport?.addEventListener('scroll', syncViewport);
 /* Yon degisiminde olcum bazen eski degeri veriyor: bir kare sonra tekrar. */
 window.addEventListener('orientationchange', () => setTimeout(syncViewport, 250));
 
+/* Hub'in tek zemin rengi. css/style.css'teki --bg yedegi ile AYNI
+   olmali, yoksa Telegram'in cercevesi ile sayfa arasinda ton farki olur. */
+const GECE = '#12131a';
+
+/* TEMA: minihub artik SADECE gece modu.
+   Eskiden Telegram'in temasi oldugu gibi kopyalaniyordu (themeParams ->
+   --tg-*) ve kullanicinin Telegram'i gunduz modundaysa hub beyaza
+   donuyordu. Afisler, oyun gorselleri ve altin yazilar koyu zemine gore
+   cizildigi icin acik temada hepsi soluk kaliyordu; style.css bunu iki
+   ayri palet tasiyarak telafi etmeye calisiyordu.
+   Artik tema KOPYALANMIYOR: --tg-* degiskenleri hic yazilmayinca
+   style.css kendi koyu yedeklerine dusuyor (--bg: var(--tg-bg-color,
+   #12131a) vb.) ve tek bir palet kaliyor. */
 function applyTheme() {
    if (!tg) return;
-   const root = document.documentElement;
-   root.dataset.tgTheme = tg.colorScheme || 'light';
-   for (const [key, value] of Object.entries(tg.themeParams || {})) {
-      root.style.setProperty(`--tg-${key.replace(/_/g, '-')}`, value);
-   }
-   if (supports('6.1')) {
-      tg.setHeaderColor?.('bg_color');
-      tg.setBackgroundColor?.(tg.themeParams?.bg_color || '#12131a');
-   }
+   document.documentElement.dataset.tgTheme = 'dark';
+
+   /* Telegram'in KENDI ust cubugu ve sayfa zemini de koyu kalsin.
+      'bg_color' anahtari kullanicinin temasindan rengi alirdi, o yuzden
+      rengi dogrudan veriyoruz. setHeaderColor hex rengi 6.9'dan beri
+      kabul ediyor; daha eski surumlerde anahtara dusuyoruz. */
+   if (supports('6.9')) tg.setHeaderColor?.(GECE);
+   else if (supports('6.1')) tg.setHeaderColor?.('bg_color');
+   if (supports('6.1')) tg.setBackgroundColor?.(GECE);
 }
 
 export function isTelegramUser() {

@@ -1,23 +1,26 @@
 /* Hub ekraninin gorunumu.
-   Renkler once Telegram temasindan gelir, Telegram yoksa yedek renkler kullanilir. */
+
+   TEK TEMA: GECE. Hub eskiden Telegram'in temasini aynen aliyordu ve
+   kullanicinin Telegram'i gunduz modundaysa beyaza donuyordu; afisler,
+   oyun gorselleri ve altin yazilar koyu zemine gore cizildigi icin orada
+   soluk kaliyordu. js/tg.js artik --tg-* degiskenlerini HIC yazmiyor,
+   yani asagidaki yedek renkler tek gecerli palet. var(--tg-...) sarmallari
+   yerinde birakildi: zararsizlar ve ileride tek bir yerden tema acilmak
+   istenirse baglanti noktasi onlar. */
 
 :root {
-  /* Temaya gore koyulasan/aciklasan ayirici ve yuzey renkleri.
-     --text zaten Telegram temasindan geliyor (koyu temada beyaz, acik
-     temada siyah), bunlari ondan turetince iki temada da goruluyorlar.
+  /* Ayirici ve yuzey renkleri.
      Duz renkler burada YEDEK: color-mix() desteklemeyen motorlarda
      (bazi masaustu/eski WebView'ler - orn. Telegram Desktop macOS/Linux)
      asagidaki @supports blogu calismiyorsa widget'lar kenarliksiz/soluk
-     kalmasin diye. Telegram'in acik/koyu temasina gore [data-tg-theme]
-     ile ayriliyor (bkz. js/tg.js applyTheme). */
+     kalmasin diye. */
   --cizgi: rgba(255, 255, 255, 0.18);
   --cizgi-soft: rgba(255, 255, 255, 0.10);
 
-  /* YUZEY TONLARI - tema duyarli.
+  /* YUZEY TONLARI.
      Oyunlarin izgara hucreleri bunlari sabit `rgba(255,255,255,0.05)`
-     olarak yaziyordu; Telegram'in gunduz temasinda sayfa beyaz oluyor ve
-     beyaz uzerine beyaz GORUNMUYORDU - tahta duz bir dikdortgene
-     donusuyor, hucreler ayirt edilemiyordu. */
+     olarak yaziyordu; degisken uzerinden gecince tum oyunlarda ayni
+     yuzey tonu kullaniliyor. */
   --yuzey-hafif: rgba(255, 255, 255, 0.03);
   --yuzey: rgba(255, 255, 255, 0.05);
   --yuzey-orta: rgba(255, 255, 255, 0.10);
@@ -32,18 +35,17 @@
   --radius: 18px;
 
   /* YAZI icin altin/pembe.
-     --gold koyu zemine gore secilmis acik bir amber; Telegram'in gunduz
-     temasinda kart neredeyse beyaz oluyor ve altin yazi okunmuyordu
-     ("HAZIR!", 24/24, rekor rozetleri). Duz yedekler koyu temaya gore
-     secildi, [data-tg-theme="light"] altta acik temaya gore degistiriyor.
-     DIKKAT: bunlar yalnizca YAZI icin. Dolgu/kenarlik/degradelerde ham
-     --gold kalmali, yoksa altin kendi rengini kaybediyor. */
+     --gold koyu zemine gore secilmis acik bir amber; dogrudan zemine
+     yazilinca biraz daha acigi gerekiyor ("HAZIR!", 24/24, rekor
+     rozetleri). DIKKAT: bunlar yalnizca YAZI icin. Dolgu/kenarlik/
+     degradelerde ham --gold kalmali, yoksa altin kendi rengini
+     kaybediyor. */
   --gold-yazi: #ffcf6b;
   --gold-yazi-parlak: #ffe9b3;
   --pembe-yazi: #ec8cb0;
 
   /* Basari/hata yazisi. Ayni gerekce: dolgusuz, dogrudan zemin uzerine
-     yazilan yesil ve kirmizi gunduz temasinda soluk kaliyordu. */
+     yazilan yesil ve kirmizi ham haliyle soluk kaliyordu. */
   --ok-yazi: #58d08a;
   --hata-yazi: #ff9c8d;
 
@@ -55,39 +57,11 @@
   --c-orange: #f2884b;
 }
 
-:root[data-tg-theme="light"] {
-  --cizgi: rgba(0, 0, 0, 0.16);
-  --cizgi-soft: rgba(0, 0, 0, 0.09);
-  --yuzey-hafif: rgba(0, 0, 0, 0.04);
-  --yuzey: rgba(0, 0, 0, 0.06);
-  --yuzey-orta: rgba(0, 0, 0, 0.11);
-  --yuzey-guclu: rgba(0, 0, 0, 0.22);
-  --gold-yazi: #ad7208;
-  --gold-yazi-parlak: #c28a12;
-  --pembe-yazi: #b23566;
-  --ok-yazi: #117a46;
-  --hata-yazi: #c33527;
-}
-
-:root[data-tg-theme="light"] .wheel-wrap {
-  --cark-golge: drop-shadow(0 8px 16px rgba(52, 38, 84, 0.26));
-  /* Gunduz temasinda isik degil GOLGE: ayni huzme deseni, ama zeminden
-     koyu sicak bir ton. Boylece cark iki temada da zemine baglaniyor ve
-     desen ikisinde de ayni yonde okunuyor. */
-  --cark-isik-ic: rgba(118, 78, 28, 0.17);
-  --cark-isik-dis: rgba(118, 78, 28, 0.09);
-  --cark-huzme: rgba(104, 68, 24, 0.10);
-  --cark-huzme-ince: rgba(104, 68, 24, 0.05);
-}
-
-/* color-mix() destekleyen motorlarda (guncel Chrome/Safari/Firefox) daha
-   dogru, temaya tam uyumlu renkleri devreye sokuyor. Ayni ozellikleri
-   [data-tg-theme] secicileriyle de tekrarliyoruz ki ozgunluk (specificity)
-   acisindan yukaridaki acik tema yedeginin onune gecebilsin. */
+/* color-mix() destekleyen motorlarda (guncel Chrome/Safari/Firefox)
+   yukaridaki duz yedeklerin yerine daha dogru, zeminle tam uyumlu
+   renkler devreye giriyor. */
 @supports (color: color-mix(in srgb, red, red)) {
-  :root,
-  :root[data-tg-theme="light"],
-  :root[data-tg-theme="dark"] {
+  :root {
     --cizgi: color-mix(in srgb, var(--tg-text-color, #fff) 18%, transparent);
     --cizgi-soft: color-mix(in srgb, var(--tg-text-color, #fff) 10%, transparent);
     --yuzey-hafif: color-mix(in srgb, var(--tg-text-color, #fff) 4%, transparent);
@@ -373,7 +347,18 @@ body.hub::before {
    yeniden kesildi, 0 CU. Ejderha ham dosyada 512'nin 487'sini
    kapliyor - tam genislikten kesilen 335'lik pencereye sigmiyor, o
    yuzden o afis kuculup SAGA yaslandi ve sol bosluk en sol serinin
-   gerilmesiyle dolduruldu (orasi zaten duz koyu gecis). */
+   gerilmesiyle dolduruldu (orasi zaten duz koyu gecis).
+
+   16 Ekim 2026: SANDIK afisi (hazine-v3). Afis 1280x279 (4,59:1), ama
+   telefonda kutu 343x108 (3,18:1) oluyor; `cover` yuksekligi tutturmak
+   icin gorseli buyutuyor ve genislikten kesiyor. Sandik gorselin sag
+   ucunda ve kocaman oldugu icin tam o kesilen yere denk geliyordu:
+   kapaginin sagi ve altindaki para yigini cerceve disinda kaliyordu.
+   v3'te sandik ham dosyadan %55'e kuculup sag kenardan 55px iceri
+   alindi, geri kalan yer ham dosyanin kendi koyu solundan gerildi ve
+   iki katman yumusak bir gecisle birlestirildi - yani sandigin artik
+   dort yaninda da pay var, telefonda da butun gorunuyor. Yine 0 CU.
+   Eski kadraj assets/hero/_alternatifler/hazine-v2.webp. */
 .hero {
   position: relative;
   overflow: hidden;
@@ -403,7 +388,7 @@ body.hub::before {
 }
 
 :root[data-afis="ejderha"] .hero { --afis: url("../assets/hero/ejderha-v2.webp"); }
-:root[data-afis="hazine"] .hero  { --afis: url("../assets/hero/hazine-v2.webp"); }
+:root[data-afis="hazine"] .hero  { --afis: url("../assets/hero/hazine-v3.webp"); }
 :root[data-afis="yumurta"] .hero { --afis: url("../assets/hero/yumurta-v2.webp"); }
 
 /* Afis her iki temada da koyu - yazilar temadan bagimsiz acik.
@@ -1270,14 +1255,10 @@ body.hub::before {
   position: relative;
   padding: 14px 10px 12px;
   border-radius: 20px;
-  /* Renkler TEMAYA GORE SECILMIYOR, ucu de saydam katman: ustte sicak
-     kor, altta notr bir vinyet, en altta temanin kendi hafif yuzeyi.
-     Boyle kurulmasinin sebebi olculdu: tarayicida [data-tg-theme]
-     "light" gelirken Telegram tema renkleri koyu yedege dusuyor
-     (--bg-soft #1c1e29). Temaya gore iki ayri palet yazilsaydi sahne
-     koyu panelin icinde krem bir dikdortgen olarak ciplak kalirdi -
-     bir kez oldu. Saydam katmanlar hangi zemin gelirse gelsin dogru
-     yonde calisiyor. */
+  /* Ucu de SAYDAM katman: ustte sicak kor, altta notr bir vinyet, en
+     altta --yuzey-hafif. Duz renk yazilmiyor ki panel hangi zeminin
+     uzerine gelirse gelsin ona baglansin - bir kez duz krem yazilmisti
+     ve koyu panelin icinde ciplak bir dikdortgen olarak kalmisti. */
   background:
     radial-gradient(84% 62% at 50% 58%, rgba(246, 155, 58, 0.19), transparent 70%),
     radial-gradient(130% 110% at 50% 50%, transparent 40%, rgba(0, 0, 0, 0.20)),
@@ -1290,8 +1271,8 @@ body.hub::before {
 /* Cark artik bir CERCEVENIN icinde oturuyor: taslardan orulmus, rune
    kazinmis, dort altin mizrakli bir halka (assets/wheel/stone-v2.webp).
    (-v2: ilk dosyada, halkanin 50px solunda, uretimden kalma 2px'lik
-   dikey gri bir sizinti vardi. Koyu zeminde gorunmuyordu, gunduz
-   temasinda carkin solunda bir cizgi olarak ortaya cikti. Goruntuler
+   dikey gri bir sizinti vardi. Acik zeminde carkin solunda bir cizgi
+   olarak ortaya cikiyordu. Goruntuler
    surum damgasi almadigi icin temizlenmis dosya YENI ISIMLE kondu,
    yoksa tarayici eskisini onbellekten verirdi.)
    Eskiden yerinde conic-gradient ile cizilmis 7px'lik duz bir altin
@@ -1309,17 +1290,11 @@ body.hub::before {
   --cark-cerceve: url("../assets/wheel/stone-v2.webp");
   --cark-delik: 0.547;
 
-  /* Cercevenin golgesi. Koyu temada agir siyah dogru duruyordu; gunduz
-     temasinda modal beyaza donunce ayni golge carkin altinda kirli gri
-     bir leke birakiyordu. Degisken [data-tg-theme="light"] altinda
-     yumusatiliyor. */
+  /* Cercevenin golgesi: koyu zemine gore agir siyah. */
   --cark-golge: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.5));
 
-  /* Arkadaki isigin ve huzmelerin rengi. Koyu temada carktan DISA
-     vuran altin bir isik; gunduz temasinda ayni sey gorunmez oluyor
-     (beyaz uzerinde %10 altin yok hukmunde) ve cark yine bos bir
-     kagida asili kaliyor. Orada tam tersi gerekiyor: zeminden KOYU,
-     sicak bir golge. Ikisi de asagida tema basina tanimli. */
+  /* Arkadaki isigin ve huzmelerin rengi: carktan DISA vuran altin bir
+     isik. Carki zemine bagliyor, yoksa bos bir sayfaya asili kaliyor. */
   --cark-isik-ic: rgba(255, 206, 110, 0.26);
   --cark-isik-dis: rgba(242, 152, 54, 0.13);
   --cark-huzme: rgba(255, 214, 128, 0.17);
@@ -1902,16 +1877,7 @@ body.hub::before {
 /* AYDINLIK TEMA.
    Once butonun zemini koyulastirilmisti; sonuc ust barda iki siyah
    lekeydi ve ikonlar o lekenin icinde kayboluyordu - koyu gri ikon koyu
-   zemin uzerinde. Zemin artik oteki yuzeylerle ayni; ikonun KENDISI
-   koyuya cevriliyor.
-
-   brightness(0) ikonu tek renk siyah siluete indiriyor, opacity onu
-   metinle ayni agirliga getiriyor. Kabartma golgesi aydinlik temada
-   kayboluyor, ama o golge zaten koyu zemin icin yapilmisti; burada
-   onemli olan seklin okunmasi. */
-:root[data-tg-theme="light"] .arac-btn img {
-  filter: brightness(0) opacity(0.55);
-}
+   zemin uzerinde. Zemin artik oteki yuzeylerle ayni. */
 
 /* --- Ayarlar ve Cuzdan panelleri --- */
 
