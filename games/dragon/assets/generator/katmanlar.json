@@ -29,28 +29,6 @@
    ]
   },
   {
-   "ad": "bot",
-   "zorunlu": false,
-   "capa": "ayak_bilegi",
-   "parcalar": [
-    {
-     "ad": "bot-kirmizi",
-     "dosya": "bot-kirmizi.webp",
-     "kb": 18
-    },
-    {
-     "ad": "bot-mavi",
-     "dosya": "bot-mavi.webp",
-     "kb": 19
-    },
-    {
-     "ad": "bot-yesil",
-     "dosya": "bot-yesil.webp",
-     "kb": 18
-    }
-   ]
-  },
-  {
    "ad": "kol",
    "zorunlu": true,
    "capa": null,
@@ -59,6 +37,28 @@
      "ad": "kol",
      "dosya": "kol.webp",
      "kb": 13
+    }
+   ]
+  },
+  {
+   "ad": "bot",
+   "zorunlu": false,
+   "capa": "ayak_bilegi",
+   "parcalar": [
+    {
+     "ad": "bot-kirmizi",
+     "dosya": "bot-kirmizi.webp",
+     "kb": 21
+    },
+    {
+     "ad": "bot-mavi",
+     "dosya": "bot-mavi.webp",
+     "kb": 20
+    },
+    {
+     "ad": "bot-yesil",
+     "dosya": "bot-yesil.webp",
+     "kb": 20
     }
    ]
   },

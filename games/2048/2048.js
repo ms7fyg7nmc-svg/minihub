@@ -1,10 +1,10 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v272';
-import { getBest, saveState, loadState, clearState, startRun, finishRunOrLegacy, yerelTohum } from '../../js/store.js?v272';
-import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v272';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v272';
-import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v272';
-import { yarimBirakmaOnayi } from '../../js/onay.js?v272';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v273';
+import { getBest, saveState, loadState, clearState, startRun, finishRunOrLegacy, yerelTohum } from '../../js/store.js?v273';
+import { initLang, t, locale, applyTranslations, mhHtml } from '../../js/i18n.js?v273';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v273';
+import { SIZE, mulberry32, createBoard, applyMove, isGameOver as boardIsOver, DIR_TO_CODE, CODE_TO_DIR } from './logic.js?v273';
+import { yarimBirakmaOnayi } from '../../js/onay.js?v273';
 
 const GAME_ID = '2048';
 const POINTS_DIVISOR = 23;
