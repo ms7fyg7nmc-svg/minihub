@@ -170,7 +170,7 @@ document.getElementById('new-game').addEventListener('click', async () => {
        yanlis dokunus on dakikalik bir oyunu goturebiliyor. Soru sadece
        oyun DEVAM EDERKEN cikiyor; bitmis oyunda dogrudan calisiyor. */
     if (!(await yarimBirakmaOnayi(t))) return;
-    await endGame(false);
+    await endGame(false, true);
     return;
   }
   startNewGame();
@@ -742,13 +742,31 @@ async function kazandi() {
   await endGame(true);
 }
 
-async function endGame(kazanma) {
+/* `birakildi`: oyuncu kaybetmedi, "Yeni oyun"a basip turu KENDISI
+   bitirdi. Ayri tutulmasi sart - eskiden bu da endGame(false) idi ve
+   perde "Oyun bitti" baslıgıyla TASAN KASA resmini gosteriyordu.
+   Oyuncu kasasi dolmadan yeni oyuna gecmek istedigi halde "kasan doldu"
+   diyen bir ekran goruyordu. */
+async function endGame(kazanma, birakildi = false) {
   if (over) return;
   over = true;
   clearState(GAME_ID);
 
   if (kazanma) { haptic.success(); SFX.goldenPickup(); }
-  else { haptic.error(); SFX.gameOver(); }
+  else if (!birakildi) { haptic.error(); SFX.gameOver(); }
+
+  /* PERDE SUNUCUYU BEKLEMIYOR (bkz. wheelrush, ayni cozum).
+     Eskiden once submitScore ve odeme await ediliyor, perde ancak
+     ikisi donunce aciliyordu: zayif baglantida oyuncu donmus bir
+     tahtaya bakip bekliyordu. Skor zaten elimizde - once onu
+     gosteriyoruz, rekor ve kazanilan $MH satirlari arkasindan
+     ekleniyor. */
+  const baslik = kazanma ? t('wonTitle') : (birakildi ? t('ortak.perde.birakildi') : t('gameOver'));
+  /* Tasan kasa resmi yalnizca GERCEKTEN kasa tastiginda. */
+  const ikon = kazanma ? 'kasa' : (birakildi ? 'tamam' : 'kasa');
+  const kendiSkoru = t('yourScore', { score: bicim(score) });
+  const ilkSatirlar = kazanma ? [kendiSkoru, t('wonText')] : [kendiSkoru];
+  showOverlay(baslik, ilkSatirlar.join(' · '), t('playAgain'), startNewGame, ikon);
 
   /* KAZANCI SUNUCU HESAPLIYOR; buradaki sayi yalnizca MISAFIR modu icin
      (bkz. js/store.js submitScore). */
@@ -758,15 +776,16 @@ async function endGame(kazanma) {
 
   const { earned: kazanilan } = await sonuc.odeme;
 
-  const satirlar = [t('yourScore', { score: bicim(score) })];
-  if (kazanma) satirlar.push(t('wonText'));
+  const satirlar = [...ilkSatirlar];
   if (sonuc.isRecord) satirlar.push(t('newRecord'));
   if (kazanilan > 0) satirlar.push(t('earnedPoints', { points: bicim(kazanilan) }));
 
-  /* Iki bitis de kasayla ilgili: kazanirken dolduruyorsun, kaybederken
-     tasiriyorsun. Ikisinde de tasan sandik dogru resim. */
-  showOverlay(kazanma ? t('wonTitle') : t('gameOver'), satirlar.join(' · '), t('playAgain'), startNewGame,
-              sonuc.isRecord ? 'rekor' : 'kasa');
+  /* Oyuncu bu arada "Tekrar oyna"ya basmis olabilir - kapali perdeyi
+     geri doldurmuyoruz. */
+  if (!overlayEl.hidden && satirlar.length > ilkSatirlar.length) {
+    overlayText.innerHTML = mhHtml(satirlar.join(' · '));
+    if (sonuc.isRecord) overlayIkon.className = 'overlay-ikon ik-rekor';
+  }
 }
 
 /* `ikon` perdenin DURUMUNU anlatiyor: bitti / tamam / rekor / sure /

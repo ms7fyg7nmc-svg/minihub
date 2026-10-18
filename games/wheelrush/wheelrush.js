@@ -175,7 +175,7 @@ document.getElementById('new-game').addEventListener('click', async () => {
        yanlis dokunus on dakikalik bir oyunu goturebiliyor. Soru sadece
        oyun DEVAM EDERKEN cikiyor; bitmis oyunda dogrudan calisiyor. */
     if (!(await yarimBirakmaOnayi(t))) return;
-    await endGame();
+    await endGame(true);
     return;
   }
   startNewGame();
@@ -276,13 +276,17 @@ controlEl.addEventListener('pointerdown', (e) => {
   setLane(x < rect.width / 2 ? lane - 1 : lane + 1);
 });
 
-async function endGame() {
+/* `birakildi`: oyuncu carpmadi, "Yeni oyun"a basip turu KENDISI
+   bitirdi - perde o zaman "Oyun bitti" demiyor ve ekran sarsilmiyor. */
+async function endGame(birakildi = false) {
   if (over) return;
   over = true;
-  haptic.error();
-  SFX.gameOver();
-  shake = 9;
-  flas = 1;
+  if (!birakildi) {
+    haptic.error();
+    SFX.gameOver();
+    shake = 9;
+    flas = 1;
+  }
 
   /* Bitis ekrani sunucuyu BEKLEMIYOR. Eskiden once submitScore ve
      addPoints await ediliyor, ekran ancak ikisi donunce aciliyordu:
@@ -291,8 +295,10 @@ async function endGame() {
      kazanilan $MH satirlari sunucudan gelince ARKASINDAN ekleniyor. */
   const kendiSkoru = t('yourScore', { score: bicim(score) });
   /* Rekor bu noktada henuz bilinmiyor (asagida satira ekleniyor), o
-     yuzden ikon her zaman kaza. */
-  showOverlay(t('gameOver'), kendiSkoru, t('playAgain'), startNewGame, 'kaza');
+     yuzden ikon kaza - oyuncu kendi bitirdiyse notr. */
+  showOverlay(birakildi ? t('ortak.perde.birakildi') : t('gameOver'),
+              kendiSkoru, t('playAgain'), startNewGame,
+              birakildi ? 'tamam' : 'kaza');
 
   /* KAZANCI SUNUCU HESAPLIYOR. Bolucu burada da duruyor ama yalnizca
      MISAFIR modu icin: sunucuya bagli bir hesapta gecerli sayi

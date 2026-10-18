@@ -568,10 +568,6 @@ function polar(cx, cy, r, angleDeg) {
    --baslik), yani yeni bir yuk degil ve cark ejderha temasina oturuyor. */
 const WHEEL_FONT = "'Cinzel', 'Times New Roman', serif";
 
-/* bot/worker.js'teki SPIN_ENERGY_REWARD ile ayni - cark diliminde yazan
-   "3x" bu, yani UC BIRIM enerji. Gercek odul her zaman sunucuda
-   belirleniyor; buradaki sayi yalnizca dilimin etiketi. */
-const SPIN_ENERGY_REWARD = 3;
 
 function buildWheel(prizes) {
    const svg = document.getElementById('wheel');
@@ -581,7 +577,7 @@ function buildWheel(prizes) {
    const cx = 100, cy = 100, r = 94, labelR = r * 0.76;
 
    /* En buyuk jeton odulu altin dilimi aliyor. Enerji disarida: o kendi
-      rengini zaten tasiyor ve miktari (3) jetonlarla kiyaslanamaz. */
+      rengini zaten tasiyor ve birim sayisi jetonlarla kiyaslanamaz. */
    const enBuyuk = Math.max(...prizes.filter((p) => p.tur !== 'enerji').map((p) => p.miktar));
    let tabanSira = 0;
 
@@ -595,7 +591,11 @@ function buildWheel(prizes) {
       const color = isEnergy ? WHEEL_ENERJI
                   : (prize.miktar === enBuyuk ? WHEEL_BUYUK
                   : WHEEL_ZEMIN[tabanSira++ % WHEEL_ZEMIN.length]);
-      const text = isEnergy ? `${SPIN_ENERGY_REWARD}x` : prize.miktar;
+      /* Enerji diliminin sayisi SUNUCUDAN geliyor. Eskiden sabit bir
+         "3x" yaziliyordu; cark iki enerji dilimi tasimaya baslayinca
+         (1 ve 3 birim) ikisi de "3x" gorunurdu - oyuncu 1 birim alip
+         3 bekledigi icin odulu hata sanardi. */
+      const text = isEnergy ? `${prize.miktar}x` : prize.miktar;
 
       /* Enerji dilimi ⚡ emojisi tasiyordu - her telefonda baska bir
          cizim, hub'in geri kalanindaki altin pille hicbir ilgisi yok.
@@ -1016,7 +1016,7 @@ async function renderStreakSection() {
    const btn = document.getElementById('streak-claim-btn');
    if (!streak || !row || !btn) return;
 
-   const rewards = streak.rewards || [100, 150, 200, 300, 400, 500, 1000];
+   const rewards = streak.rewards || [150, 250, 350, 500, 650, 900, 1500];
    const kilitli = (await odulDurumu()) === 'misafir';
    const gecerliSayim = streak.broken ? 0 : streak.count;
 

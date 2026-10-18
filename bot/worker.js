@@ -15,7 +15,13 @@ const ENERGY_REGEN_MS = 30 * 60 * 1000;
 const ENERGY_PER_EARN = 1;
 const EMPTY_ENERGY_CARPAN = 0.25;
 
-const STREAK_REWARDS = [200, 300, 400, 600, 800, 1000, 2000];
+/* Yedinci gunun odulu 2000'den 1500'e indi ve merdiven bastan
+   yeniden olculdu. Tek bir sayiyi degistirmek yetmezdi: 2000'den
+   1500'e inince 7. gun 6. gunun yalnizca 1,5 kati kalirdi ve seriyi
+   yedi gun surdurmenin odulu kaybolurdu. Oranlar korundu - her gun
+   bir oncekinden belirgin olarak buyuk, yedinci gun hala bir siçrama
+   (6. gunun 1,67 kati). Haftalik toplam 5300'den 4250'ye indi. */
+const STREAK_REWARDS = [150, 250, 350, 500, 650, 900, 1500];
 const STREAK_MIN_GAP_MS = 24 * 3600 * 1000;
 const STREAK_RESET_GAP_MS = 48 * 3600 * 1000;
 
@@ -64,17 +70,29 @@ const REFERRAL_DAILY_CAP = 50000;
    gunde bir kez yasadigi tek "sans" ani. Merdivenin tamami yukseldi,
    sekli (agirliklar) aynen korundu.
 
-   Beklenen deger ~162 $MH'den ~600'e cikti; gunluk serinin ortalamasi
-   (~757) ile gorev sandiginin (2000) arasinda duruyor. */
+   2026-10-18: TAVAN 2500'den 1500'e indi ve bosalan dilime BIR BIRIM
+   ENERJI kondu. 2500'luk dilim merdivenin geri kalanindan kopuktu -
+   bir ustundeki 1600'un bir buçuk kati - ve carkin en nadir dilimi
+   oldugu icin neredeyse hic cikmiyordu; yani tavan pratikte 1600'du,
+   2500 sadece ekranda duruyordu.
+
+   Agirliklar: enerji-1 dilimi NADIR DEGIL, sik cikan bir teselli
+   (%5,5). Carkin en nadir dilimi olsaydi oyuncu en dusuk odulu en zor
+   ihtimalde alirdi. Tavan artik 1500 ve %4,5 ile cikiyor; uc birimlik
+   enerji (%1) carkin gercek surprizi olarak kaldi.
+   Toplam agirlik 1000 - yuzdeler dogrudan okunuyor.
+
+   Beklenen deger ~600 $MH'den ~571'e dustu, yani merdivenin sekli
+   korundu, yalnizca tepesi kisaldi. */
 const SPIN_PRIZES = [
-  { tur: 'coin',   miktar: 250,         agirlik: 260 },
+  { tur: 'coin',   miktar: 250,         agirlik: 210 },
   { tur: 'coin',   miktar: 400,         agirlik: 250 },
   { tur: 'coin',   miktar: 600,         agirlik: 200 },
   { tur: 'coin',   miktar: 900,         agirlik: 150 },
   { tur: 'coin',   miktar: 1200,        agirlik: 80  },
-  { tur: 'coin',   miktar: 1600,        agirlik: 45  },
+  { tur: 'coin',   miktar: 1500,        agirlik: 45  },
   { tur: 'enerji', miktar: SPIN_ENERGY_REWARD, agirlik: 10 },
-  { tur: 'coin',   miktar: 2500,        agirlik: 5   },
+  { tur: 'enerji', miktar: 1,           agirlik: 55  },
 ];
 
 /* MAX_EARN_PER_REQUEST KALDIRILDI: istek basi tavan artik oyunun kendi

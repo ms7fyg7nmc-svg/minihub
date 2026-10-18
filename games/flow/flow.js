@@ -288,12 +288,23 @@ async function finishLevel() {
   clearState(GAME_ID);
   boardEl.classList.add('solved');
 
+  /* PERDE SUNUCUYU BEKLEMIYOR. Eskiden once finishLevelRun await
+     ediliyor, "Bolum tamam" ekrani ancak sunucu donunce aciliyordu;
+     zayif baglantida oyuncu cozdugu tahtaya bakip bekliyordu. Hamle
+     sayisi elimizde - once onu gosteriyoruz, kazanilan $MH satiri
+     arkasindan ekleniyor. (Ayni cozum: wheelrush.) */
+  const hamleSatiri = t('levelResult', { moves });
+  showOverlay(t('levelDone'), hamleSatiri, t('nextLevel'),
+              () => { level += 1; buildLevel(); }, 'seviye');
+
   const { best, earned } = await finishLevelRun();
   bestLevel = best;
   bestEl.textContent = bestLevel;
 
-  const text = `${t('levelResult', { moves })} ${t('earnedPoints', { points: earned })}`;
-  showOverlay(t('levelDone'), text, t('nextLevel'), () => { level += 1; buildLevel(); }, 'seviye');
+  /* Oyuncu bu arada "Sonraki bolum"e basmis olabilir. */
+  if (!overlayEl.hidden && earned > 0) {
+    overlayText.innerHTML = mhHtml(`${hamleSatiri} ${t('earnedPoints', { points: earned })}`);
+  }
 }
 
 function persist() {

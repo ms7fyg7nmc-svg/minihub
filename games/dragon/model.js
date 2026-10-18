@@ -2,7 +2,7 @@
 import { loadState, saveState } from '../../js/store.js?v274';
 import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_TAVANI,
          GENISLEME_N, GENISLEME_KILITLERI, GENISLEME_YUVA,
-         bostaHesapla } from './ekonomi.js?v274';
+         YUMURTA } from './ekonomi.js?v274';
 import { CONFIG, eskiToplamHarcama } from './config.js?v274';
 import { turCek, turBul } from './turler.js?v274';
 
@@ -85,10 +85,8 @@ export function yeniEjderha(id, turId = 'ember') {
     lastFed: 0,
     pencereBas: 0,          /* 4 saatlik istah penceresinin baslangici */
     pencereSayi: 0,         /* pencere icinde kacinci besleme */
+    yemSayaci: 0,           /* yumurta periyodunda kacinci besleme */
     happiness: 100,
-    /* Bosta uretim sayaci: `son` en son yumurta dustugu an,
-       `biriken` toplanmayi bekleyen yumurta sayisi. */
-    bosta: { son: simdi, biriken: 0 },
     look: gorunum(turId),
     createdAt: simdi,
     updatedAt: simdi,
@@ -262,15 +260,24 @@ function duzelt(o) {
     d.lastFed = Number(d.lastFed) || 0;
     d.pencereBas = Number(d.pencereBas) || 0;
     d.pencereSayi = Math.max(0, Number(d.pencereSayi) || 0);
+    /* Eski kayitlarda yok: sifirdan basliyor, yani eski oyuncu bir
+       periyot gecikmeyle degil bastan sayiyor - kayip yok. */
+    d.yemSayaci = Math.max(0, Number(d.yemSayaci) || 0);
     d.happiness = Number.isFinite(d.happiness) ? d.happiness : 100;
 
-    /* Eski kayitlarda bosta sayaci yok. Simdiden baslatiyoruz, yoksa
-       `son: 0` yuzunden oyuncu aninda tavani dolu buluyor. */
-    const b = d.bosta;
-    d.bosta = {
-      son: Number(b?.son) || Date.now(),
-      biriken: Math.max(0, Math.min(3, Number(b?.biriken) || 0)),
-    };
+    /* BOSTA URETIM KALDIRILDI (2026-10-18). Ejderhanin altinda kendi
+       kendine 3'e kadar yumurta birikiyordu; oyuncunun yapmasi gereken
+       tek sey geri gelip "Topla"ya basmakti ve bu, oyunun asil dongusu
+       olan besle-birlestir-kir'in yerine geciyordu.
+
+       Elde kalan birikmis yumurtalar GERI ALINMIYOR: her biri Sv.1
+       yumurtanin ortalama degerinde yeme cevrilip hesaba yaziliyor.
+       Alan bir kez aliyor, cunku ardindan `bosta` kaydi siliniyor. */
+    if (d.bosta) {
+      const kalan = Math.max(0, Math.min(3, Number(d.bosta.biriken) || 0));
+      if (kalan > 0) o.food += kalan * Math.round((YUMURTA[1].az + YUMURTA[1].cok) / 2);
+      delete d.bosta;
+    }
   });
   if (o.dragons.length > EN_COK_YUVA) o.dragons.length = EN_COK_YUVA;
   if (!o.dragons.some((d) => d.id === o.activeId)) o.activeId = o.dragons[0].id;
@@ -316,26 +323,6 @@ export function yuvaAcikMi(oyuncu, ejderha) {
 /* Yeni ejderha ilk BOS yuvaya iniyor - o yuva kilitli olsa bile.
    Kilitli yuvada duran ejderha beslenemiyor ama seritte gorunuyor;
    oyuncu neyi kacirdigini gorsun diye (bkz. dragon.js slotlariCiz). */
-/* Butun ACIK yuvalardaki ejderhalarin bosta sayacini ilerletiyor.
-   Kilitli yuvadaki ejderha uretmiyor - yuvayi acmanin dogrudan karsiligi
-   bu. Degisen bir sey olduysa true donuyor ki cagiran kaydetsin. */
-export function bostaIsle(oyuncu, simdi = Date.now()) {
-  let degisti = false;
-  oyuncu.dragons.forEach((d, sira) => {
-    if (sira >= oyuncu.unlockedSlots) return;
-    const y = bostaHesapla(d.bosta, simdi);
-    if (y.biriken !== d.bosta.biriken || y.son !== d.bosta.son) degisti = true;
-    d.bosta = { son: y.son, biriken: y.biriken };
-  });
-  return degisti;
-}
-
-/* Acik yuvalarda toplanmayi bekleyen toplam yumurta. */
-export function bekleyenYumurta(oyuncu) {
-  return oyuncu.dragons.reduce(
-    (t, d, sira) => t + (sira < oyuncu.unlockedSlots ? d.bosta.biriken : 0), 0);
-}
-
 /* Yeni ejderha ilk BOS yuvaya iniyor - o yuva kilitli olsa bile.
    Kilitli yuvadaki ejderha beslenemiyor ama seritte gorunuyor; yuvayi
    acmak icin en guclu sebep bu.

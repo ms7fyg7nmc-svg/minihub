@@ -80,7 +80,7 @@ document.getElementById('new-game').addEventListener('click', async () => {
        yanlis dokunus on dakikalik bir oyunu goturebiliyor. Soru sadece
        oyun DEVAM EDERKEN cikiyor; bitmis oyunda dogrudan calisiyor. */
     if (!(await yarimBirakmaOnayi(t))) return;
-    await endGame();
+    await endGame(true);
     return;
   }
   startNewGame();
@@ -353,13 +353,26 @@ function stopTimer() {
   timer = null;
 }
 
-async function endGame() {
+/* `birakildi`: sure dolmadi, oyuncu "Yeni oyun"a basip turu KENDISI
+   bitirdi - perde o zaman "Sure doldu" demiyor. */
+async function endGame(birakildi = false) {
   if (over) return;
   over = true;
   stopTimer();
   clearState(GAME_ID);
-  haptic.error();
-  SFX.gameOver();
+  if (!birakildi) { haptic.error(); SFX.gameOver(); }
+
+  /* PERDE SUNUCUYU BEKLEMIYOR. Eskiden once submitScore ve odeme await
+     ediliyor, perde ancak ikisi donunce aciliyordu; zayif baglantida
+     oyuncu donmus bir tahtaya bakip bekliyordu. Skor elimizde - once
+     onu gosteriyoruz, rekor ve kazanilan $MH satirlari arkasindan
+     ekleniyor. (Ayni cozum: wheelrush.) */
+  const kendiSkoru = t('yourScore', { score: format(score) });
+  /* Sure dolmasi bir kayip degil, oyunun normal bitisi - kum saati
+     catlak tabletten daha dogru anlatiyor. */
+  showOverlay(birakildi ? t('ortak.perde.birakildi') : t('timeUp'),
+              kendiSkoru, t('playAgain'), startNewGame,
+              birakildi ? 'tamam' : 'sure');
 
   /* KAZANCI SUNUCU HESAPLIYOR. Bolucu burada da duruyor ama yalnizca
      MISAFIR modu icin: sunucuya bagli bir hesapta gecerli sayi
@@ -372,14 +385,15 @@ async function endGame() {
 
   const { earned } = await result.odeme;
 
-  const lines = [t('yourScore', { score: format(score) })];
+  const lines = [kendiSkoru];
   if (result.isRecord) lines.push(t('newRecord'));
   if (earned > 0) lines.push(t('earnedPoints', { points: format(earned) }));
 
-  /* Sure dolmasi bir kayip degil, oyunun normal bitisi - kum saati
-     catlak tabletten daha dogru anlatiyor. */
-  showOverlay(t('timeUp'), lines.join(' · '), t('playAgain'), startNewGame,
-              result.isRecord ? 'rekor' : 'sure');
+  /* Oyuncu bu arada "Tekrar oyna"ya basmis olabilir. */
+  if (!overlayEl.hidden && lines.length > 1) {
+    overlayText.innerHTML = mhHtml(lines.join(' · '));
+    if (result.isRecord) overlayIkon.className = 'overlay-ikon ik-rekor';
+  }
 }
 
 function persist() {

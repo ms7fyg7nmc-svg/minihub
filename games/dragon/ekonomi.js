@@ -307,14 +307,25 @@ export function ejderhaSansi(lv) {
 /* ---------- GUNLUK ODUL ---------- */
 
 /* Yedi gunluk seri. Gun atlanirsa seri basa doner; yedinci gunden sonra
-   yeniden birinci gunden basliyor. */
+   yeniden birinci gunden basliyor.
+
+   2026-10-18: 2. ve 5. gunun YILDIZ odulleri kaldirildi. Ikisi de
+   kucuk birer yildiz parcasiydi (1 ve 3) ve yildizin kit kaynak olma
+   sebebini zayiflatiyordu: kilitli hucre ve yuva yildizla aciliyor,
+   onu her gun azar azar dagitmak merdiveni anlamsiz kiliyor. Yildiz
+   artik haftada TEK yerde, 7. gunde.
+
+   2. gun yerine Sv.4 yumurta geldi. 6. gun de Sv.4 yumurtaydi; ikisi
+   ayni kalsaydi hafta ortasinda merdiven duz olurdu, o yuzden 5. ve 6.
+   gun birer kademe yukari cekildi. Hafta artik bastan sona cikiyor:
+   85 yem -> Sv.4 -> 190 yem -> kese -> Sv.5 -> Sv.6 -> 10 yildiz. */
 export const GUNLUK_ODULLER = [
   { food: 85 },
-  { stars: 1 },
+  { item: { t: 'egg', lv: 4 } },
   { food: 190 },
   { item: { t: 'food', lv: 1 } },
-  { stars: 3 },
-  { item: { t: 'egg', lv: 4 } },
+  { item: { t: 'egg', lv: 5 } },
+  { item: { t: 'egg', lv: 6 } },
   { stars: 10 },
 ];
 
@@ -382,33 +393,31 @@ export function yumurtaAraligi(nadir = 'common') {
   return { az: tablo[0].lv, cok: tablo[tablo.length - 1].lv };
 }
 
-/* ---------- BOSTA URETIM ----------
+/* ---------- YUMURTA PERIYODU ----------
 
-   Ejderha oyun kapaliyken de yumurta biriktiriyor, ama DEPOSU DOLUNCA
-   DURUYOR. Dragon City'nin on dort yildir calisan geri getirme araci bu:
-   "doldu, bosa gidiyor" hissi, odul vaadinden daha guclu cekiyor.
+   Besleme eskiden HER SEFERINDE bir yumurta dusuruyordu. Yem ucuz
+   (ilk besleme 2 yem) ve yumurta kaynagin kendisi oldugu icin dongu
+   "dugmeye bas, yumurta al" a iniyordu: birlestirme, tuccar ve izgara
+   kararlari o akisin yaninda gereksiz kaliyordu.
 
-   Ayni zamanda ikinci ejderhanin degerini oyuncunun gorebilecegi bir
-   sayiya ceviriyor - iki ejderha iki kat bosta uretim demek. Sadece
-   ACIK yuvadakiler uretiyor; yuva satin almanin dogrudan karsiligi. */
-export const BOSTA_ARALIK = 90 * 60 * 1000;      /* 90 dk'da bir yumurta */
-export const BOSTA_TAVAN = 3;                    /* ejderha basina en fazla */
+   Artik yumurta DORT beslemede bir dusuyor. Dort, keyfi degil: istah
+   penceresi (4 saat) icinde besleme maliyeti her adimda artiyor
+   (2, 4, 6, 8...), yani dorduncu beslemeye varmak gercek bir yatirim.
+   Daha uzun bir periyot (6-8) ilk seviyedeki oyuncuyu yumurtasiz
+   birakirdi - izgara bos kalir, oyunun yarisi calismaz.
 
-/* Saf fonksiyon: gecen sureye gore yeni durumu hesapliyor.
+   Sayac EJDERHA BASINA tutuluyor (d.yemSayaci): iki ejderhayi birer
+   kere beslemek bir ejderhayi iki kere beslemekle ayni sey degil. */
+export const BESLEME_YUMURTA_PERIYODU = 4;
 
-   Tavan dolunca `son` OLDUGU GIBI BIRAKILIYOR. Ilk surumde her cagrida
-   simdiye cekiliyordu; saniyede bir donen tik bunu "durum degisti" diye
-   okuyup her saniye kaydet() cagiriyordu - yani butun kaydi JSON'a
-   cevirip localStorage'a yazan bir dongu. Toplama zaten `son`u elle
-   simdiye aliyor, burada dokunmaya gerek yok. */
-export function bostaHesapla(bosta, simdi) {
-  let { son = simdi, biriken = 0 } = bosta || {};
-  if (biriken >= BOSTA_TAVAN) return { son, biriken: BOSTA_TAVAN, kalan: 0, dolu: true };
+/* BOSTA URETIM KALDIRILDI (2026-10-18).
 
-  while (biriken < BOSTA_TAVAN && simdi - son >= BOSTA_ARALIK) {
-    biriken += 1;
-    son += BOSTA_ARALIK;
-  }
-  if (biriken >= BOSTA_TAVAN) return { son, biriken: BOSTA_TAVAN, kalan: 0, dolu: true };
-  return { son, biriken, kalan: BOSTA_ARALIK - (simdi - son), dolu: false };
-}
+   Ejderhanin altinda, oyun kapaliyken bile 3'e kadar yumurta birikiyor
+   ve oyuncu geri donup "Topla"ya basiyordu. Dragon City'den alinmis bir
+   geri getirme araciydi ama burada oyunun asil dongusunun ONUNE
+   geciyordu: besleyip birlestirip kirmak yerine beklemek daha az emek
+   isteyen bir yoldu. Besleme odulu artik tek yumurta kaynagi (bkz.
+   BESLEME_YUMURTA ve BESLEME_YUMURTA_PERIYODU).
+
+   Oyuncularin elinde kalmis birikmis yumurtalar silinmedi: model.js
+   kaydi yuklerken onlari yeme cevirip hesaba yaziyor. */

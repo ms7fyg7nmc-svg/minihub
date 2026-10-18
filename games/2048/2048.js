@@ -60,7 +60,7 @@ document.getElementById('new-game').addEventListener('click', async () => {
          yanlis dokunus on dakikalik bir oyunu goturebiliyor. Soru sadece
          oyun DEVAM EDERKEN cikiyor; bitmis oyunda dogrudan calisiyor. */
       if (!(await yarimBirakmaOnayi(t))) return;
-      await endGame();
+      await endGame(true);
       return;
    }
    await startNewGame();
@@ -300,12 +300,22 @@ function rebuildCells(prevCells, result) {
    return next;
 }
 
-async function endGame() {
+/* `birakildi`: oyuncu kaybetmedi, "Yeni oyun"a basip turu KENDISI
+   bitirdi. Perde o zaman "Oyun bitti" demiyor. */
+async function endGame(birakildi = false) {
    if (over) return;
    over = true;
    clearState(GAME_ID);
-   haptic.error();
-   SFX.gameOver();
+   if (!birakildi) { haptic.error(); SFX.gameOver(); }
+
+   /* PERDE SUNUCUYU BEKLEMIYOR. Eskiden once finishAndCredit await
+      ediliyor, perde ancak sunucu donunce aciliyordu; zayif baglantida
+      oyuncu kilitli bir tahtaya bakip bekliyordu. Skor elimizde - once
+      onu gosteriyoruz, rekor ve kazanc satirlari arkasindan geliyor. */
+   const kendiSkoru = t('g2048.yourScore', { score: score.toLocaleString(locale()) });
+   showOverlay(birakildi ? t('ortak.perde.birakildi') : t('g2048.gameOver'),
+               kendiSkoru, t('g2048.playAgain'), startNewGame,
+               birakildi ? 'tamam' : 'bitti');
 
    const result = await finishAndCredit();
    if (result?.ok && typeof result.best === 'number') {
@@ -318,8 +328,11 @@ async function endGame() {
    const earned = result?.earned || 0;
    if (earned > 0) lines.push(t('g2048.pointsEarned', { earned: earned.toLocaleString(locale()) }));
 
-   showOverlay(t('g2048.gameOver'), lines.join(' · '), t('g2048.playAgain'), startNewGame,
-               result?.isRecord ? 'rekor' : 'bitti');
+   /* Oyuncu bu arada "Yeniden oyna"ya basmis olabilir. */
+   if (!overlayEl.hidden && lines.length > 1) {
+      overlayText.innerHTML = mhHtml(lines.join(' · '), '../../assets/coin-128.webp');
+      if (result?.isRecord) overlayIkon.className = 'overlay-ikon ik-rekor';
+   }
 }
 
 function layout() {

@@ -91,7 +91,7 @@ document.getElementById('new-game').addEventListener('click', async () => {
        yanlis dokunus on dakikalik bir oyunu goturebiliyor. Soru sadece
        oyun DEVAM EDERKEN cikiyor; bitmis oyunda dogrudan calisiyor. */
     if (!(await yarimBirakmaOnayi(t))) return;
-    await crash(-1);
+    await crash(-1, true);
     return;
   }
   resetGame();
@@ -370,15 +370,27 @@ async function levelUp() {
   scheduleTick();
 }
 
-async function crash(index) {
+/* `birakildi`: yilan carpmadi, oyuncu "Yeni oyun"a basip turu KENDISI
+   bitirdi - perde o zaman "Oyun bitti" demiyor. */
+async function crash(index, birakildi = false) {
   over = true;
   running = false;
   stopTimer();
-  haptic.error();
-  SFX.gameOver();
+  if (!birakildi) { haptic.error(); SFX.gameOver(); }
 
   render();
   if (cellEls[index]) cellEls[index].classList.add('crash');
+
+  /* PERDE SUNUCUYU BEKLEMIYOR. Eskiden once submitScore ve odeme await
+     ediliyor, perde ancak ikisi donunce aciliyordu; zayif baglantida
+     oyuncu donmus bir tahtaya bakip bekliyordu. Skor elimizde - once
+     onu gosteriyoruz, rekor ve kazanilan $MH satirlari arkasindan
+     ekleniyor. (Ayni cozum: wheelrush.) */
+  const ilkSatirlar = [t('yourScore', { score: format(score) }),
+                       t('reachedLevel', { level: format(level) })];
+  showOverlay(birakildi ? t('ortak.perde.birakildi') : t('gameOver'),
+              ilkSatirlar.join(' · '), t('playAgain'), resetGame,
+              birakildi ? 'tamam' : 'bitti');
 
   /* KAZANCI SUNUCU HESAPLIYOR. Bolucu burada da duruyor ama yalnizca
      MISAFIR modu icin: sunucuya bagli bir hesapta gecerli sayi
@@ -391,12 +403,15 @@ async function crash(index) {
 
   const { earned } = await result.odeme;
 
-  const lines = [t('yourScore', { score: format(score) }), t('reachedLevel', { level: format(level) })];
+  const lines = [...ilkSatirlar];
   if (result.isRecord) lines.push(t('newRecord'));
   if (earned > 0) lines.push(t('earnedPoints', { points: format(earned) }));
 
-  showOverlay(t('gameOver'), lines.join(' · '), t('playAgain'), resetGame,
-              result.isRecord ? 'rekor' : 'bitti');
+  /* Oyuncu bu arada "Tekrar oyna"ya basmis olabilir. */
+  if (!overlayEl.hidden && lines.length > ilkSatirlar.length) {
+    overlayText.innerHTML = mhHtml(lines.join(' · '));
+    if (result.isRecord) overlayIkon.className = 'overlay-ikon ik-rekor';
+  }
 }
 
 function buildBoard() {

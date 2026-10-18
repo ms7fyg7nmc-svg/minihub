@@ -54,7 +54,6 @@
 
   <!-- Atmosfer -->
   <div class="sky" id="sky"></div>
-  <div class="embers"></div>
 
   <div class="dragon-shell" id="shell" hidden>
 
@@ -149,16 +148,16 @@
                bu satirda gorunuyor, yoksa yuva fiyati anlamsiz kaliyor. -->
           <p class="tur-satiri" id="tur-satiri"></p>
 
-          <!-- BOSTA URETIM
-               Ejderha oyun kapaliyken de yumurta biriktiriyor; depo
-               dolunca duruyor. Dolu hal ayri bir renge geciyor ki
-               oyuncu "bosa gidiyor" diye geri gelsin. -->
-          <div class="bosta" id="bosta" hidden>
-            <div class="bosta-sol">
-              <span class="bosta-say" id="bosta-say">0/3</span>
-              <span class="bosta-not" id="bosta-not"></span>
-            </div>
-            <button class="act-btn bosta-btn" id="bosta-btn" data-i18n="idleCollect">Topla</button>
+          <!-- YUMURTA SAYACI
+               Besleme artik her seferinde yumurta dusurmuyor; birkac
+               besleme bir yumurta ediyor. Sayac kacinci beslemede
+               oldugunu soyluyor - soylemezsek oyuncu yumurta
+               gelmedigini hata saniyor. Son besleme yaklasinca kutu
+               altin rengine geciyor.
+               (Bu satirin yerinde once bosta uretim kutusu vardi.) -->
+          <div class="yemsay" id="yemsay" hidden>
+            <span class="yemsay-pul" id="yemsay-pul"></span>
+            <span class="yemsay-not" id="yemsay-not"></span>
           </div>
 
           <button class="act-btn primary feed-big" id="feed-btn">

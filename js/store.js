@@ -359,16 +359,18 @@ const MISAFIR = {
      $MH odedigi icin hesapsiz bir oyuncuya gosterilmesi yanlis olurdu.
      null gelince hub karti hic cizilmiyor. */
   gorev: null,
-  streak: { count: 0, canClaim: false, nextDay: 1, nextReward: 100,
-            nextInMs: 0, broken: false, rewards: [100, 150, 200, 300, 400, 500, 1000] },
+  /* Sunucudaki STREAK_REWARDS ile AYNI olmali: misafir yedi gunluk
+     merdiveni gorup Telegram'dan girince baska sayilar bulmasin. */
+  streak: { count: 0, canClaim: false, nextDay: 1, nextReward: 150,
+            nextInMs: 0, broken: false, rewards: [150, 250, 350, 500, 650, 900, 1500] },
   /* Sunucudaki SPIN_PRIZES ile AYNI sirada ve ayni degerlerde olmali -
      misafir carki dondurup sonra Telegram'dan girince baska sayilar
      gormesin. */
   spin: { canSpin: false, nextInMs: 0, prizes: [
     { tur: 'coin', miktar: 250 }, { tur: 'coin', miktar: 400 },
     { tur: 'coin', miktar: 600 }, { tur: 'coin', miktar: 900 },
-    { tur: 'coin', miktar: 1200 }, { tur: 'coin', miktar: 1600 },
-    { tur: 'enerji', miktar: 3 }, { tur: 'coin', miktar: 2500 },
+    { tur: 'coin', miktar: 1200 }, { tur: 'coin', miktar: 1500 },
+    { tur: 'enerji', miktar: 3 }, { tur: 'enerji', miktar: 1 },
   ] },
 };
 

@@ -4,7 +4,7 @@ import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.j
 import { CONFIG, gorselSeviye } from './config.js?v274';
 import { bakimdaMi } from '../../js/store.js?v274';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
-         ejderhaEkle, bostaIsle, bekleyenYumurta, EN_COK_YUVA,
+         ejderhaEkle, EN_COK_YUVA,
          izgarayiGenislet, genislemeHakki } from './model.js?v274';
 import { dragonSvg, dragonAssetUrls } from './art.js?v274';
 import { turCek, turYolu, turBul } from './turler.js?v274';
@@ -22,7 +22,7 @@ import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         bostaHesapla, BOSTA_TAVAN, ejderhaSansi } from './ekonomi.js?v274';
+         BESLEME_YUMURTA_PERIYODU, ejderhaSansi } from './ekonomi.js?v274';
 import { createTutorial, pozListesi } from './tutorial.js?v274';
 
 const GAME_ID = 'dragon';
@@ -42,7 +42,8 @@ registerTexts(GAME_ID, {
   queuedMsg: 'Ödül sırada bekliyor, izgarada yer aç.',
 
   eggName: 'Sv. {lv} yumurta',
-  eggYield: '{a} - {b} yem · %{p} ihtimalle {n} yem',
+  eggYield: '{a} - {b} yem',
+  eggChance: 'Şans eseri çok daha fazlası çıkabilir.',
   packFood1: 'Yem kesesi',
   packFood2: 'Yem sepeti',
   packFood3: 'Yem sandığı',
@@ -91,16 +92,14 @@ registerTexts(GAME_ID, {
   slotUnlock: 'Yuvayı aç',
   slotNewTitle: 'Yeni yuva',
   slotNewLine: '{n}. ejderha yuvası',
-  eggDragonChance: 'Ayrıca %{p} ihtimalle bir ejderha çıkabilir.',
+  eggDragonChance: 'Şans eseri bir ejderha da çıkabilir.',
   cancel: 'Vazgeç',
   close: 'Kapat',
 
   eggDropsOne: 'Sv. {a} yumurta bırakır',
   eggDropsRange: 'Sv. {a}–{b} yumurta bırakır',
-  idleCollect: 'Topla',
-  idleFull: 'Yuva doldu — üretim durdu',
-  idleNext: 'Sonraki yumurta {time}',
-  idleGot: '{n} yumurta toplandı',
+  eggInFeeds: 'Yumurtaya {n} besleme kaldı',
+  eggNextFeed: 'Sıradaki besleme yumurta getiriyor',
 
   turEmber: 'Ateş',
   turOcean: 'Okyanus',
@@ -210,8 +209,8 @@ const feedBtn = $('feed-btn'); const feedCostEl = $('feed-cost');
 const slotStrip = $('slot-strip');
 const turSatiri = $('tur-satiri');
 const ejderhaNoktasi = $('dragon-dot');
-const bostaKutu = $('bosta'); const bostaSay = $('bosta-say');
-const bostaNot = $('bosta-not'); const bostaBtn = $('bosta-btn');
+const yemsayKutu = $('yemsay'); const yemsayPul = $('yemsay-pul');
+const yemsayNot = $('yemsay-not');
 
 const dailyRow = $('daily-row'); const dailyNote = $('daily-note'); const dailyClaim = $('daily-claim');
 const questOzet = $('quest-ozet'); const questSayac = $('quest-sayac');
@@ -296,10 +295,6 @@ async function basla() {
   if (!yerelTest && await bakimdaMi(GAME_ID)) { bakimEkrani(); return; }
 
   oyuncu = await oyuncuyuYukle();
-
-  /* Oyun kapaliyken gecen sure burada yumurtaya cevriliyor. Tahtadan
-     once calismali ki ilk cizimde sayac dogru gorunsun. */
-  bostaIsle(oyuncu, simdi());
 
   board = createBoard(boardEl, { onMerge: birlesti, onPick: hucreSecildi, onChange: izgaraDegisti });
   board.bagla(oyuncu.grid);
@@ -680,26 +675,23 @@ function bilgiPaneliCiz() {
   if (hucre.t === 'egg') {
     infoTag.textContent = ''; infoTag.className = 'info-tag';
 
-    /* Yuksek seviye yumurtada ejderha SANSI var. Panel bunu yuzdeyle
-       soyluyor: garanti vaat edip vermemek oyuncuyu kandirilmis
-       hissettirir. Yem odulu her halukarda yaziyor. */
+    /* YUZDE YOK (2026-10-18). Panel eskiden "%3 ihtimalle 2.000 yem"
+       ve "%12 ihtimalle ejderha" gibi satirlar yaziyordu. Iki sorunu
+       vardi: kucuk yuzdeler odulu heyecanli degil UMITSIZ gosteriyor
+       ("%3, yani cikmaz"), ve sayilar dengeyi her oynattigimizda
+       oyuncuya verilmis bir soz gibi okunuyordu.
+
+       Artik yalnizca GARANTI aralik sayiyla yaziliyor; surpriz olan her
+       sey yuzdesiz bir not. Odul tablosunun kendisi hic degismedi. */
+    const a = YUMURTA[hucre.lv];
+    infoLine.textContent = t('eggYield', { a: bicim(a.az), b: bicim(a.cok) });
+
+    /* Notta tek satir yer var: ejderha sansi varsa o daha onemli. */
     const sans = ejderhaSansi(hucre.lv);
     const yerVar = oyuncu.dragons.length < EN_COK_YUVA;
-    if (sans > 0 && yerVar) {
-      const a = YUMURTA[hucre.lv];
-      infoLine.textContent = t('eggYield', {
-        a: bicim(a.az), b: bicim(a.cok), p: Math.round(a.sans * 100), n: bicim(a.jackpot),
-      });
-      infoNote.textContent = t('eggDragonChance', { p: Math.round(sans * 100) });
-      infoNote.hidden = false;
-      infoAction.textContent = t('crack');
-    } else {
-      const a = YUMURTA[hucre.lv];
-      infoLine.textContent = t('eggYield', {
-        a: bicim(a.az), b: bicim(a.cok), p: Math.round(a.sans * 100), n: bicim(a.jackpot),
-      });
-      infoAction.textContent = t('crack');
-    }
+    infoNote.textContent = (sans > 0 && yerVar) ? t('eggDragonChance') : t('eggChance');
+    infoNote.hidden = false;
+    infoAction.textContent = t('crack');
     infoAction.disabled = false;
     infoAction.onclick = () => yumurtaKir(seciliHucre);
     return;
@@ -896,8 +888,6 @@ function beslemeFiyati(d) {
   return yemMaliyeti(d.level, d.pencereSayi);
 }
 
-bostaBtn.addEventListener('click', () => { if (!mesgulMu()) bostaTopla(); });
-
 feedBtn.addEventListener('click', async () => {
   const d = aktifEjderha(oyuncu);
   if (!d || mesgulMu()) return;
@@ -919,7 +909,16 @@ feedBtn.addEventListener('click', async () => {
     d.lastFed = simdi();
     d.feeds += 1;
     seviyeKontrol(d);
-    yumurtaBirak();
+
+    /* Yumurta HER beslemede degil, periyot dolunca dusuyor (bkz.
+       ekonomi.js BESLEME_YUMURTA_PERIYODU). Sayac ejderhanin
+       kendisinde duruyor, yani iki ejderhayi birer kere beslemek bir
+       ejderhayi iki kere beslemekle ayni sey degil. */
+    d.yemSayaci = (Number(d.yemSayaci) || 0) + 1;
+    if (d.yemSayaci >= BESLEME_YUMURTA_PERIYODU) {
+      d.yemSayaci = 0;
+      yumurtaBirak();
+    }
     kaydet();
   } finally {
     mesgulKapat();
@@ -1179,62 +1178,29 @@ function ejderhaCiz() {
                    : t('eggDropsRange', { a: a.az, b: a.cok })}`;
   turSatiri.className = `tur-satiri nadir-${tur.nadir}`;
 
-  bostaCiz(d, acik);
+  yemSayacCiz(d, acik);
 }
 
-/* Biriken yumurtalari izgaraya indiriyor. Seviyeleri yine ture bagli:
-   Efsanevi ejderha bosta da daha iyi yumurta biriktiriyor. Izgara
-   doluysa nesneVer zaten siraya aliyor. */
-function bostaTopla() {
-  const d = aktifEjderha(oyuncu);
-  if (!d || !yuvaAcikMi(oyuncu, d)) return;
+/* YUMURTA SAYACI SATIRI
 
-  bostaIsle(oyuncu, simdi());
-  const adet = d.bosta.biriken;
-  if (!adet) return;
+   Besleme artik her seferinde yumurta vermiyor (bkz.
+   BESLEME_YUMURTA_PERIYODU). Bu satir olmasaydi oyuncu dort kere
+   besleyip ucunde hicbir sey almayacak ve bunu bir hata sanacakti.
+   Dort pul, kac besleme yapildigini tek bakista soyluyor; son pula
+   gelince satir "siradaki besleme yumurta getiriyor" diyor.
 
-  const nadir = turBul(d.look?.tur).nadir;
-  const ocakSekmesi = tabbar.querySelector('.tab[data-go="grid"]');
-  let sirayaGiden = 0;
+   Kilitli yuvadaki ejderha beslenemiyor, orada satir hic cizilmiyor. */
+function yemSayacCiz(d, acik) {
+  if (!acik) { yemsayKutu.hidden = true; return; }
+  yemsayKutu.hidden = false;
 
-  /* Once hepsi yerlestiriliyor, sonra animasyon. Ters sirada yapilirsa
-     kaydet() animasyonlardan once donuyor ve oduller diske ulasmiyor. */
-  const seviyeler = [];
-  for (let i = 0; i < adet; i += 1) {
-    const lv = beslemeYumurtaSeviyesi(nadir);
-    seviyeler.push(lv);
-    if (nesneVer({ t: 'egg', lv }) !== 'izgara') sirayaGiden += 1;
-  }
-  d.bosta = { son: simdi(), biriken: 0 };
-  kaydet();
+  const yapilan = (Number(d.yemSayaci) || 0) % BESLEME_YUMURTA_PERIYODU;
+  const kalan = BESLEME_YUMURTA_PERIYODU - yapilan;
 
-  ucur({
-    kaynak: bostaKutu,
-    hedef: ocakSekmesi || resFood,
-    gorsel: gorselYolu({ t: 'egg', lv: seviyeler[0] }),
-    adet,
-    boy: 34,
-    bitince: () => { zipla(ocakSekmesi, 1.16); },
-  });
-
-  haptic.success();
-  odulUcur(t('idleGot', { n: adet }), true);
-  if (sirayaGiden) yaziUcur(t('gridFullEgg'));
-  cizHepsi();
-}
-
-/* Bosta uretim satiri. Kilitli yuvadaki ejderha uretmedigi icin orada
-   hic gosterilmiyor - bos bir sayac kafa karistirirdi. */
-function bostaCiz(d, acik) {
-  if (!acik) { bostaKutu.hidden = true; return; }
-  bostaKutu.hidden = false;
-
-  const y = bostaHesapla(d.bosta, simdi());
-  bostaSay.textContent = `${y.biriken}/${BOSTA_TAVAN}`;
-  bostaKutu.classList.toggle('dolu', y.dolu);
-  bostaNot.textContent = y.dolu ? t('idleFull')
-    : t('idleNext', { time: sureKisa(y.kalan) });
-  bostaBtn.disabled = mesgulMu() || y.biriken === 0;
+  yemsayPul.innerHTML = Array.from({ length: BESLEME_YUMURTA_PERIYODU },
+    (_, i) => `<i class="${i < yapilan ? 'dolu' : ''}"></i>`).join('');
+  yemsayNot.textContent = kalan === 1 ? t('eggNextFeed') : t('eggInFeeds', { n: kalan });
+  yemsayKutu.classList.toggle('yakin', kalan === 1);
 }
 
 /* ---------- GUNLUK ODUL ---------- */
@@ -1591,9 +1557,10 @@ function gorevNoktasi() {
 
   taskDot.hidden = !(hazirGorev || hazirPartner || hazirBuyuk || gunlukAlinabilirMi());
 
-  /* Bekleyen yumurta varken Ejderha sekmesi de isaretleniyor; yoksa
-     oyuncu Ocak ekranindayken birikenin farkina varmiyor. */
-  ejderhaNoktasi.hidden = bekleyenYumurta(oyuncu) === 0;
+  /* Ejderha sekmesindeki nokta BOSTA BIRIKEN yumurtayi gosteriyordu;
+     o sistem kalkinca (bkz. ekonomi.js) isaretleyecek bir sey kalmadi -
+     besleme oyuncunun kendi yaptigi bir sey, hatirlatilmasi gerekmiyor. */
+  ejderhaNoktasi.hidden = true;
 }
 
 /* ---------- ORTAK ---------- */
@@ -1661,10 +1628,9 @@ function tazele() {
     ? t('appetite', { time: sureMetni(d.pencereBas + BESLEME_PENCERESI - simdi()) })
     : t('appetiteFresh');
 
-  /* Tur satiri degismiyor, sadece bosta sayaci iliyor. Sayac bir
-     yumurta daha dustugunde rozetin de guncellenmesi gerekiyor. */
-  if (bostaIsle(oyuncu, simdi())) { kaydet(); gorevNoktasi(); }
-  bostaCiz(d, yuvaAcikMi(oyuncu, d));
+  /* Yumurta sayaci duvar saatiyle degil BESLEMEYLE iliyor, yani bu
+     tikin onu guncellemesi gerekmiyor; satir beslemenin kendisinde
+     yeniden ciziliyor (bkz. feedBtn). */
 }
 
 /* Sure birimleri de dile bagli: arayuz Ingilizce'yken "3sa 56dk" gorunmesin. */

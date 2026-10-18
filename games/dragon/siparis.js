@@ -24,8 +24,15 @@ import { YUMURTA, EN_UST_YUMURTA } from './ekonomi.js?v274';
 export const ACIK_SIPARIS = 2;
 
 /* Kirmaya gore ne kadar fazla odedigimiz. 1.0 = kirmakla ayni (yani
-   anlamsiz), 1.7 = teslim etmek belirgin sekilde karli. */
-const PRIM = 1.7;
+   anlamsiz), 1.35 = teslim etmek belirgin sekilde karli ama ezici
+   degil.
+
+   1.7'den indi. Siparis, istenen seviye yukseltilince (bkz.
+   seviyeAraligi) zaten cok daha degerli bir seyi istiyor; eski prim o
+   seviyedeki yumurtaya uygulandiginda odul oyunun geri kalanini
+   golgede birakiyordu - tuccar tek basina en iyi yem kaynagiydi ve
+   birlestirmenin sebebi kalmiyordu. */
+const PRIM = 1.35;
 
 /* Her ucuncu siparis yildiz da veriyor. Yildiz oyunun kit kaynagi -
    kilitli hucre ve yuva onunla aciliyor - bu yuzden her siparise
@@ -52,14 +59,22 @@ const rast = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 
 /* Oyuncunun siparise konu olabilecek seviye araligi.
 
-   Ust sinir ulasilan en yuksek seviyenin BIR ALTI: oyuncu Lv.6'ya bir
-   kez ulastiysa Lv.6 istemek onu tum ilerlemesini tek siparise yatirmaya
-   zorlar. Alt sinir da cok asagi inmiyor, yoksa ilerlemis bir oyuncuya
-   Lv.1 yumurta siparisi gelir ve siparis sistemi onemsizlesir. */
+   Ust sinir, oyuncunun ULASTIGI EN YUKSEK seviye. Onceden bir alt
+   kademeydi ve siparis bir karar degil, otomatik bir "evet"ti: elindeki
+   fazlaligi veriyordun. Artik tuccar senin yapabildigin en iyi seyi
+   istiyor, yani her siparis gercek bir tercih - o yumurtayi bir ust
+   kademeye birlestirmeyi mi goze alirsin, yoksa tuccara verip odulu mu
+   alirsin.
+
+   KURAL 1 BOZULMUYOR: istenen seviyeye oyuncu bir kez ulasmis demektir,
+   yani tekrar uretebilir. Imkansiz bir sey istenmiyor.
+
+   Alt sinir bir kademe asagida: aralik iki seviyeden ibaret, boylece
+   ilerlemis bir oyuncuya anlamsiz kalan dusuk seviye siparis gelmiyor. */
 function seviyeAraligi(maxEggLv) {
   const ulasilan = Math.max(1, Math.min(EN_UST_YUMURTA, Number(maxEggLv) || 1));
-  const ust = Math.max(1, Math.min(EN_UST_YUMURTA - 1, ulasilan - 1));
-  const alt = Math.max(1, ust - 2);
+  const ust = ulasilan;
+  const alt = Math.max(1, ust - 1);
   return { alt, ust };
 }
 
