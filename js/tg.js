@@ -185,6 +185,20 @@ export function hideBackButton() {
    if (supports('6.1')) tg?.BackButton?.hide();
 }
 
+/* SAYFA GORUNMEZKEN ANIMASYONLARI DURDUR.
+
+   Telegram'in WebView'i arka plana alinan sayfayi her zaman
+   durdurmuyor; oyuncu baska bir sohbete gecince hub arkada kare
+   uretmeye devam edebiliyor ve telefon isiniyor. Bu sinif
+   css/style.css'teki `:root.sayfa-gizli` kuraliyla butun
+   animasyonlari duraklatiyor (bkz. "SONSUZ ANIMASYON YOK").
+
+   Modul yuklenir yuklenmez kuruluyor - hem hub hem oyunlar js/tg.js'i
+   zaten iceri aliyor, yani her sayfada gecerli. */
+document.addEventListener('visibilitychange', () => {
+   document.documentElement.classList.toggle('sayfa-gizli', document.hidden);
+});
+
 const RESUME_LIMIT_MS = 60000;
 
 export function backToHubOnResume(hubUrl = '../../index.html') {

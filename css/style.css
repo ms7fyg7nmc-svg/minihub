@@ -76,6 +76,34 @@
   }
 }
 
+/* ---------- SONSUZ ANIMASYON YOK ----------
+
+   Hub uzun sure acik birakilinca telefon isiniyor ve yavasliyordu.
+   Sebep tek tek animasyonlarin pahali olmasi degil, HIC DURMAMALARI:
+   ekranda sonsuz tekrarlayan bir animasyon varsa tarayici saniyede 60
+   kare uretmeye devam etmek zorunda - sayfa tamamen bos dursa bile.
+   Ana ekranda boyle UC animasyon vardi (hazir yazisinin yanip sonmesi,
+   pembe nokta, ejderha ambleminin donmesi), yani cihaz hicbir zaman
+   dinlenmiyordu.
+
+   Iki kural kondu:
+
+   1. DIKKAT CEKEN ANIMASYONLAR SONLU. Oyuncu ekrana geldiginde
+      calisiyorlar, yarim dakika sonra duruyorlar. Isleri zaten ilk
+      bakista goze carpmak; otuz saniye sonra bakan kimse yok.
+      "Hazir" yazisinin yanip sonmesi tamamen kaldirildi - yanindaki
+      pembe nokta zaten ayni seyi soyluyordu.
+
+   2. SAYFA GORUNMEZKEN HER SEY DURUYOR. Telegram'in WebView'i arka
+      plana alinan sayfayi her zaman durdurmuyor; asagidaki kural
+      durduruyor. js/tg.js bu sinifi visibilitychange'de koyup
+      kaldiriyor. */
+:root.sayfa-gizli *,
+:root.sayfa-gizli *::before,
+:root.sayfa-gizli *::after {
+  animation-play-state: paused !important;
+}
+
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 html { overscroll-behavior: none; }
@@ -559,12 +587,33 @@ body.hub::before {
 
 /* Amblem yerine kirpilmis bir gorsel tasiyan kare. Gradyan ve SVG ikon
    kapaniyor; ustte ince bir parlaklik kaliyor ki digerleriyle ayni
-   kabartma hissini korusun. */
+   kabartma hissini korusun.
+
+   DIS KENARDA KOYU HALKA. Bu sekiz ikon uretilmis birer cizim ve her
+   birinin kendi yuvarlatilmis kenari var; o kenar karenin 14px'lik
+   kosesiyle tam ortusmuyor. Sonucta kimi ikonda kose disarida bir
+   piksel paylasiyor, kimisinde icerde acik bir tirtik kaliyor -
+   kucukken bile "elle kesilmis" duruyordu.
+
+   Icerden cizilen koyu halka ikisini de kapatiyor: cizimin kendi
+   kenari halkanin ALTINDA kaliyor ve gorunen sinir artik tarayicinin
+   cizdigi kusursuz yuvarlak kose oluyor. Disaridan degil ICERDEN
+   (inset) cizilmesi onemli - disaridan cizilen bir halka karenin
+   olcusunu buyutur ve izgara hizasi kayar.
+
+   Iki kat: dis koyu cizgi silueti veriyor, ic yari saydam cizgi
+   gorselin kendi kenariyla halka arasindaki gecisi yumusatiyor,
+   yoksa koyu cizgi gorselin uzerine yapistirilmis gibi duruyor. */
 .tile-icon.is-foto {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 42%),
     var(--tile-foto) center / cover no-repeat,
     #11131c;
+  box-shadow:
+    0 5px 12px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1.5px rgba(0, 0, 0, 0.72),
+    inset 0 0 0 3px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
 .tile-icon.is-foto svg { display: none; }
@@ -932,10 +981,7 @@ body.hub::before {
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  animation: hazir-parla 1.8s ease-in-out infinite;
 }
-
-@keyframes hazir-parla { 50% { opacity: 0.6; } }
 
 .daily-card-dot {
   width: 9px;
@@ -944,7 +990,9 @@ body.hub::before {
   border-radius: 50%;
   background: var(--c-pink);
   box-shadow: 0 0 8px rgba(226, 103, 156, 0.8);
-  animation: dot-pulse 1.6s ease-in-out infinite;
+  /* 12 tur, yani ~19 saniye - sonra DURUYOR. Bkz. asagidaki
+     "SONSUZ ANIMASYON YOK" notu. */
+  animation: dot-pulse 1.6s ease-in-out 12;
 }
 .daily-card-dot[hidden] { display: none; }
 
@@ -1037,16 +1085,24 @@ body.hub::before {
 .daily-section { margin: 0 0 22px; }
 .daily-section:last-of-type { margin-bottom: 4px; }
 
+/* BOLUM BASLIKLARI
+   Once sistem fontuyla, 12px, gri, buyuk harf yaziliyordu - panelin
+   icindeki cark tas cerceveli, run kazili ve Cinzel rakamli oldugu
+   halde ustundeki baslik bir form etiketi gibi duruyordu. Artik
+   carkla AYNI harfi kullaniyor (Cinzel sayfada zaten yuklu, yeni bir
+   indirme degil) ve gri degil altin. */
 .daily-section h3 {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0 0 12px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--muted);
+  gap: 10px;
+  margin: 0 0 13px;
+  font-family: 'Cinzel', 'Times New Roman', serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--gold-yazi);
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 1.1px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .energy-bolt {
@@ -1059,7 +1115,7 @@ body.hub::before {
   content: '';
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, var(--cizgi), transparent);
+  background: linear-gradient(90deg, rgba(245, 185, 66, 0.42), transparent);
 }
 
 /* Cark basligi ortada: iki yanina da cizgi geliyor */
@@ -1068,10 +1124,7 @@ body.hub::before {
   content: '';
   flex: 1;
   height: 1px;
-  background: linear-gradient(270deg, var(--cizgi), transparent);
-}
-.daily-section.is-orta h3::after {
-  background: linear-gradient(90deg, var(--cizgi), transparent);
+  background: linear-gradient(270deg, rgba(245, 185, 66, 0.42), transparent);
 }
 
 .daily-btn {
@@ -1183,56 +1236,90 @@ body.hub::before {
 }
 
 
-/* Gunluk seri seridi */
-/* Gunler tek bir cerceve icinde, aralarinda ince ayirici - dagilmis
-   kutucuklar yerine tablo gibi butunluklu duruyor. */
+/* GUNLUK SERI SERIDI
+
+   Once tek bir cerceve icinde, aralarinda ince ayirici cizgiler olan
+   yedi dar hucreydi - bir odul merdiveninden cok bir TABLO satiriydi.
+   Gun numaralari 9,5px gri, miktarlar 11,5px; ikisi de okunmak icin
+   degil sigmak icin secilmis olculerdi.
+
+   Artik yedi ayri KART: her biri kendi cercevesi ve zemini olan kucuk
+   bir kutu, aralarinda bosluk. Gun numarasi Cinzel (panelin geri
+   kalaniyla ayni harf), miktar bir tik buyuk ve kalin. Hucreler
+   boyundan degil icerikten buyudugu icin yedisi hala tek satira
+   siğiyor. */
 .streak-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  margin-bottom: 12px;
-  border-radius: 14px;
-  overflow: hidden;
-  border: 1px solid var(--cizgi);
-  background: var(--yuzey);
+  gap: 4px;
+  margin-bottom: 14px;
 }
 
 .streak-pill {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 10px 2px;
-  border-left: 1px solid var(--cizgi-soft);
+  gap: 4px;
+  padding: 9px 1px 8px;
+  border: 1px solid var(--cizgi-soft);
+  border-radius: 11px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.015));
 }
-.streak-pill:first-child { border-left: none; }
 
-.streak-pill .day { font-size: 9.5px; color: var(--muted); font-weight: 700; }
+.streak-pill .day {
+  font-family: 'Cinzel', 'Times New Roman', serif;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--muted);
+}
 .streak-pill .amt {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 800;
+  /* 1500 gibi dort haneli bir sayi dar hucreye sigmali: rakamlar esit
+     genislikte olunca yedi hucre birbirine gore oynamiyor. */
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
 }
-.amt-coin { width: 10px; height: 10px; flex: none; }
+.amt-coin { width: 11px; height: 11px; flex: none; }
 
-.streak-pill.is-done { background: rgba(78, 203, 139, 0.14); }
+/* Alinmis gun: yesil onay. Zemin degil KENARLIK yesil - yedi kart yan
+   yanayken yedi dolu zemin seridi bir uyari paneline cevirmisti. */
+.streak-pill.is-done {
+  border-color: rgba(78, 203, 139, 0.45);
+  background: linear-gradient(180deg, rgba(78, 203, 139, 0.16), rgba(78, 203, 139, 0.05));
+}
 .streak-pill.is-done .amt { color: #4ecb8b; }
+.streak-pill.is-done .day { color: #4ecb8b; }
 .streak-pill.is-done .day::after { content: ' ✓'; }
 
+/* BUGUN. Serideki tek hareketli sey bu - oyuncunun gozu once buraya
+   gitsin diye. */
 .streak-pill.is-current {
-  background: linear-gradient(160deg, rgba(245, 185, 66, 0.30), rgba(245, 185, 66, 0.10));
-  box-shadow: inset 0 0 0 1px rgba(245, 185, 66, 0.55);
+  border-color: rgba(245, 185, 66, 0.65);
+  background: linear-gradient(170deg, rgba(245, 185, 66, 0.32), rgba(245, 185, 66, 0.09));
   animation: streak-glow 1.8s ease-in-out infinite;
 }
-.streak-pill.is-current .amt { color: var(--gold-yazi); }
+.streak-pill.is-current .amt,
+.streak-pill.is-current .day { color: var(--gold-yazi-parlak); }
 
 @keyframes streak-glow {
-  50% { box-shadow: inset 0 0 0 1px rgba(245, 185, 66, 0.9), 0 0 14px rgba(245, 185, 66, 0.35); }
+  50% { box-shadow: 0 0 14px rgba(245, 185, 66, 0.38); }
 }
 
-.streak-pill.is-future { opacity: 0.5; }
+.streak-pill.is-future { opacity: 0.55; }
+
+/* YEDINCI GUN haftanin odulu: altin cerceve. Once sadece yazisi pembeydi
+   ve oteki alti gunden ayirt edilemiyordu. */
+.streak-pill.is-jackpot {
+  border-color: rgba(245, 185, 66, 0.5);
+  background: linear-gradient(180deg, rgba(226, 103, 156, 0.16), rgba(245, 185, 66, 0.07));
+}
 .streak-pill.is-jackpot .amt { color: var(--c-pink); }
+.streak-pill.is-jackpot .day { color: var(--gold-yazi); }
 
 /* Gunluk cark */
 /* Baslik carkin ustune binmesin: ibre yukari tastigi icin ekstra pay */
@@ -1628,18 +1715,54 @@ body.hub::before {
   width: min(88px, 100%);
   align-self: end;          /* 1fr satirin DIBINE: kaidelerin alti ayni cizgide */
   margin-top: 4px;
-  /* Sayi gorselin ortasina degil ON YUZUNE oturmali. Cizimde on yuz
-     %5-78 arasinda, altta bir taban cikintisi var; alt dolgu sayiyi o
+  /* Plaket gorselin ortasina degil ON YUZUNE oturmali. Cizimde on yuz
+     %5-78 arasinda, altta bir taban cikintisi var; alt dolgu plaketi o
      cikintinin uzerine itiyor. */
   padding-bottom: 17%;
   background: center / 100% 100% no-repeat;
-  font-size: 21px;
-  font-weight: 900;
-  /* Altin/gumus/bronz metalin uzerinde koyu yazi - rozetlerdeki ile
-     ayni cozum. Beyaz yazi gumus kaidede kayboluyordu. Ilk denemede
-     15px'ti ve metalin dokusunda eriyordu; bu olcude okunuyor. */
-  color: #2a1c00;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 6px rgba(255, 255, 255, 0.3);
+}
+
+/* --- SIRA PLAKETI ---
+
+   Kaidenin uzerinde once duz bir sayi vardi: sistem fontu, koyu kahve,
+   beyaz bir golge. Iki sorunu vardi. Metalin uzerinde kendi dokusuna
+   karisiyordu, ve bir tabloda okunan sira numarasindan farki yoktu -
+   oysa podyumda duran sayi bir SIRA degil bir UNVAN.
+
+   Artik kendi armasinin icinde: koyu bir kalkan, etrafinda kaidenin
+   kendi metalinden bir cerceve, icinde Cinzel ile altin bir rakam.
+   Cinzel sayfada zaten yuklu (cark da onu kullaniyor), yani yeni bir
+   indirme degil; roma rakami gorunumlu serif, bu is icin dogru harf.
+
+   Kalkan bicimi iki yaricap degeriyle: ust koseler hafif yuvarlak, alt
+   koseler cok daha genis - asagi dogru sivrilen bir arma. */
+.podyum-no {
+  --arma: #8a5e12;             /* cerceve; yere gore degisiyor */
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 40px;
+  font-family: 'Cinzel', 'Times New Roman', serif;
+  font-style: normal;          /* <i> ogesi: egik gelmesin */
+  font-size: 23px;
+  font-weight: 800;
+  line-height: 1;
+  /* Rakam KOYU zeminin uzerinde acik altin. Kaide hangi metalden
+     olursa olsun plaket koyu kaldigi icin uc basamakta da ayni
+     okunakliliga sahip - eskiden gumus kaidede sayi kayboluyordu. */
+  color: #ffe6ab;
+  text-shadow: 0 1px 0 #5c3c06, 0 2px 4px rgba(0, 0, 0, 0.65);
+  border-radius: 9px 9px 13px 13px / 9px 9px 18px 18px;
+  background: linear-gradient(180deg, rgba(44, 30, 9, 0.97), rgba(14, 9, 3, 0.98));
+  /* Dort halka: metal cerceve, onu zeminden ayiran koyu kontur, ustte
+     isik, altta govde golgesi. Rozetteki ile ayni dil (bkz.
+     .podyum-rozet) - plaket oraya ait gorunsun diye. */
+  box-shadow:
+    0 0 0 1.5px var(--arma),
+    0 0 0 3px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 226, 160, 0.3),
+    inset 0 -7px 11px rgba(0, 0, 0, 0.45),
+    0 3px 7px rgba(0, 0, 0, 0.5);
 }
 
 .yer-1 .podyum-kaide { aspect-ratio: 0.921; background-image: url("../assets/widget/podyum/kaide-1.webp"); }
@@ -1651,6 +1774,13 @@ body.hub::before {
 .yer-1 .podyum-rozet { background: linear-gradient(160deg, #fff3c4, #f5b942 45%, #a9761a); --halka: #8a5e12; width: 52px; height: 52px; font-size: 21px; }
 .yer-2 .podyum-rozet { background: linear-gradient(160deg, #ffffff, #c8ccd6 45%, #7d8390); --halka: #6b7078; }
 .yer-3 .podyum-rozet { background: linear-gradient(160deg, #f8d5a8, #cd7f32 45%, #7d4a17); --halka: #8a5420; }
+
+/* Plaketin cercevesi de kaidenin metalinden: altin kaidede altin,
+   gumuste gumus, bronzda bronz. Birincininki bir tik buyuk - podyumun
+   geri kalanindaki olcek farkiyla ayni fikir. */
+.yer-1 .podyum-no { --arma: #c9972c; width: 40px; height: 44px; font-size: 26px; }
+.yer-2 .podyum-no { --arma: #9aa0aa; }
+.yer-3 .podyum-no { --arma: #b5742f; }
 
 .yer-1 .podyum-ad { font-size: 13px; }
 
@@ -1686,6 +1816,8 @@ body.hub::before {
   .podyum-ad { font-size: 11px; }
   .yer-1 .podyum-ad { font-size: 12px; }
   .podyum-puan { font-size: 10px; }
+  .podyum-no { width: 31px; height: 35px; font-size: 20px; }
+  .yer-1 .podyum-no { width: 34px; height: 38px; font-size: 22px; }
 }
 
 .lider-liste { display: flex; flex-direction: column; }
@@ -1819,9 +1951,9 @@ body.hub::before {
 /* Amblem madeni para gibi kendi ekseninde donuyor: surekli degil,
    bir tur atip birkac saniye bekliyor - listede goz yormasin. */
 .tile-icon .game-img.spin {
-  animation: armaDon 6s cubic-bezier(.45, 0, .2, 1) infinite;
+  /* 5 tur = 30 saniye, sonra duruyor (bkz. "SONSUZ ANIMASYON YOK"). */
+  animation: armaDon 6s cubic-bezier(.45, 0, .2, 1) 5;
   transform-style: preserve-3d;
-  will-change: transform;
 }
 
 @keyframes armaDon {

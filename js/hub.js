@@ -1420,9 +1420,16 @@ function podyumBasamagi(s) {
    puan.className = 'podyum-puan';
    puan.innerHTML = mhHtml(`${s.kazanilan.toLocaleString(locale())} $MH`);
 
+   /* Sira numarasi kaidenin uzerine DOGRUDAN yazilmiyor; kendi
+      plaketinin icinde duruyor (bkz. .podyum-no). Cıplak yazi metalin
+      dokusunda eriyordu ve sistem fontuyla tabloya ait bir sayi gibi
+      duruyordu - oysa bu bir sira degil, bir unvan. */
    const kaide = document.createElement('span');
    kaide.className = 'podyum-kaide';
-   kaide.textContent = s.sira;
+   const no = document.createElement('i');
+   no.className = 'podyum-no';
+   no.textContent = s.sira;
+   kaide.appendChild(no);
 
    /* Tac yalnizca birincide. Ikinci ve ucuncude de olsaydi "birinci"
       olmanin gorsel karsiligi kalmazdi. */
