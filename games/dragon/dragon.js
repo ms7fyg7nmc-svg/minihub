@@ -1,27 +1,27 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v275';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v275';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v276';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v276';
 
-import { CONFIG, gorselSeviye } from './config.js?v275';
-import { bakimdaMi } from '../../js/store.js?v275';
+import { CONFIG, gorselSeviye } from './config.js?v276';
+import { bakimdaMi } from '../../js/store.js?v276';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
          ejderhaEkle, EN_COK_YUVA,
-         izgarayiGenislet, genislemeHakki } from './model.js?v275';
-import { dragonSvg, dragonAssetUrls } from './art.js?v275';
-import { turCek, turYolu, turBul } from './turler.js?v275';
-import { taniBaslat, iz } from '../../js/tani.js?v275';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v275';
+         izgarayiGenislet, genislemeHakki } from './model.js?v276';
+import { dragonSvg, dragonAssetUrls } from './art.js?v276';
+import { turCek, turYolu, turBul } from './turler.js?v276';
+import { taniBaslat, iz } from '../../js/tani.js?v276';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v276';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
-         kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI } from './gorevler.js?v275';
-import { gorevOlay, promoKutuAl, sahipMiyim } from '../../js/store.js?v275';
-import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v275';
+         kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI } from './gorevler.js?v276';
+import { gorevOlay, promoKutuAl, sahipMiyim } from '../../js/store.js?v276';
+import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v276';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v275';
+         kilitliMi, nesneMi } from './grid.js?v276';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         BESLEME_YUMURTA_PERIYODU, ejderhaSansi } from './ekonomi.js?v275';
-import { createTutorial, pozListesi } from './tutorial.js?v275';
+         BESLEME_YUMURTA_PERIYODU, ejderhaSansi } from './ekonomi.js?v276';
+import { createTutorial, pozListesi } from './tutorial.js?v276';
 
 const GAME_ID = 'dragon';
 
@@ -325,7 +325,7 @@ async function basla() {
      bekletmesinin anlami yok. */
   promoKutusunuBosalt();
 
-  showBackButton(hubaDon);
+  showBackButton(geriTusu);
   backToHubOnResume();
   window.addEventListener('resize', () => tut?.yenidenKonumla());
   /* SES KALDIRILDI.
@@ -343,11 +343,19 @@ async function basla() {
 }
 
 const hubaDon = () => { location.href = '../../index.html'; };
+
+/* Telegram'in geri tusu TEK handler kullaniyor ve durumu kendisi
+   soruyor. Acik bir panel varken once onu kapatiyor; yoksa oyuncu
+   gorev listesini kapatmak icin bastiginda oyundan cikiyordu. */
+const geriTusu = () => { if (!sayfa.hidden) sayfaKapatt(); else hubaDon(); };
 const kaydet = () => oyuncuyuKaydet(oyuncu);
 
 /* ---------- EKRAN ---------- */
 
 function ekranGoster(ad) {
+  /* Panel ekrana degil OYUNA ait: sekme degisince ustte asili
+     kalmamali. */
+  sayfaKapatt();
   document.body.dataset.screen = ad;
   document.querySelectorAll('.screen').forEach((s) => { s.hidden = s.dataset.screen !== ad; });
   tabbar.querySelectorAll('.tab').forEach((b) => b.classList.toggle('is-on', b.dataset.go === ad));
@@ -367,7 +375,7 @@ let generatorKurulu = false;
 async function generatorAc() {
   if (generatorKurulu) return;
   generatorKurulu = true;
-  const { generatorKur } = await import('./generator.js?v275');
+  const { generatorKur } = await import('./generator.js?v276');
   await generatorKur($('gen-kok'));
 }
 
@@ -1405,6 +1413,20 @@ function sayfaAc(baslik, cizici) {
 function sayfaKapatt() {
   sayfa.hidden = true;
 }
+
+/* GOREV HARITASI KARTI TAM LISTEYI ACIYOR.
+
+   Kart bastan beri bir dugmeydi ve uzerinde "Ac" yazip ok tasiyordu,
+   ama hicbir yere BAGLI DEGILDI: sayfaAc/questSayfaCiz yazilmis ama
+   cagrilmamisti, yani karta dokunmak hicbir sey yapmiyordu. Ozet
+   kartta yalnizca ustunde olunan tek gorev goruluyor; 21 gorevin
+   tamami ve kademe kilitleri burada. */
+questOzet.addEventListener('click', () => {
+  haptic.tap();
+  sayfaAc(t('questTitle'), questSayfaCiz);
+});
+
+sayfaKapat.addEventListener('click', () => { haptic.tap(); sayfaKapatt(); });
 
 
 /* Sekmedeki nokta: alinmayi bekleyen bir sey var mi? Kilitli gorevler

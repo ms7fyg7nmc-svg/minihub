@@ -1,5 +1,5 @@
 
-import { t } from './i18n.js?v275';
+import { t } from './i18n.js?v276';
 
 export const tg = window.Telegram?.WebApp ?? null;
 
@@ -175,8 +175,17 @@ export const haptic = {
    },
 };
 
+/* Telegram'in BackButton.onClick'i handler'i DEGISTIRMIYOR, LISTEYE
+   EKLIYOR. Iki kez cagrilirsa geri tusuna basildiginda ikisi birden
+   calisiyor; ornegin once bir paneli kapatan, sonra oyundan cikan iki
+   handler takiliysa oyuncu paneli kapatmak isterken oyundan cikiyor.
+   Bir oncekini elle kaldiriyoruz. */
+let geriHandler = null;
+
 export function showBackButton(handler) {
    if (!supports('6.1') || !tg?.BackButton) return;
+   if (geriHandler) tg.BackButton.offClick(geriHandler);
+   geriHandler = handler;
    tg.BackButton.show();
    tg.BackButton.onClick(handler);
 }
