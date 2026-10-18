@@ -38,3 +38,24 @@ sayıyı onun üstüne itiyor.
 Yazı koyu (`#2a1c00`), rozetlerdeki çözümün aynısı — beyaz yazı gümüş
 kaidede kayboluyordu. İlk denemede 15px'ti ve metalin dokusunda
 eriyordu; 21px'te okunuyor.
+
+## Sıra armaları (18 Ekim 2026)
+
+`no-1.webp`, `no-2.webp`, `no-3.webp` — kaidenin ön yüzüne oturan oymalı
+altın çerçeveli rakamlar. Lacivert mine zemin, kabartma altın rakam.
+
+Kaide ne renk olursa olsun arma **altın**: gümüş ve bronz basamakta
+üzerine takılmış bir madalyon gibi okunuyor.
+
+**Üretim:** Scenario, GPT Image 2.5 Flare, 1536×512, saydam arka plan —
+**tek üretimde üçü birden** çıkarıldı, sonra sütun boşluklarına göre
+ücretsiz kesildi (premultiply + LANCZOS, saydam kenarda siyah sızmasın
+diye). Üçü ayrı üretilseydi üç katı tutardı.
+
+Öncesinde iki deneme vardı ve ikisi de yetersizdi: düz sistem fontu sayı
+(metalin dokusunda eriyordu) ve CSS ile çizilmiş koyu plaket (kaidenin
+üstüne yapıştırılmış duruyordu).
+
+**Ölçü kaideye göre**, çizimin kendi oranına göre değil: üç kaidenin
+yüksekliği farklı (96 / 77 / 59 px) ve arma ön yüze oturmak zorunda.
+Ölçüler `css/style.css` → `.podyum-no`.

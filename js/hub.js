@@ -1,20 +1,20 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v276';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v277';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, enerjiBosMu, bakimListesi, bakimOnbellek,
    getGorev, gorevAl, getPartner, partnerAl, partnerBuyukAl, promoKullan, promoKayit, sahipMiyim,
-} from './store.js?v276';
-import { enerjiBosOnayi } from './onay.js?v276';
-import { odulGoster, odulOnYukle } from './odul.js?v276';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v276';
+} from './store.js?v277';
+import { enerjiBosOnayi } from './onay.js?v277';
+import { odulGoster, odulOnYukle } from './odul.js?v277';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v277';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniBaslat, iz } from './tani.js?v276';
+import { taniBaslat, iz } from './tani.js?v277';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -1573,7 +1573,10 @@ function podyumBasamagi(s) {
    kaide.className = 'podyum-kaide';
    const no = document.createElement('i');
    no.className = 'podyum-no';
-   no.textContent = s.sira;
+   /* Rakam artik YAZI degil cizim (bkz. css .podyum-no). Ekran
+      okuyucu icin sayiyi yine de soyluyoruz. */
+   no.setAttribute('role', 'img');
+   no.setAttribute('aria-label', String(s.sira));
    kaide.appendChild(no);
 
    /* Tac yalnizca birincide. Ikinci ve ucuncude de olsaydi "birinci"

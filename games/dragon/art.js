@@ -1,7 +1,7 @@
 
-import { palet } from './data.js?v276';
-import { CONFIG, growthRatio } from './config.js?v276';
-import { TURLER, turYolu, turBul } from './turler.js?v276';
+import { palet } from './data.js?v277';
+import { CONFIG, growthRatio } from './config.js?v277';
+import { TURLER, turYolu, turBul } from './turler.js?v277';
 
 export { TURLER };
 
