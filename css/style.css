@@ -2301,6 +2301,125 @@ body.hub::before {
 .gorev-al:disabled { background: var(--yuzey); color: var(--muted); cursor: default; }
 .gorev-al:disabled:active { transform: none; }
 
+/* ---------- OYUN GOREVLERI ----------
+
+   Kart gunluk gorevlerle AYNI kabugu kullaniyor (.gorev-kart) ama bir
+   dugme: icerik sekiz oyun x dort kademe oldugu icin karta sigmiyor,
+   kendi paneline aciliyor. Kabugun aynisi olmasi bilincli - ikisi de
+   "git oyna" diyen, yan yana duran iki satir. */
+.gorev-ac {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  position: relative;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  background:
+    linear-gradient(160deg, rgba(245, 185, 66, 0.14), rgba(226, 103, 156, 0.05)),
+    var(--yuzey);
+}
+.gorev-ac:active { transform: scale(0.99); }
+
+.gorev-ac-ad { font-size: 14px; font-weight: 800; }
+/* Kac kademe alindi: "11/32". Esit genislikli rakam, sayi degisince
+   satirin geri kalani oynamasin. */
+.gorev-ac-sayi {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--gold-yazi);
+  font-variant-numeric: tabular-nums;
+}
+.gorev-ac-ok { font-size: 18px; line-height: 1; color: var(--muted); }
+/* Bekleyen odul noktasi kartin KOSESINDE, akista degil - yoksa oku
+   iter ve satir her tazelemede birkac piksel kayar. */
+.gorev-ac .daily-card-dot { position: absolute; top: 9px; right: 9px; }
+
+/* --- Panel icindeki liste --- */
+
+.partner-liste { display: grid; gap: 10px; margin: 14px 0 0; }
+
+.partner-satir {
+  display: grid;
+  gap: 6px;
+  padding: 11px 12px 10px;
+  border: 1px solid var(--cizgi-soft);
+  border-radius: 14px;
+  background: var(--yuzey-hafif);
+}
+
+.partner-bas { display: flex; align-items: center; gap: 8px; }
+.partner-ad { font-size: 13.5px; font-weight: 800; }
+
+/* Dort kademe dort pul: dolu (alindi), hazir (hak edildi, alinmadi),
+   bos. Hazir olan tek hareketli sey - gozu dogrudan alinacak odule
+   goturuyor. Sonlu degil cunku panel yalnizca acikken duruyor; sayfa
+   gorunmez olunca :root.sayfa-gizli zaten durduruyor. */
+.partner-pul { display: flex; gap: 4px; margin-left: auto; }
+.partner-pul i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--yuzey-orta);
+}
+.partner-pul i.dolu { background: var(--gold); }
+.partner-pul i.hazir {
+  background: var(--c-pink);
+  box-shadow: 0 0 7px rgba(226, 103, 156, 0.75);
+  animation: dot-pulse 1.6s ease-in-out infinite;
+}
+
+.partner-hedef { font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* Cubuk gunluk gorevlerinkiyle ayni oge (.gorev-bar) ama burada tek
+   sutunlu bir izgarada, o yuzden sutun atlamasi sifirlaniyor. */
+.partner-satir .gorev-bar { grid-column: auto; }
+
+.partner-al {
+  margin-top: 3px;
+  padding: 8px;
+  border: none;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #ffe28a, var(--gold));
+  color: #2a1c00;
+  font: inherit;
+  font-weight: 800;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.partner-al[hidden] { display: none; }
+.partner-al:active { transform: scale(0.98); }
+
+/* Dordu de alinmis oyun: altin kenarlik, cubuk dolu. */
+.partner-satir.is-bitti { border-color: rgba(245, 185, 66, 0.4); }
+.partner-satir.is-bitti .gorev-bar b { background: linear-gradient(90deg, #d79a24, var(--gold)); }
+
+.partner-buyuk {
+  display: grid;
+  gap: 6px;
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid rgba(245, 185, 66, 0.4);
+  border-radius: 16px;
+  background:
+    radial-gradient(90% 70% at 50% 0%, rgba(245, 185, 66, 0.18), transparent 70%),
+    var(--yuzey-hafif);
+  text-align: center;
+}
+.partner-buyuk[hidden] { display: none; }
+.partner-buyuk strong {
+  font-family: 'Cinzel', 'Times New Roman', serif;
+  font-size: 15px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--gold-yazi);
+}
+.partner-buyuk-not { font-size: 11.5px; color: var(--muted); }
+.partner-buyuk .daily-btn { margin-top: 4px; }
+
 /* --- PROMOSYON KODU (Ayarlar) --- */
 
 .promo { margin-top: 14px; }

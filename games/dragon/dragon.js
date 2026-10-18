@@ -1,29 +1,27 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v274';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v274';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v275';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v275';
 
-import { CONFIG, gorselSeviye } from './config.js?v274';
-import { bakimdaMi } from '../../js/store.js?v274';
+import { CONFIG, gorselSeviye } from './config.js?v275';
+import { bakimdaMi } from '../../js/store.js?v275';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
          ejderhaEkle, EN_COK_YUVA,
-         izgarayiGenislet, genislemeHakki } from './model.js?v274';
-import { dragonSvg, dragonAssetUrls } from './art.js?v274';
-import { turCek, turYolu, turBul } from './turler.js?v274';
-import { taniBaslat, iz } from '../../js/tani.js?v274';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v274';
+         izgarayiGenislet, genislemeHakki } from './model.js?v275';
+import { dragonSvg, dragonAssetUrls } from './art.js?v275';
+import { turCek, turYolu, turBul } from './turler.js?v275';
+import { taniBaslat, iz } from '../../js/tani.js?v275';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v275';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
-         kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI,
-         PARTNER_OYUNLAR, PARTNER_ODULLERI, PARTNER_BUYUK_ODUL,
-         partnerKademe } from './gorevler.js?v274';
-import { getBest, gorevOlay, promoKutuAl, sahipMiyim } from '../../js/store.js?v274';
-import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v274';
+         kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI } from './gorevler.js?v275';
+import { gorevOlay, promoKutuAl, sahipMiyim } from '../../js/store.js?v275';
+import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v275';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v274';
+         kilitliMi, nesneMi } from './grid.js?v275';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         BESLEME_YUMURTA_PERIYODU, ejderhaSansi } from './ekonomi.js?v274';
-import { createTutorial, pozListesi } from './tutorial.js?v274';
+         BESLEME_YUMURTA_PERIYODU, ejderhaSansi } from './ekonomi.js?v275';
+import { createTutorial, pozListesi } from './tutorial.js?v275';
 
 const GAME_ID = 'dragon';
 
@@ -156,15 +154,6 @@ registerTexts(GAME_ID, {
   openingIn: '{time} sonra açılır',
   skipFor: 'Hemen aç',
   allDone: 'Bütün görevler bitti',
-  partnerTitle: 'Partner görevleri',
-  partnerReady: '{n} ödül seni bekliyor',
-  partnerHint: 'Diğer hub oyunlarında skor yap',
-  targetScore: '{n} puana ulaş',
-  targetLevel: '{n}. seviyeye ulaş',
-  yourBest: 'Rekorun: {n}',
-  grandTitle: 'Büyük ödül',
-  grandNote: 'Sekiz oyunda da 4. kademeyi bitir',
-  grandReady: 'Büyük ödül hazır',
   questChest: '{n} kap aç',
   questPacklv: 'Sv. {n} kaba ulaş',
   questUnlock: '{n} kilitli hücre aç',
@@ -215,8 +204,6 @@ const yemsayNot = $('yemsay-not');
 const dailyRow = $('daily-row'); const dailyNote = $('daily-note'); const dailyClaim = $('daily-claim');
 const questOzet = $('quest-ozet'); const questSayac = $('quest-sayac');
 const questKademeler = $('quest-kademeler'); const questAktif = $('quest-aktif');
-const partnerOzet = $('partner-ozet'); const partnerSayac = $('partner-sayac');
-const partnerBar = $('partner-bar'); const partnerAktif = $('partner-aktif');
 const sayfa = $('sayfa'); const sayfaBaslik = $('sayfa-baslik');
 const sayfaGovde = $('sayfa-govde'); const sayfaKapat = $('sayfa-kapat');
 const taskDot = $('task-dot'); const tabbar = $('tabbar');
@@ -366,7 +353,7 @@ function ekranGoster(ad) {
   tabbar.querySelectorAll('.tab').forEach((b) => b.classList.toggle('is-on', b.dataset.go === ad));
   if (ad === 'grid') { board.ciz(); board.sec(seciliHucre); }
   if (ad === 'dragon') ejderhaCiz();
-  if (ad === 'tasks') { gunlukCiz(); questOzetCiz(); partnerOzetCiz(); }
+  if (ad === 'tasks') { gunlukCiz(); questOzetCiz(); }
   if (ad === 'trader') siparisCiz();
   if (ad === 'generator') generatorAc();
   tut?.yenidenKonumla();
@@ -380,7 +367,7 @@ let generatorKurulu = false;
 async function generatorAc() {
   if (generatorKurulu) return;
   generatorKurulu = true;
-  const { generatorKur } = await import('./generator.js?v274');
+  const { generatorKur } = await import('./generator.js?v275');
   await generatorKur($('gen-kok'));
 }
 
@@ -1390,137 +1377,21 @@ function questSayfaCiz() {
   }
 }
 
-/* ---------- PARTNER GOREVLERI ---------- */
+/* PARTNER GOREVLERI BURADAN KALDIRILDI (2026-10-18).
 
-let partnerSkorlar = {};      /* oyun id -> en iyi skor */
+   Sekiz hub oyununun skor hedefleri artik HUB'da, kendi Gorevler
+   panelinde ve $MH odiyor (bkz. js/hub.js renderPartnerPanel,
+   bot/worker.js PARTNER_OYUNLAR). Burada dururken yem, yumurta ve
+   yildiz veriyordu - yani sekiz oyunu oynamanin karsiligi yalnizca
+   dokuzuncu oyunun icinde bir anlam tasiyordu ve Ejderha Adasi'ni
+   oynamayan bir oyuncu icin gorunmez bir oduldu.
 
-async function partnerSkorlariOku() {
-  const girisler = await Promise.all(
-    PARTNER_OYUNLAR.map(async (o) => [o.id, Number(await getBest(o.id)) || 0]),
-  );
-  partnerSkorlar = Object.fromEntries(girisler);
-}
-
-const partnerAnahtar = (oyunId, kademe) => `${oyunId}:${kademe}`;
-
-function partnerAlinanSayisi() {
-  return oyuncu.partner.alinan.length;
-}
-
-/* Sekiz oyunun da 4. kademesi alindi mi? */
-function buyukOdulHazirMi() {
-  return PARTNER_OYUNLAR.every((o) => oyuncu.partner.alinan.includes(partnerAnahtar(o.id, 4)));
-}
-
-function partnerOzetCiz() {
-  const toplam = PARTNER_OYUNLAR.length * 4;
-  const alinan = partnerAlinanSayisi();
-  partnerSayac.textContent = `${alinan}/${toplam}`;
-  partnerBar.style.width = `${(alinan / toplam) * 100}%`;
-
-  /* Alinmayi bekleyen kademe sayisi - oyuncunun hemen yapabilecegi sey */
-  let hazir = 0;
-  for (const o of PARTNER_OYUNLAR) {
-    const kazanilan = partnerKademe(o.id, partnerSkorlar[o.id] || 0);
-    for (let k = 1; k <= kazanilan; k += 1) {
-      if (!oyuncu.partner.alinan.includes(partnerAnahtar(o.id, k))) hazir += 1;
-    }
-  }
-
-  if (buyukOdulHazirMi() && !oyuncu.partner.buyukOdul) {
-    partnerAktif.innerHTML = `<span class="ozet-gorev-ad vurgulu">${t('grandReady')}</span>`;
-  } else if (hazir > 0) {
-    partnerAktif.innerHTML = `<span class="ozet-gorev-ad vurgulu">${t('partnerReady', { n: hazir })}</span>`;
-  } else {
-    partnerAktif.innerHTML = `<span class="ozet-gorev-ad">${t('partnerHint')}</span>`;
-  }
-}
-
-function partnerSayfaCiz() {
-  sayfaGovde.innerHTML = '';
-
-  /* Buyuk odul kartini en uste koyuyoruz: hedefi bastan gostermek
-     sekiz oyunu da oynamak icin sebep veriyor. */
-  const buyuk = document.createElement('section');
-  const buyukHazir = buyukOdulHazirMi() && !oyuncu.partner.buyukOdul;
-  buyuk.className = `buyuk-odul${oyuncu.partner.buyukOdul ? ' alindi' : ''}${buyukHazir ? ' hazir' : ''}`;
-  buyuk.innerHTML = `
-    <div class="buyuk-bas">
-      <h3>${t('grandTitle')}</h3>
-      <span>${t('grandNote')}</span>
-    </div>
-    <div class="buyuk-oduller">
-      ${PARTNER_BUYUK_ODUL.map((o) => `<img src="${o.stars ? '../../assets/currency/star-64.webp' : gorselYolu(o)}" alt="">`).join('')}
-    </div>
-    <button class="act-btn primary buyuk-al"${buyukHazir ? '' : ' disabled'}>
-      ${oyuncu.partner.buyukOdul ? t('questDone') : t('questClaim')}
-    </button>`;
-
-  buyuk.querySelector('button').addEventListener('click', () => {
-    if (!buyukOdulHazirMi() || oyuncu.partner.buyukOdul) return;
-    oyuncu.partner.buyukOdul = true;
-    /* Listede artik hem nesne hem dogrudan yildiz olabiliyor. */
-    for (const o of PARTNER_BUYUK_ODUL) {
-      odulVer(o.stars ? { stars: o.stars } : { item: { ...o } }, buyuk.querySelector('button'));
-    }
-    kaydet();
-    haptic.success();
-    partnerSayfaCiz();
-    partnerOzetCiz();
-    gorevNoktasi();
-  });
-  sayfaGovde.appendChild(buyuk);
-
-  for (const oyun of PARTNER_OYUNLAR) {
-    const skor = partnerSkorlar[oyun.id] || 0;
-    const kazanilan = partnerKademe(oyun.id, skor);
-
-    const kart = document.createElement('section');
-    kart.className = 'partner-oyun';
-    kart.innerHTML = `
-      <div class="partner-bas">
-        <h3>${oyun.ad}</h3>
-        <span class="partner-skor">${t('yourBest', { n: bicim(skor) })}</span>
-      </div>`;
-
-    const liste = document.createElement('div');
-    liste.className = 'partner-kademeler';
-
-    oyun.esik.forEach((esik, i) => {
-      const kademe = i + 1;
-      const anahtar = partnerAnahtar(oyun.id, kademe);
-      const alindi = oyuncu.partner.alinan.includes(anahtar);
-      const hazir = !alindi && kazanilan >= kademe;
-
-      const sat = document.createElement('div');
-      sat.className = `partner-kademe${alindi ? ' done' : ''}${hazir ? ' active' : ''}`;
-      sat.innerHTML = `
-        <span class="pk-no">${kademe}</span>
-        <div class="pk-govde">
-          <div class="pk-hedef">${t(oyun.birim === 'seviye' ? 'targetLevel' : 'targetScore', { n: bicim(esik) })}</div>
-          <div class="bar"><i style="width:${Math.min(100, (skor / esik) * 100)}%"></i></div>
-        </div>
-        <span class="quest-odul">${odulRozeti(PARTNER_ODULLERI[i])}</span>
-        <button class="quest-claim"${hazir ? '' : ' disabled'}>${alindi ? t('questDone') : t('questClaim')}</button>`;
-
-      sat.querySelector('button').addEventListener('click', () => {
-        if (oyuncu.partner.alinan.includes(anahtar)) return;
-        if (partnerKademe(oyun.id, partnerSkorlar[oyun.id] || 0) < kademe) return;
-        oyuncu.partner.alinan.push(anahtar);
-        odulVer(PARTNER_ODULLERI[i], sat.querySelector('button'));
-        kaydet();
-        haptic.success();
-        partnerSayfaCiz();
-        partnerOzetCiz();
-        gorevNoktasi();
-      });
-      liste.appendChild(sat);
-    });
-
-    kart.appendChild(liste);
-    sayfaGovde.appendChild(kart);
-  }
-}
+   Ilerleme KAYBOLMADI cunku zaten burada tutulmuyordu: olcu oyuncunun
+   o oyundaki rekoru ve o sunucuda duruyor. Hub paneli ayni rekorlari
+   okuyor. Burada tutulan tek sey "hangi kademeyi aldi" listesiydi
+   (oyuncu.partner); sunucu kendi sayacini sifirdan baslatiyor, yani
+   daha once Ejderha Adasi'nda alinmis kademeler hub'da bir kez daha
+   alinabiliyor. Bu bilincli: oyuncunun zararina olan yon secilmedi. */
 
 /* ---------- GENISLEYEN SAYFA ---------- */
 
@@ -1545,17 +1416,7 @@ function gorevNoktasi() {
   const g = aktifGorev(bitti);
   const hazirGorev = !!g && gorevIlerleme(g) >= g.hedef;
 
-  const hazirPartner = PARTNER_OYUNLAR.some((o) => {
-    const kazanilan = partnerKademe(o.id, partnerSkorlar[o.id] || 0);
-    for (let k = 1; k <= kazanilan; k += 1) {
-      if (!oyuncu.partner.alinan.includes(partnerAnahtar(o.id, k))) return true;
-    }
-    return false;
-  });
-
-  const hazirBuyuk = buyukOdulHazirMi() && !oyuncu.partner.buyukOdul;
-
-  taskDot.hidden = !(hazirGorev || hazirPartner || hazirBuyuk || gunlukAlinabilirMi());
+  taskDot.hidden = !(hazirGorev || gunlukAlinabilirMi());
 
   /* Ejderha sekmesindeki nokta BOSTA BIRIKEN yumurtayi gosteriyordu;
      o sistem kalkinca (bkz. ekonomi.js) isaretleyecek bir sey kalmadi -
@@ -1601,7 +1462,6 @@ function cizHepsi() {
   bilgiPaneliCiz();
   gunlukCiz();
   questOzetCiz();
-  partnerOzetCiz();
   gorevNoktasi();
   tazele();
 }

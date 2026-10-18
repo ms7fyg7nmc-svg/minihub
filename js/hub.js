@@ -1,20 +1,20 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v274';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v275';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, enerjiBosMu, bakimListesi, bakimOnbellek,
-   getGorev, gorevAl, promoKullan, promoKayit, sahipMiyim,
-} from './store.js?v274';
-import { enerjiBosOnayi } from './onay.js?v274';
-import { odulGoster, odulOnYukle } from './odul.js?v274';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v274';
+   getGorev, gorevAl, getPartner, partnerAl, partnerBuyukAl, promoKullan, promoKayit, sahipMiyim,
+} from './store.js?v275';
+import { enerjiBosOnayi } from './onay.js?v275';
+import { odulGoster, odulOnYukle } from './odul.js?v275';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v275';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniBaslat, iz } from './tani.js?v274';
+import { taniBaslat, iz } from './tani.js?v275';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -319,12 +319,14 @@ renderSyncBadge();
 const cizimler = Promise.all([
    renderDailyCard(),
    renderGorevKart(),
+   renderPartnerKart(),
    renderEnergyCard(),
    renderLiderCard(),
    renderFriendsCard(),
 ]).catch(() => { /* biri patlarsa perde yine de kalkar */ });
 
 wireDailyPanel();
+wirePartnerPanel();
 wireLiderPanel();
 wireFriendsPanel();
 basitPanel('settings-btn', 'settings-overlay', 'settings-close');
@@ -368,6 +370,7 @@ document.addEventListener('langchange', () => {
    renderSyncBadge();
    renderDailyCard();
    renderGorevKart();
+   renderPartnerKart();
    renderEnergyCard();
    renderLiderCard();
    renderFriendsCard();
@@ -746,6 +749,148 @@ document.getElementById('gorev-al')?.addEventListener('click', async () => {
    }
    await renderGorevKart();
 });
+
+/* ---------- OYUN GOREVLERI (PARTNER) ----------
+
+   Her oyunun dort kademeli bir skor hedefi var; ilerleme oyuncunun o
+   oyundaki REKORUNDAN okunuyor, ayrica sayilan bir sey yok. Odul $MH
+   ve odemeyi her zaman sunucu yapiyor (bkz. bot/worker.js
+   handlePartnerAl) - buradaki sayilar yalnizca ekranda yazan sey.
+
+   2026-10-18'de Ejderha Adasi'ndan tasindi. Orada yem/yumurta/yildiz
+   odiyordu; sekiz oyunu oynamanin karsiligi dokuzuncu oyunun icinde
+   kaliyordu ve Ejderha Adasi'ni oynamayan icin gorunmez bir oduldu. */
+
+/* Kartin kendisi: panelde kac odul bekliyor. */
+async function renderPartnerKart() {
+   const kart = document.getElementById('gorev-oyun-kart');
+   const sayiEl = document.getElementById('gorev-oyun-sayi');
+   const dot = document.getElementById('gorev-oyun-dot');
+   if (!kart) return;
+
+   let durum = null;
+   try { durum = await getPartner(); } catch { durum = null; }
+   /* Misafirde kart hic cizilmiyor: odul $MH ve misafirin $MH hesabi
+      yok - alinamayacak bir odul listesi gostermek yaniltici olurdu. */
+   if (!durum || !Array.isArray(durum.oyunlar)) { kart.hidden = true; return; }
+   kart.hidden = false;
+
+   const bekleyen = durum.oyunlar.filter((o) => o.alinabilir).length
+      + (durum.buyukHazir && !durum.buyukAlindi ? 1 : 0);
+   const toplamKademe = durum.oyunlar.reduce((n, o) => n + o.alinan, 0);
+   sayiEl.textContent = `${toplamKademe}/${durum.oyunlar.length * 4}`;
+   if (dot) dot.hidden = bekleyen === 0;
+}
+
+function wirePartnerPanel() {
+   basitPanel('gorev-oyun-kart', 'gorev-oyun-overlay', 'gorev-oyun-close', renderPartnerPanel);
+   document.getElementById('partner-buyuk-btn')?.addEventListener('click', async () => {
+      const btn = document.getElementById('partner-buyuk-btn');
+      if (!btn || btn.disabled) return;
+      btn.disabled = true;
+      haptic.tap();
+      const sonuc = await partnerBuyukAl();
+      if (sonuc?.ok) {
+         await odulGoster({
+            baslik: t('hub.partner.buyukTitle'),
+            tutar: `+${Number(sonuc.odul || 0).toLocaleString(locale())} $MH`,
+            kapat: t('hub.odul.kapat'),
+         }).catch(() => {});
+         await renderProfile();
+      }
+      await renderPartnerPanel();
+      await renderPartnerKart();
+   });
+}
+
+async function renderPartnerPanel() {
+   const liste = document.getElementById('partner-liste');
+   const buyukKutu = document.getElementById('partner-buyuk');
+   const buyukBtn = document.getElementById('partner-buyuk-btn');
+   if (!liste) return;
+
+   const durum = await getPartner();
+   if (!durum || !Array.isArray(durum.oyunlar)) { liste.textContent = ''; return; }
+
+   odulOnYukle();
+   liste.textContent = '';
+
+   for (const o of durum.oyunlar) {
+      const satir = document.createElement('div');
+      satir.className = 'partner-satir' + (o.alinan >= 4 ? ' is-bitti' : '');
+
+      /* Dort kademe dort pul. Alinan dolu, hak edilmis ama alinmamis
+         olan yanip sonuyor, kalanlar bos - oyuncu nerede oldugunu
+         sayiyi okumadan goruyor. */
+      const pul = Array.from({ length: 4 }, (_, i) => {
+         if (i < o.alinan) return '<i class="dolu"></i>';
+         if (i < o.hakEdilen) return '<i class="hazir"></i>';
+         return '<i></i>';
+      }).join('');
+
+      /* Hedef satiri: dordu de bittiyse hedef yok. */
+      const hedefMetin = o.hedef === null
+         ? t('hub.partner.tamam')
+         : t('hub.partner.hedef', {
+              en: o.enIyi.toLocaleString(locale()),
+              hedef: o.hedef.toLocaleString(locale()),
+           });
+
+      satir.innerHTML = `
+        <div class="partner-bas">
+          <span class="partner-ad"></span>
+          <span class="partner-pul">${pul}</span>
+        </div>
+        <span class="partner-hedef"></span>
+        <i class="gorev-bar"><b></b></i>
+        <button class="partner-al" hidden></button>`;
+
+      satir.querySelector('.partner-ad').textContent = t(`game.${o.id}.title`);
+      satir.querySelector('.partner-hedef').textContent = hedefMetin;
+
+      /* Cubuk SIRADAKI kademeye gore doluyor, toplam ilerlemeye gore
+         degil: oyuncunun sordugu sey "bir sonrakine ne kadar kaldi". */
+      const onceki = o.alinan > 0 ? o.esik[o.alinan - 1] : 0;
+      const oran = o.hedef === null ? 1
+         : Math.max(0, Math.min(1, (o.enIyi - onceki) / Math.max(1, o.hedef - onceki)));
+      satir.querySelector('.gorev-bar b').style.width = `${Math.round(oran * 100)}%`;
+
+      if (o.alinabilir) {
+         const btn = satir.querySelector('.partner-al');
+         btn.hidden = false;
+         btn.innerHTML = mhHtml(t('hub.partner.al', { n: o.odul.toLocaleString(locale()) }));
+         btn.addEventListener('click', async () => {
+            if (btn.disabled) return;
+            btn.disabled = true;
+            haptic.tap();
+            const sonuc = await partnerAl(o.id);
+            if (sonuc?.ok) {
+               await odulGoster({
+                  baslik: t(`game.${o.id}.title`),
+                  tutar: `+${Number(sonuc.odul || 0).toLocaleString(locale())} $MH`,
+                  kapat: t('hub.odul.kapat'),
+               }).catch(() => {});
+               await renderProfile();
+            }
+            await renderPartnerPanel();
+            await renderPartnerKart();
+         });
+      }
+
+      liste.appendChild(satir);
+   }
+
+   /* BUYUK ODUL. Hak edilmeden de gorunuyor - hedefin kendisi bir
+      sebep. Alindiktan sonra bolum tamamen gizleniyor, cunku bir daha
+      alinamaz ve "alindi" yazan olu bir dugme tutmanin anlami yok. */
+   if (buyukKutu && buyukBtn) {
+      buyukKutu.hidden = durum.buyukAlindi;
+      buyukBtn.disabled = !durum.buyukHazir;
+      buyukBtn.innerHTML = durum.buyukHazir
+         ? mhHtml(t('hub.partner.al', { n: Number(durum.buyukOdul || 0).toLocaleString(locale()) }))
+         : mhHtml(t('hub.partner.buyukKilitli', { n: Number(durum.buyukOdul || 0).toLocaleString(locale()) }));
+   }
+}
 
 async function renderDailyCard() {
    const card = document.getElementById('daily-card');

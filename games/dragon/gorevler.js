@@ -1,15 +1,11 @@
 /* GOREV TABLOLARI
 
-   Iki ayri sistem var:
+   GOREV HARITASI - uc kademe, her kademede yedi gorev. Kademe icinde
+   gorevler sirali: birincisi alinmadan ikincisi acilmiyor. Kademeler
+   arasi da kilit var: Acemi'nin yedisi bitmeden Orta acilmiyor.
+   Boylece oyuncunun onunde her an tek bir hedef duruyor.
 
-   1. GOREV HARITASI - uc kademe, her kademede yedi gorev. Kademe
-      icinde gorevler sirali: birincisi alinmadan ikincisi acilmiyor.
-      Kademeler arasi da kilit var: Acemi'nin yedisi bitmeden Orta
-      acilmiyor. Boylece oyuncunun onunde her an tek bir hedef duruyor.
-
-   2. PARTNER GOREVLERI - hub'daki diger sekiz oyunun her birine dort
-      kademeli skor hedefi. Hepsinin 4. kademesini bitiren buyuk odulu
-      aliyor.
+   (Partner gorevleri 2026-10-18'de hub'a tasindi.)
 
    Sayilar burada tek yerde; dengeyi degistirmek icin baska hicbir
    dosyaya dokunmak gerekmiyor. */
@@ -73,58 +69,12 @@ export const GOREV_HARITASI = {
 
 export const KADEME_GOREV_SAYISI = 7;
 
-/* ---------- PARTNER GOREVLERI ----------
+/* PARTNER GOREVLERI BURADAN KALDIRILDI (2026-10-18).
 
-   Esikler her oyunun kendi puanlama formulunden hesaplandi, gercek
-   oyuncu verisinden degil. Ilk gercek skorlar geldiginde buradaki
-   sayilari ayarlamak gerekecek - baska hicbir yeri degistirmeden.
-
-   Hedeflenen zorluk her oyunda ayni:
-     lv1  ilk ciddi denemede ulasilir
-     lv2  oyunu anlamis birinin iyi bir turu
-     lv3  birkac tur ugrasmayi gerektirir
-     lv4  oyunu gercekten iyi oynamak gerekir
-
-   DIKKAT: tripletile'da skor 3600'de tavanliyor, esikler onun altinda
-   kalmak zorunda. flow skor degil SEVIYE numarasi gonderiyor. */
-
-export const PARTNER_OYUNLAR = [
-  { id: '2048',       ad: '2048',         birim: 'skor',   esik: [3000, 8000, 16000, 30000] },
-  { id: 'blockblast', ad: 'Block Puzzle', birim: 'skor',   esik: [1500, 4000, 9000, 18000] },
-  { id: 'match3',     ad: 'Match Candy',  birim: 'skor',   esik: [800, 2000, 4000, 7000] },
-  { id: 'tripletile', ad: 'Triple Tile',  birim: 'skor',   esik: [900, 1800, 2700, 3400] },
-  { id: 'flow',       ad: 'Flow',         birim: 'seviye', esik: [10, 25, 50, 90] },
-  { id: 'snake',      ad: 'Snake',        birim: 'skor',   esik: [300, 800, 1600, 3000] },
-  { id: 'coindrop',   ad: 'Coin Drop',    birim: 'skor',   esik: [1500, 4000, 9000, 18000] },
-  { id: 'wheelrush',  ad: 'Wheel Rush',   birim: 'skor',   esik: [800, 2000, 4500, 9000] },
-];
-
-/* Her oyunda ayni kademe ayni odulu veriyor - zorluk esit oldugu icin
-   odul de esit. Oyunlar arasi fark yaratmak oyuncuyu en kolay oyuna
-   yonlendirirdi.
-
-   Kademe 3 once dogrudan Lv.3 SANDIK veriyordu. Sekiz oyun sekiz sandik
-   demekti ve ikisini birlestiren aninda Lv.4'e (~198 bin yem) ulasiyordu
-   - yani iki partner odulu oyunun en buyuk kabini aciyordu. Artik kese
-   veriyor: ayni yere varmak sekiz odul ve elle birlestirme istiyor.
-
-   Sandik (Lv.3+) artik sadece uc yerden geliyor: Pro kademesi gorevleri,
-   buyuk odul, ve yildizla acilan kilitli hucreler. Ucu de gun alir. */
-export const PARTNER_ODULLERI = [
-  { food: 470 },
-  { food: 800, items: [{ t: 'food', lv: 1 }] },
-  { food: 1800, items: [{ t: 'food', lv: 1 }, { t: 'food', lv: 1 }] },
-  { stars: 50 },
-];
-
-/* Sekiz oyunun da 4. kademesini bitirene. Oyunun en buyuk tek odulu. */
-export const PARTNER_BUYUK_ODUL = [
-  { stars: 1800 },
-  { t: 'food', lv: 4 },
-  { t: 'food', lv: 4 },
-  { t: 'egg', lv: 8 },
-  { t: 'egg', lv: 8 },
-];
+   Sekiz hub oyununun skor hedefleri ve odulleri artik sunucuda
+   (bot/worker.js -> PARTNER_OYUNLAR, PARTNER_ODUL) ve $MH odiyor.
+   Burada dururken yem/yumurta/yildiz veriyordu, yani hub oyunlarini
+   oynamanin karsiligi yalnizca Ejderha Adasi'nin icinde anlamliydi. */
 
 /* ---------- YARDIMCILAR ---------- */
 
@@ -166,12 +116,4 @@ export function aktifGorev(bitenler) {
 export function kademeIlerleme(kademe, bitenler) {
   const liste = GOREV_HARITASI[kademe];
   return { biten: liste.filter((g) => bitenler.includes(g.id)).length, toplam: liste.length };
-}
-
-export function partnerKademe(oyunId, enIyiSkor) {
-  const oyun = PARTNER_OYUNLAR.find((o) => o.id === oyunId);
-  if (!oyun) return 0;
-  let kademe = 0;
-  for (const e of oyun.esik) if (enIyiSkor >= e) kademe += 1;
-  return kademe;            /* 0-4: kac kademe hak edilmis */
 }

@@ -1,6 +1,6 @@
 
-import { isTelegramUser, getInitData } from './tg.js?v274';
-import { surumKontrol } from './guncel.js?v274';
+import { isTelegramUser, getInitData } from './tg.js?v275';
+import { surumKontrol } from './guncel.js?v275';
 
 /* Hub ve 12 oyunun hepsi bu modulu yukluyor, o yuzden surum tazeleyici
    buraya bagli: tek yerden hepsini kapsiyor. */
@@ -475,6 +475,46 @@ export async function gorevAl() {
   return sonuc;
 }
 
+/* ---- Oyun gorevleri (partner) ----
+
+   Gunluk gorevlerden farki KALICI olmasi: her oyunun dort kademeli bir
+   skor hedefi var, bir kez alindi mi bir daha gelmiyor. Ilerleme ayri
+   tutulmuyor - olcu oyuncunun o oyundaki rekoru ve o zaten sunucuda.
+   Misafirde null doner, hub karti hic cizilmez (odul $MH ve misafirin
+   $MH hesabi yok).
+
+   2026-10-18'de Ejderha Adasi'ndan tasindi; orada yem/yumurta/yildiz
+   odiyordu, artik $MH. */
+export async function getPartner() {
+  const v = await senkron;
+  if (!v) return null;
+  if (!v.partner) {
+    const sonuc = await sunucuGonder('/api/partner', {});
+    if (sonuc && Array.isArray(sonuc.oyunlar)) v.partner = sonuc;
+  }
+  return v.partner;
+}
+
+export async function partnerAl(oyun) {
+  const v = await senkron;
+  if (!v) return { ok: false, reason: 'misafir' };
+  const sonuc = await sunucuGonder('/api/partner/al', { oyun });
+  if (!sonuc) return { ok: false, reason: 'ag' };
+  if (sonuc.ok) v.points = sonuc.total;
+  if (Array.isArray(sonuc.oyunlar)) v.partner = sonuc;
+  return sonuc;
+}
+
+export async function partnerBuyukAl() {
+  const v = await senkron;
+  if (!v) return { ok: false, reason: 'misafir' };
+  const sonuc = await sunucuGonder('/api/partner/buyuk', {});
+  if (!sonuc) return { ok: false, reason: 'ag' };
+  if (sonuc.ok) v.points = sonuc.total;
+  if (Array.isArray(sonuc.oyunlar)) v.partner = sonuc;
+  return sonuc;
+}
+
 /* Oyun ici olay bildirimi.
 
    BIRIKTIRILIYOR. Ilk hali her birlestirmede ayri bir istek atiyordu;
@@ -794,7 +834,7 @@ const kayitBekleyen = new Map();  /* key -> son state */
    ogrenebiliyoruz - masaustunde hic olmuyor. */
 async function taniYaz(olay, ayrinti) {
   try {
-    const m = await import('./tani.js?v274');
+    const m = await import('./tani.js?v275');
     m.iz(olay, ayrinti);
   } catch { /* tani yoksa sessiz */ }
 }

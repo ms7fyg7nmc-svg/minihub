@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="274">
+  <meta name="surum" content="275">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MINI HUB GAMES</title>
   <!-- Cark rakamlari icin (bkz. js/hub.js WHEEL_FONT). Ejderha Adasi
@@ -16,14 +16,14 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <!-- ON YUKLEME: otomatik uretildi, elle duzenleme (node on-yukle.mjs) -->
-  <link rel="modulepreload" href="js/hub.js?v274">
-  <link rel="modulepreload" href="./js/guncel.js?v274">
-  <link rel="modulepreload" href="./js/i18n.js?v274">
-  <link rel="modulepreload" href="./js/odul.js?v274">
-  <link rel="modulepreload" href="./js/onay.js?v274">
-  <link rel="modulepreload" href="./js/store.js?v274">
-  <link rel="modulepreload" href="./js/tani.js?v274">
-  <link rel="modulepreload" href="./js/tg.js?v274">
+  <link rel="modulepreload" href="js/hub.js?v275">
+  <link rel="modulepreload" href="./js/guncel.js?v275">
+  <link rel="modulepreload" href="./js/i18n.js?v275">
+  <link rel="modulepreload" href="./js/odul.js?v275">
+  <link rel="modulepreload" href="./js/onay.js?v275">
+  <link rel="modulepreload" href="./js/store.js?v275">
+  <link rel="modulepreload" href="./js/tani.js?v275">
+  <link rel="modulepreload" href="./js/tg.js?v275">
   <!-- /ON YUKLEME -->
 
   <!-- Perde, ASAGIDAKI gorseller inene kadar kalkmiyor (bkz. hub.js
@@ -71,7 +71,7 @@
     /* Oyun sayfalari bu isarete bakip hub'dan gelinip gelinmedigini anlar */
     try { sessionStorage.setItem('mh_hub_open', '1'); } catch (e) {}
   </script>
-  <link rel="stylesheet" href="css/style.css?v274">
+  <link rel="stylesheet" href="css/style.css?v275">
 </head>
 <body class="hub">
   <!-- ACILIS EKRANI
@@ -190,6 +190,20 @@
       <ul class="gorev-liste" id="gorev-liste"></ul>
       <button class="gorev-al" id="gorev-al" hidden></button>
     </section>
+
+    <!-- OYUN GOREVLERI
+         Gunluk gorevlerin ALTINDA ve oyunlarin ustunde: ikisi de "git
+         oyna" diyor, yan yana durmalari dogru. Fark su - gunluk
+         gorevler her gun yenileniyor, bunlar KALICI beceri hedefleri.
+         Liste uzun oldugu icin (sekiz oyun, dort kademe) karta degil
+         kendi paneline aciliyor. -->
+    <button class="gorev-kart gorev-ac" id="gorev-oyun-kart" hidden>
+      <img class="bas-ikon" src="assets/icons/gorev.webp" alt="" width="19" height="19">
+      <span class="gorev-ac-ad" data-i18n="hub.partner.title">Oyun Görevleri</span>
+      <span class="gorev-ac-sayi" id="gorev-oyun-sayi"></span>
+      <span class="gorev-ac-ok" aria-hidden="true">›</span>
+      <span class="daily-card-dot" id="gorev-oyun-dot" hidden></span>
+    </button>
 
     <h2 class="section-title" data-i18n="hub.gamesTitle">Games</h2>
     <div class="game-grid" id="games"></div>
@@ -363,6 +377,29 @@
     </div>
   </div>
 
+  <!-- OYUN GOREVLERI PANELI -->
+  <div class="daily-overlay" id="gorev-oyun-overlay" hidden>
+    <div class="daily-modal">
+      <button class="daily-close" id="gorev-oyun-close" aria-label="Kapat">✕</button>
+      <p class="daily-intro is-heading" data-i18n="hub.partner.title">Oyun Görevleri</p>
+      <!-- .daily-card-hint DEGIL: o sinif tek satirlik, tasani uc noktaya
+           dusuren bir etiket icin yazilmis; buradaki iki cumlelik giris
+           orada kirpiliyordu. .daily-intro cok satirli. -->
+      <p class="daily-intro" data-i18n="hub.partner.intro"></p>
+
+      <div class="partner-liste" id="partner-liste"></div>
+
+      <!-- Sekiz oyunun da 4. kademesini bitirene: oyunun tek seferlik
+           en buyuk odulu. Hak edilmeden once de GORUNUYOR - hedefin
+           kendisi bir sebep. -->
+      <section class="partner-buyuk" id="partner-buyuk" hidden>
+        <strong data-i18n="hub.partner.buyukTitle">Büyük Ödül</strong>
+        <span class="partner-buyuk-not" data-i18n="hub.partner.buyukNot"></span>
+        <button class="daily-btn" id="partner-buyuk-btn"></button>
+      </section>
+    </div>
+  </div>
+
   <div class="daily-overlay" id="friends-overlay" hidden>
     <div class="daily-modal">
       <button class="daily-close" id="friends-close" aria-label="Kapat">✕</button>
@@ -380,6 +417,6 @@
     </div>
   </div>
 
-  <script type="module" src="js/hub.js?v274"></script>
+  <script type="module" src="js/hub.js?v275"></script>
 </body>
 </html>

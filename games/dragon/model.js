@@ -1,10 +1,10 @@
 
-import { loadState, saveState } from '../../js/store.js?v274';
+import { loadState, saveState } from '../../js/store.js?v275';
 import { KILITLI_HUCRELER, EN_UST_YUMURTA, EN_UST_SANDIK, YUVA_TAVANI,
          GENISLEME_N, GENISLEME_KILITLERI, GENISLEME_YUVA,
-         YUMURTA } from './ekonomi.js?v274';
-import { CONFIG, eskiToplamHarcama } from './config.js?v274';
-import { turCek, turBul } from './turler.js?v274';
+         YUMURTA } from './ekonomi.js?v275';
+import { CONFIG, eskiToplamHarcama } from './config.js?v275';
+import { turCek, turBul } from './turler.js?v275';
 
 const OYUN_ID = 'dragon';
 const SURUM = 7;
@@ -106,7 +106,6 @@ function yeniOyuncu() {
     sayaclar: yeniSayaclar(),
     gorevler: { bitti: [] },
     siparisler: [],                            /* tuccarin acik siparisleri */
-    partner: { alinan: [], buyukOdul: false },   /* "oyun:kademe" anahtarlari */
     gunluk: { sonGun: '', seri: 0 },
     tutorial: 0,
   };
@@ -215,7 +214,6 @@ function v5Tasi(kayit) {
    kazaniyor - kaybi yok. */
 function v6Tasi(kayit) {
   kayit.gorevler = { bitti: [] };
-  kayit.partner = { alinan: [], buyukOdul: false };
   return kayit;
 }
 
@@ -245,9 +243,10 @@ function duzelt(o) {
   o.sayaclar = { ...yeniSayaclar(), ...(o.sayaclar || {}) };
   o.gorevler = o.gorevler || { bitti: [] };
   if (!Array.isArray(o.gorevler.bitti)) o.gorevler.bitti = [];
-  o.partner = o.partner || { alinan: [], buyukOdul: false };
-  if (!Array.isArray(o.partner.alinan)) o.partner.alinan = [];
-  o.partner.buyukOdul = !!o.partner.buyukOdul;
+  /* Partner gorevleri hub'a tasindi (2026-10-18). Eski kayitlarda
+     kalan alinan-kademe listesi artik okunmuyor; kayit her yuklenisde
+     temizleniyor ki bir daha diske yazilmasin. */
+  delete o.partner;
   o.gunluk = o.gunluk || { sonGun: '', seri: 0 };
 
   /* Tur artik KAYITTAN okunuyor: ejderha kazanildigi an cekilmis ve

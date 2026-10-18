@@ -648,6 +648,166 @@ async function handleGorevAl(env, playerId) {
   return { ok: true, total: sonuc.total, ...gorevRapor(v) };
 }
 
+/* ---------------- OYUN GOREVLERI (PARTNER) ----------------
+
+   Her oyunun dort kademeli bir skor hedefi var; hepsini bitiren buyuk
+   odulu aliyor. Gunluk gorevlerin aksine bunlar KALICI: bir kez
+   alindi mi bir daha gelmiyor.
+
+   2026-10-18'de EJDERHA ADASI'NDAN BURAYA TASINDI. Orada yem, yumurta
+   ve yildiz odiyordu - yani hub'in sekiz oyununu oynamanin karsiligi
+   yalnizca dokuzuncu oyunun icinde bir anlam tasiyordu. Ejderha
+   Adasi'ni oynamayan bir oyuncu icin gorevler gorunmez bir odul
+   veriyordu. Artik $MH odiyor ve hub'in kendi Gorevler panelinde
+   duruyor.
+
+   ILERLEME AYRI TUTULMUYOR: olcu, oyuncunun o oyundaki EN IYI SKORU
+   (player_data -> best_<oyun>) ve o zaten sunucuda. Yani bu sistemin
+   saydigi yeni bir sey yok, sadece var olan rekora bakiyor.
+
+   Esikler her oyunun kendi puanlama formulunden hesaplandi, gercek
+   oyuncu verisinden degil. Hedeflenen zorluk her oyunda ayni:
+     kademe 1  ilk ciddi denemede ulasilir
+     kademe 2  oyunu anlamis birinin iyi bir turu
+     kademe 3  birkac tur ugrasmayi gerektirir
+     kademe 4  oyunu gercekten iyi oynamak gerekir
+
+   DIKKAT: tripletile'da skor 3600'de tavanliyor, esikler onun altinda
+   kalmak zorunda. flow skor degil SEVIYE numarasi gonderiyor. */
+const PARTNER_OYUNLAR = [
+  { id: '2048',       esik: [3000, 8000, 16000, 30000] },
+  { id: 'blockblast', esik: [1500, 4000, 9000, 18000] },
+  { id: 'match3',     esik: [800, 2000, 4000, 7000] },
+  { id: 'tripletile', esik: [900, 1800, 2700, 3400] },
+  { id: 'flow',       esik: [10, 25, 50, 90] },
+  { id: 'snake',      esik: [300, 800, 1600, 3000] },
+  { id: 'coindrop',   esik: [1500, 4000, 9000, 18000] },
+  { id: 'wheelrush',  esik: [800, 2000, 4500, 9000] },
+];
+
+/* Her oyunda ayni kademe ayni odulu veriyor - zorluk esit oldugu icin
+   odul de esit. Oyunlar arasi fark yaratmak oyuncuyu en kolay oyuna
+   yonlendirirdi.
+
+   Olcek: sekiz oyunun dort kademesi toplam 79.200 $MH, buyuk odulle
+   birlikte 99.200. Gunluk tavan 30.000 oldugu icin bu, en iyi ihtimalle
+   uc gunluk kazanca denk - ama haftalara yayilmis bir BECERI
+   merdiveninden geliyor, bir gun icinde toplanamaz. */
+const PARTNER_ODUL = [400, 1000, 2500, 6000];
+const PARTNER_BUYUK_ODUL = 20000;
+
+async function partnerOku(env, playerId) {
+  const row = await env.DB.prepare(
+    "SELECT value FROM player_data WHERE player_id = ? AND key = 'partner'",
+  ).bind(playerId).first();
+  let v = null;
+  try { v = row ? JSON.parse(row.value) : null; } catch { v = null; }
+  if (!v || typeof v !== 'object') v = {};
+  return { alinan: (v.alinan && typeof v.alinan === 'object') ? v.alinan : {}, buyuk: !!v.buyuk };
+}
+
+async function partnerYaz(env, playerId, v, now) {
+  await env.DB.prepare(
+    `INSERT INTO player_data (player_id, key, value, updated_at) VALUES (?, 'partner', ?, ?)
+     ON CONFLICT(player_id, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`,
+  ).bind(playerId, JSON.stringify(v), now).run();
+}
+
+/* Oyuncunun o oyunda HAK ETTIGI kademe: rekoru kac esigi gectiyse. */
+function partnerKademe(oyun, enIyi) {
+  let k = 0;
+  for (const e of oyun.esik) if (enIyi >= e) k += 1;
+  return k;
+}
+
+/* Istemciye giden rapor. `state` bootstrap'te zaten okunan best_*
+   satirlari - ikinci bir sorgu atmamak icin disaridan veriliyor. */
+function partnerRapor(v, state) {
+  let hepsiDort = true;
+  const oyunlar = PARTNER_OYUNLAR.map((o) => {
+    const enIyi = Number(state[`best_${o.id}`]) || 0;
+    const hakEdilen = partnerKademe(o, enIyi);
+    const alinan = Math.max(0, Math.min(4, Number(v.alinan[o.id]) || 0));
+    if (hakEdilen < 4) hepsiDort = false;
+    return {
+      id: o.id,
+      enIyi,
+      esik: o.esik,
+      hakEdilen,
+      alinan,
+      /* Siradaki kademenin hedefi; dordu de bittiyse null. */
+      hedef: alinan < 4 ? o.esik[alinan] : null,
+      odul: alinan < 4 ? PARTNER_ODUL[alinan] : 0,
+      alinabilir: hakEdilen > alinan,
+    };
+  });
+  return {
+    oyunlar,
+    buyukHazir: hepsiDort && oyunlar.every((o) => o.alinan >= 4),
+    buyukAlindi: !!v.buyuk,
+    buyukOdul: PARTNER_BUYUK_ODUL,
+  };
+}
+
+/* Oyuncunun butun best_* satirlarini okur. Bootstrap disindaki
+   cagrilar (claim) icin gerekli - orada elimizde hazir bir state yok. */
+async function bestDurumu(env, playerId) {
+  const rows = await env.DB.prepare(
+    "SELECT key, value FROM player_data WHERE player_id = ? AND key LIKE 'best_%'",
+  ).bind(playerId).all();
+  const state = {};
+  for (const r of rows.results) {
+    try { state[r.key] = JSON.parse(r.value); } catch { /* bozuk satir yok sayiliyor */ }
+  }
+  return state;
+}
+
+async function handlePartner(env, playerId) {
+  const [v, state] = await Promise.all([partnerOku(env, playerId), bestDurumu(env, playerId)]);
+  return partnerRapor(v, state);
+}
+
+/* TEK KADEME ALMA. Istemci hangi oyun oldugunu soyluyor, kademeyi
+   SUNUCU buluyor: "bana 4. kademeyi ver" diyebilmesinin bir anlami
+   olmasin diye. Odeme opId'si oyun+kademe, yani ayni kademe iki kez
+   odenmiyor (applyDelta idempotent). */
+async function handlePartnerAl(env, playerId, body) {
+  const oyunId = String(body.oyun || '').trim();
+  const oyun = PARTNER_OYUNLAR.find((o) => o.id === oyunId);
+  if (!oyun) return { ok: false, reason: 'bilinmeyen oyun' };
+
+  const now = Date.now();
+  const [v, state] = await Promise.all([partnerOku(env, playerId), bestDurumu(env, playerId)]);
+  const alinan = Math.max(0, Math.min(4, Number(v.alinan[oyunId]) || 0));
+  const hakEdilen = partnerKademe(oyun, Number(state[`best_${oyunId}`]) || 0);
+  if (hakEdilen <= alinan) {
+    return { ok: false, reason: 'hak edilmedi', ...partnerRapor(v, state) };
+  }
+
+  /* Tek seferde TEK kademe: oyuncu dort kademeyi birden hak etmis olsa
+     bile dordunu ayri ayri aliyor. Her biri ayri bir odul ani. */
+  const kademe = alinan + 1;
+  v.alinan[oyunId] = kademe;
+  await partnerYaz(env, playerId, v, now);
+
+  const odul = PARTNER_ODUL[kademe - 1];
+  const sonuc = await applyDelta(env, playerId, `partner:${oyunId}:${kademe}`, odul);
+  return { ok: true, odul, kademe, total: sonuc.total, ...partnerRapor(v, state) };
+}
+
+async function handlePartnerBuyuk(env, playerId) {
+  const now = Date.now();
+  const [v, state] = await Promise.all([partnerOku(env, playerId), bestDurumu(env, playerId)]);
+  const rapor = partnerRapor(v, state);
+  if (!rapor.buyukHazir) return { ok: false, reason: 'tamamlanmadi', ...rapor };
+  if (v.buyuk) return { ok: false, reason: 'alindi', ...rapor };
+
+  v.buyuk = true;
+  await partnerYaz(env, playerId, v, now);
+  const sonuc = await applyDelta(env, playerId, `partner:buyuk`, PARTNER_BUYUK_ODUL);
+  return { ok: true, odul: PARTNER_BUYUK_ODUL, total: sonuc.total, ...partnerRapor(v, state) };
+}
+
 /* ---------------- PROMOSYON KODLARI ----------------
 
    Kodlar BU DOSYADA tanimli, veritabaninda degil. Yeni bir kod eklemek
@@ -1064,11 +1224,15 @@ async function handleSync(env, playerId, body, ad) {
   const state = {};
   const meta = {};
   let gorevSatiri = null;
+  let partnerSatiri = null;
   let promoBekleyen = 0;
   for (const r of rows.results) {
     /* 'gorev' ham ilerleme sayaci - istemcinin isine yaramaz, asagida
        islenmis haliyle ayri bir alanda gidiyor. */
     if (r.key === 'gorev') { try { gorevSatiri = JSON.parse(r.value); } catch { gorevSatiri = null; } continue; }
+    /* 'partner' ham alinan-kademe kaydi; istemciye islenmis raporu
+       gidiyor (bkz. asagidaki partnerRapor). */
+    if (r.key === 'partner') { try { partnerSatiri = JSON.parse(r.value); } catch { partnerSatiri = null; } continue; }
     /* promo_kutu Ejderha Adasi'nin alacagi ham odul listesi - hub'in
        state'ine girmesinin anlami yok, yalnizca "bekleyen var mi"
        bilgisi asagida gidiyor. */
@@ -1108,6 +1272,15 @@ async function handleSync(env, playerId, body, ad) {
        sahip islemi sunucuda AYRICA kimlik kontrolunden geciyor. */
     sahip: String(playerId) === SAHIP_ID,
     gorev: gorevRapor(gorevDurum),
+    /* Oyun gorevleri: ilerleme zaten state'teki best_* satirlarindan
+       okunuyor, ayri bir sorgu yok. */
+    partner: partnerRapor(
+      {
+        alinan: (partnerSatiri?.alinan && typeof partnerSatiri.alinan === 'object') ? partnerSatiri.alinan : {},
+        buyuk: !!partnerSatiri?.buyuk,
+      },
+      state,
+    ),
     promoBekleyen,
     spin: { ...spinDurumu(player, now), prizes: SPIN_PRIZES.map((p) => ({ tur: p.tur, miktar: p.miktar })) },
     state,
@@ -2067,6 +2240,12 @@ async function handleApi(request, env, url) {
         return json(await handleGorevOlay(env, playerId, body));
       case '/api/gorev/al':
         return json(await handleGorevAl(env, playerId));
+      case '/api/partner':
+        return json(await handlePartner(env, playerId));
+      case '/api/partner/al':
+        return json(await handlePartnerAl(env, playerId, body));
+      case '/api/partner/buyuk':
+        return json(await handlePartnerBuyuk(env, playerId));
       case '/api/promo':
         return json(await handlePromo(env, playerId, body));
       case '/api/promo/kutu':

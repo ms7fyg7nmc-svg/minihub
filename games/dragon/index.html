@@ -2,30 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="274">
+  <meta name="surum" content="275">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Dragon Island</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <!-- ON YUKLEME: otomatik uretildi, elle duzenleme (node on-yukle.mjs) -->
-  <link rel="modulepreload" href="dragon.js?v274">
-  <link rel="modulepreload" href="../../js/guncel.js?v274">
-  <link rel="modulepreload" href="../../js/i18n-hook.js?v274">
-  <link rel="modulepreload" href="../../js/i18n.js?v274">
-  <link rel="modulepreload" href="../../js/store.js?v274">
-  <link rel="modulepreload" href="../../js/tani.js?v274">
-  <link rel="modulepreload" href="../../js/tg.js?v274">
-  <link rel="modulepreload" href="./art.js?v274">
-  <link rel="modulepreload" href="./canlandir.js?v274">
-  <link rel="modulepreload" href="./config.js?v274">
-  <link rel="modulepreload" href="./data.js?v274">
-  <link rel="modulepreload" href="./ekonomi.js?v274">
-  <link rel="modulepreload" href="./gorevler.js?v274">
-  <link rel="modulepreload" href="./grid.js?v274">
-  <link rel="modulepreload" href="./model.js?v274">
-  <link rel="modulepreload" href="./siparis.js?v274">
-  <link rel="modulepreload" href="./turler.js?v274">
-  <link rel="modulepreload" href="./tutorial.js?v274">
+  <link rel="modulepreload" href="dragon.js?v275">
+  <link rel="modulepreload" href="../../js/guncel.js?v275">
+  <link rel="modulepreload" href="../../js/i18n-hook.js?v275">
+  <link rel="modulepreload" href="../../js/i18n.js?v275">
+  <link rel="modulepreload" href="../../js/store.js?v275">
+  <link rel="modulepreload" href="../../js/tani.js?v275">
+  <link rel="modulepreload" href="../../js/tg.js?v275">
+  <link rel="modulepreload" href="./art.js?v275">
+  <link rel="modulepreload" href="./canlandir.js?v275">
+  <link rel="modulepreload" href="./config.js?v275">
+  <link rel="modulepreload" href="./data.js?v275">
+  <link rel="modulepreload" href="./ekonomi.js?v275">
+  <link rel="modulepreload" href="./gorevler.js?v275">
+  <link rel="modulepreload" href="./grid.js?v275">
+  <link rel="modulepreload" href="./model.js?v275">
+  <link rel="modulepreload" href="./siparis.js?v275">
+  <link rel="modulepreload" href="./turler.js?v275">
+  <link rel="modulepreload" href="./tutorial.js?v275">
   <!-- /ON YUKLEME -->
 
   <script>
@@ -37,9 +37,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;800&display=swap">
-  <link rel="stylesheet" href="../../css/style.css?v274">
-  <link rel="stylesheet" href="../../css/game.css?v274">
-  <link rel="stylesheet" href="dragon.css?v274">
+  <link rel="stylesheet" href="../../css/style.css?v275">
+  <link rel="stylesheet" href="../../css/game.css?v275">
+  <link rel="stylesheet" href="dragon.css?v275">
 </head>
 <body class="game dragon-app" data-i18n-title="title">
 
@@ -196,16 +196,6 @@
           <span class="ozet-ac" data-i18n="expand">Ac</span>
         </button>
 
-        <!-- PARTNER GOREVLERI: diger oyunlarin skor hedefleri -->
-        <button class="ozet-kart" id="partner-ozet">
-          <div class="ozet-ust">
-            <h3 class="card-title" data-i18n="partnerTitle">Partner gorevleri</h3>
-            <span class="ozet-sayac" id="partner-sayac">0/32</span>
-          </div>
-          <div class="ozet-bar"><i id="partner-bar"></i></div>
-          <div class="ozet-aktif" id="partner-aktif"></div>
-          <span class="ozet-ac" data-i18n="expand">Ac</span>
-        </button>
       </section>
 
       <!-- GENERATOR — yalnizca sahip gorur; sekmesi dragon.js'te
@@ -217,9 +207,10 @@
 
     </main>
 
-    <!-- GENISLEYEN PANEL: gorev haritasi ve partner gorevleri tam
-         listeyle burada aciliyor. Gorev ekrani boylece uc kucuk kartla
-         sinirli kaliyor, 21 gorev alt alta durmuyor. -->
+    <!-- GENISLEYEN PANEL: gorev haritasi tam listeyle burada
+         aciliyor. Gorev ekrani boylece kucuk kartlarla sinirli
+         kaliyor, 21 gorev alt alta durmuyor.
+         (Partner gorevleri 2026-10-18'de hub'a tasindi.) -->
     <div class="sayfa" id="sayfa" hidden>
       <div class="sayfa-bas">
         <button class="sayfa-kapat" id="sayfa-kapat" aria-label="Kapat">
@@ -278,6 +269,6 @@
     </div>
   </div>
 
-  <script type="module" src="dragon.js?v274"></script>
+  <script type="module" src="dragon.js?v275"></script>
 </body>
 </html>
