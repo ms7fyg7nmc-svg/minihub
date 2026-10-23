@@ -16,6 +16,10 @@ const KOK = 'assets/generator/';
    aksesuarlar hic gorunmuyordu. Sayfanin kendi <meta name="surum">
    degerini kullanmak bunu kendiliginden guncel tutuyor. */
 const SURUM = document.querySelector('meta[name="surum"]')?.content || '';
+/* GORSELLER de surumle cagrilmali. Katmanlari yeniden kesip ayni
+   dosya adiyla kaydettigimizde tarayici eski WebP'yi onbellekten
+   veriyordu: duzeltilmis katmanlar oyuncuya hic ulasmiyordu. */
+const damga = (dosya) => KOK + dosya + (SURUM ? '?v' + SURUM : '');
 
 let veri = null;          // katmanlar.json
 const secim = {};         // yuva adi -> dosya adi ('' = bos)
@@ -51,7 +55,7 @@ function yiginHTML() {
   const g = gizliler();
   return veri.yuvalar
     .filter((y) => secim[y.ad] && !g.has(y.ad))
-    .map((y) => `<img src="${KOK}${secim[y.ad]}" alt="">`)
+    .map((y) => `<img src="${damga(secim[y.ad])}" alt="">`)
     .join('');
 }
 
@@ -88,7 +92,7 @@ async function indir() {
   const g = gizliler();
   const yollar = veri.yuvalar
     .filter((y) => secim[y.ad] && !g.has(y.ad))
-    .map((y) => KOK + secim[y.ad]);
+    .map((y) => damga(secim[y.ad]));
   const [w, h] = veri.tuval;
   const c = document.createElement('canvas');
   c.width = w; c.height = h;

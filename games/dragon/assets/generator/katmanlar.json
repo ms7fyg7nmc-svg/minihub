@@ -12,31 +12,19 @@
     {
      "ad": "govde",
      "dosya": "govde.webp",
-     "kb": 27
+     "kb": 53
     }
    ]
   },
   {
-   "ad": "ayak",
+   "ad": "boynuz",
    "zorunlu": true,
    "capa": null,
    "parcalar": [
     {
-     "ad": "ayak",
-     "dosya": "ayak.webp",
-     "kb": 14
-    }
-   ]
-  },
-  {
-   "ad": "kol",
-   "zorunlu": true,
-   "capa": null,
-   "parcalar": [
-    {
-     "ad": "kol",
-     "dosya": "kol.webp",
-     "kb": 13
+     "ad": "boynuz",
+     "dosya": "boynuz.webp",
+     "kb": 9
     }
    ]
   },
@@ -48,12 +36,12 @@
     {
      "ad": "bot-kirmizi",
      "dosya": "bot-kirmizi.webp",
-     "kb": 21
+     "kb": 18
     },
     {
      "ad": "bot-mavi",
      "dosya": "bot-mavi.webp",
-     "kb": 20
+     "kb": 19
     },
     {
      "ad": "bot-yesil",
@@ -80,55 +68,7 @@
     {
      "ad": "bileklik-gumus",
      "dosya": "bileklik-gumus.webp",
-     "kb": 9
-    }
-   ]
-  },
-  {
-   "ad": "kafatasi",
-   "zorunlu": true,
-   "capa": null,
-   "parcalar": [
-    {
-     "ad": "kafatasi",
-     "dosya": "kafatasi.webp",
-     "kb": 13
-    }
-   ]
-  },
-  {
-   "ad": "ibik",
-   "zorunlu": true,
-   "capa": null,
-   "parcalar": [
-    {
-     "ad": "ibik",
-     "dosya": "ibik.webp",
-     "kb": 21
-    }
-   ]
-  },
-  {
-   "ad": "yuz",
-   "zorunlu": true,
-   "capa": null,
-   "parcalar": [
-    {
-     "ad": "yuz-notr",
-     "dosya": "yuz-notr.webp",
-     "kb": 7
-    }
-   ]
-  },
-  {
-   "ad": "boynuz",
-   "zorunlu": true,
-   "capa": null,
-   "parcalar": [
-    {
-     "ad": "boynuz",
-     "dosya": "boynuz.webp",
-     "kb": 17
+     "kb": 10
     }
    ]
   },
@@ -140,12 +80,12 @@
     {
      "ad": "kolye-dis",
      "dosya": "kolye-dis.webp",
-     "kb": 8
+     "kb": 9
     },
     {
      "ad": "kolye-yakut",
      "dosya": "kolye-yakut.webp",
-     "kb": 8
+     "kb": 9
     },
     {
      "ad": "kolye-zumrut",
@@ -160,19 +100,14 @@
    "capa": "kafa_ust",
    "parcalar": [
     {
-     "ad": "tac-alev",
-     "dosya": "tac-alev.webp",
-     "kb": 22
-    },
-    {
      "ad": "tac-altin",
      "dosya": "tac-altin.webp",
-     "kb": 17
+     "kb": 14
     },
     {
      "ad": "tac-buz",
      "dosya": "tac-buz.webp",
-     "kb": 18
+     "kb": 16
     }
    ]
   },
@@ -184,7 +119,7 @@
     {
      "ad": "sapka-admin",
      "dosya": "sapka-admin.webp",
-     "kb": 19
+     "kb": 20
     }
    ]
   }
