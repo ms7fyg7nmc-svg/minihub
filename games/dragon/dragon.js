@@ -1,27 +1,28 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v281';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v281';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v283';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v283';
 
-import { CONFIG, gorselSeviye } from './config.js?v281';
-import { bakimdaMi } from '../../js/store.js?v281';
+import { CONFIG, gorselSeviye } from './config.js?v283';
+import { bakimdaMi } from '../../js/store.js?v283';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
          ejderhaEkle, EN_COK_YUVA,
-         izgarayiGenislet, genislemeHakki } from './model.js?v281';
-import { dragonSvg, dragonAssetUrls } from './art.js?v281';
-import { turCek, turYolu, turBul } from './turler.js?v281';
-import { taniBaslat, iz } from '../../js/tani.js?v281';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v281';
+         izgarayiGenislet, genislemeHakki } from './model.js?v283';
+import { dragonSvg, dragonAssetUrls } from './art.js?v283';
+import { turCek, turYolu, turBul } from './turler.js?v283';
+import { BASARIM_ACIK, durum as basarimDurum } from './basarimlar.js?v283';
+import { taniBaslat, iz } from '../../js/tani.js?v283';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v283';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
-         kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI } from './gorevler.js?v281';
-import { gorevOlay, promoKutuAl, sahipMiyim } from '../../js/store.js?v281';
-import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v281';
+         kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI } from './gorevler.js?v283';
+import { gorevOlay, promoKutuAl, sahipMiyim } from '../../js/store.js?v283';
+import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v283';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v281';
+         kilitliMi, nesneMi } from './grid.js?v283';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         BESLEME_YUMURTA_PERIYODU, ejderhaSansi } from './ekonomi.js?v281';
-import { createTutorial, pozListesi } from './tutorial.js?v281';
+         BESLEME_YUMURTA_PERIYODU, ejderhaSansi } from './ekonomi.js?v283';
+import { createTutorial, pozListesi } from './tutorial.js?v283';
 
 const GAME_ID = 'dragon';
 
@@ -203,6 +204,8 @@ const yemsayNot = $('yemsay-not');
 
 const dailyRow = $('daily-row'); const dailyNote = $('daily-note'); const dailyClaim = $('daily-claim');
 const questOzet = $('quest-ozet'); const questSayac = $('quest-sayac');
+const bsrOzet = $('bsr-ozet'); const bsrSayac = $('bsr-sayac');
+const bsrGruplar = $('bsr-gruplar');
 const questKademeler = $('quest-kademeler'); const questAktif = $('quest-aktif');
 const sayfa = $('sayfa'); const sayfaBaslik = $('sayfa-baslik');
 const sayfaGovde = $('sayfa-govde'); const sayfaKapat = $('sayfa-kapat');
@@ -361,7 +364,7 @@ function ekranGoster(ad) {
   tabbar.querySelectorAll('.tab').forEach((b) => b.classList.toggle('is-on', b.dataset.go === ad));
   if (ad === 'grid') { board.ciz(); board.sec(seciliHucre); }
   if (ad === 'dragon') ejderhaCiz();
-  if (ad === 'tasks') { gunlukCiz(); questOzetCiz(); }
+  if (ad === 'tasks') { gunlukCiz(); questOzetCiz(); basarimOzetCiz(); }
   if (ad === 'trader') siparisCiz();
   if (ad === 'generator') generatorAc();
   tut?.yenidenKonumla();
@@ -375,7 +378,7 @@ let generatorKurulu = false;
 async function generatorAc() {
   if (generatorKurulu) return;
   generatorKurulu = true;
-  const { generatorKur } = await import('./generator.js?v281');
+  const { generatorKur } = await import('./generator.js?v283');
   await generatorKur($('gen-kok'));
 }
 
@@ -1424,6 +1427,82 @@ function sayfaKapatt() {
 questOzet.addEventListener('click', () => {
   haptic.tap();
   sayfaAc(t('questTitle'), questSayfaCiz);
+});
+
+/* ---------- BASARIMLAR ----------
+
+   Gorev haritasiyla ayni kalip: kucuk ozet kart, dokununca tam liste
+   genisleyen panelde. Rozetler yeni bir sey OLCMUYOR; oyunun zaten
+   tuttugu sayaclari (birlestirme, besleme, kirma...) okunur hale
+   getiriyor. Bu yuzden ozelligi acan oyuncu birikmis rozetlerini
+   aninda goruyor.
+
+   BASARIM_ACIK false ise kart hic gorunmuyor ve hicbir sey hesaplanmiyor. */
+function basarimOzetCiz() {
+  if (!BASARIM_ACIK) { bsrOzet.hidden = true; return; }
+  bsrOzet.hidden = false;
+
+  const d = basarimDurum(oyuncu);
+  bsrSayac.textContent = `${d.kazanilan.length}/${d.toplam}`;
+
+  /* Ozette EN COK DORT grup. Dokuz grubun hepsini koymak satiri
+     tasiriyordu: .ozet-kademeler sarmayan bir flex satiri, dokuzuncu
+     etiket kartin sagindan tasip kesiliyordu. Tamami bir dokunus
+     otede, panelde.
+     Secim: once en cok rozet kazanilan, esitlikte siradaki rozete en
+     yakin olan - yani oyuncunun en ilerlediği ve bitirmeye en yakin
+     oldugu basliklar. */
+  bsrGruplar.innerHTML = '';
+  const dolu = d.gruplar.filter((g) => g.kazanilan > 0);
+  const gosterilecek = (dolu.length ? dolu : d.gruplar)
+    .slice()
+    .sort((a, b) => (b.kazanilan - a.kazanilan) || (b.ilerleme - a.ilerleme))
+    .slice(0, 4);
+  for (const g of gosterilecek) {
+    const el = document.createElement('div');
+    el.className = `kademe-rozet${g.kazanilan > 0 ? ' acik' : ''}${g.kazanilan === g.toplam ? ' bitti' : ''}`;
+    el.innerHTML = `<span class="kademe-ad">${t(g.adKey)}</span>
+      <span class="kademe-say">${g.kazanilan}/${g.toplam}</span>`;
+    bsrGruplar.appendChild(el);
+  }
+}
+
+function basarimSayfaCiz() {
+  const d = basarimDurum(oyuncu);
+  sayfaGovde.innerHTML = '';
+
+  for (const g of d.gruplar) {
+    const blok = document.createElement('section');
+    blok.className = `kademe-blok${g.kazanilan ? '' : ' kilitli'}`;
+    /* "Sonraki: 500 · 120" iki sayiyi yan yana koyuyordu ve hangisinin
+       ne oldugu anlasilmiyordu. "120 / 500" tek bakista okunuyor ve
+       hicbir dile cevrilmesi gerekmiyor. */
+    const altYazi = g.sonraki === null
+      ? t('bsrDone')
+      : `${g.deger} / ${g.sonraki}`;
+    blok.innerHTML = `<div class="kademe-bas">
+        <h3>${t(g.adKey)}</h3>
+        <span>${g.kazanilan}/${g.toplam}</span>
+      </div>
+      <div class="bsr-alt">${altYazi}</div>`;
+
+    const sira = document.createElement('div');
+    sira.className = 'bsr-sira';
+    for (const r of g.rozetler) {
+      const rz = document.createElement('div');
+      rz.className = `bsr-rozet${r.kazanildi ? ' kazanildi' : ''}`;
+      /* Seviye gruplarinda hedef bir SEVIYE, adet degil: "Sv. 5". */
+      rz.textContent = g.seviye ? `Sv. ${r.hedef}` : String(r.hedef);
+      sira.appendChild(rz);
+    }
+    blok.appendChild(sira);
+    sayfaGovde.appendChild(blok);
+  }
+}
+
+bsrOzet.addEventListener('click', () => {
+  haptic.tap();
+  sayfaAc(t('bsrTitle'), basarimSayfaCiz);
 });
 
 sayfaKapat.addEventListener('click', () => { haptic.tap(); sayfaKapatt(); });

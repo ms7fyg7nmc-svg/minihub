@@ -2,30 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="281">
+  <meta name="surum" content="283">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Dragon Island</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <!-- ON YUKLEME: otomatik uretildi, elle duzenleme (node on-yukle.mjs) -->
-  <link rel="modulepreload" href="dragon.js?v281">
-  <link rel="modulepreload" href="../../js/guncel.js?v281">
-  <link rel="modulepreload" href="../../js/i18n-hook.js?v281">
-  <link rel="modulepreload" href="../../js/i18n.js?v281">
-  <link rel="modulepreload" href="../../js/store.js?v281">
-  <link rel="modulepreload" href="../../js/tani.js?v281">
-  <link rel="modulepreload" href="../../js/tg.js?v281">
-  <link rel="modulepreload" href="./art.js?v281">
-  <link rel="modulepreload" href="./canlandir.js?v281">
-  <link rel="modulepreload" href="./config.js?v281">
-  <link rel="modulepreload" href="./data.js?v281">
-  <link rel="modulepreload" href="./ekonomi.js?v281">
-  <link rel="modulepreload" href="./gorevler.js?v281">
-  <link rel="modulepreload" href="./grid.js?v281">
-  <link rel="modulepreload" href="./model.js?v281">
-  <link rel="modulepreload" href="./siparis.js?v281">
-  <link rel="modulepreload" href="./turler.js?v281">
-  <link rel="modulepreload" href="./tutorial.js?v281">
+  <link rel="modulepreload" href="dragon.js?v283">
+  <link rel="modulepreload" href="../../js/guncel.js?v283">
+  <link rel="modulepreload" href="../../js/i18n-hook.js?v283">
+  <link rel="modulepreload" href="../../js/i18n.js?v283">
+  <link rel="modulepreload" href="../../js/store.js?v283">
+  <link rel="modulepreload" href="../../js/tani.js?v283">
+  <link rel="modulepreload" href="../../js/tg.js?v283">
+  <link rel="modulepreload" href="./art.js?v283">
+  <link rel="modulepreload" href="./basarimlar.js?v283">
+  <link rel="modulepreload" href="./canlandir.js?v283">
+  <link rel="modulepreload" href="./config.js?v283">
+  <link rel="modulepreload" href="./data.js?v283">
+  <link rel="modulepreload" href="./ekonomi.js?v283">
+  <link rel="modulepreload" href="./gorevler.js?v283">
+  <link rel="modulepreload" href="./grid.js?v283">
+  <link rel="modulepreload" href="./model.js?v283">
+  <link rel="modulepreload" href="./siparis.js?v283">
+  <link rel="modulepreload" href="./turler.js?v283">
+  <link rel="modulepreload" href="./tutorial.js?v283">
   <!-- /ON YUKLEME -->
 
   <script>
@@ -37,9 +38,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;800&display=swap">
-  <link rel="stylesheet" href="../../css/style.css?v281">
-  <link rel="stylesheet" href="../../css/game.css?v281">
-  <link rel="stylesheet" href="dragon.css?v281">
+  <link rel="stylesheet" href="../../css/style.css?v283">
+  <link rel="stylesheet" href="../../css/game.css?v283">
+  <link rel="stylesheet" href="dragon.css?v283">
 </head>
 <body class="game dragon-app" data-i18n-title="title">
 
@@ -196,6 +197,18 @@
           <span class="ozet-ac" data-i18n="expand">Ac</span>
         </button>
 
+        <!-- BASARIMLAR: gorev haritasiyla ayni kalipta. Dokununca tam
+             liste ayni genisleyen panelde aciliyor. Kart dragon.js'te
+             BASARIM_ACIK false ise hic gosterilmiyor. -->
+        <button class="ozet-kart" id="bsr-ozet" hidden>
+          <div class="ozet-ust">
+            <h3 class="card-title" data-i18n="bsrTitle">Basarimlar</h3>
+            <span class="ozet-sayac" id="bsr-sayac">0/33</span>
+          </div>
+          <div class="ozet-kademeler" id="bsr-gruplar"></div>
+          <span class="ozet-ac" data-i18n="expand">Ac</span>
+        </button>
+
       </section>
 
       <!-- GENERATOR — yalnizca sahip gorur; sekmesi dragon.js'te
@@ -269,6 +282,6 @@
     </div>
   </div>
 
-  <script type="module" src="dragon.js?v281"></script>
+  <script type="module" src="dragon.js?v283"></script>
 </body>
 </html>

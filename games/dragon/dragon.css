@@ -2292,3 +2292,46 @@
   margin: 16px 2px 0; font-size: 11.5px; line-height: 1.6; color: var(--soluk);
 }
 .gen-not b { color: var(--vurgu, #e0a055); }
+
+/* ---------- BASARIMLAR ----------
+   Gorev haritasiyla ayni dili konusuyor: ayni kart, ayni blok, ayni
+   kilitli/acik gorunum. Yeni bir gorsel dil kurmuyor; yalnizca rozet
+   serisi icin uc kucuk kural ekliyor. */
+
+/* Grubun siradaki hedefi ve o anki sayac. */
+.bsr-alt {
+  font-size: .78rem;
+  color: var(--soluk, #9a9382);
+  margin: 2px 0 8px;
+}
+
+/* Rozetler tek satirda; sigmazsa yana kayiyor, satira bolunup blogu
+   uzatmiyor. */
+.bsr-sira {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bsr-rozet {
+  flex: 0 0 auto;
+  min-width: 46px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  text-align: center;
+  font-size: .8rem;
+  font-variant-numeric: tabular-nums;
+  background: rgba(255, 255, 255, .05);
+  border: 1px solid rgba(255, 255, 255, .10);
+  color: rgba(255, 255, 255, .42);
+}
+
+/* Kazanilan rozet: oyunun kendi altin vurgusu. */
+.bsr-rozet.kazanildi {
+  background: rgba(214, 170, 76, .16);
+  border-color: rgba(214, 170, 76, .55);
+  color: #e8c877;
+  font-weight: 700;
+}
