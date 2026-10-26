@@ -88,3 +88,27 @@ CREATE TABLE IF NOT EXISTS spend_log (
   created_at     INTEGER NOT NULL,
   PRIMARY KEY (player_id, op_id)
 );
+
+-- ---------------------------------------------------------------------
+-- OLCUM (25 Ekim 2026 eklendi). Tek amaci su soruyu cevaplamak:
+-- "oyuncu ertesi gun geri geliyor mu?"
+--
+-- Oyuncu basina, uygulamayi actigi HER GUN icin tek satir. Baska hicbir
+-- sey tutulmuyor. /api/sync her acilista bir kez calistigi icin yazma
+-- oturum basina bir tanedir; INSERT OR IGNORE sayesinde ayni gun tekrar
+-- acmak yeni satir uretmez.
+--
+-- gun: 'YYYY-MM-DD', UTC. Yerel saat kullanmak, gece yarisi gecen bir
+-- oturumu iki ayri gune bolerdi.
+--
+-- Bu tablo OLMADAN da oyun calisir: olcum yazmasi hata verirse sessizce
+-- geciliyor (bkz. bot/olcum.js gunuIsaretle).
+CREATE TABLE IF NOT EXISTS gun_aktif (
+  player_id TEXT NOT NULL,
+  gun       TEXT NOT NULL,
+  PRIMARY KEY (player_id, gun)
+);
+
+-- Gunluk aktif oyuncu sorgusu gun'e gore grupluyor; bu indeks onu
+-- tablo taramasindan kurtariyor.
+CREATE INDEX IF NOT EXISTS gun_aktif_gun ON gun_aktif(gun);

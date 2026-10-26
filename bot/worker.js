@@ -1,5 +1,9 @@
 import { replayRun as replay2048, CODE_TO_DIR as CODES_2048 } from '../games/2048/logic.js';
 import { generatePuzzle as generateFlowPuzzle, validateSolution as validateFlowSolution } from '../games/flow/logic.js';
+/* Olcum ayri dosyada ve kapatilabilir (bkz. olcum.js OLCUM_ACIK). Oyunun
+   isleyisine hicbir yerde karismiyor: yazmasi hata verirse sessizce
+   geciliyor, okumasi yalnizca sahibe acik. */
+import { gunuIsaretle, ozet as olcumOzeti } from './olcum.js';
 
 const MINI_APP_URL = 'https://ms7fyg7nmc-svg.github.io/minihub/';
 const BOT_USERNAME = 'minihubgames_bot';
@@ -2173,7 +2177,7 @@ async function handleState(env, playerId, body) {
   return { state: kayitliDurum, version: row.version };
 }
 
-async function handleApi(request, env, url) {
+async function handleApi(request, env, url, ctx) {
   if (request.method === 'OPTIONS') {
     return new Response(null, { status: 204, headers: corsHeaders() });
   }
@@ -2197,7 +2201,24 @@ async function handleApi(request, env, url) {
 
   try {
     if (url.pathname === '/api/sync') {
-      return json(await handleSync(env, playerId, body, auth.ad));
+      const cevap = await handleSync(env, playerId, body, auth.ad);
+      /* Oyuncunun bugun uygulamayi actigini isaretle. Yalnizca burada,
+         yani oturum basina bir kez — her API cagrisina yazmak gunde
+         binlerce gereksiz yazma olurdu.
+         ctx VARSA cevabi beklettirmiyor. Testler worker'i ctx olmadan
+         cagiriyor; korumasiz birakmak butun sync testlerini patlatiyordu
+         (olculdu: 170 basarili -> 3 FAIL + cokme). Olcum oyunu hicbir
+         kosulda bozmamali. */
+      const isaret = gunuIsaretle(env, playerId);
+      if (ctx?.waitUntil) ctx.waitUntil(isaret); else await isaret;
+      return json(cevap);
+    }
+
+    /* Olcum ozeti — SADECE SAHIP. Oyuncu sayisi, 1. ve 7. gun geri donus
+       orani, gunluk aktif oyuncu. */
+    if (url.pathname === '/api/olcum') {
+      if (String(playerId) !== SAHIP_ID) return json({ error: 'yetkisiz' }, 403);
+      return json(await olcumOzeti(env));
     }
 
     await ensurePlayer(env, playerId);
@@ -2263,11 +2284,13 @@ async function handleApi(request, env, url) {
 export { parseReferralPayload };
 
 export default {
-  async fetch(request, env) {
+  /* ctx (ucuncu parametre) olcum icin eklendi: ctx.waitUntil(...) isi
+     cevaptan SONRA bitiriyor, yani olcum yazmasi oyuncuyu bekletmiyor. */
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     if (url.pathname.startsWith('/api/')) {
-      return handleApi(request, env, url);
+      return handleApi(request, env, url, ctx);
     }
 
     if (request.method !== 'POST') {
