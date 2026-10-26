@@ -11,22 +11,39 @@
    (bkz. ekonomi.js yuvaFiyati). Yani yildiz gideri duruyor, tura olan
    bagi kopuyor. */
 
+/* cekilmez: true -> tur ARTIK YENI EJDERHA OLARAK CIKMIYOR, ama listede
+   kaliyor.
+
+   Neden silinmiyor: turBul() bulamadigi id icin TURLER[0]'a dusuyor. Turu
+   listeden cikarmak, o turden ejderhasi olan oyuncunun ejderhasini sessizce
+   'ember'a cevirirdi. Burada kalinca eski ejderhalar oldugu gibi gorunmeye
+   devam ediyor, sadece havuzdan cikiyorlar.
+
+   Neden cikarildilar: on alti turun dokuzu ayni cizimin baska rengiydi.
+   Olculdu (renk atilip yapi karsilastirildi): asagidaki besi, listede kalan
+   bir baska turle 0,80'in uzerinde ayni. Gorsel olarak da ayirt edilemiyor.
+     solar     -> ember/amber ile ayni duz govde; altin olan zaten radiant
+     amber     -> ember'in turuncusu; turuncu olan zaten magma
+     violet    -> aqua'nin moru; mor olan zaten cosmic
+     rose      -> azure ile ayni beyaz zirh, farkli renk
+     amethyst  -> cosmic ile ayni eterik cizim
+   Gorselleri yerinde duruyor (assets/dragons/), hicbir dosya silinmedi. */
 export const TURLER = [
   /* common - duz pullu govde, temel renkler */
   { id: 'ember',     nadir: 'common',    adKey: 'turEmber' },
   { id: 'ocean',     nadir: 'common',    adKey: 'turOcean' },
   { id: 'verdant',   nadir: 'common',    adKey: 'turVerdant' },
-  { id: 'solar',     nadir: 'common',    adKey: 'turSolar' },
+  { id: 'solar',     nadir: 'common',    adKey: 'turSolar',    cekilmez: true },
 
   /* rare - alinda mucevher, metalik parlaklik, coklu boynuz */
   { id: 'aqua',      nadir: 'rare',      adKey: 'turAqua' },
-  { id: 'amber',     nadir: 'rare',      adKey: 'turAmber' },
-  { id: 'violet',    nadir: 'rare',      adKey: 'turViolet' },
+  { id: 'amber',     nadir: 'rare',      adKey: 'turAmber',    cekilmez: true },
+  { id: 'violet',    nadir: 'rare',      adKey: 'turViolet',   cekilmez: true },
   { id: 'pearl',     nadir: 'rare',      adKey: 'turPearl' },
 
   /* epic - zirh plakalari, dikenli tasma, parlayan goz */
   { id: 'magma',     nadir: 'epic',      adKey: 'turMagma' },
-  { id: 'rose',      nadir: 'epic',      adKey: 'turRose' },
+  { id: 'rose',      nadir: 'epic',      adKey: 'turRose',     cekilmez: true },
   { id: 'azure',     nadir: 'epic',      adKey: 'turAzure' },
   { id: 'verdigris', nadir: 'epic',      adKey: 'turVerdigris' },
 
@@ -34,7 +51,7 @@ export const TURLER = [
   { id: 'cosmic',    nadir: 'legendary', adKey: 'turCosmic' },
   { id: 'radiant',   nadir: 'legendary', adKey: 'turRadiant' },
   { id: 'glacial',   nadir: 'legendary', adKey: 'turGlacial' },
-  { id: 'amethyst',  nadir: 'legendary', adKey: 'turAmethyst' },
+  { id: 'amethyst',  nadir: 'legendary', adKey: 'turAmethyst', cekilmez: true },
 ];
 
 /* Kademe cekilis agirliklari. Toplam 100 olmak zorunda degil, oran
@@ -59,8 +76,18 @@ export function turBul(id) {
   return TURLER.find((t) => t.id === id) || TURLER[0];
 }
 
+/* Cekilise GIREN turler. turBul() tum listeye bakar, bu yalnizca havuzu
+   suzer: `cekilmez` isaretli turler yeni ejderha olarak cikmaz. */
 export function kademeTurleri(nadir) {
-  return TURLER.filter((t) => t.nadir === nadir);
+  return TURLER.filter((t) => t.nadir === nadir && !t.cekilmez);
+}
+
+/* Bir kademenin tamami cekilmez isaretlenirse havuz bosalir ve turCek()
+   undefined dondurur. Boyle bir durumda oyun ejderhasiz kalmasin diye
+   kademenin ilk turune donulur. */
+export function kademeHavuzu(nadir) {
+  const havuz = kademeTurleri(nadir);
+  return havuz.length ? havuz : TURLER.filter((t) => t.nadir === nadir);
 }
 
 /* Kazanilan ejderhanin turu: once kademe, sonra o kademenin dort
@@ -78,6 +105,6 @@ export function turCek(enAz = null) {
     if (r < 0) { kademe = k; break; }
   }
 
-  const liste = kademeTurleri(kademe);
+  const liste = kademeHavuzu(kademe);
   return liste[Math.floor(Math.random() * liste.length)];
 }
