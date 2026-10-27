@@ -2335,3 +2335,43 @@
   color: #e8c877;
   font-weight: 700;
 }
+
+/* Basarim ikonlari (assets/basarim/, Scenario'da tek kolajda uretildi).
+   Oyunun mevcut madalyon dilini kullaniyor: ayni altin cerceve, ayni
+   lacivert ic disk - gorev zincirindeki node-active/node-done ile ayni
+   aile. */
+
+/* Ozet kartindaki kucuk etiket: ikon ustte, ad ve sayac altinda. */
+.kademe-rozet .bsr-ikon {
+  width: 34px;
+  height: 34px;
+  display: block;
+  margin: 0 auto 1px;
+}
+
+/* Hic rozeti olmayan grup sonuk duruyor; kazanilan grup altin gibi
+   parliyor. Renk degisimi CSS'te yapiliyor, ayri gorsel uretilmedi. */
+.kademe-rozet:not(.acik) .bsr-ikon {
+  filter: grayscale(.85) brightness(.55);
+  opacity: .5;
+}
+
+/* Panel basligi: ikon solda, baslik ortada, sayac sagda. */
+.bsr-bas {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bsr-bas h3 { flex: 1; min-width: 0; }
+
+.bsr-ikon-buyuk {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+}
+
+.bsr-ikon-buyuk.sonuk {
+  filter: grayscale(.85) brightness(.55);
+  opacity: .55;
+}

@@ -1,28 +1,28 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v283';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v283';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v285';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v285';
 
-import { CONFIG, gorselSeviye } from './config.js?v283';
-import { bakimdaMi } from '../../js/store.js?v283';
+import { CONFIG, gorselSeviye } from './config.js?v285';
+import { bakimdaMi } from '../../js/store.js?v285';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
          ejderhaEkle, EN_COK_YUVA,
-         izgarayiGenislet, genislemeHakki } from './model.js?v283';
-import { dragonSvg, dragonAssetUrls } from './art.js?v283';
-import { turCek, turYolu, turBul } from './turler.js?v283';
-import { BASARIM_ACIK, durum as basarimDurum } from './basarimlar.js?v283';
-import { taniBaslat, iz } from '../../js/tani.js?v283';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v283';
+         izgarayiGenislet, genislemeHakki } from './model.js?v285';
+import { dragonSvg, dragonAssetUrls } from './art.js?v285';
+import { turCek, turYolu, turBul } from './turler.js?v285';
+import { BASARIM_ACIK, durum as basarimDurum } from './basarimlar.js?v285';
+import { taniBaslat, iz } from '../../js/tani.js?v285';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v285';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
-         kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI } from './gorevler.js?v283';
-import { gorevOlay, promoKutuAl, sahipMiyim } from '../../js/store.js?v283';
-import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v283';
+         kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI } from './gorevler.js?v285';
+import { gorevOlay, promoKutuAl, sahipMiyim } from '../../js/store.js?v285';
+import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v285';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v283';
+         kilitliMi, nesneMi } from './grid.js?v285';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         BESLEME_YUMURTA_PERIYODU, ejderhaSansi } from './ekonomi.js?v283';
-import { createTutorial, pozListesi } from './tutorial.js?v283';
+         BESLEME_YUMURTA_PERIYODU, ejderhaSansi } from './ekonomi.js?v285';
+import { createTutorial, pozListesi } from './tutorial.js?v285';
 
 const GAME_ID = 'dragon';
 
@@ -378,7 +378,7 @@ let generatorKurulu = false;
 async function generatorAc() {
   if (generatorKurulu) return;
   generatorKurulu = true;
-  const { generatorKur } = await import('./generator.js?v283');
+  const { generatorKur } = await import('./generator.js?v285');
   await generatorKur($('gen-kok'));
 }
 
@@ -1297,6 +1297,10 @@ const gorevBaslik = (g) => t(`quest${g.tip.charAt(0).toUpperCase()}${g.tip.slice
 
 /* Onizleme karti: uc kademe rozetini, toplam ilerlemeyi ve oyuncunun
    su an ustunde oldugu tek gorevi gosteriyor. Tam liste sayfada. */
+const BSR_SURUM = document.querySelector('meta[name="surum"]')?.content || '';
+const bsrIkon = (id, boy) =>
+  `assets/basarim/${id}-${boy}.webp${BSR_SURUM ? '?v' + BSR_SURUM : ''}`;
+
 function questOzetCiz() {
   const bitti = oyuncu.gorevler.bitti;
   const toplam = tumGorevler().length;
@@ -1309,7 +1313,13 @@ function questOzetCiz() {
     const bittiMi = biten === kt;
     const el = document.createElement('div');
     el.className = `kademe-rozet${acik ? ' acik' : ''}${bittiMi ? ' bitti' : ''}`;
-    el.innerHTML = `<span class="kademe-ad">${t(`tier_${kademe}`)}</span>
+    /* Kademe madalyonu: gorev zincirinde ZATEN kullanilan uc gorsel.
+       Yeni bir sey uretilmedi; kutular bostu ve kilitli kademe kilitli
+       gorunmuyordu - oysa dogru gorsel dosyasi dururken duruyordu. */
+    const nod = bittiMi ? 'node-done' : (acik ? 'node-active' : 'node-locked');
+    el.innerHTML = `<img class="bsr-ikon" src="../../assets/ui/${nod}.webp${BSR_SURUM ? '?v' + BSR_SURUM : ''}"
+        alt="" width="34" height="34">
+      <span class="kademe-ad">${t(`tier_${kademe}`)}</span>
       <span class="kademe-say">${acik ? `${biten}/${kt}` : KILIT_KUCUK}</span>`;
     questKademeler.appendChild(el);
   }
@@ -1438,6 +1448,11 @@ questOzet.addEventListener('click', () => {
    aninda goruyor.
 
    BASARIM_ACIK false ise kart hic gorunmuyor ve hicbir sey hesaplanmiyor. */
+/* Rozet ikonlari surum damgasiyla cagriliyor. Damgalayici yalnizca .js ve
+   .css dosyalarini damgaliyor; gorseli damgasiz birakirsak yeni bir ikon
+   koydugumuzda oyuncunun tarayicisi eskisini onbellekten veriyor
+   (generator.js'te tam bu yasanmisti). Sayfanin kendi <meta name="surum">
+   degeri bunu kendiliginden guncel tutuyor. */
 function basarimOzetCiz() {
   if (!BASARIM_ACIK) { bsrOzet.hidden = true; return; }
   bsrOzet.hidden = false;
@@ -1451,17 +1466,23 @@ function basarimOzetCiz() {
      otede, panelde.
      Secim: once en cok rozet kazanilan, esitlikte siradaki rozete en
      yakin olan - yani oyuncunun en ilerlediği ve bitirmeye en yakin
-     oldugu basliklar. */
+     oldugu basliklar.
+
+     UC tane, dort degil: dort etiket Ingilizcede siğiyordu ama Turkce
+     kelimeler uzun ("Yumurta ustasi") ve 45 piksel tasiyordu, sonuncu
+     etiket sagdan kesiliyordu. Gorev haritasi da uc etiket kullaniyor;
+     ayni sayida olmasi iki kartin hizasini da tutturuyor. */
   bsrGruplar.innerHTML = '';
   const dolu = d.gruplar.filter((g) => g.kazanilan > 0);
   const gosterilecek = (dolu.length ? dolu : d.gruplar)
     .slice()
     .sort((a, b) => (b.kazanilan - a.kazanilan) || (b.ilerleme - a.ilerleme))
-    .slice(0, 4);
+    .slice(0, 3);
   for (const g of gosterilecek) {
     const el = document.createElement('div');
     el.className = `kademe-rozet${g.kazanilan > 0 ? ' acik' : ''}${g.kazanilan === g.toplam ? ' bitti' : ''}`;
-    el.innerHTML = `<span class="kademe-ad">${t(g.adKey)}</span>
+    el.innerHTML = `<img class="bsr-ikon" src="${bsrIkon(g.id, 64)}" alt="" width="34" height="34">
+      <span class="kademe-ad">${t(g.adKey)}</span>
       <span class="kademe-say">${g.kazanilan}/${g.toplam}</span>`;
     bsrGruplar.appendChild(el);
   }
@@ -1480,7 +1501,9 @@ function basarimSayfaCiz() {
     const altYazi = g.sonraki === null
       ? t('bsrDone')
       : `${g.deger} / ${g.sonraki}`;
-    blok.innerHTML = `<div class="kademe-bas">
+    blok.innerHTML = `<div class="kademe-bas bsr-bas">
+        <img class="bsr-ikon-buyuk${g.kazanilan ? '' : ' sonuk'}" src="${bsrIkon(g.id, 128)}"
+             alt="" width="46" height="46">
         <h3>${t(g.adKey)}</h3>
         <span>${g.kazanilan}/${g.toplam}</span>
       </div>
