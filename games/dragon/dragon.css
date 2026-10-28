@@ -299,7 +299,16 @@
 
 /* ---------- IZGARA ---------- */
 
-.board-wrap { display: flex; justify-content: center; }
+/* Izgara biraz asagida duruyor: ustunde artik "Sirada" seridi var ve
+   ikisi dipdibe olunca tahta ekranin tepesine yapisiyordu. Bu bosluk
+   seridi tahtadan ayiriyor.
+   (queue-row bos oldugunda visibility:hidden ile gizleniyor ama yerini
+   koruyor, yani tahta sira dolup bosaldikca ziplamiyor.) */
+.board-wrap {
+  display: flex;
+  justify-content: center;
+  margin-block-start: 22px;
+}
 
 .board {
   /* Hucre genisligi ekrana gore: 4x4 de 6x6 da tasmiyor. */

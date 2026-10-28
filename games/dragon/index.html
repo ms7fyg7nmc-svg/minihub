@@ -2,31 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="surum" content="285">
+  <meta name="surum" content="286">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Dragon Island</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <!-- ON YUKLEME: otomatik uretildi, elle duzenleme (node on-yukle.mjs) -->
-  <link rel="modulepreload" href="dragon.js?v285">
-  <link rel="modulepreload" href="../../js/guncel.js?v285">
-  <link rel="modulepreload" href="../../js/i18n-hook.js?v285">
-  <link rel="modulepreload" href="../../js/i18n.js?v285">
-  <link rel="modulepreload" href="../../js/store.js?v285">
-  <link rel="modulepreload" href="../../js/tani.js?v285">
-  <link rel="modulepreload" href="../../js/tg.js?v285">
-  <link rel="modulepreload" href="./art.js?v285">
-  <link rel="modulepreload" href="./basarimlar.js?v285">
-  <link rel="modulepreload" href="./canlandir.js?v285">
-  <link rel="modulepreload" href="./config.js?v285">
-  <link rel="modulepreload" href="./data.js?v285">
-  <link rel="modulepreload" href="./ekonomi.js?v285">
-  <link rel="modulepreload" href="./gorevler.js?v285">
-  <link rel="modulepreload" href="./grid.js?v285">
-  <link rel="modulepreload" href="./model.js?v285">
-  <link rel="modulepreload" href="./siparis.js?v285">
-  <link rel="modulepreload" href="./turler.js?v285">
-  <link rel="modulepreload" href="./tutorial.js?v285">
+  <link rel="modulepreload" href="dragon.js?v286">
+  <link rel="modulepreload" href="../../js/guncel.js?v286">
+  <link rel="modulepreload" href="../../js/i18n-hook.js?v286">
+  <link rel="modulepreload" href="../../js/i18n.js?v286">
+  <link rel="modulepreload" href="../../js/store.js?v286">
+  <link rel="modulepreload" href="../../js/tani.js?v286">
+  <link rel="modulepreload" href="../../js/tg.js?v286">
+  <link rel="modulepreload" href="./art.js?v286">
+  <link rel="modulepreload" href="./basarimlar.js?v286">
+  <link rel="modulepreload" href="./canlandir.js?v286">
+  <link rel="modulepreload" href="./config.js?v286">
+  <link rel="modulepreload" href="./data.js?v286">
+  <link rel="modulepreload" href="./ekonomi.js?v286">
+  <link rel="modulepreload" href="./gorevler.js?v286">
+  <link rel="modulepreload" href="./grid.js?v286">
+  <link rel="modulepreload" href="./model.js?v286">
+  <link rel="modulepreload" href="./siparis.js?v286">
+  <link rel="modulepreload" href="./turler.js?v286">
+  <link rel="modulepreload" href="./tutorial.js?v286">
   <!-- /ON YUKLEME -->
 
   <script>
@@ -38,9 +38,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;800&display=swap">
-  <link rel="stylesheet" href="../../css/style.css?v285">
-  <link rel="stylesheet" href="../../css/game.css?v285">
-  <link rel="stylesheet" href="dragon.css?v285">
+  <link rel="stylesheet" href="../../css/style.css?v286">
+  <link rel="stylesheet" href="../../css/game.css?v286">
+  <link rel="stylesheet" href="dragon.css?v286">
 </head>
 <body class="game dragon-app" data-i18n-title="title">
 
@@ -80,15 +80,17 @@
 
       <!-- EKRAN 1: OCAK -->
       <section class="screen" id="screen-grid" data-screen="grid">
-        <div class="board-wrap">
-          <div class="board" id="board"></div>
-        </div>
-
-        <!-- SIRADAKILER: izgara doluyken kazanilan oduller burada bekler -->
+        <!-- SIRADAKILER izgaranin USTUNDE: oyuncunun gozu once bekleyen
+             odule, sonra tahtaya gidiyor. Onceden tahtanin altindaydi ve
+             alt yarida bilgi paneliyle birlikte sikisiyordu. -->
         <div class="queue-row bos" id="queue-row">
           <span class="queue-label" data-i18n="upNext">Sirada</span>
           <div class="queue" id="queue"></div>
           <span class="queue-more" id="queue-more" hidden></span>
+        </div>
+
+        <div class="board-wrap">
+          <div class="board" id="board"></div>
         </div>
 
         <!-- BILGI PANELI: secilen ogenin ne verecegi -->
@@ -282,6 +284,6 @@
     </div>
   </div>
 
-  <script type="module" src="dragon.js?v285"></script>
+  <script type="module" src="dragon.js?v286"></script>
 </body>
 </html>
