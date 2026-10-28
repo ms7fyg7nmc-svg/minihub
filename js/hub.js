@@ -1,20 +1,20 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v286';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v290';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, enerjiBosMu, bakimListesi, bakimOnbellek,
    getGorev, gorevAl, getPartner, partnerAl, partnerBuyukAl, promoKullan, promoKayit, sahipMiyim,
-} from './store.js?v286';
-import { enerjiBosOnayi } from './onay.js?v286';
-import { odulGoster, odulOnYukle } from './odul.js?v286';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v286';
+} from './store.js?v290';
+import { enerjiBosOnayi } from './onay.js?v290';
+import { odulGoster, odulOnYukle } from './odul.js?v290';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v290';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniBaslat, iz } from './tani.js?v286';
+import { taniBaslat, iz } from './tani.js?v290';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -35,6 +35,12 @@ function oranYazi(oran) {
 }
 
 const ICONS = {
+   kule: `<svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="4" y="16.5" width="16" height="5" rx="1.4" fill="#fff" opacity=".95"/>
+      <rect x="6" y="10.5" width="12" height="5" rx="1.4" fill="#fff" opacity=".72"/>
+      <rect x="8.5" y="4.5" width="7" height="5" rx="1.4" fill="#fff" opacity=".5"/>
+   </svg>`,
+
    '2048': `<svg viewBox="0 0 24 24" aria-hidden="true">
       <rect x="2.5" y="2.5" width="8.5" height="8.5" rx="2.4" fill="#fff" opacity=".5"/>
       <rect x="13" y="2.5" width="8.5" height="8.5" rx="2.4" fill="#fff" opacity=".32"/>
@@ -174,6 +180,19 @@ function gameList() {
          foto: 'assets/game-tile/match3.webp',
          gradient: 'linear-gradient(145deg, #ffa3c8 0%, #e56a9f 48%, #b8407c 100%)',
          accent: '#e2679c',
+         ready: true,
+      },
+      {
+         id: 'kule',
+         title: t('game.kule.title'),
+         desc: t('game.kule.desc'),
+         icon: ICONS.kule,
+         url: 'games/kule/index.html',
+         /* foto YOK: kart gradyan + SVG ikonla cizilyor (bkz. if (game.foto)).
+            Uc yeni oyunun kart gorseli hepsi bitince TEK kolajda uretilecek;
+            simdi tek tek uretmek hem pahali hem stil tutarsizligi riski. */
+         gradient: 'linear-gradient(145deg, #a8c6e8 0%, #5b7fae 48%, #2c3f63 100%)',
+         accent: '#8fb4de',
          ready: true,
       },
       {

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="surum" content="290">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Kule</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- ON YUKLEME: otomatik uretildi, elle duzenleme (node on-yukle.mjs) -->
+  <link rel="modulepreload" href="kule.js?v290">
+  <link rel="modulepreload" href="../../js/audio.js?v290">
+  <link rel="modulepreload" href="../../js/guncel.js?v290">
+  <link rel="modulepreload" href="../../js/i18n-hook.js?v290">
+  <link rel="modulepreload" href="../../js/i18n.js?v290">
+  <link rel="modulepreload" href="../../js/onay.js?v290">
+  <link rel="modulepreload" href="../../js/store.js?v290">
+  <link rel="modulepreload" href="../../js/tg.js?v290">
+  <!-- /ON YUKLEME -->
+  <script>
+    /* Uygulama dogrudan bu oyun sayfasinda acildiysa once hub'i goster. */
+    try {
+      if (sessionStorage.getItem('mh_hub_open') !== '1') location.replace('../../index.html');
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="../../css/style.css?v290">
+  <link rel="stylesheet" href="../../css/game.css?v290">
+  <link rel="stylesheet" href="kule.css?v290">
+  <link rel="stylesheet" href="../../css/cerceve.css?v290">
+</head>
+<body class="game" data-i18n-title="title">
+  <div class="app game-app">
+
+    <header class="game-head">
+      <div>
+        <h1 class="game-title" data-i18n="title">Kule</h1>
+        <p class="game-sub" data-i18n="subtitle">Dokun ve blogu birak</p>
+      </div>
+      <div class="head-right">
+        <div class="scores">
+          <div class="score-box">
+            <span data-i18n="score">SKOR</span>
+            <strong id="score">0</strong>
+          </div>
+          <div class="score-box">
+            <span data-i18n="kat">KAT</span>
+            <strong id="kat">0</strong>
+          </div>
+          <div class="score-box">
+            <span data-i18n="best">REKOR</span>
+            <strong id="best">0</strong>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="game-mid">
+      <div class="kule-alan cerceveli cerceve-duz">
+        <canvas id="tuval"></canvas>
+        <span class="tam-yazi" id="tam-yazi" hidden></span>
+
+        <div class="overlay" id="overlay" hidden>
+          <i class="overlay-ikon" id="overlay-ikon" aria-hidden="true"></i>
+          <h2 id="overlay-title"></h2>
+          <p id="overlay-text"></p>
+          <button class="btn primary" id="overlay-btn"></button>
+        </div>
+      </div>
+    </div>
+
+    <p class="hint" data-i18n="hint">Blok kayarken dokun. Tasan kisim kesilir.</p>
+
+    <div class="controls">
+      <button class="btn" id="new-game" data-i18n="newGame">Yeni oyun</button>
+      <a class="btn" href="../../index.html" id="back-link" data-i18n="backToHub">Hub'a don</a>
+    </div>
+
+    <footer class="foot"><span data-i18n="hub.version">Version 0.1</span></footer>
+
+  </div>
+
+  <script type="module" src="kule.js?v290"></script>
+</body>
+</html>

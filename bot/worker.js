@@ -1693,6 +1693,10 @@ const OYUN_ODEME = {
   '2048':     { bolucu: 23,  tavan: 300000 },
   blockblast: { bolucu: 9,   tavan: 50000 },
   coindrop:   { bolucu: 100, tavan: 60000 },
+  /* kule: skor = blok basina 10 + tam isabet ikramiyesi. Oyunun kendi
+     SCORE_CAP'i 5000; sunucudaki tavan onunla AYNI olmali, yoksa
+     istemciyi degistiren biri tavani asabilirdi. */
+  kule:       { bolucu: 12,  tavan: 5000 },
   match3:     { bolucu: 19,  tavan: 60000 },
   snake:      { bolucu: 5,   tavan: 15000 },
   /* tripletile'in kendi SCORE_CAP'i 3600; tavan ondan geliyor. */
