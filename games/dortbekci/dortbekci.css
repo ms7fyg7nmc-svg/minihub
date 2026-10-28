@@ -1,0 +1,14 @@
+/* DORT BEKCI — labirent, yemler ve duvarlar kodla ciziliyor.
+   Tek gorsel dosyasi bes karakter (assets/), tek kolajda uretildi ve
+   42 pikselde okunacak sekilde tasarlandi. */
+
+.bekci-alan {
+  position: relative;
+  width: 100%;
+  height: min(68vh, 620px);
+  overflow: hidden;
+  border-radius: 14px;
+  touch-action: none;   /* kaydirma yon komutu, sayfayi kaydirmasin */
+}
+
+.bekci-alan canvas { display: block; width: 100%; height: 100%; }

@@ -1699,6 +1699,9 @@ const OYUN_ODEME = {
   kule:       { bolucu: 12,  tavan: 5000 },
   /* ilkucus: skor = cikilan METRE. Oyunun kendi SCORE_CAP'i 10000. */
   ilkucus:    { bolucu: 20,  tavan: 10000 },
+  /* dortbekci: 218 yem x10 + 4 buyuk x50 + bekci ikramiyeleri. Oyunun
+     kendi SCORE_CAP'i 60000; tavan onunla ayni. */
+  dortbekci:  { bolucu: 30,  tavan: 60000 },
   match3:     { bolucu: 19,  tavan: 60000 },
   snake:      { bolucu: 5,   tavan: 15000 },
   /* tripletile'in kendi SCORE_CAP'i 3600; tavan ondan geliyor. */

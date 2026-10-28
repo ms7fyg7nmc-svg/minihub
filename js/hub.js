@@ -1,20 +1,20 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v292';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v302';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, enerjiBosMu, bakimListesi, bakimOnbellek,
    getGorev, gorevAl, getPartner, partnerAl, partnerBuyukAl, promoKullan, promoKayit, sahipMiyim,
-} from './store.js?v292';
-import { enerjiBosOnayi } from './onay.js?v292';
-import { odulGoster, odulOnYukle } from './odul.js?v292';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v292';
+} from './store.js?v302';
+import { enerjiBosOnayi } from './onay.js?v302';
+import { odulGoster, odulOnYukle } from './odul.js?v302';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v302';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniBaslat, iz } from './tani.js?v292';
+import { taniBaslat, iz } from './tani.js?v302';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -35,6 +35,13 @@ function oranYazi(oran) {
 }
 
 const ICONS = {
+   dortbekci: `<svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 20v-9a4.5 4.5 0 0 1 9 0v9l-2.2-1.7L8.6 20l-2.2-1.7Z" fill="#fff" opacity=".92"/>
+      <circle cx="7" cy="11.5" r="1.4" fill="#1d2c52"/><circle cx="10.6" cy="11.5" r="1.4" fill="#1d2c52"/>
+      <circle cx="18" cy="7" r="2" fill="#fff" opacity=".55"/>
+      <circle cx="18" cy="14" r="1.4" fill="#fff" opacity=".4"/>
+   </svg>`,
+
    ilkucus: `<svg viewBox="0 0 24 24" aria-hidden="true">
       <rect x="3" y="18.5" width="9" height="3" rx="1.4" fill="#fff" opacity=".45"/>
       <rect x="12" y="12.5" width="9" height="3" rx="1.4" fill="#fff" opacity=".7"/>
@@ -187,6 +194,17 @@ function gameList() {
          foto: 'assets/game-tile/match3.webp',
          gradient: 'linear-gradient(145deg, #ffa3c8 0%, #e56a9f 48%, #b8407c 100%)',
          accent: '#e2679c',
+         ready: true,
+      },
+      {
+         id: 'dortbekci',
+         title: t('game.dortbekci.title'),
+         desc: t('game.dortbekci.desc'),
+         icon: ICONS.dortbekci,
+         url: 'games/dortbekci/index.html',
+         /* foto YOK — uc yeni oyunun karti tek kolajda uretilecek. */
+         gradient: 'linear-gradient(145deg, #9fb6ff 0%, #4a5fa8 48%, #241d4d 100%)',
+         accent: '#8ea4e8',
          ready: true,
       },
       {

@@ -52,22 +52,27 @@ for (const yol of dosyalariTara('.', ['.html'])) {
   if (yeni !== eski) { writeFileSync(yol, yeni); degisen++; }
 }
 
-for (const yol of dosyalariTara('.', ['.js'])) {
+/* .mjs de taranmali. Dort Bekci oyunu mantigini labirent.mjs ve
+   logic.mjs'e ayirdi; damgalayici yalnizca .js biliyordu, yani bu iki
+   dosyanin import'u bir surumde ASILI KALIYORDU. Tam da yukarida
+   anlatilan tani.js tuzagi - kod calisir, onbellek kirilmaz, degisiklik
+   oyuncuya ulasmaz. */
+for (const yol of dosyalariTara('.', ['.js', '.mjs'])) {
   const eski = readFileSync(yol, 'utf8');
-  /* IKI KALIP birden: statik `from './x.js'` ve DINAMIK `import('./x.js')`.
+  /* IKI KALIP birden: statik `from './x.js?v302'` ve DINAMIK `import('./x.js?v302')`.
      Uzun sure yalnizca ilki vardi ve js/store.js icindeki
-     `import('./tani.js?v210')` yirmi dokuz surum boyunca v210'da asili
+     `import('./tani.js?v302')` yirmi dokuz surum boyunca v210'da asili
      kaldi. Kimse fark etmedi cunku dosya sorgu dizesinden bagimsiz
      servis ediliyor - yani kod CALISIYORDU; bozulan sey onbellek
      kirilmasiydi. Tarayicisinda v210 duran oyuncu, telefonda ne
      oldugunu anlatmasi gereken tani kaydinin eski kopyasini
      calistirmaya devam ediyordu. */
   let yeni = eski.replace(
-    /(from\s+['"])(\.[^'"]*?\.js)(\?v\d+)?(['"])/g,
+    /(from\s+['"])(\.[^'"]*?\.m?js)(\?v\d+)?(['"])/g,
     `$1$2?v${surum}$4`,
   );
   yeni = yeni.replace(
-    /(import\s*\(\s*['"])(\.[^'"]*?\.js)(\?v\d+)?(['"])/g,
+    /(import\s*\(\s*['"])(\.[^'"]*?\.m?js)(\?v\d+)?(['"])/g,
     `$1$2?v${surum}$4`,
   );
   if (yeni !== eski) { writeFileSync(yol, yeni); degisen++; }
