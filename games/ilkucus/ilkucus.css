@@ -1,0 +1,18 @@
+/* ILK UCUS — her sey tuvalde kodla ciziliyor. Tek gorsel dosyasi
+   ejderhanin kendisi ve o da MEVCUT varliklardan geliyor
+   (games/dragon/assets/dragons), yeni cizim yok. */
+
+.ucus-alan {
+  position: relative;
+  width: 100%;
+  height: min(66vh, 600px);
+  overflow: hidden;
+  border-radius: 14px;
+  touch-action: none;   /* parmak surukleme sayfayi kaydirmasin */
+}
+
+.ucus-alan canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

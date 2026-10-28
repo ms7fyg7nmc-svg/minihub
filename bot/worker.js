@@ -1697,6 +1697,8 @@ const OYUN_ODEME = {
      SCORE_CAP'i 5000; sunucudaki tavan onunla AYNI olmali, yoksa
      istemciyi degistiren biri tavani asabilirdi. */
   kule:       { bolucu: 12,  tavan: 5000 },
+  /* ilkucus: skor = cikilan METRE. Oyunun kendi SCORE_CAP'i 10000. */
+  ilkucus:    { bolucu: 20,  tavan: 10000 },
   match3:     { bolucu: 19,  tavan: 60000 },
   snake:      { bolucu: 5,   tavan: 15000 },
   /* tripletile'in kendi SCORE_CAP'i 3600; tavan ondan geliyor. */

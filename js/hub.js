@@ -1,20 +1,20 @@
 
-import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v290';
+import { initTelegram, getUser, haptic, hideBackButton, isTelegramUser, openShareLink, openInvoice } from './tg.js?v292';
 import {
    getPoints, getBest, sunucuDurumu,
    getEnergy, getStreak, claimStreak, getSpin, spinWheel, odulDurumu, liderTablosu, refreshDaily,
    referralOzeti, adEnergyRefill, starEnergyInvoiceLink, enerjiBosMu, bakimListesi, bakimOnbellek,
    getGorev, gorevAl, getPartner, partnerAl, partnerBuyukAl, promoKullan, promoKayit, sahipMiyim,
-} from './store.js?v290';
-import { enerjiBosOnayi } from './onay.js?v290';
-import { odulGoster, odulOnYukle } from './odul.js?v290';
-import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v290';
+} from './store.js?v292';
+import { enerjiBosOnayi } from './onay.js?v292';
+import { odulGoster, odulOnYukle } from './odul.js?v292';
+import { initLang, t, locale, applyTranslations, renderLangSwitcher, mhHtml } from './i18n.js?v292';
 
 // Adsgram partner panelinde olusturulan "Reward" ad unit'inin Block ID'si.
 const ADSGRAM_BLOCK_ID = '43308';
 
 const BOT_LINK = '';
-import { taniBaslat, iz } from './tani.js?v290';
+import { taniBaslat, iz } from './tani.js?v292';
 
 const BOT_USERNAME = 'minihubgames_bot';
 
@@ -35,6 +35,13 @@ function oranYazi(oran) {
 }
 
 const ICONS = {
+   ilkucus: `<svg viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="18.5" width="9" height="3" rx="1.4" fill="#fff" opacity=".45"/>
+      <rect x="12" y="12.5" width="9" height="3" rx="1.4" fill="#fff" opacity=".7"/>
+      <rect x="4" y="6.5" width="9" height="3" rx="1.4" fill="#fff" opacity=".95"/>
+      <circle cx="8.5" cy="3.4" r="2.1" fill="#fff"/>
+   </svg>`,
+
    kule: `<svg viewBox="0 0 24 24" aria-hidden="true">
       <rect x="4" y="16.5" width="16" height="5" rx="1.4" fill="#fff" opacity=".95"/>
       <rect x="6" y="10.5" width="12" height="5" rx="1.4" fill="#fff" opacity=".72"/>
@@ -180,6 +187,17 @@ function gameList() {
          foto: 'assets/game-tile/match3.webp',
          gradient: 'linear-gradient(145deg, #ffa3c8 0%, #e56a9f 48%, #b8407c 100%)',
          accent: '#e2679c',
+         ready: true,
+      },
+      {
+         id: 'ilkucus',
+         title: t('game.ilkucus.title'),
+         desc: t('game.ilkucus.desc'),
+         icon: ICONS.ilkucus,
+         url: 'games/ilkucus/index.html',
+         /* foto YOK — uc yeni oyunun karti tek kolajda uretilecek. */
+         gradient: 'linear-gradient(145deg, #ffd9a8 0%, #e8864f 48%, #8f3f5e 100%)',
+         accent: '#f0975c',
          ready: true,
       },
       {

@@ -1,9 +1,9 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v290';
-import { submitScore, getBest, clearState, settleAbandonedRun } from '../../js/store.js?v290';
-import { registerTexts, t, applyStaticTexts, mhHtml } from '../../js/i18n-hook.js?v290';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v290';
-import { yarimBirakmaOnayi } from '../../js/onay.js?v290';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v292';
+import { submitScore, getBest, clearState, settleAbandonedRun } from '../../js/store.js?v292';
+import { registerTexts, t, applyStaticTexts, mhHtml } from '../../js/i18n-hook.js?v292';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v292';
+import { yarimBirakmaOnayi } from '../../js/onay.js?v292';
 
 const GAME_ID = 'kule';
 
