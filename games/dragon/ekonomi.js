@@ -200,6 +200,40 @@ export function seviyeIcinBesleme(level) {
 
 /* 4x4 izgarada ucretsiz alan 3x3; en sag sutun ve en alt satir kilitli.
    Her kilitli hucre hem yeri hem icindeki odulu satiyor. */
+/* YILDIZ URETIMI KAPATILDI (2026-10-29).
+
+   Yukaridaki uzun yorum "cozum KAYNAGI kapatmak oldu" diyor ve yildiz
+   KABINI izgaradan kaldirdigini anlatiyor. Ama yerine konan dogrudan
+   {stars: 1800} odulu ayni miktari odemeye devam ediyordu, yani
+   kapatildigi soylenen kaynak acik kalmisti. Olculen sonuc, yorumda
+   yazan bozuklugun neredeyse birebir aynisi:
+
+     16 kilidin masrafi      3.470 yildiz
+     kilitlerden gelen       5.400 yildiz   (3 x 1.800)
+     NET                    +1.930 yildiz
+
+   Daha kotusu, en ucuzdan acan oyuncu HICBIR noktada acik vermiyordu:
+   220 yildizlik hucre 15, 710 yildizlik butun 4x4 merdivenini odedikten
+   sonra 1.800 geri veriyor. Yani merdiven kendi kendini finanse ediyor
+   ve yildiz "kit kaynak" olmaktan cikiyordu - kilitler gider degil
+   GELIR kalemiydi.
+
+   Simdiki hal: yildiz odulu duruyor ama FIYATIN ALTINDA, yani kismi
+   geri odeme. Oyuncu asil olarak HUCREYI satin aliyor; yildiz bir
+   bonus. Uc odul de tek basina ve toplamda net gider:
+
+     hucre 15 (4x4):  220 oder, 90 alir
+     hucre 3  (5x5):  320 oder, 130 alir
+     hucre 0  (5x5):  760 oder, 300 alir      (kose, merdivenin hedefi)
+     TOPLAM:        3.470 oder, 520 alir  ->  net -2.950
+
+   test-kur.mjs bu uc kurali her calismada kontrol ediyor: merdiven net
+   gider olmali, hicbir kilit tek basina uretmemeli ve en ucuzdan acan
+   oyuncu kara gecmemeli. Bir daha elle aramak gerekmeyecek.
+
+   OYUNCULARIN ELINDEKILERE DOKUNULMADI: bu tablo yalnizca HENUZ
+   ACILMAMIS hucrelerin odulunu belirliyor. Acilmis hucrelerin odulu
+   coktan hesaba yazildi, geri alinmiyor. */
 export const KILITLI_HUCRELER = {
   3:  { fiyat: 25,  odul: { t: 'egg',  lv: 7 } },
   7:  { fiyat: 40,  odul: { t: 'egg',  lv: 7 } },
@@ -207,7 +241,7 @@ export const KILITLI_HUCRELER = {
   12: { fiyat: 85,  odul: { t: 'egg',  lv: 7 } },
   13: { fiyat: 120, odul: { t: 'egg',  lv: 8 } },
   14: { fiyat: 160, odul: { t: 'egg',  lv: 8 } },
-  15: { fiyat: 220, odul: { stars: 1800 } },
+  15: { fiyat: 220, odul: { stars: 90 } },
 };
 
 /* ---------- IZGARA GENISLEMESI ----------
@@ -230,10 +264,10 @@ export const GENISLEME_KILITLERI = {
   10: { fiyat: 130, odul: { t: 'food', lv: 4 } },
   2:  { fiyat: 180, odul: { t: 'egg',  lv: 8 } },
   15: { fiyat: 240, odul: { t: 'egg',  lv: 8 } },
-  3:  { fiyat: 320, odul: { stars: 1800 } },
+  3:  { fiyat: 320, odul: { stars: 130 } },
   20: { fiyat: 420, odul: { t: 'egg',  lv: 8 } },
   4:  { fiyat: 560, odul: { t: 'food', lv: 4 } },
-  0:  { fiyat: 760, odul: { stars: 1800 } },
+  0:  { fiyat: 760, odul: { stars: 300 } },
 };
 
 /* Genisleme hangi yuva sayisinda aciliyor. */
@@ -317,14 +351,29 @@ export function ejderhaSansi(lv) {
 
    2. gun yerine Sv.4 yumurta geldi. 6. gun de Sv.4 yumurtaydi; ikisi
    ayni kalsaydi hafta ortasinda merdiven duz olurdu, o yuzden 5. ve 6.
-   gun birer kademe yukari cekildi. Hafta artik bastan sona cikiyor:
-   85 yem -> Sv.4 -> 190 yem -> kese -> Sv.5 -> Sv.6 -> 10 yildiz. */
+   gun birer kademe yukari cekildi.
+
+   2026-10-29: 4. ve 5. gun YER DEGISTIRDI. Yukaridaki siralama
+   "hafta bastan sona cikiyor" diyordu ama cikmiyordu - oduller yem
+   cinsine cevrilince 4. gun 652, 5. gun 383 veriyordu, yani hafta
+   ortasinda INIYORDU. Sebep, iki ayri olcegin ayni merdivene
+   karistirilmasi: kap seviyeleri (Lv1 kese = 652) ile yumurta
+   seviyeleri (Sv.5 = 383) ayni sayilarla yazilip farkli degerler
+   tasiyor. "Lv.1" etiketi 5. gunun "Sv.5"inden kucuk gorunuyor ama
+   bir buçuk kati odiyor.
+
+   Yalnizca sira degisti; haftanin toplami ve odullerin kendisi AYNI.
+   Yeni merdiven: 85 -> Sv.4 -> 190 yem -> Sv.5 -> kese -> Sv.6 -> 10 yildiz
+                  85    179     190       383     652     800    yildiz
+
+   test-kur.mjs artik her calismada merdivenin yukari gittigini
+   kontrol ediyor, yani bu bir daha sessizce bozulmayacak. */
 export const GUNLUK_ODULLER = [
   { food: 85 },
   { item: { t: 'egg', lv: 4 } },
   { food: 190 },
-  { item: { t: 'food', lv: 1 } },
   { item: { t: 'egg', lv: 5 } },
+  { item: { t: 'food', lv: 1 } },
   { item: { t: 'egg', lv: 6 } },
   { stars: 10 },
 ];
