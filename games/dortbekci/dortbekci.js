@@ -348,22 +348,95 @@ function canKaybi() {
 }
 
 /* ---------- cizim ---------- */
+const duvarMi = (tx, ty) => HARITA[ty]?.[tx] === '#';
+
+/* DUVARLAR — BIRLESIK HATLAR, AYRI KARELER DEGIL.
+
+   Once her duvar karesi kendi basina, 1 piksel bosluk birakilarak
+   doldurulmus bir kare olarak ciziliyordu. Sonuc labirent degil
+   DAMA TAHTASI gibi duruyordu: koridorlarin nerede bittigi
+   okunmuyordu ve oyun ucuz goruyordu.
+
+   Gercek Pac-Man duvari doldurmaz, SINIRINI cizer: duvar kutlesinin
+   disa bakan kenarlari boyunca tek bir parlak hat gider ve koseler
+   yuvarlaktir. Burada yapilan da bu, ve hicbir gorsel dosyasi
+   gerekmiyor - yalnizca komsuluk bilgisi:
+
+     - Bir kenar, KOMSUSU DUVAR DEGILSE ciziliyor (yani dis sinir).
+     - Komsusu duvarsa hat kutucuk kenarina kadar UZATILIYOR ki yan
+       karenin hattiyla kesintisiz birlessin.
+     - Iki komsu da bossa aradaki kose YUVARLATILIYOR (dis kose).
+     - Iki komsu duvar ama CAPRAZ komsu bossa, ic kose yuvarlatiliyor;
+       bunlar koridor aglarinin donus noktalari.
+
+   Her yay tek bir kenarin sorumlulugunda: ust kenar ust iki koseyi,
+   alt kenar alt iki koseyi ciziyor. Yoksa her kose iki kez cizilir ve
+   hat o noktalarda kalinlasir. */
+function duvarlariCiz() {
+  const ic = Math.max(1.2, K * 0.2);          /* hattin kutucuk kenarina uzakligi */
+  const r = Math.min(ic * 1.7, K * 0.3);      /* kose yaricapi */
+
+  ctx.strokeStyle = '#4a74d8';
+  ctx.lineWidth = Math.max(1.3, K * 0.1);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  for (let ty = 0; ty < BOY; ty++) {
+    for (let tx = 0; tx < EN; tx++) {
+      if (!duvarMi(tx, ty)) continue;
+      const px = OX + tx * K, py = OY + ty * K;
+      const U = duvarMi(tx, ty - 1), D = duvarMi(tx, ty + 1);
+      const L = duvarMi(tx - 1, ty), R = duvarMi(tx + 1, ty);
+      const x0 = px + ic, x1 = px + K - ic, y0 = py + ic, y1 = py + K - ic;
+
+      ctx.beginPath();
+
+      if (!U) {
+        ctx.moveTo(L ? px : x0 + r, y0);
+        ctx.lineTo(R ? px + K : x1 - r, y0);
+        if (!L) { ctx.moveTo(x0 + r, y0); ctx.quadraticCurveTo(x0, y0, x0, y0 + r); }
+        if (!R) { ctx.moveTo(x1 - r, y0); ctx.quadraticCurveTo(x1, y0, x1, y0 + r); }
+      }
+      if (!D) {
+        ctx.moveTo(L ? px : x0 + r, y1);
+        ctx.lineTo(R ? px + K : x1 - r, y1);
+        if (!L) { ctx.moveTo(x0 + r, y1); ctx.quadraticCurveTo(x0, y1, x0, y1 - r); }
+        if (!R) { ctx.moveTo(x1 - r, y1); ctx.quadraticCurveTo(x1, y1, x1, y1 - r); }
+      }
+      if (!L) {
+        ctx.moveTo(x0, U ? py : y0 + r);
+        ctx.lineTo(x0, D ? py + K : y1 - r);
+      }
+      if (!R) {
+        ctx.moveTo(x1, U ? py : y0 + r);
+        ctx.lineTo(x1, D ? py + K : y1 - r);
+      }
+
+      /* Ic koseler: iki komsu duvar, capraz komsu bos. Hat kutucugun
+         KOSESINDEN donuyor, boylece iki koridor birlesiyor. */
+      if (U && L && !duvarMi(tx - 1, ty - 1)) { ctx.moveTo(px, y0); ctx.quadraticCurveTo(x0, y0, x0, py); }
+      if (U && R && !duvarMi(tx + 1, ty - 1)) { ctx.moveTo(px + K, y0); ctx.quadraticCurveTo(x1, y0, x1, py); }
+      if (D && L && !duvarMi(tx - 1, ty + 1)) { ctx.moveTo(px, y1); ctx.quadraticCurveTo(x0, y1, x0, py + K); }
+      if (D && R && !duvarMi(tx + 1, ty + 1)) { ctx.moveTo(px + K, y1); ctx.quadraticCurveTo(x1, y1, x1, py + K); }
+
+      ctx.stroke();
+    }
+  }
+}
+
 function ciz(simdi) {
   const g = parseFloat(tuval.style.width), y = parseFloat(tuval.style.height);
   ctx.fillStyle = '#080a12';
   ctx.fillRect(0, 0, g, y);
 
-  /* duvarlar */
+  duvarlariCiz();
+
+  /* yemler ve kapi */
   for (let ty = 0; ty < BOY; ty++) {
     for (let tx = 0; tx < EN; tx++) {
       const c = HARITA[ty][tx];
       const px = OX + tx * K, py = OY + ty * K;
-      if (c === '#') {
-        ctx.fillStyle = '#1d2c52';
-        ctx.fillRect(px + 1, py + 1, K - 2, K - 2);
-        ctx.fillStyle = 'rgba(120,160,235,0.16)';
-        ctx.fillRect(px + 1, py + 1, K - 2, 2);
-      } else if (c === '-') {
+      if (c === '-') {
         ctx.fillStyle = '#6f7fa8';
         ctx.fillRect(px + 1, py + K / 2 - 2, K - 2, 3);
       }
