@@ -155,9 +155,15 @@ async function eveDon() {
 }
 
 function olcule() {
-  const kutu = tuval.parentElement.getBoundingClientRect();
-  const g = Math.max(220, Math.round(kutu.width));
-  const y = Math.max(260, Math.round(kutu.height));
+  /* clientWidth/Height kullaniliyor, getBoundingClientRect DEGIL:
+     .cerceveli siniflari 14px'lik bir border-image ekliyor ve rect o
+     cerceveyi DE olcuyor. Tuval boylece her kenardan 14px fazla genis
+     kaliyor, saga kayiyor ve sag kenari cerceve tarafindan kirpiliyordu
+     (Dort Bekci'de labirentin son sutunu gorunmuyordu). clientWidth
+     yalnizca ic alani veriyor. */
+  const alan = tuval.parentElement;
+  const g = Math.max(220, alan.clientWidth);
+  const y = Math.max(260, alan.clientHeight);
   K = Math.floor(Math.min(g / EN, y / BOY));
   OX = Math.round((g - K * EN) / 2);
   OY = Math.round((y - K * BOY) / 2);

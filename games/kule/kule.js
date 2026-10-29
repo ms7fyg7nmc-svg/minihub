@@ -120,9 +120,12 @@ async function eveDon() {
 }
 
 function olcule() {
-  const kutu = tuval.parentElement.getBoundingClientRect();
-  G = Math.max(200, Math.round(kutu.width));
-  Y = Math.max(260, Math.round(kutu.height));
+  /* clientWidth/Height kullaniliyor, getBoundingClientRect DEGIL:
+     .cerceveli siniflari 14px'lik bir border-image ekliyor ve rect o
+     cerceveyi DE olcuyor; tuval her kenardan 14px tasip kirpiliyordu. */
+  const alan = tuval.parentElement;
+  G = Math.max(200, alan.clientWidth);
+  Y = Math.max(260, alan.clientHeight);
   const o = Math.min(3, devicePixelRatio || 1);
   tuval.width = Math.round(G * o);
   tuval.height = Math.round(Y * o);
