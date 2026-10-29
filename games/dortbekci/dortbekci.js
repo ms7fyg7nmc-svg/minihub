@@ -1,15 +1,15 @@
 
-import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v302';
-import { submitScore, getBest, clearState, settleAbandonedRun } from '../../js/store.js?v302';
-import { registerTexts, t, applyStaticTexts, mhHtml } from '../../js/i18n-hook.js?v302';
-import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v302';
-import { yarimBirakmaOnayi } from '../../js/onay.js?v302';
-import { HARITA, EN, BOY, TUNEL_SATIR } from './labirent.mjs?v302';
+import { initTelegram, haptic, showBackButton, backToHubOnResume } from '../../js/tg.js?v303';
+import { submitScore, getBest, clearState, settleAbandonedRun } from '../../js/store.js?v303';
+import { registerTexts, t, applyStaticTexts, mhHtml } from '../../js/i18n-hook.js?v303';
+import { SFX, soundToggleHtml, mountSoundToggle } from '../../js/audio.js?v303';
+import { yarimBirakmaOnayi } from '../../js/onay.js?v303';
+import { HARITA, EN, BOY, TUNEL_SATIR } from './labirent.mjs?v303';
 /* Hareket ve yapay zeka AYRI dosyada: bu ortamda tarayicida dogru
    olculemiyor (requestAnimationFrame saniyede 1 kez donuyor), bu
    yuzden tarayicisiz sabit adimli test ediliyor (test-dortbekci.mjs).
    Kopyasi burada TUTULMUYOR - tek kaynak logic.mjs. */
-import { YONLER, sar, gecilir, ilerlet, bekciYonSec } from './logic.mjs?v302';
+import { YONLER, sar, gecilir, ilerlet, bekciYonSec } from './logic.mjs?v303';
 
 const GAME_ID = 'dortbekci';
 const POINTS_DIVISOR = 30;

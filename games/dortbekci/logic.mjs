@@ -9,7 +9,7 @@
  * sinanabiliyor (bkz. test-dortbekci.mjs). Ayni kalip projede zaten
  * var: games/2048/logic.js hem istemci hem sunucu tarafindan kullaniliyor.
  */
-import { HARITA, EN, BOY, TUNEL_SATIR } from './labirent.mjs?v302';
+import { HARITA, EN, BOY, TUNEL_SATIR } from './labirent.mjs?v303';
 
 export const YONLER = [
   { x: 0, y: -1, ad: 'yukari' },

@@ -4,8 +4,8 @@
  * (olculdu), yani "bekciler kovaliyor mu", "yakaliyor mu" sorulari
  * ekranda sinanamiyor. Burada 60 fps sabit adimla oynatiliyor.
  */
-import { HARITA, EN, BOY, TUNEL_SATIR } from './labirent.mjs?v302';
-import { YONLER, sar, gecilir, ilerlet, bekciYonSec, hedefKare } from './logic.mjs?v302';
+import { HARITA, EN, BOY, TUNEL_SATIR } from './labirent.mjs?v303';
+import { YONLER, sar, gecilir, ilerlet, bekciYonSec, hedefKare } from './logic.mjs?v303';
 
 const HIZ = { oyuncu: 5.6, bekci: 5.0 };
 let ok = 0, kotu = 0;

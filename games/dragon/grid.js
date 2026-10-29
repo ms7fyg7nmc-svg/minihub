@@ -4,9 +4,9 @@
    seviye oluyor. Kilitli hucreler yildizla aciliyor ve icindeki odulu
    dogrudan oyuncuya veriyor. */
 
-import { EN_UST_YUMURTA, EN_UST_SANDIK, kapSuresi } from './ekonomi.js?v302';
-import { belir, zipla, AKIS } from './canlandir.js?v302';
-import { iz } from '../../js/tani.js?v302';
+import { EN_UST_YUMURTA, EN_UST_SANDIK, kapSuresi } from './ekonomi.js?v303';
+import { belir, zipla, AKIS } from './canlandir.js?v303';
+import { iz } from '../../js/tani.js?v303';
 
 /* Kap gorselleri v2: kaplar artik ACIK ve iceriklerini gosteriyor.
    Eski set sekiz kabin da ayni kirmizi kutu olmasi yuzunden 64 pikselde
