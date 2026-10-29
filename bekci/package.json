@@ -1,0 +1,13 @@
+{
+  "name": "minihub-bekci",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "minihub oyunlarini surekli oynayip hata arayan bekci",
+  "scripts": {
+    "maymun": "node maymun.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.56.1"
+  }
+}

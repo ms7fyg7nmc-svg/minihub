@@ -1,0 +1,111 @@
+# GECE AJANI — minihub'ı kendi kendine geliştiren görev.
+#
+# Haftada iki gece çalışır: Salı ve Cuma, saat 02:00 (İstanbul).
+# cron UTC ile yazılır; 02:00 İstanbul = 23:00 UTC, bir önceki gün.
+# Yani Pazartesi ve Perşembe 23:00 UTC.
+#
+# Sıklık bilerek düşük: anayasa "haftada iki iyi PR, her gece bir vasat
+# PR'dan iyidir" diyor. Artırmak istersen aşağıdaki cron satırını
+# değiştir. Her çalıştırma abonelik kotasından yer.
+#
+# Elle de başlatabilirsin: GitHub'da Actions sekmesi → Gece ajanı →
+# "Run workflow". Beklemeden denemek için bu yol.
+
+name: Gece ajanı
+
+on:
+  schedule:
+    - cron: "0 23 * * 1,4"
+  workflow_dispatch:
+    inputs:
+      not:
+        description: "Ajana ek not (isteğe bağlı)"
+        required: false
+        default: ""
+
+# Aynı anda iki gece işi çalışmasın: ikisi de PR açarsa çakışır.
+concurrency:
+  group: gece-ajani
+  cancel-in-progress: false
+
+jobs:
+  gece:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write        # dal açıp commit atabilmesi için
+      pull-requests: write   # PR açabilmesi için
+      issues: read
+      id-token: write        # claude-code-action'ın kimlik doğrulaması
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0     # defteri ve geçmişi okuyabilsin
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # Maymun ve ekran aracı Playwright kullanıyor. Yalnızca chromium
+      # kuruluyor; ötekiler gereksiz yere dakika ve disk yiyor.
+      # npx'in --prefix diye bir bayragi YOK (o npm'in bayragi); ilk
+      # yazimda oyleydi ve adim sessizce yanlis yerde calisirdi.
+      # working-directory dogru yol.
+      - name: Playwright kur
+        working-directory: bekci
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+
+      # Oyunlar statik dosya; basit bir sunucu yetiyor. Maymun ve ekran
+      # aracı BEKCI_KOK ile buraya bakıyor. Canlı API'ye hiçbir şey
+      # gitmiyor (ikisi de kesiyor).
+      - name: Yerel sunucu
+        run: |
+          python3 -m http.server 8765 >/tmp/sunucu.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8765/surum.json >/dev/null && break
+            sleep 1
+          done
+          curl -sf http://localhost:8765/surum.json || (echo "sunucu acilmadi"; cat /tmp/sunucu.log; exit 1)
+
+      # Bekçi oyunları oynar ve hata arar. Çökse bile gece işi devam
+      # etmeli: raporu yoksa ajan testlere ve koda bakar.
+      - name: Bekçi oyunları oynasın
+        continue-on-error: true
+        env:
+          BEKCI_KOK: http://localhost:8765
+        run: node bekci/maymun.mjs --sure 20 --tur 2
+
+      # Bütün testler. Kırmızı olanı ajan görecek, o yüzden burada
+      # işi düşürmüyoruz.
+      - name: Testleri koştur
+        continue-on-error: true
+        run: |
+          : > /tmp/testler.txt
+          for f in $(find . -name "test-*.mjs" -not -path "./node_modules/*" -not -path "./_*" | sort); do
+            echo "=== $f ===" >> /tmp/testler.txt
+            node "$f" >> /tmp/testler.txt 2>&1 || echo "^^^ BU TEST PATLADI" >> /tmp/testler.txt
+          done
+          tail -40 /tmp/testler.txt
+
+      # gh pr create icin jeton lazim. Olmadan ajan dali itiyor ama PR
+      # acamiyor ve is sessizce yarim kaliyor.
+      - name: Gece işi
+        uses: anthropics/claude-code-action@v1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            /gece-isi
+
+            Yerel sunucu http://localhost:8765 adresinde açık.
+            Test çıktıları /tmp/testler.txt dosyasında.
+            Maymun raporları bekci/raporlar/ altında.
+
+            Volkan'ın ek notu: ${{ github.event.inputs.not }}
+          claude_args: |
+            --max-turns 60
+            --allowedTools "Bash,Read,Write,Edit,Glob,Grep"

@@ -5,3 +5,10 @@
 !.dev.vars.example
 .env*
 !.env.example
+
+# Bekci ciktilari: her calismada yeniden uretilir, depoda durmasina
+# gerek yok. Gece ajani raporu o calismada okur ve PR'a OZETINI yazar.
+bekci/node_modules/
+bekci/raporlar/
+bekci/goruntuler/
+bekci/package-lock.json
