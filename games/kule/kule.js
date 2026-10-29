@@ -49,6 +49,29 @@ const KUSAKLAR = [
   { kat: 80, ust: '#241a4a', alt: '#0a0a18' },  /* yildizlar */
 ];
 
+/* TAS GORSELLERI — Kenney.nl "Platformer Pack Medieval", CC0 (kamu mali).
+   Bloklar eskiden duz HSL dikdortgenlerdi; kule iki kahverengi cubuk
+   gibi duruyordu. Artik her blok tas duvar kutucuklariyla doseniyor:
+   iki ucta kenar sutunu, arada tekrarlayan govde. Kutucuklar 70x70 ve
+   kare dosenmek icin tasarlandi, o yuzden blok yuksekligi kadar
+   (BLOK_Y) kare parcalar halinde yan yana diziliyor.
+
+   Dosyalar kucuk (toplam ~2,5 KB) ve lisans atif istemiyor; yine de
+   kaynak assets/BENIOKU.md'de yaziyor. */
+const gorseller = {};
+for (const ad of ['tas-govde', 'tas-sol', 'tas-sag', 'mesale-a', 'mesale-b']) {
+  const g = new Image();
+  g.src = `assets/${ad}.webp?v304`;
+  gorseller[ad] = g;
+}
+/* Gorseller inene kadar oyun BEKLEMIYOR: hazir olmayan kutucugun
+   yerine eski duz dikdortgen ciziliyor. Yavas baglantida oyun yine
+   aciliyor, sadece birkac kare sade goruntuyle basliyor. */
+const hazirMi = (g) => g.complete && g.naturalWidth > 0;
+
+/* O karenin gokyuzu dolgusu; mazgallari oymak icin tacCiz kullaniyor. */
+let gokDolgu = null;
+
 const tuval = document.getElementById('tuval');
 const ctx = tuval.getContext('2d');
 const skorEl = document.getElementById('score');
@@ -275,10 +298,29 @@ const karistir = (c1, c2, k) => {
 
 /* Blogun yuzey rengi kata gore donuyor: kule yukseldikce tasin tonu
    degisiyor, boylece katlar birbirinden ayirt ediliyor. */
-function blokRengi(kat, tam) {
-  const t1 = (kat * 9) % 360;
-  const isik = tam ? 62 : 52;
-  return `hsl(${t1} 34% ${isik}%)`;
+/* Kat rengi. Kutucuklar tek renk (soguk gri-mavi) oldugu icin kuleyi
+   renklendiren tek sey bu; 'multiply' ile basildigi icin ACIK renkler
+   tasi oldugu gibi birakiyor, KOYU renkler boyuyor.
+
+   Ton kehribardan basliyor (yerdeki mesale isigi), yukari cikildikca
+   mora ve maviye donuyor - KUSAKLAR'daki gokyuzu gecisiyle ayni yonde.
+   Kat basina 5 derece: 36 katta bir tam tur degil, yarim tur. Once
+   tur basina 9 dereceydi ve kuleyi 40 katta iki kez bastan sona
+   geziyordu, bu da hangi yukseklikte oldugunu renkten anlamayi
+   imkansiz kiliyordu. */
+function blokRengi(kat) {
+  /* Ton GERIYE donuyor: 38 (kehribar) -> 0 (kor) -> 320 (macenta)
+     -> 280 (mor) -> 240 (gece mavisi). Ileri gitseydi sariyi ve YESILI
+     gecerdi; yesil bir kale hastalikli goruyordu ve ilk denemede butun
+     kule aynı yesile battı. Geri yon atesten geceye cikiyor, yani
+     KUSAKLAR'daki gokyuzu gecisiyle ayni hikaye. */
+  const ton = (38 - kat * 4 + 720) % 360;
+  /* Tam isabet RENGI DEGISTIRMIYOR. Once doygunlugu dusurup parlakligi
+     88'e cikariyordu; multiply'da bu neredeyse beyaz demek, yani iyi
+     oynayan oyuncunun kulesi bembeyaz griye donuyor ve yukseklik
+     rengi tamamen kayboluyordu. Tam isabetin isareti artik yalnizca
+     altin kenar. */
+  return `hsl(${ton} 38% 78%)`;
 }
 
 function ciz() {
@@ -289,6 +331,8 @@ function ciz() {
   gok.addColorStop(1, karistir(a.alt, b.alt, k));
   ctx.fillStyle = gok;
   ctx.fillRect(0, 0, G, Y);
+  /* Mazgal oymak icin ayni dolgu lazim (bkz. tacCiz). */
+  gokDolgu = gok;
 
   /* Yildizlar yalnizca yukarida; alcakta gorunmuyorlar. */
   if (kat > 36) {
@@ -316,21 +360,120 @@ function ciz() {
   for (const bl of bloklar) {
     const y = ekranY(bl.kat);
     if (y > Y + BLOK_Y || y < -BLOK_Y * 2) continue;
-    blokCiz(bl.x, y, bl.g, blokRengi(bl.kat, bl.tam));
+    blokCiz(bl.x, y, bl.g, blokRengi(bl.kat), bl.tam);
+    if (bl.kat > 0 && bl.kat % 6 === 0) mesaleCiz(bl.x, y, bl.g, bl.kat);
+  }
+
+  /* Tac, kulenin en ustundeki YERLESMIS bloga konuyor; havada kayan
+     blogun uzerine degil, yoksa siper ekranda ucusuyor. */
+  const tepe = bloklar[bloklar.length - 1];
+  if (tepe) {
+    const ty = ekranY(tepe.kat);
+    if (ty > -BLOK_Y * 2 && ty < Y + BLOK_Y) tacCiz(tepe.x, ty, tepe.g);
   }
 
   if (aktif && !bitti) blokCiz(aktif.x, ekranY(aktif.kat), aktif.g, blokRengi(aktif.kat));
 }
 
-function blokCiz(x, y, g, renk) {
+/* Bir blogu tas kutucuklariyla doser. Kutucuk boyu = blok yuksekligi,
+   yani kareler; genislik ona bolunmuyorsa ARTAN ORTADA kaliyor ve iki
+   uc tam cikiyor - kenar sutunlari yarim kalmasin diye. */
+function tasDose(x, y, g) {
+  const sol = gorseller['tas-sol'], sag = gorseller['tas-sag'], govde = gorseller['tas-govde'];
+  if (!hazirMi(sol) || !hazirMi(sag) || !hazirMi(govde)) return false;
+
+  const k = BLOK_Y;
+  if (g <= k * 2) {
+    /* Cok dar blok: iki kenar sutunu sigmaz, tek govde geriliyor. */
+    ctx.drawImage(govde, x, y, g, k);
+    return true;
+  }
+  ctx.drawImage(sol, x, y, k, k);
+  ctx.drawImage(sag, x + g - k, y, k, k);
+  const ortaG = g - k * 2;
+  const adet = Math.max(1, Math.round(ortaG / k));
+  const birim = ortaG / adet;
+  for (let i = 0; i < adet; i++) ctx.drawImage(govde, x + k + i * birim, y, birim + 0.5, k);
+  return true;
+}
+
+function blokCiz(x, y, g, renk, tam) {
+  if (!tasDose(x, y, g)) {
+    /* Gorseller henuz inmedi - eski sade cizim. */
+    ctx.fillStyle = renk;
+    ctx.fillRect(x, y, g, BLOK_Y);
+    ctx.fillStyle = 'rgba(255,255,255,0.16)';
+    ctx.fillRect(x, y, g, 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.26)';
+    ctx.fillRect(x, y + BLOK_Y - 3, g, 3);
+    return;
+  }
+
+  /* Kutucuklar tek renk; yukari cikildikca kulenin rengi degissin diye
+     blogun UZERINE saydam bir renk basiliyor. 'overlay' tasin dokusunu
+     koruyor, duz boyama gibi ezmiyor. Blok tamamen opak dosendigi icin
+     dikdortgenin disina tasmiyor. */
+  /* 'multiply' secildi, 'overlay' degil: overlay orta parlakliktaki bir
+     rengi acik tasin uzerine basinca neredeyse hicbir sey yapmiyordu,
+     butun katlar ayni solgun griye cikiyordu. multiply tasin dokusunu
+     koruyarak gercekten renklendiriyor. */
+  ctx.save();
+  ctx.globalCompositeOperation = 'multiply';
   ctx.fillStyle = renk;
   ctx.fillRect(x, y, g, BLOK_Y);
-  /* Ust kenarda ince bir isik, altta golge: duz dikdortgenler tas gibi
-     dursun diye. Gorsel dosyasi kullanilmiyor. */
-  ctx.fillStyle = 'rgba(255,255,255,0.16)';
-  ctx.fillRect(x, y, g, 2);
-  ctx.fillStyle = 'rgba(0,0,0,0.26)';
-  ctx.fillRect(x, y + BLOK_Y - 3, g, 3);
+  ctx.restore();
+
+  /* Tam isabette altin bir kenar: oyuncu iyi vurdugunu kuleye BAKARAK
+     gorsun, yalnizca ucup giden yaziyla degil. */
+  if (tam) {
+    ctx.strokeStyle = 'rgba(255,205,105,0.55)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 0.5, y + 0.5, g - 1, BLOK_Y - 1);
+  }
+
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fillRect(x, y + BLOK_Y - 2, g, 2);
+}
+
+/* Kulenin tepesine mazgalli siper.
+
+   ILK DENEME YANLISTI: siper, en ust blogun BIR KAT USTUNE ciziliyordu
+   - ama orasi tam da kayan aktif blogun satiri. Aktif blok en sona
+   cizildigi icin siperin uzerini her karede kapatiyordu ve mazgallar
+   yalnizca blok uzaktayken, yarim yamalak gorunuyordu.
+
+   Simdi mazgal blogun KENDI ustune OYULUYOR: tepe seridi gokyuzu
+   dolgusuyla dis dis siliniyor. Siluet boylece gercekten disli
+   oluyor ve hicbir sey ustunu ortmuyor. Kutucuk gorseli gerekmiyor. */
+function tacCiz(x, y, g) {
+  if (!gokDolgu) return;
+  const yuk = 6;                      /* mazgal derinligi */
+  const dis = Math.max(3, Math.round(g / 22));
+  const adim = g / dis;
+  ctx.fillStyle = gokDolgu;
+  for (let i = 0; i < dis; i++) {
+    /* Bir dis dolu, bir dis bos: tek olanlar oyuluyor. */
+    if (i % 2 === 0) continue;
+    ctx.fillRect(x + i * adim, y, adim, yuk);
+  }
+}
+
+/* Yanan mesale: iki kare arasinda gidip gelerek titriyor. Her alti
+   katta bir, kulenin donusumlu kenarinda. */
+function mesaleCiz(x, y, g, kat) {
+  const a = gorseller['mesale-a'], b = gorseller['mesale-b'];
+  if (!hazirMi(a) || !hazirMi(b)) return;
+  const kare = (Math.floor(performance.now() / 140) + kat) % 2 ? a : b;
+  const en = BLOK_Y * 0.8, boy = BLOK_Y * 1.4;
+  /* Mesale duvara TUTUNUYOR: govdesinin yarisi blogun uzerinde kaliyor.
+     Once blogun tamamen disina konuyordu ve bosta asili duruyordu. */
+  /* Mesale duvardan SARKIYOR: govdesinin dortte biri tasin uzerinde,
+     gerisi disarida. Once yarisi iceride kaliyordu ve bloga gomulmus
+     gibi duruyordu. */
+  const sagda = Math.floor(kat / 6) % 2 === 0;
+  const mx = sagda ? x + g - en * 0.25 : x - en * 0.75;
+  if (mx < -en || mx > G) return;
+  ctx.drawImage(kare, mx, y - boy * 0.46, en, boy);
 }
 
 /* ---------- bitis ---------- */
