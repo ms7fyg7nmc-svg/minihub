@@ -49,6 +49,31 @@ const KUSAKLAR = [
   { m: 1100, ust: '#2a1a52', alt: '#09081a' },  /* yildizlar */
 ];
 
+/* KALAS GORSELLERI — Kenney.nl "Platformer Pack Medieval", CC0.
+   Kayalar eskiden tek renkli yuvarlak dikdortgenlerdi; ekranda bir
+   avuc bej cubuk gibi duruyorlardi. Artik ahsap kalas kutucuklariyla
+   doseniyor: iki ucta kapak, arada gerilen govde.
+   Kaynak ve esleme assets/BENIOKU.md'de. */
+const gorseller = {};
+for (const ad of ['kalas-sol', 'kalas-orta', 'kalas-sag', 'kaya-duvar']) {
+  const g = new Image();
+  g.src = `assets/${ad}.webp?v304`;
+  gorseller[ad] = g;
+}
+const kalasHazir = () => ['kalas-sol', 'kalas-orta', 'kalas-sag']
+  .every((a) => gorseller[a].complete && gorseller[a].naturalWidth > 0);
+
+/* Kaya turunun rengi. Kalaslar tek renk (ahsap) oldugu icin tur farki
+   uzerlerine 'multiply' ile basilan renkten okunuyor; duz kaya hic
+   boyanmiyor, yani ahsap kendi rengiyle kaliyor ve digerleri ona gore
+   ayrisiyor. */
+const TUR_RENGI = {
+  duz: null,
+  kayan: 'hsl(205 55% 70%)',     /* buzlu mavi: kayiyor */
+  kirilgan: 'hsl(8 50% 64%)',    /* catlak kirmizi: bir kere basilir */
+  yay: 'hsl(44 70% 72%)',        /* altin: firlatir */
+};
+
 const tuval = document.getElementById('tuval');
 const ctx = tuval.getContext('2d');
 const skorEl = document.getElementById('score');
@@ -292,6 +317,48 @@ function ciz() {
     }
   }
 
+  /* UCURUM DUVARLARI. Arka plan duz bir kahverengi bosluktu; ejderha
+     hicbir seyin icinde ucmuyor gibi duruyordu ve yukseldigini yalnizca
+     sayactan anliyordun. Iki yanda tas duvar var artik: kameradan DAHA
+     YAVAS kayiyor (0,45 kat), yani paralaks veriyor ve yukari cikis
+     hissediliyor.
+
+     Duvarlar 420 metreye kadar; orada ucurum bitiyor ve gokyuzu
+     aciliyor. Hikaye de bu: yuvadan cikip kayaligi asmak. */
+  const duvar = gorseller['kaya-duvar'];
+  if (duvar.complete && duvar.naturalWidth > 0 && skor < 420) {
+    const solma = Math.min(1, Math.max(0, (420 - skor) / 150));
+    const en = Math.max(26, Math.round(G * 0.13));
+    /* Paralaks kaydirma; kutucuk boyuna gore modunu aliyor ki dikis
+       hep ayni yerde olmasin. */
+    const kay = ((kamera * 0.45) % en + en) % en;
+    ctx.save();
+    ctx.globalAlpha = 0.9 * solma;
+    for (let y = -en + kay; y < Y + en; y += en) {
+      ctx.drawImage(duvar, 0, y, en, en);
+      ctx.drawImage(duvar, G - en, y, en, en);
+    }
+    /* Duvarlari koyultup ice dogru karartiyoruz: ortadaki oyun alani
+       one ciksin, kenarlar geride kalsin. */
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'multiply';
+/* Ilk denemede ic kenar '#14100d' idi, yani neredeyse siyah; multiply
+       tasi tamamen yutuyordu ve duvar yerine yalnizca bir vinyet
+       goruluyordu. Artik ic kenar da koyu ama tasin dokusunu gecirecek
+       kadar acik - duvar KAYA gibi okunuyor, golge gibi degil.
+
+       Renk SICAK secildi: kutucuk soguk gri-mavi oldugu icin notr bir
+       kahve ile carpilinca zeytin yesiline donuyordu. Turuncuya kayan
+       bir ton mavi kanali bastirip kayayi topraga yaklastiriyor. */
+    const solG = ctx.createLinearGradient(0, 0, en, 0);
+    solG.addColorStop(0, '#c98d55'); solG.addColorStop(1, '#3d2c1e');
+    ctx.fillStyle = solG; ctx.fillRect(0, 0, en, Y);
+    const sagG = ctx.createLinearGradient(G - en, 0, G, 0);
+    sagG.addColorStop(0, '#3d2c1e'); sagG.addColorStop(1, '#c98d55');
+    ctx.fillStyle = sagG; ctx.fillRect(G - en, 0, en, Y);
+    ctx.restore();
+  }
+
   const ekranY = (dy) => dy - kamera;
 
   for (const kaya of kayalar) {
@@ -328,17 +395,59 @@ function ciz() {
 }
 
 function kayaCiz(x, y, tur) {
-  const renk = { duz: '#8a7a63', kayan: '#6f87a8', kirilgan: '#9a6a6a', yay: '#caa24e' }[tur] || '#8a7a63';
-  ctx.fillStyle = renk;
-  ctx.beginPath();
-  ctx.roundRect(x, y, KAYA_EN, KAYA_BOY, 5);
-  ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,0.18)';
-  ctx.fillRect(x + 4, y + 1.5, KAYA_EN - 8, 2);
-  if (tur === 'yay') {
-    ctx.fillStyle = '#f3d98a';
-    ctx.fillRect(x + KAYA_EN / 2 - 7, y - 4, 14, 4);
+  if (!kalasHazir()) {
+    /* Gorseller inmeden de oynanabilsin diye eski sade cizim. */
+    const renk = { duz: '#8a7a63', kayan: '#6f87a8', kirilgan: '#9a6a6a', yay: '#caa24e' }[tur] || '#8a7a63';
+    ctx.fillStyle = renk;
+    ctx.beginPath();
+    ctx.roundRect(x, y, KAYA_EN, KAYA_BOY, 5);
+    ctx.fill();
+    if (tur === 'yay') { ctx.fillStyle = '#f3d98a'; ctx.fillRect(x + KAYA_EN / 2 - 7, y - 4, 14, 4); }
+    return;
   }
+
+  /* Uclar sabit genislikte, govde arada geriliyor. Kutucuklar 70x70 ama
+     kalas 13 piksel yuksekliginde; ahsabin damari YATAY oldugu icin
+     yatay germe dokuyu bozmuyor, dikey ezme bozardi - o yuzden uclar
+     da kare degil, kalas boyunda tutuluyor. */
+  const uc = 9;
+  ctx.drawImage(gorseller['kalas-sol'], x, y, uc, KAYA_BOY);
+  ctx.drawImage(gorseller['kalas-sag'], x + KAYA_EN - uc, y, uc, KAYA_BOY);
+  ctx.drawImage(gorseller['kalas-orta'], x + uc, y, KAYA_EN - uc * 2, KAYA_BOY);
+
+  const renk = TUR_RENGI[tur];
+  if (renk) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = renk;
+    ctx.fillRect(x, y, KAYA_EN, KAYA_BOY);
+    ctx.restore();
+  }
+
+  /* Kirilgan kalasta catlak: oyuncu rengi ayirt edemese bile siluetten
+     anlasin. Iki ince cizgi, kalasin ortasinda. */
+  if (tur === 'kirilgan') {
+    ctx.strokeStyle = 'rgba(30,12,12,0.55)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(x + KAYA_EN * 0.38, y);
+    ctx.lineTo(x + KAYA_EN * 0.46, y + KAYA_BOY);
+    ctx.moveTo(x + KAYA_EN * 0.63, y);
+    ctx.lineTo(x + KAYA_EN * 0.56, y + KAYA_BOY);
+    ctx.stroke();
+  }
+
+  if (tur === 'yay') {
+    /* Yay: ustunde duran altin mandal. Kalasin uzerinde durdugu icin
+       oyuncu yukari firlatacagini carpmadan once goruyor. */
+    ctx.fillStyle = '#f6dc90';
+    ctx.fillRect(x + KAYA_EN / 2 - 7, y - 4, 14, 4);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fillRect(x + KAYA_EN / 2 - 7, y - 1, 14, 1);
+  }
+
+  ctx.fillStyle = 'rgba(0,0,0,0.32)';
+  ctx.fillRect(x + 1, y + KAYA_BOY - 1.5, KAYA_EN - 2, 1.5);
 }
 
 /* ---------- bitis ---------- */
