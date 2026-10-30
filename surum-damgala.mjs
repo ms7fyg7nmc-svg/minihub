@@ -59,9 +59,9 @@ for (const yol of dosyalariTara('.', ['.html'])) {
    oyuncuya ulasmaz. */
 for (const yol of dosyalariTara('.', ['.js', '.mjs'])) {
   const eski = readFileSync(yol, 'utf8');
-  /* IKI KALIP birden: statik `from './x.js?v304'` ve DINAMIK `import('./x.js?v304')`.
+  /* IKI KALIP birden: statik `from './x.js?v305'` ve DINAMIK `import('./x.js?v305')`.
      Uzun sure yalnizca ilki vardi ve js/store.js icindeki
-     `import('./tani.js?v304')` yirmi dokuz surum boyunca v210'da asili
+     `import('./tani.js?v305')` yirmi dokuz surum boyunca v210'da asili
      kaldi. Kimse fark etmedi cunku dosya sorgu dizesinden bagimsiz
      servis ediliyor - yani kod CALISIYORDU; bozulan sey onbellek
      kirilmasiydi. Tarayicisinda v210 duran oyuncu, telefonda ne

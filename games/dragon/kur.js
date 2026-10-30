@@ -47,7 +47,7 @@
    karsilastirmak ve denetciye (test-kur.mjs) olcu vermek icin. */
 
 import { YILDIZ_BASINA_DAKIKA, KAP_SURESI, SANDIK_MERDIVEN, YUMURTA,
-         EN_UST_YUMURTA, EN_UST_SANDIK } from './ekonomi.js?v304';
+         EN_UST_YUMURTA, EN_UST_SANDIK } from './ekonomi.js?v305';
 
 /* Capanin turetildigi kap. Lv1 kese secildi cunku oyunun en yaygin
    ve en erken kabi; oyuncunun ilk ogrendigi zaman-yem orani o. */

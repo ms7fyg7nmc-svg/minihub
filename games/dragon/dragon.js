@@ -1,28 +1,28 @@
-import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v304';
-import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v304';
+import { initTelegram, haptic, showBackButton, backToHubOnResume, getUser } from '../../js/tg.js?v305';
+import { registerTexts, t, applyStaticTexts, locale } from '../../js/i18n-hook.js?v305';
 
-import { CONFIG, gorselSeviye } from './config.js?v304';
-import { bakimdaMi } from '../../js/store.js?v304';
+import { CONFIG, gorselSeviye } from './config.js?v305';
+import { bakimdaMi } from '../../js/store.js?v305';
 import { oyuncuyuYukle, oyuncuyuKaydet, aktifEjderha, yuvaAcikMi, bugun,
          ejderhaEkle, EN_COK_YUVA,
-         izgarayiGenislet, genislemeHakki } from './model.js?v304';
-import { dragonSvg, dragonAssetUrls } from './art.js?v304';
-import { turCek, turYolu, turBul } from './turler.js?v304';
-import { BASARIM_ACIK, durum as basarimDurum } from './basarimlar.js?v304';
-import { taniBaslat, iz } from '../../js/tani.js?v304';
-import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v304';
+         izgarayiGenislet, genislemeHakki } from './model.js?v305';
+import { dragonSvg, dragonAssetUrls } from './art.js?v305';
+import { turCek, turYolu, turBul } from './turler.js?v305';
+import { BASARIM_ACIK, durum as basarimDurum } from './basarimlar.js?v305';
+import { taniBaslat, iz } from '../../js/tani.js?v305';
+import { ucur, zipla, sayacAkit, belir } from './canlandir.js?v305';
 import { KADEMELER, kademeGorevleri, kademeAcikMi, gorevAcikMi, aktifGorev,
-         kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI } from './gorevler.js?v304';
-import { gorevOlay, promoKutuAl, sahipMiyim } from '../../js/store.js?v304';
-import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v304';
+         kademeIlerleme, tumGorevler, KADEME_GOREV_SAYISI } from './gorevler.js?v305';
+import { gorevOlay, promoKutuAl, sahipMiyim } from '../../js/store.js?v305';
+import { siparisleriTamamla, siparisDurumu, siparisiAl, siparisiDegistir } from './siparis.js?v305';
 import { createBoard, nesneKoy, bosHucreVarMi, gorselYolu, onYukleListesi, kapDurumu, kapMi, sureKisa,
-         kilitliMi, nesneMi } from './grid.js?v304';
+         kilitliMi, nesneMi } from './grid.js?v305';
 import { YUMURTA, EN_UST_YUMURTA, BESLEME_PENCERESI, SIRA_GOSTERILEN,
          GUNLUK_ODULLER, yemMaliyeti, seviyeIcinBesleme,
          toplamaSonucu, sandikDegeri, sandikAraligi, ustBasamakMi, atlamaFiyati, kapSuresi,
          beslemeYumurtaSeviyesi, yumurtaAraligi, yuvaFiyati,
-         BESLEME_YUMURTA_PERIYODU, ejderhaSansi } from './ekonomi.js?v304';
-import { createTutorial, pozListesi } from './tutorial.js?v304';
+         BESLEME_YUMURTA_PERIYODU, ejderhaSansi } from './ekonomi.js?v305';
+import { createTutorial, pozListesi } from './tutorial.js?v305';
 
 const GAME_ID = 'dragon';
 
@@ -378,7 +378,7 @@ let generatorKurulu = false;
 async function generatorAc() {
   if (generatorKurulu) return;
   generatorKurulu = true;
-  const { generatorKur } = await import('./generator.js?v304');
+  const { generatorKur } = await import('./generator.js?v305');
   await generatorKur($('gen-kok'));
 }
 
@@ -1295,6 +1295,30 @@ const gorevBaslik = (g) => t(`quest${g.tip.charAt(0).toUpperCase()}${g.tip.slice
 
 /* ---------- GOREV HARITASI ---------- */
 
+/* HANGI GOREV NEREDE YAPILIR.
+
+   Oyuncu "30 kere birlestir" yazisini okuyup nereye gidecegini kendi
+   bulmak zorunda kalmamali. DMD'de her yarim gorevin yaninda bir
+   "GO TO" dugmesi var ve oyuncuyu dogrudan o ekrana atiyor;
+   akiskanligin en gorunur sebeplerinden biri bu.
+
+   Bizde sayaclarin cogu ocakta (izgara) donuyor; yalnizca besleme ve
+   ejderha seviyesi ejderha ekraninda. Yeni bir gorev tipi eklenirse
+   buraya da yazilmali - yazilmazsa varsayilan ocak olur, yani en kotu
+   ihtimalle yanlis ama zararsiz bir yere goturur. */
+const GOREV_EKRANI = {
+  feed: 'dragon',
+  draglv: 'dragon',
+  merge: 'grid',
+  collect: 'grid',
+  egglv: 'grid',
+  chest: 'grid',
+  packlv: 'grid',
+  unlock: 'grid',
+};
+
+const gorevEkrani = (tip) => GOREV_EKRANI[tip] || 'grid';
+
 /* Onizleme karti: uc kademe rozetini, toplam ilerlemeyi ve oyuncunun
    su an ustunde oldugu tek gorevi gosteriyor. Tam liste sayfada. */
 const BSR_SURUM = document.querySelector('meta[name="surum"]')?.content || '';
@@ -1337,8 +1361,18 @@ function questOzetCiz() {
       <div class="ozet-gorev-alt">
         <div class="bar"><i style="width:${Math.min(100, (sayi / g.hedef) * 100)}%"></i></div>
         <span class="quest-odul">${odulRozeti(g.odul)}</span>
+        ${hazir ? '' : `<button class="ozet-git" type="button">${t('questGo')}</button>`}
       </div>
     </div>`;
+
+  /* Gorev hazirsa "Git" yok: alinacak odul varken oyuncuyu baska
+     ekrana gondermek yanlis yone itmek olur. Hazir gorev zaten
+     listedeki "Al" dugmesiyle toplaniyor. */
+  questAktif.querySelector('.ozet-git')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    haptic.tap('light');
+    ekranGoster(gorevEkrani(g.tip));
+  });
 }
 
 /* Sayfadaki tam liste: kademe kademe, kilitli olanlar kapali. */
@@ -1365,6 +1399,8 @@ function questSayfaCiz() {
       const gorevAcik = gorevAcikMi(kademe, i, bitti);
       const sayi = gorevIlerleme(g);
       const hazir = !tamamlandi && gorevAcik && sayi >= g.hedef;
+      /* Acik ama henuz tamamlanmamis gorev: oyuncuyu yerine goturebiliriz. */
+      const gidilebilir = !tamamlandi && gorevAcik && !hazir;
 
       const el = document.createElement('div');
       el.className = `quest${tamamlandi ? ' done' : ''}${hazir ? ' active' : ''}${gorevAcik ? '' : ' kapali'}`;
@@ -1377,9 +1413,20 @@ function questSayfaCiz() {
             <span class="quest-odul">${odulRozeti(g.odul)}</span>
           </div>
         </div>
-        <button class="quest-claim"${hazir ? '' : ' disabled'}>${tamamlandi ? t('questDone') : t('questClaim')}</button>`;
+        <button class="quest-claim${gidilebilir ? ' git' : ''}"${(hazir || gidilebilir) ? '' : ' disabled'}>${
+          tamamlandi ? t('questDone') : (gidilebilir ? t('questGo') : t('questClaim'))
+        }</button>`;
 
       el.querySelector('button').addEventListener('click', () => {
+        /* Alinacak bir sey yoksa dugme oyuncuyu gorevin yapildigi ekrana
+           goturuyor. Ayri bir dugme eklenmedi: bos bos duran kapali "Al"
+           dugmesinin yerini aliyor.
+
+           "Git" yazisi YALNIZCA gercekten gidilebilen gorevde. Ilk
+           yazimda kilitli gorevler de "Git" diyordu - kapali bir
+           dugmede ustelik gidilemeyecek bir yer icin. Kilitli gorev
+           eskisi gibi kapali "Al" gosteriyor. */
+        if (gidilebilir) { haptic.tap('light'); ekranGoster(gorevEkrani(g.tip)); return; }
         if (!gorevAcikMi(kademe, i, oyuncu.gorevler.bitti)) return;
         if (oyuncu.gorevler.bitti.includes(g.id) || gorevIlerleme(g) < g.hedef) return;
         oyuncu.gorevler.bitti.push(g.id);
