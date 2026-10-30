@@ -71,16 +71,27 @@ düzeldiği anlamına gelmez — bu araç ilk yazıldığında oyun yerine hub'�
 
 ## 5. Sun
 
-Dal adı: `gece/<kısa-konu>`. PR başlığı tek satır, Türkçe.
+Dal adı: `gece/<kısa-konu>`. Başlık tek satır, Türkçe.
+
+**Yerelde (Volkan'ın Mac'inde) çalışıyorsan** — varsayılan hal:
 
 ```
 git checkout -b gece/<kısa-konu>
-git add -A && git commit -m "<başlık>"
-git push -u origin gece/<kısa-konu>
-gh pr create --title "<başlık>" --body-file <gövde.md>
+git add -A && git commit -F <rapor.md>
 ```
 
-PR gövdesi tam olarak şu beş başlığı taşır:
+**Push etme, PR açma, ana dala dokunma.** Dalı bırak ve dur.
+Volkan sabah uygulamadaki fark görünümünden bakacak.
+
+**GitHub'ın sunucusunda çalışıyorsan** (`CI` ortam değişkeni varsa),
+aynı dalı it ve PR aç:
+
+```
+git push -u origin gece/<kısa-konu>
+gh pr create --title "<başlık>" --body-file <rapor.md>
+```
+
+Her iki halde de rapor metni tam olarak şu beş başlığı taşır:
 
 ```
 ## Ne bulundu
@@ -99,7 +110,7 @@ PR gövdesi tam olarak şu beş başlığı taşır:
 (anayasa bölüm 4'ten bir şeye dokunduysan; yoksa "—")
 ```
 
-**Push etme, birleştirme.** Sadece PR aç.
+**Ana dala asla dokunma. Birleştirme.** Yerelde push bile etme.
 
 ## 6. Deftere yaz
 

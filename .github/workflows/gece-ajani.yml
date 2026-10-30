@@ -13,9 +13,26 @@
 
 name: Gece ajanı
 
+# ZAMANLAYICI KAPALI (2026-10-30).
+#
+# Gece ajani simdilik Volkan'in Mac'inde calisiyor: masaustu
+# uygulamasinin zamanlanmis gorevi olarak, uygulamanin kendi
+# oturumuyla. Sebebi basit - buradaki is akisi
+# CLAUDE_CODE_OAUTH_TOKEN istiyor, o da tarayicidan Claude'a giris
+# yapmayi gerektiriyor ve Volkan'in makinesinde o giris calismiyor.
+#
+# Dosya duruyor cunku bulutta calismanin bir ustunlugu var: Mac
+# kapaliyken de koşar. Jeton bir gun elde edilirse asagidaki iki
+# satirin basindaki # kaldirilir, o kadar.
+#
+# Zamanlayici KAPALI birakildi: anahtar yokken her gece patlayip
+# bos yere hata e-postasi gonderirdi.
+#
+# Elle calistirmak yine mumkun: Actions sekmesi -> Gece ajani ->
+# "Run workflow". (Anahtar olmadan o da basarisiz olur.)
 on:
-  schedule:
-    - cron: "0 23 * * 1,4"
+#  schedule:
+#    - cron: "0 23 * * 1,4"
   workflow_dispatch:
     inputs:
       not:
